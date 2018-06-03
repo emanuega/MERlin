@@ -1,9 +1,17 @@
+import matplotlib
+
 import storm_analysis.sa_library.parameters as parameters
 import storm_analysis.daostorm_3d.mufit_analysis as mfit
+import storm_analysis.sa_library.sa_h5py as saH5Py
+from storm_analysis.sa_library import datareader
+from storm_analysis.sa_library import datawriter
+import numpy as np
+from sklearn.neighbors import NearestNeighbors
 import os
 
 
 import matplotlib.pyplot as plt
+plt.style.use('./util/default.mplstyle')
 
 def getDefaultParameters(startFrame = -1, endFrame = -1):
     params = parameters.ParametersDAO()
@@ -35,7 +43,12 @@ def getDefaultParameters(startFrame = -1, endFrame = -1):
 
     return params
     
-dataPath = 'C:/users/george/documents/test_data/';
+dataPath = '//10.245.74.90/data/flow_differentiation/180531_U2OS_smFISH_FLNA_Surface_Treatment/Sample1/';
+
+
+destPath = '//10.245.74.90/data/htseq_fun/180209_MERFISH_Test/data'
+destPath2 = '//10.245.74.90/data/flow_differentiation/180430_MERFISH_L26_U2OS_Sample2/data'
+#dataPath = '//10.245.74.90/data/flow_differentiation/180531_ChromaticAbberationTest_750_650/data'
 os.chdir(dataPath)
 print(os.getcwd())
 
@@ -63,40 +76,178 @@ def fit_spots(fileName, analysisDirectory='analysis',
     else:
         print(outputName + ' already exists')
 
-for currentFile in os.listdir():
-    if currentFile.endswith('.dax'):
-        fit_spots(currentFile, endFrame=2)
+def fit_all_dax_in_current_dir():
+    for currentFile in os.listdir():
+        if currentFile.endswith('.dax'):
+            fit_spots(currentFile, endFrame=2)
+
+def load_all_localizations(directory='.'):
+
+    localizationDictionary = {}
+    for currentFile in os.listdir(directory):
+        if currentFile.endswith('.hdf5'):
+            fileName = currentFile.split('.')[0]
+            localizationDictionary[fileName] = \
+                    saH5Py.SAH5Py(directory + os.path.sep + currentFile)
+    
+    return localizationDictionary
+
+def extract_coordinates(localizationData, frameIndex):
+    localizationSet = localizationData.getLocalizationsInFrame(frameIndex)
+    return [[x, y] for x,y in zip(localizationSet['x'], localizationSet['y'])]
+
+def pair_points(localizationData, referenceFrame, movingFrame,
+        distanceThreshold = 5):
+    referencePoints = extract_coordinates(localizationData, referenceFrame)
+    movingPoints = extract_coordinates(localizationData, movingFrame)
+
+    neighbors = NearestNeighbors(n_neighbors=1, radius=10)
+
+    neighbors.fit(referencePoints)
+    distances, indexes = neighbors.kneighbors(
+            movingPoints, return_distance=True)
+
+
+    controlPoints = [(referencePoints[indexes[i][0]], movingPoints[i]) \
+            for i in range(len(movingPoints)) \
+            if distances[i][0] < distanceThreshold]
+
+    return controlPoints
+
+localizationDictionary = load_all_localizations('analysis')
+pairedDictionary = {k: pair_points(v, 1, 0) for k,v in \
+        localizationDictionary.items()}
+pairedList = [p for x in pairedDictionary.values() for p in x]
+
+def bin_pairs(pairedList, binSize=16, extents=2048):
+    binCount = int(extents/binSize)
+    binnedPoints = [[[] for i in range(binCount)] for j in range(binCount)]
+
+    for currentPair in pairedList:
+        binX = int(currentPair[0][0]/binSize)
+        binY = int(currentPair[0][1]/binSize)
+        binnedPoints[binX][binY].append(currentPair)
+
+    return binnedPoints
+
+def calculate_displacement_for_pair(pair):
+    return [pair[0][0] - pair[1][0], pair[0][1] - pair[1][1]]
+
+def plot_binned_displacements(
+        pairedPoints, magnification=50, binSize=128, extents=2048,
+        saveName=None):
+    meanDisplacements = [[np.mean(
+            [calculate_displacement_for_pair(x) for x in y], axis=0) \
+        for y in z] for z in bin_pairs(pairedList, binSize, extents)]
+    binCount = int(extents/binSize)
+
+    plt.figure(figsize=(5,5))
+    for i in range(binCount-1):
+        for j in range(binCount-1):
+            x = (i+0.5)*binSize
+            y = (j+0.5)*binSize
+            plt.plot([x, x+magnification*meanDisplacements[i][j][0]],
+                    [y, y+magnification*meanDisplacements[i][j][1]], 
+                    color='#55AA55')
+            plt.scatter([x], [y], s=40, facecolors='none', 
+                edgecolors='#407F7F') 
+
+    plt.title('Mean displacement by position\n(extended ' + \
+            str(magnification) + 'x)')
+    plt.ylabel('Y (pixels)')
+    plt.xlabel('X (pixels)')
+
+    save_figure('mean_displacements_by_position')
+
+    plt.show()
+
 
 '''
-params = getDefaultParameters()
-
-params.toXMLFile('parameters.xml')
-
-if not os.path.exists('final.hdf5'):
-    mfit.analyze(testFile, 'final.hdf5', 'parameters.xml')
-
-import storm_analysis.sa_library.sa_h5py as saH5Py
-infile = saH5Py.SAH5Py('final.hdf5')    
-locs0 = infile.getLocalizationsInFrame(0)
-locs1 = infile.getLocalizationsInFrame(1)
-
-
-from sklearn.neighbors import NearestNeighbors
-
-referencePoints = [[x, y] for x,y in zip(locs1['x'], locs1['y'])]
-movingPoints = [[x,y] for x,y in zip(locs0['x'], locs0['y'])]
-
-neighbors = NearestNeighbors(n_neighbors=1, radius=10)
-
-neighbors.fit(referencePoints)
-distances, indexes = neighbors.kneighbors(movingPoints, return_distance=True)
-
-distanceThreshold = 5
-
-controlPoints = [(referencePoints[indexes[i][0]], movingPoints[i]) \
-        for i in range(len(movingPoints)) \
-        if distances[i][0] < distanceThreshold]
-
-
-
+Returns a list where the first element in each entry is the distance of the
+first point from the center and the second element is the displacement 
+between the two points.
 '''
+def calculate_radial_displacements(pairedPoints, centerX=1024, centerY=1024):
+    radialDisplacements = [[np.linalg.norm(
+                    [p[0][0]-centerX, p[0][1]-centerY]), \
+                np.linalg.norm([p[0][0]-p[1][0], p[0][1]-p[1][1]])] \
+                for p in pairedPoints]
+    return np.array(radialDisplacements)
+
+
+def plot_radial_displacements(pairedPoints, binCount=500):
+    radialDisplacements = calculate_radial_displacements(pairedPoints)
+    
+    binWidth = np.ceil(1.001*np.max(radialDisplacements[:,0])/binCount)
+    binnedDisplacements = [[] for i in range(binCount)]
+
+    for currentDisplacement in radialDisplacements:
+        binnedDisplacements[int(currentDisplacement[0]/binWidth)].append(
+                currentDisplacement[1])
+
+    plt.figure(figsize=(5,4))
+    plt.plot(np.arange(0, binWidth*binCount, binWidth), 
+            [np.mean(x) for x in binnedDisplacements])
+
+    plt.xlabel('Radial distance (pixels)')
+    plt.ylabel('Mean displacement (pixels)')
+    plt.title('Displacement vs radial distance')
+
+    save_figure('radial_displacement')
+
+    return binnedDisplacements
+
+
+
+
+
+def save_figure(saveName, savePath = 'figures/'):
+    ensure_directory(savePath)
+    if saveName is not None:
+        fullPath = os.sep.join([savePath, saveName])
+        plt.savefig(fullPath + '.png', pad_inches=0)
+        plt.savefig(fullPath + '.pdf', transparent=True, pad_inches=0)
+
+from storm_analysis.sa_library import datareader
+reader = datareader.inferReader('Conventional_750_650_561_405_000.dax')
+f1 = reader.loadAFrame(0)
+f2 = reader.loadAFrame(1)
+
+import cv2
+points1 = np.array([x[0] for x in pairedList])
+points2 = np.array([x[1] for x in pairedList])
+h, mask = cv2.findHomography(points2, points1, cv2.LMEDS)
+
+
+def plot_image_overlay(image1, image2, vmax=15000):
+    width = image1.shape[0]
+    height = image1.shape[1]
+    colorImage = np.zeros((width, height, 3))
+    colorImage[:,:,0] = image1/vmax
+    colorImage[:,:,1] = image2/vmax
+    plt.imshow(colorImage)
+
+def transform_all():
+    ensure_directory('preprocessed')
+    for currentFile in os.listdir():
+        if currentFile.endswith('.dax'):
+            transform_750(currentFile, h, [0])
+
+
+def transform_750(inputName, transform, indexesToTransform): 
+    reader = datareader.inferReader(inputName)
+    writer = datawriter.inferWriter(os.sep.join(['preprocessed', inputName]))
+    
+    filmSize = reader.filmSize()
+
+    for i in range(filmSize[2]):
+        if i in indexesToTransform:
+            writer.addFrame(cv2.warpPerspective(
+                reader.loadAFrame(i), transform, (filmSize[0], filmSize[1])))
+        else:
+            writer.addFrame(reader.loadAFrame(i))
+
+    reader.close()
+    writer.close()
+
+

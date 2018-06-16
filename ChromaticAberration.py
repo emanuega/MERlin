@@ -49,6 +49,7 @@ dataPath = '//10.245.74.90/data/flow_differentiation/180531_U2OS_smFISH_FLNA_Sur
 destPath = '//10.245.74.90/data/htseq_fun/180209_MERFISH_Test/data'
 destPath2 = '//10.245.74.90/data/flow_differentiation/180430_MERFISH_L26_U2OS_Sample2/data'
 #dataPath = '//10.245.74.90/data/flow_differentiation/180531_ChromaticAbberationTest_750_650/data'
+dataPath = '//10.245.74.90/data/htseq_fun/180604_PostEmbed_FLNA_Attempt2/Sample1_zstack'
 os.chdir(dataPath)
 print(os.getcwd())
 
@@ -76,10 +77,10 @@ def fit_spots(fileName, analysisDirectory='analysis',
     else:
         print(outputName + ' already exists')
 
-def fit_all_dax_in_current_dir():
+def fit_all_dax_in_current_dir(startFrame=-1, endFrame=-1):
     for currentFile in os.listdir():
         if currentFile.endswith('.dax'):
-            fit_spots(currentFile, endFrame=2)
+            fit_spots(currentFile, startFrame=startFrame, endFrame=endFrame)
 
 def load_all_localizations(directory='.'):
 
@@ -107,17 +108,20 @@ def pair_points(localizationData, referenceFrame, movingFrame,
     distances, indexes = neighbors.kneighbors(
             movingPoints, return_distance=True)
 
-
     controlPoints = [(referencePoints[indexes[i][0]], movingPoints[i]) \
             for i in range(len(movingPoints)) \
             if distances[i][0] < distanceThreshold]
 
     return controlPoints
 
-localizationDictionary = load_all_localizations('analysis')
-pairedDictionary = {k: pair_points(v, 1, 0) for k,v in \
-        localizationDictionary.items()}
-pairedList = [p for x in pairedDictionary.values() for p in x]
+
+def load_and_pair(framesToPair):
+    localizationDictionary = load_all_localizations('analysis')
+    pairedDictionaries = [{k: pair_points(v, f[0], f[1]) for k,v in \
+            localizationDictionary.items()} for f in framesToPair]
+    pairedList = [[p for x in pairedDictionary.values() for p in x] \
+            for  pairedDictionary in pairedDictionaries]
+    return pairedList
 
 def bin_pairs(pairedList, binSize=16, extents=2048):
     binCount = int(extents/binSize)
@@ -138,7 +142,7 @@ def plot_binned_displacements(
         saveName=None):
     meanDisplacements = [[np.mean(
             [calculate_displacement_for_pair(x) for x in y], axis=0) \
-        for y in z] for z in bin_pairs(pairedList, binSize, extents)]
+        for y in z] for z in bin_pairs(pairedPoints, binSize, extents)]
     binCount = int(extents/binSize)
 
     plt.figure(figsize=(5,5))
@@ -157,7 +161,10 @@ def plot_binned_displacements(
     plt.ylabel('Y (pixels)')
     plt.xlabel('X (pixels)')
 
-    save_figure('mean_displacements_by_position')
+    if saveName is None:
+        save_figure('mean_displacements_by_position')
+    else:
+        save_figure(saveName)
 
     plt.show()
 
@@ -175,7 +182,7 @@ def calculate_radial_displacements(pairedPoints, centerX=1024, centerY=1024):
     return np.array(radialDisplacements)
 
 
-def plot_radial_displacements(pairedPoints, binCount=500):
+def plot_radial_displacements(pairedPoints, binCount=500, saveName=None):
     radialDisplacements = calculate_radial_displacements(pairedPoints)
     
     binWidth = np.ceil(1.001*np.max(radialDisplacements[:,0])/binCount)
@@ -193,7 +200,10 @@ def plot_radial_displacements(pairedPoints, binCount=500):
     plt.ylabel('Mean displacement (pixels)')
     plt.title('Displacement vs radial distance')
 
-    save_figure('radial_displacement')
+    if saveName is None:
+        save_figure('radial_displacement')
+    else:
+        save_figure(saveName)
 
     return binnedDisplacements
 
@@ -209,14 +219,7 @@ def save_figure(saveName, savePath = 'figures/'):
         plt.savefig(fullPath + '.pdf', transparent=True, pad_inches=0)
 
 from storm_analysis.sa_library import datareader
-reader = datareader.inferReader('Conventional_750_650_561_405_000.dax')
-f1 = reader.loadAFrame(0)
-f2 = reader.loadAFrame(1)
-
 import cv2
-points1 = np.array([x[0] for x in pairedList])
-points2 = np.array([x[1] for x in pairedList])
-h, mask = cv2.findHomography(points2, points1, cv2.LMEDS)
 
 
 def plot_image_overlay(image1, image2, vmax=15000):

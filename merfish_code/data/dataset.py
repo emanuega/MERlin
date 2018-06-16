@@ -1,6 +1,8 @@
 import os
 import dotenv
 import errno
+import cPickle as pickle
+
 
 class DataSet(object):
 
@@ -58,6 +60,19 @@ class DataSet(object):
         return taskDirectoryPath
         
 
+    def save_analysis_task(self, analysisTask):
+        saveName = os.sep.join([get_task_subdirectory(
+            analysisTask.get_analysis_name()), 'task.pkl'])
+        
+        with open(saveName, 'w') as outFile:
+            pickle.dump(analysisTask, outFile)
+
+    def load_analysis_task(self, analysisTaskName):
+        loadName = os.sep.join([get_task_subdirectory(
+            analysisTask.get_analysis_name()), 'task.pkl'])
+
+        with open(loadName, 'r') as inFile:
+            return pickle.load(loadName)
 
 class ImageDataSet(DataSet):
 

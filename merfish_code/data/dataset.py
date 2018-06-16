@@ -43,12 +43,21 @@ class DataSet(object):
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
 
 
-    def get_analysis_subdirectory(self, subdirectoryName):
+    def get_analysis_subdirectory(self, analysisName):
         subdirectoryPath = os.sep.join(
                 [self.analysisPath, subdirectoryName])
         os.makedirs(subdirectoryPath, exist_ok=True)
 
         return subdirectoryPath
+
+    def get_task_subdirectory(self, analysisName):
+        taskDirectoryPath = os.sep.join(
+                [self.get_analysis_subdirectory(analysisName), 'tasks'])
+        os.makedirs(taskDirectoryPath, exist_ok=True)
+
+        return taskDirectoryPath
+        
+
 
 class ImageDataSet(DataSet):
 

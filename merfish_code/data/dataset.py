@@ -32,7 +32,6 @@ class DataSet(object):
         self.figurePath = os.sep.join([self.analysisPath, 'figures'])
         os.makedirs(self.figurePath, exist_ok=True)
 
-
     def save_figure(figure, figureName, subDirectory=None):
 
         if subDirectory is not None:
@@ -43,7 +42,6 @@ class DataSet(object):
 
         figure.savefig(savePath + '.png', pad_inches=0)
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
-
 
     def get_analysis_subdirectory(self, analysisName):
         subdirectoryPath = os.sep.join(
@@ -59,7 +57,6 @@ class DataSet(object):
 
         return taskDirectoryPath
         
-
     def save_analysis_task(self, analysisTask):
         saveName = os.sep.join([get_task_subdirectory(
             analysisTask.get_analysis_name()), 'task.pkl'])
@@ -73,6 +70,42 @@ class DataSet(object):
 
         with open(loadName, 'r') as inFile:
             return pickle.load(loadName)
+
+    def record_analysis_running(self, analysisTask, fragmentIndex=None):
+        self._record_analysis_event(analysisTask, 'run', fragmentIndex)
+
+    def record_analysis_complete(self, analysisTask, fragmentIndex=None):
+        self._record_analysis_event(analysisTask, 'done', fragmentIndex)
+
+    def _record_analysis_event(
+            self, analysisTask, eventName, fragmentIndex=None):    
+        if fragmentIndex is None:
+            fileName = analysisTask.get_analysis_name() + '.' + eventName
+        else:
+            fileName = analysisTask.get_analysis_name() + \
+                    '_' + str(fragmentIndex) + '.' + eventName
+
+        fullName = os.sep.join([get_task_subdirectory(
+            analysisTask.get_analysis_name()), fileName])
+        open(fullName, 'a').close()
+
+    def check_analysis_running(self, analysisTask, fragmentIndex=None):
+        return self._check_analysis_event(analysisTask, 'run', fragmentIndex)
+
+    def check_analysis_done(self, analysisTask, fragmentIndex=None):
+        return self._check_analysis_event(analysisTask, 'done', fragmentIndex)
+
+    def _check_analysis_event(
+            self, analysisTask, eventName, fragmentIndex=None):
+        if fragmentIndex is None:
+            fileName = analysisTask.get_analysis_name() + '.' + eventName
+        else:
+            fileName = analysisTask.get_analysis_name() + \
+                    '_' + str(fragmentIndex) + '.' + eventName
+    
+        fullName = os.sep.join([get_task_subdirectory(
+            analysisTask.get_analysis_name()), fileName])
+        return os.paith.exists(fullName)
 
 class ImageDataSet(DataSet):
 

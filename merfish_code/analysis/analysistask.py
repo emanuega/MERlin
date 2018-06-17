@@ -1,5 +1,6 @@
 import os
 from abc import ABC, abstractmethod
+import time
 
 class AnalysisTask(object):
 
@@ -12,7 +13,7 @@ class AnalysisTask(object):
             self.analysisName = analysisName
 
     def run(self):
-        self.dataSet.record_analysis_complete(self, fragmentIndex)
+        self.dataSet.record_analysis_complete(self)
 
     def is_complete(self):
         return self.dataSet.check_analysis_done(self)
@@ -26,11 +27,13 @@ class AnalysisTask(object):
         else:
             return os.sep.join([self.get_savepath(), fileName])
 
+
 class ParallelAnalysisTask(AnalysisTask):
 
     def __init__(self, dataSet, analysisName=None):
         super().__init__(dataSet, analysisName)
 
+    @abstractmethod
     def fragment_count(self):
         pass
 
@@ -57,3 +60,4 @@ class ParallelAnalysisTask(AnalysisTask):
 
         else:
             return self.dataSet.check_analysis_done(self, fragmentIndex)
+

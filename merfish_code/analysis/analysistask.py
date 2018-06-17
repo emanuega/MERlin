@@ -1,4 +1,5 @@
 import os
+from abc import ABC, abstractmethod
 
 class AnalysisTask(object):
 
@@ -11,10 +12,13 @@ class AnalysisTask(object):
             self.analysisName = analysisName
 
     def run(self):
-        pass
+        self.dataSet.record_analysis_complete(self, fragmentIndex)
 
     def is_complete(self):
-        pass
+        return self.dataSet.check_analysis_done(self)
+
+    def get_analysis_name(self):
+        return self.analysisName
 
     def get_savepath(self, fileName=None):
         if fileName is None:
@@ -37,7 +41,9 @@ class ParallelAnalysisTask(AnalysisTask):
         
         else:
             self.run_for_fragment(fragmentIndex)
+            self.dataSet.record_analysis_complete(self, fragmentIndex) 
 
+    @abstractmethod
     def run_for_fragment(self, fragmentIndex):
         pass
 
@@ -48,3 +54,6 @@ class ParallelAnalysisTask(AnalysisTask):
                     return False
 
             return True
+
+        else:
+            return self.dataSet.check_analysis_done(self, fragmentIndex)

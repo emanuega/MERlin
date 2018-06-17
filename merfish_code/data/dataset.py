@@ -1,7 +1,7 @@
 import os
 import dotenv
 import errno
-import cPickle as pickle
+import pickle
 
 
 class DataSet(object):
@@ -45,7 +45,7 @@ class DataSet(object):
 
     def get_analysis_subdirectory(self, analysisName):
         subdirectoryPath = os.sep.join(
-                [self.analysisPath, subdirectoryName])
+                [self.analysisPath, analysisName])
         os.makedirs(subdirectoryPath, exist_ok=True)
 
         return subdirectoryPath
@@ -58,18 +58,19 @@ class DataSet(object):
         return taskDirectoryPath
         
     def save_analysis_task(self, analysisTask):
-        saveName = os.sep.join([get_task_subdirectory(
+        saveName = os.sep.join([self.get_task_subdirectory(
             analysisTask.get_analysis_name()), 'task.pkl'])
         
-        with open(saveName, 'w') as outFile:
-            pickle.dump(analysisTask, outFile)
+        with open(saveName, 'wb') as outFile:
+            pickle.dump(
+                    analysisTask, outFile, protocol=pickle.HIGHEST_PROTOCOL)
 
     def load_analysis_task(self, analysisTaskName):
-        loadName = os.sep.join([get_task_subdirectory(
-            analysisTask.get_analysis_name()), 'task.pkl'])
+        loadName = os.sep.join([self.get_task_subdirectory(
+            analysisTaskName), 'task.pkl'])
 
-        with open(loadName, 'r') as inFile:
-            return pickle.load(loadName)
+        with open(loadName, 'rb') as inFile:
+            return pickle.load(inFile)
 
     def record_analysis_running(self, analysisTask, fragmentIndex=None):
         self._record_analysis_event(analysisTask, 'run', fragmentIndex)
@@ -85,7 +86,7 @@ class DataSet(object):
             fileName = analysisTask.get_analysis_name() + \
                     '_' + str(fragmentIndex) + '.' + eventName
 
-        fullName = os.sep.join([get_task_subdirectory(
+        fullName = os.sep.join([self.get_task_subdirectory(
             analysisTask.get_analysis_name()), fileName])
         open(fullName, 'a').close()
 
@@ -103,9 +104,9 @@ class DataSet(object):
             fileName = analysisTask.get_analysis_name() + \
                     '_' + str(fragmentIndex) + '.' + eventName
     
-        fullName = os.sep.join([get_task_subdirectory(
+        fullName = os.sep.join([self.get_task_subdirectory(
             analysisTask.get_analysis_name()), fileName])
-        return os.paith.exists(fullName)
+        return os.path.exists(fullName)
 
 class ImageDataSet(DataSet):
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import multiprocessing
 
-from merfish_code.analysis import analysistask
+from . import analysistask
 
 class Executor(object):
 

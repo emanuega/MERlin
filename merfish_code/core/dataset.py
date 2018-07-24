@@ -2,6 +2,12 @@ import os
 import dotenv
 import errno
 import pickle
+import shutil
+import pandas
+import numpy as np
+import re
+
+from storm_analysis.sa_library import datareader
 
 
 class DataSet(object):
@@ -43,9 +49,13 @@ class DataSet(object):
         figure.savefig(savePath + '.png', pad_inches=0)
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
 
-    def get_analysis_subdirectory(self, analysisName):
-        subdirectoryPath = os.sep.join(
-                [self.analysisPath, analysisName])
+    def get_analysis_subdirectory(self, analysisName, subdirectory=None):
+        if subdirectory is None:
+            subdirectoryPath = os.sep.join(
+                    [self.analysisPath, analysisName])
+        else:
+            subdirectoryPath = os.sep.join(
+                    [self.analysisPath, analysisName, subdirectory])
         os.makedirs(subdirectoryPath, exist_ok=True)
 
         return subdirectoryPath
@@ -108,19 +118,23 @@ class DataSet(object):
             analysisTask.get_analysis_name()), fileName])
         return os.path.exists(fullName)
 
+
 class ImageDataSet(DataSet):
 
     def __init__(self, dataDirectoryName, 
             dataName=None, dataHome=None, analysisHome=None):
         super().__init__(dataDirectoryName, dataName, dataHome, analysisHome)
 
-    def get_image_files(self):
+    def get_image_file_names(self):
         return sorted(
                 [os.sep.join([self.rawDataPath, currentFile]) \
                     for currentFile in os.listdir(self.rawDataPath) \
                 if currentFile.endswith('.dax') \
                 or currentFile.endswith('.tif')])
 
+    def load_image(self, imagePath, frameIndex):
+        reader = datareader.inferReader(imagePath)
+        return reader.loadAFrame(frameIndex)
 
 
 class MERFISHDataSet(ImageDataSet):
@@ -133,12 +147,125 @@ class MERFISHDataSet(ImageDataSet):
         if codebookName is not None:
             self._import_codebook(codebookName)
 
-        if dataOrganizationname is not None:
+        if dataOrganizationName is not None:
             self._import_dataorganization(dataOrganizationName)
+
+        self._load_dataorganization()
+        self._map_images()
+
+    def get_data_channels(self):
+        return self.dataOrganization.index
+
+    def get_z_positions(self):
+        return(sorted(np.unique([x for x in self.dataOrganization['zPos']])))
+
+    def get_image_path(self, imageType, fov, imagingRound):
+        selection = self.fileMap[(self.fileMap['imageType'] == imageType) & \
+                (self.fileMap['fov'] == fov) & \
+                (self.fileMap['imagingRound'] == imagingRound)]
+
+        return selection['imagePath'].values[0]
+
+    def get_fovs(self):
+        return np.unique(self.fileMap['fov'])
+
+    def get_imaging_rounds(self):
+        return np.unique(self.fileMap['imagingRound'])
+
+    def get_fiducial_filename(self, dataChannel, fov):
+        imageType = self.dataOrganization.loc[dataChannel, 'fiducialImageType']
+        imagingRound = \
+                self.dataOrganization.loc[dataChannel, 'fiducialImagingRound']
+        return(self.get_image_path(imageType, fov, imagingRound))
+
+    def get_fiducial_frame(self, dataChannel):
+        return self.dataOrganization.loc[dataChannel, 'fiducialFrame']
+
+    def get_raw_image(self, dataChannel, fov, zPosition):
+        channelInfo = self.dataOrganization.loc[dataChannel]
+        imagePath = self.get_image_path(
+                channelInfo['imageType'], fov, channelInfo['imagingRound'])
+
+        channelZ = channelInfo['zPos']
+        if isinstance(channelZ, np.ndarray):
+            zIndex = np.where(channelZ == zPosition)[0]
+            if len(zIndex) == 0:
+                frameIndex = 0
+            else:
+                frameIndex = zIndex[0]
+        else:
+            frameIndex = 0
+
+        frames = channelInfo['frame']
+        if isinstance(frames, np.ndarray):
+            frame = frames[frameIndex]
+        else:
+            frame = frames
+
+        return self.load_image(imagePath, frame)
+
+    def get_fiducial_image(self, dataChannel, fov):
+        channelInfo = self.dataOrganization.loc[dataChannel]
+        imagePath = self.get_image_path(
+                channelInfo['fiducialImageType'], 
+                fov, 
+                channelInfo['fiducialImagingRound'])
+        frame = channelInfo['fiducialFrame']
+        return self.load_image(imagePath, frame)
+
+    def _map_images(self):
+        '''
+        TODO: This doesn't map the fiducial image types and currently assumes
+        that the fiducial image types and regular expressions are part of the 
+        standard image types.
+        '''
+        mapPath = os.sep.join([self.analysisPath, 'filemap.csv'])
+
+        if not os.path.exists(mapPath):
+            uniqueTypes, uniqueIndexes = np.unique(
+                self.dataOrganization['imageType'], return_index=True)
+
+            fileNames = self.get_image_file_names()
+            fileData = []
+            for currentType, currentIndex in zip(uniqueTypes, uniqueIndexes):
+                matchRE = re.compile(
+                        self.dataOrganization.imageRegExp[currentIndex])
+
+                for currentFile in fileNames:
+                    transformedName = matchRE.match(
+                                os.path.split(currentFile)[-1]).groupdict()
+                    if transformedName['imageType'] == currentType:
+                        transformedName['imagePath'] = currentFile
+                        fileData.append(transformedName)
+        
+            self.fileMap = pandas.DataFrame(fileData)
+            self.fileMap[['imagingRound', 'fov']] = \
+                    self.fileMap[['imagingRound', 'fov']].astype(int)
+    
+            self.fileMap.to_csv(mapPath)
+
+        else:
+            self.fileMap = pandas.read_csv(mapPath)
 
     def _import_codebook(self, codebookName):
         pass
 
+    def _load_dataorganization(self):
+        path = os.sep.join([self.analysisPath, 'dataorganization.csv'])
+        self.dataOrganization = pandas.read_csv(path)
+
+    def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
+        return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
+
     def _import_dataorganization(self, dataOrganizationName):
-        pass
+        sourcePath = os.sep.join([os.environ.get('DATA_ORGANIZATION_HOME'), \
+                dataOrganizationName + '.csv'])
+
+        if not os.path.exists(sourcePath):
+            raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), sourcePath)
+
+        destPath = os.sep.join([self.analysisPath, 'dataorganization.csv'])
+            
+        shutil.copyfile(sourcePath, destPath)    
 

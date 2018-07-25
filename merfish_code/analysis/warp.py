@@ -24,11 +24,23 @@ class Warp(analysistask.ParallelAnalysisTask):
         #TODO
 
     def get_registered_images(self, fov):
+        return tifffile.imread(self._registered_image_name(fov))
+        
+    def get_registered_images_for_channel(self, fov, dataChannel, zPos):
+        imageFile = tifffile.TiffFile(self._registered_image_name(fov))
+        zIndex = int(np.where(
+                [x == zPos for x in self.dataSet.get_z_positions()])[0][0])
+        imageIndex = dataChannel*len(self.dataSet.get_z_positions()) + zIndex
+        return imageFile.asarray(key=imageIndex)
+
+    def _registered_image_name(self, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
                 self.analysisName, subdirectory='aligned_images')
-        tiffName = os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
-        return tifffile.imread(tiffName)
-        
+        return os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
+
+    def _writer_for_registered_images(self, fov):
+        return tifffile.TiffWriter(
+                self._registered_image_name(fov), imagej=True)
 
     def _process_transformations(self, transformationList, fov):
         '''
@@ -74,11 +86,6 @@ class Warp(analysistask.ParallelAnalysisTask):
         fileName = '_'.join(['tform', str(fov)])
         #TODO 
 
-    def _writer_for_registered_images(self, fov):
-        destPath = self.dataSet.get_analysis_subdirectory(
-                self.analysisName, subdirectory='aligned_images')
-        tiffName = os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
-        return tifffile.TiffWriter(tiffName, imagej=True)
 
 
 

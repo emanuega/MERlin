@@ -121,3 +121,42 @@ class ParallelAnalysisTask(AnalysisTask):
         else:
             return self.dataSet.check_analysis_done(self, fragmentIndex)
 
+
+class ImageSavingParallelTask(AnalysisTask):
+
+    '''
+    An abstract class for analysis that can be run in multiple parts 
+    independently. Subclasses should implement the analysis to perform in 
+    the run_analysis() function
+    '''
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+    def get_images(self, fov):
+        return tifffile.imread(self._image_name(fov))
+        
+    def get_images_for_channel(self, fov, dataChannel, zPos):
+        imageFile = tifffile.TiffFile(self._image_name(fov))
+        zIndex = int(np.where(
+                [x == zPos for x in self.dataSet.get_z_positions()])[0][0])
+        imageIndex = dataChannel*len(self.dataSet.get_z_positions()) + zIndex
+        return imageFile.asarray(key=imageIndex)
+
+    def _writer_for_images(self, fov):
+        return tifffile.TiffWriter(
+                self._image_name(fov), imagej=True)
+    
+    def _tiff_description(self, sliceCount, framesPerSlice):
+        imageDescription = {'ImageJ': '1.47a\n',
+                'images': sliceCount*framesPerSlice,
+                'channels': 1,
+                'slices': sliceCount,
+                'frames': framesPerSlice,
+                'hyperstack': True,
+                'loop': False}
+
+    @abstractmethod
+    def _image_name(self, fov):
+        pass
+

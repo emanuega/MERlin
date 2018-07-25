@@ -12,7 +12,7 @@ import storm_analysis.sa_library.sa_h5py as saH5Py
 
 from merfish_code.core import analysistask
 
-class Warp(analysistask.ParallelAnalysisTask):
+class Warp(analysistask.ImageSavingParallelTask):
 
     '''
     An abstract class for warping a set of images so that the corresponding
@@ -23,24 +23,16 @@ class Warp(analysistask.ParallelAnalysisTask):
         pass
         #TODO
 
-    def get_registered_images(self, fov):
-        return tifffile.imread(self._registered_image_name(fov))
-        
-    def get_registered_images_for_channel(self, fov, dataChannel, zPos):
-        imageFile = tifffile.TiffFile(self._registered_image_name(fov))
-        zIndex = int(np.where(
-                [x == zPos for x in self.dataSet.get_z_positions()])[0][0])
-        imageIndex = dataChannel*len(self.dataSet.get_z_positions()) + zIndex
-        return imageFile.asarray(key=imageIndex)
+    def _save_transformations(self, transformationList, fov):
+        destPath = self.dataSet.get_analysis_subdirectory(
+                self.analysisName, subdirectory='transformations')
+        fileName = '_'.join(['tform', str(fov)])
+        #TODO 
 
-    def _registered_image_name(self, fov):
+    def _image_name(self, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
                 self.analysisName, subdirectory='aligned_images')
         return os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
-
-    def _writer_for_registered_images(self, fov):
-        return tifffile.TiffWriter(
-                self._registered_image_name(fov), imagej=True)
 
     def _process_transformations(self, transformationList, fov):
         '''
@@ -55,17 +47,11 @@ class Warp(analysistask.ParallelAnalysisTask):
             fov: The fov that is being transformed.
         '''
 
-        dataChannelCount = len(self.dataSet.get_data_channels())
-        zPositionCount = len(self.dataSet.get_z_positions())
-        imageDescription = {'ImageJ': '1.47a\n',
-                'images': dataChannelCount*zPositionCount,
-                'channels': 1,
-                'slices': zPositionCount,
-                'frames': dataChannelCount,
-                'hyperstack': True,
-                'loop': False}
+        imageDescription = self._tiff_description(
+                len(self.dataSet.get_z_positions())
+                len(self.dataSet.get_data_channels()))
 
-        with self._writer_for_registered_images(fov) as outputTif:
+        with self._writer_for_images(fov) as outputTif:
             for t,x in zip(
                     transformationList, self.dataSet.get_data_channels()):
                 for z in self.dataSet.get_z_positions():
@@ -79,14 +65,6 @@ class Warp(analysistask.ParallelAnalysisTask):
                             metadata=imageDescription)
 
         self._save_transformations(transformationList, fov)
-
-    def _save_transformations(self, transformationList, fov):
-        destPath = self.dataSet.get_analysis_subdirectory(
-                self.analysisName, subdirectory='transformations')
-        fileName = '_'.join(['tform', str(fov)])
-        #TODO 
-
-
 
 
 class FiducialFitWarp(Warp):

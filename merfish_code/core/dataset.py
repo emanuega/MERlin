@@ -218,6 +218,7 @@ class MERFISHDataSet(ImageDataSet):
         TODO: This doesn't map the fiducial image types and currently assumes
         that the fiducial image types and regular expressions are part of the 
         standard image types.
+        TODO: This doesn't verify that all files are present
         '''
         mapPath = os.sep.join([self.analysisPath, 'filemap.csv'])
 
@@ -231,12 +232,16 @@ class MERFISHDataSet(ImageDataSet):
                 matchRE = re.compile(
                         self.dataOrganization.imageRegExp[currentIndex])
 
+
                 for currentFile in fileNames:
-                    transformedName = matchRE.match(
-                                os.path.split(currentFile)[-1]).groupdict()
-                    if transformedName['imageType'] == currentType:
-                        transformedName['imagePath'] = currentFile
-                        fileData.append(transformedName)
+                    matchedName = matchRE.match(os.path.split(currentFile)[-1])
+                    if matchedName is not None:
+                        transformedName = matchedName.groupdict()
+                        if transformedName['imageType'] == currentType:
+                            if 'imagingRound' not in transformedName:
+                                transformedName['imagingRound'] = -1
+                            transformedName['imagePath'] = currentFile
+                            fileData.append(transformedName)
         
             self.fileMap = pandas.DataFrame(fileData)
             self.fileMap[['imagingRound', 'fov']] = \
@@ -247,12 +252,22 @@ class MERFISHDataSet(ImageDataSet):
         else:
             self.fileMap = pandas.read_csv(mapPath)
 
+    def _parse_list(self, inputString, dtype=float):
+        return np.fromstring(inputString.strip('[]'), dtype=dtype, sep=',')
+
+    def _parse_int_list(self, inputString):
+        return self._parse_list(inputString, dtype=int)
+
+
     def _import_codebook(self, codebookName):
         pass
 
     def _load_dataorganization(self):
         path = os.sep.join([self.analysisPath, 'dataorganization.csv'])
-        self.dataOrganization = pandas.read_csv(path)
+        self.dataOrganization = pandas.read_csv(
+                path, 
+                converters={'frame': self._parse_int_list,
+                    'zPos': self._parse_list})
 
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]

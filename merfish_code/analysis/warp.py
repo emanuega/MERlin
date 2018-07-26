@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-import tifffile
+
 from sklearn.neighbors import NearestNeighbors
 from skimage import transform
 from skimage import feature
@@ -20,8 +20,8 @@ class Warp(analysistask.ImageSavingParallelTask):
     '''
 
     def get_transformation(self, fov, dataChannel):
-        pass
         #TODO
+        pass
 
     def _save_transformations(self, transformationList, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
@@ -48,7 +48,7 @@ class Warp(analysistask.ImageSavingParallelTask):
         '''
 
         imageDescription = self._tiff_description(
-                len(self.dataSet.get_z_positions())
+                len(self.dataSet.get_z_positions()),
                 len(self.dataSet.get_data_channels()))
 
         with self._writer_for_images(fov) as outputTif:

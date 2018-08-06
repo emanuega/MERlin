@@ -7,6 +7,11 @@ from merfish_code.core import analysistask
 
 class Preprocess(analysistask.ImageSavingParallelTask):
 
+
+    '''
+    An abstract class for preparing data for barcode calling. 
+    '''
+
     def _image_name(self, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
                 self.analysisName, subdirectory='preprocessed_images')
@@ -68,7 +73,8 @@ class DeconvolutionPreprocess(Preprocess):
                             fragmentIndex, dataChannel, i)
                     filteredImage = inputImage.astype(float) \
                             - cv2.GaussianBlur(inputImage,
-                                (5*self.highPassSigma, 5*self.highPassSigma),
+                                (int(5*self.highPassSigma), \
+                                        int(5*self.highPassSigma)),
                                 self.highPassSigma).astype(float)
                     filteredImage[filteredImage < 0] = 0
                     deconvolvedImage = deconvolve_lr(

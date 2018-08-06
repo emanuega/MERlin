@@ -2,6 +2,9 @@ import os
 from abc import ABC, abstractmethod
 import time
 
+import numpy as np
+import tifffile
+
 class AnalysisTask(ABC):
 
     '''
@@ -27,6 +30,8 @@ class AnalysisTask(ABC):
             self.analysisName = type(self).__name__
         else:
             self.analysisName = analysisName
+
+        self.dataSet.save_analysis_task(self)
 
     def run(self):
         '''Run this AnalysisTask.
@@ -122,7 +127,7 @@ class ParallelAnalysisTask(AnalysisTask):
             return self.dataSet.check_analysis_done(self, fragmentIndex)
 
 
-class ImageSavingParallelTask(AnalysisTask):
+class ImageSavingParallelTask(ParallelAnalysisTask):
 
     '''
     An abstract class for analysis that can be run in multiple parts 
@@ -136,10 +141,9 @@ class ImageSavingParallelTask(AnalysisTask):
     def get_images(self, fov):
         return tifffile.imread(self._image_name(fov))
         
-    def get_images_for_channel(self, fov, dataChannel, zPos):
+    def get_image_for_channel(self, fov, dataChannel, zIndex):
+        #TODO - dataChannel is sometimes bit number instead of data channel
         imageFile = tifffile.TiffFile(self._image_name(fov))
-        zIndex = int(np.where(
-                [x == zPos for x in self.dataSet.get_z_positions()])[0][0])
         imageIndex = dataChannel*len(self.dataSet.get_z_positions()) + zIndex
         return imageFile.asarray(key=imageIndex)
 

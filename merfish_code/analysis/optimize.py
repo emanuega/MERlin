@@ -66,7 +66,7 @@ class Optimize(analysistask.AnalysisTask):
             scale factor corresponding to the i'th bit.
         '''
         return self.dataSet.load_analysis_result('scale_factors',
-                self.analysisName)[:,-1]
+                self.analysisName)[-1,:]
 
     def get_scale_factor_history(self):
         '''Get the scale factors cached for each iteration of the optimization.

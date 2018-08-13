@@ -3,9 +3,11 @@ import cv2
 import pandas
 import sqlalchemy
 from sqlalchemy import types
+from skimage import measure
 
 from merfish_code.core import analysistask
 from merfish_code.util import decoding
+from merfish_code.util import binary
 
 
 class Decode(analysistask.ParallelAnalysisTask):
@@ -13,7 +15,7 @@ class Decode(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.barcodeDB = dataSet.get_database_engine()
+        self.barcodeDB = dataSet.get_database_engine(self)
         self.areaThreshold = 4
 
     def fragment_count(self):
@@ -40,12 +42,18 @@ class Decode(analysistask.ParallelAnalysisTask):
         scaleFactors = optimizeTask.get_scale_factors()
         di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors)
 
-        return di, pm, npt, d
+
+        self._extract_and_save_barcodes(di, pm, npt, d, fragmentIndex)
 
     def _initialize_db(self):
+        #TODO - maybe I can initialize the database with an autoincrementing
+        #column
+        '''
         bcTable = sqlalchemy.Table(
                 'barcode_information', sqlalchemy.MetaData(),
                 Column('id', types.Integer, primary_key=True),
+        '''
+        pass
 
     def _dataframe_empty(cls, columns, dtypes, index=None):
         df = pandas.DataFrame(index=index)
@@ -56,20 +64,25 @@ class Decode(analysistask.ParallelAnalysisTask):
     def _initialize_barcode_dataframe(self):
         '''
         barcode - the error corrected binary word corresponding to the barcode
-        measured_barcode - the measureed, uncorrected binary word corresponding
-            to the barcode
         barcode_id - the index of the barcode in the codebook
         fov - the field of view where the barcode was identified
         magnitude - the sum of the fluorescence intensities in the pixels 
             corresponding to this  barcode
         area - the number of pixels covered by the barcode
-        average_distance - the distance between the barcode and the measured
+        mean_distance - the distance between the barcode and the measured
+            pixel traces averaged for all pixels corresponding to the barcode
+        min_distance - the distance between the barcode and the measured
             pixel traces averaged for all pixels corresponding to the barcode
         x,y,z - the average x,y,z position of all pixels covered by the barcode
         weighted_x, weighted_y, weighted_z - the average x,y,z position of 
             of all pixels covered by the barcode weighted by the magnitude
             of eachc pixel
         global_x, global_y, global_z - the global x,y,z position of the barcode 
+
+        Removed: (I am not convinced this is a useful way to quantify the errors
+            in pixel-based decoding)
+        measured_barcode - the measureed, uncorrected binary word corresponding
+            to the barcode
         is_exact - flag indicating if non errors were detected while reading
             out the barcode
         error_bit - the index of the bit where an error occured if the barcode
@@ -85,24 +98,19 @@ class Decode(analysistask.ParallelAnalysisTask):
         
     def _get_bc_column_types(self):
         columnInformation={'barcode': types.BigInteger(), \
-                            'measured_barcode': types.BigInteger(), \
                             'barcode_id': types.SmallInteger(), \
                             'fov': types.SmallInteger(), \
-                            'magnitude': types.Float(precision=32), \
+                            'mean_intensity': types.Float(precision=32), \
+                            'max_intensity': types.Float(precision=32), \
                             'area': types.SmallInteger(), \
-                            'average_distance': types.Float(precision=32), \
+                            'mean_distance': types.Float(precision=32), \
+                            'min_distance': types.Float(precision=32), \
                             'x': types.Float(precision=32), \
                             'y': types.Float(precision=32), \
                             'z': types.Float(precision=32), \
-                            'weighted_x': types.Float(precision=32), \
-                            'weighted_y': types.Float(precision=32), \
-                            'weighted_z': types.Float(precision=32), \
                             'global_x': types.Float(precision=32), \
                             'global_y': types.Float(precision=32), \
-                            'global_z': types.Float(precision=32), \
-                            'is_exact': types.Boolean(),  \
-                            'error_bit': types.SmallInteger(), \
-                            'error_direction': types.Boolean()}
+                            'global_z': types.Float(precision=32)}
         return columnInformation
 
     def _write_barcodes_to_db(self, barcodeInformation):
@@ -110,35 +118,55 @@ class Decode(analysistask.ParallelAnalysisTask):
     
         #TODO - the database needs to create a unique ID for each barcode
         barcodeInformation.to_sql(
-                'barcode_information', self.barcodeDB, chunksize=500,
+                'barcode_information', self.barcodeDB, chunksize=50,
                 dtype=columnInformation, index=False, if_exists='append')
 
     def get_barcode_information(self, sqlQuery=None):
         if sqlQuery is None:
             return pandas.read_sql_table('barcode_information', self.barcodeDB)
     
-    def _test_barcode_data(self):
-        barcodeInformation={'barcode': np.uint64(2128), \
-                            'measured_barcode': np.uint64(2128), \
-                            'barcode_id': np.uint16(5), \
-                            'fov': np.uint16(27), \
-                            'magnitude': np.float32(15.8), \
-                            'area': np.uint16(12), \
-                            'average_distance': np.float32(12.8), \
-                            'x': np.float32(1.0), \
-                            'y': np.float32(1.0), \
-                            'z': np.float32(1.0), \
-                            'weighted_x': np.float32(1.2), \
-                            'weighted_y': np.float32(1.2), \
-                            'weighted_z': np.float32(1.1), \
-                            'global_x': np.float32(728.9), \
-                            'global_y': np.float32(182.8), \
-                            'global_z': np.float32(128.7), \
-                            'is_exact': True,  \
-                            'error_bit': np.uint8(0), \
-                            'error_direction': False}
-        return barcodeInformation
+    def _bc_properties_to_dict(
+            self, properties, bcIndex, fov, distances):
+        #TODO update for 3D
+        centroid = properties.centroid
+        globalCentroid = self.dataSet.calculate_global_position(fov, centroid)
+        d = [distances[x[0], x[1]] for x in properties.coords]
+        outputDict = {'barcode': binary.bit_array_to_int(
+                            self.dataSet.codebook.loc[bcIndex, 'barcode']), \
+                    'barcode_id': bcIndex, \
+                    'fov': fov, \
+                    'mean_intensity': properties.mean_intensity, \
+                    'max_intensity': properties.max_intensity, \
+                    'area': properties.area, \
+                    'mean_distance': np.mean(d), \
+                    'min_distance': np.min(d), \
+                    'x': centroid[0], \
+                    'y': centroid[1], \
+                    'z': 0.0, \
+                    'global_x': globalCentroid[0], \
+                    'global_y': globalCentroid[1], \
+                    'global_z': 0.0}
 
-    def _extract_barcodes(self, decodedImage, pixelMagnitudes, 
-            singleErrorBarcodes, pixelTraces):
-        barcodeInformation = self._initialize_barcode_dataframe()
+        return outputDict
+
+    def _extract_and_save_barcodes(self, decodedImage, pixelMagnitudes, 
+            pixelTraces, distances, fov):
+
+        for i in range(len(self.dataSet.codebook)):
+            self._write_barcodes_to_db(
+                    self._extract_barcodes_with_index(
+                        i, decodedImage, pixelMagnitudes, pixelTraces, 
+                        distances, fov))
+
+    def _extract_barcodes_with_index(
+            self, barcodeIndex, decodedImage, pixelMagnitudes, 
+            pixelTraces, distances, fov):
+
+        properties = measure.regionprops(
+                measure.label(decodedImage == barcodeIndex),
+                intensity_image=pixelMagnitudes)
+        dList = [self._bc_properties_to_dict(p, barcodeIndex, fov, distances) \
+                for p in properties]
+        barcodeInformation = pandas.DataFrame(dList)
+
+        return barcodeInformation

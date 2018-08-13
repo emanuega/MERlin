@@ -149,7 +149,7 @@ class DataSet(object):
 
     def get_database_engine(self, analysisTask=None):
         if analysisTask is None:
-            return sqlalchemy.create_engine('sqlite:///' + \
+            return sqlalchemy.create_engine('mysql://' + \
                     os.sep.join([self.analysisPath, 'analysis_data.db']))
         else:
             return sqlalchemy.create_engine('sqlite:///' + \

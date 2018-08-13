@@ -15,13 +15,13 @@ To set the default analysis directories, the following variables should be defin
 An example .env file is below:
 
 
-'''python
+```python
 DATA_HOME=//10.245.74.90/data/flow_differentiation
 ANALYSIS_HOME=D:/analysis
 CODEBOOK_HOME=D:/merfish-parameters/codebooks
 DATA_ORGANIZATION_HOME=D:/merfish-parameters/dataorganization
 POSITION_HOME=D:/merfish-parameters/positions
-'''
+```
 
 ### Prerequisites
 

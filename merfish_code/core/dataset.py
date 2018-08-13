@@ -8,6 +8,7 @@ import numpy as np
 import re
 import csv
 import sqlalchemy
+import fnmatch
 
 from storm_analysis.sa_library import datareader
 
@@ -180,7 +181,7 @@ class ImageDataSet(DataSet):
 class MERFISHDataSet(ImageDataSet):
 
     def __init__(self, dataDirectoryName, codebookName=None, 
-            dataOrganizationName=None,
+            dataOrganizationName=None, positionFileName=None,
             dataName=None, dataHome=None, analysisHome=None):
         super().__init__(dataDirectoryName, dataName, dataHome, analysisHome)
 
@@ -190,8 +191,12 @@ class MERFISHDataSet(ImageDataSet):
         if dataOrganizationName is not None:
             self._import_dataorganization(dataOrganizationName)
 
+        if positionFileName is not None:
+            self._import_positions(positionFileName)
+
         self._load_dataorganization()
         self._load_codebook()
+        self._load_positions()
         self._map_images()
 
     def get_bit_names(self):
@@ -377,6 +382,34 @@ class MERFISHDataSet(ImageDataSet):
             csvReader = csv.reader(inFile, delimiter=',')
             header = [row for i,row in enumerate(csvReader) if i<headerLength]
         self.bitNames = [x.strip() for x in header[2][1:]]
+
+    def _load_positions(self):
+        positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
+        #TODO - this is messy searching for the position file
+        #TODO - I should check to make sure the number of positions 
+        # matches the number of FOVs
+        if not os.path.exists(positionPath):
+            for f in os.listdir(self.rawDataPath):
+                if fnmatch.fnmatch(f, '*position*'):
+                    shutil.copyfile(
+                            os.sep.join([self.rawDataPath, f]), positionPath)
+        
+        if not os.path.exists(positionPath):
+            for f in os.listdir(os.sep.join([self.rawDataPath, '..'])):
+                if fnmatch.fnmatch(f, '*position*'):
+                    shutil.copyfile(
+                            os.sep.join([self.rawDataPath, '..', f]), 
+                            positionPath)
+
+        self.positions = pandas.read_csv(positionPath, header=None,
+                names=['X','Y'])
+
+    def _import_positions(self, positionFileName):
+        sourcePath = os.sep.join([os.environ.get('POSITION_HOME'), \
+                positionFileName + '.csv'])
+        destPath = os.sep.join([self.analysisPath, 'positions.csv'])
+            
+        shutil.copyfile(sourcePath, destPath)    
 
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]

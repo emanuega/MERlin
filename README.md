@@ -23,6 +23,12 @@ DATA_ORGANIZATION_HOME=D:/merfish-parameters/dataorganization
 POSITION_HOME=D:/merfish-parameters/positions
 ```
 
+### Data format specifications
+
+# Position list
+
+A text file containing a list of positions is expected either in the raw data directory or the parent directory. This text file should contain 'positions' in the file name. The i'th row in the file should be coordinates of the i'th field of view. Each row should contain the x position and the y position with a comma in between.
+
 ### Prerequisites
 
 

@@ -11,11 +11,9 @@ from merfish_code.util import decoding
 class Decode(analysistask.ParallelAnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
-        #super().__init__(dataSet, parameters, analysisName)
+        super().__init__(dataSet, parameters, analysisName)
 
-        #TODO - this should be a path created from the dataset
-        #TODO - the database needs to create a unique ID for each barcode
-        self.barcodeDB = sqlalchemy.create_engine('sqlite:///bc.db')
+        self.barcodeDB = dataSet.get_database_engine()
         self.areaThreshold = 4
 
     def fragment_count(self):
@@ -109,6 +107,7 @@ class Decode(analysistask.ParallelAnalysisTask):
     def _write_barcodes_to_db(self, barcodeInformation):
         columnInformation = self._get_bc_column_types()
     
+        #TODO - the database needs to create a unique ID for each barcode
         barcodeInformation.to_sql(
                 'barcode_information', self.barcodeDB, chunksize=500,
                 dtype=columnInformation, index=False, if_exists='append')

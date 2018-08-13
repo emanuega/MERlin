@@ -7,6 +7,7 @@ import pandas
 import numpy as np
 import re
 import csv
+import sqlalchemy
 
 from storm_analysis.sa_library import datareader
 
@@ -145,6 +146,11 @@ class DataSet(object):
         fullName = os.sep.join([self.get_task_subdirectory(
             analysisTask.get_analysis_name()), fileName])
         return os.path.exists(fullName)
+
+    def get_database_engine(self):
+        return sqlalchemy.create_engine('sqlite:///' + \
+                os.sep.join([self.analysisPath, 'analysis_data.db'])
+
 
 
 class ImageDataSet(DataSet):

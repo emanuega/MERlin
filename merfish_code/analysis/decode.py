@@ -26,16 +26,17 @@ class Decode(analysistask.ParallelAnalysisTask):
         return 5
 
     def run_analysis(self, fragmentIndex):
+        '''This function generates the barcodes for a fov and saves them to the 
+        barcode database.
+        '''
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
         optimizeTask = self.dataSet.load_analysis_task(
                 self.parameters['optimize_task'])
 
-
         decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
 
-        imageSet = np.array([cv2.GaussianBlur(x, (5, 5), 1) \
-                        for x in preprocessTask.get_images(fragmentIndex)])
+        imageSet = np.array(preprocessTask.get_images(fragmentIndex))
         scaleFactors = optimizeTask.get_scale_factors()
         di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors)
 
@@ -140,4 +141,4 @@ class Decode(analysistask.ParallelAnalysisTask):
 
     def _extract_barcodes(self, decodedImage, pixelMagnitudes, 
             singleErrorBarcodes, pixelTraces):
-        pass
+        barcodeInformation = self._initialize_barcode_dataframe()

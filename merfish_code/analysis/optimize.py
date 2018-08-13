@@ -86,8 +86,7 @@ class Optimize(analysistask.AnalysisTask):
                 self.analysisName)
 
     def extract_refactors_for_fov(self, fov, scaleFactors=None):
-        imageSet = np.array([cv2.GaussianBlur(x, (5, 5), 1) \
-                        for x in self.preprocessTask.get_images(fov)])
+        imageSet = np.array(self.preprocessTask.get_images(fov))
         di, pm, npt, d = self.decoder.decode_pixels(
                 imageSet, scaleFactors=scaleFactors)
 

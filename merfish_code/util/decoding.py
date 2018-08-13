@@ -53,9 +53,13 @@ class PixelBasedDecoder(object):
         '''
         if scaleFactors is None:
             scaleFactors = self.scaleFactors
+
+        filteredImages = np.array([cv2.GaussianBlur(x, (5, 5), 1) \
+                    for x in imageData])
         #For no z data
         pixelTraces = np.reshape(
-                imageData, (imageData.shape[0], np.prod(imageData.shape[1:])))
+                filteredImages, 
+                (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
         pixelCount = pixelTraces.shape[1]
         scaledPixelTraces = np.transpose(
                 np.array([p/s for p,s in zip(pixelTraces, scaleFactors)]))
@@ -69,12 +73,13 @@ class PixelBasedDecoder(object):
                 normalizedPixelTraces, return_distance=True)
         decodedImage = np.reshape(
             np.array([i[0] if d[0]<=distanceThreshold else -1 \
-                    for i,d in zip(indexes, distances) ]), imageData.shape[1:])
+                    for i,d in zip(indexes, distances) ]), 
+            filteredImages.shape[1:])
 
-        pixelMagnitudes = np.reshape(pixelMagnitudes, imageData.shape[1:])
+        pixelMagnitudes = np.reshape(pixelMagnitudes, filteredImages.shape[1:])
         normalizedPixelTraces = np.moveaxis(normalizedPixelTraces, 1, 0)
         normalizedPixelTraces = np.reshape(
-                normalizedPixelTraces, imageData.shape)
+                normalizedPixelTraces, filteredImages.shape)
         return decodedImage, pixelMagnitudes, normalizedPixelTraces, distances
 
     def _calculate_normalized_barcodes(

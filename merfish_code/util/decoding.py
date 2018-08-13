@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 from sklearn.neighbors import NearestNeighbors
 
 '''
@@ -80,6 +81,7 @@ class PixelBasedDecoder(object):
         normalizedPixelTraces = np.moveaxis(normalizedPixelTraces, 1, 0)
         normalizedPixelTraces = np.reshape(
                 normalizedPixelTraces, filteredImages.shape)
+        distances = np.reshape(distances, filteredImages.shape[1:])
         return decodedImage, pixelMagnitudes, normalizedPixelTraces, distances
 
     def _calculate_normalized_barcodes(
@@ -88,7 +90,6 @@ class PixelBasedDecoder(object):
         their L2 norm is 1.
 
         Args:
-            codebook: The codebook that contains the set of barcodes 
             ignoreBlanks: Flag to set if the barcodes corresponding to blanks
                 should be ignored. If True, barcodes corresponding to a name
                 that contains 'Blank' are ignored.

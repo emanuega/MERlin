@@ -147,9 +147,15 @@ class DataSet(object):
             analysisTask.get_analysis_name()), fileName])
         return os.path.exists(fullName)
 
-    def get_database_engine(self):
-        return sqlalchemy.create_engine('sqlite:///' + \
-                os.sep.join([self.analysisPath, 'analysis_data.db'])
+    def get_database_engine(self, analysisTask=None):
+        if analysisTask is None:
+            return sqlalchemy.create_engine('sqlite:///' + \
+                    os.sep.join([self.analysisPath, 'analysis_data.db']))
+        else:
+            return sqlalchemy.create_engine('sqlite:///' + \
+                    os.sep.join(
+                        [self.analysisPath, analysisTask.get_analysis_name(), \
+                                'analysis_data.db']))
 
 
 
@@ -195,6 +201,34 @@ class MERFISHDataSet(ImageDataSet):
             A list of the names of the bits in order from the lowest to highest
         '''
         return self.bitNames
+
+    def get_fov_offset(self, fov):
+        '''Get the offset of the specified fov in the global coordinate system.
+
+        Args:
+            fov: The fov 
+        Returns:
+            A tuple specificing the x and y offset of the top right corner 
+            of the specified fov in pixels.
+        '''
+        #TODO - this should be implemented using the position of the fov. 
+        return (0,0)
+
+    def calculate_global_position(self, fov, localPosition):
+        '''Converts a position in the local, fov-based coordinate system
+        to the global coordinates.
+
+        Args:
+            fov: The fov corresponding to the localPosition
+            localPosition: a tuple specifying the x and y coordinates in fov
+        Returns:
+            A tuple specifying the x and y position corresponding to local
+                position in the global coordinate system.
+        '''
+
+        offset = self.get_fov_offset(fov)
+        return (localPosition[0] + offset[0], localPosition[1] + offset[1])
+
 
     def get_data_channels(self):
         '''Get the data channels for the MERFISH data set.

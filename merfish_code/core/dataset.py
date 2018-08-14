@@ -166,6 +166,10 @@ class ImageDataSet(DataSet):
             dataName=None, dataHome=None, analysisHome=None):
         super().__init__(dataDirectoryName, dataName, dataHome, analysisHome)
 
+        self.flipHorizontal = True
+        self.flipVertical = False
+        self.transpase = True
+
     def get_image_file_names(self):
         return sorted(
                 [os.sep.join([self.rawDataPath, currentFile]) \
@@ -175,7 +179,14 @@ class ImageDataSet(DataSet):
 
     def load_image(self, imagePath, frameIndex):
         reader = datareader.inferReader(imagePath)
-        return reader.loadAFrame(frameIndex)
+        imageIn = reader.loadAFrame(frameIndex)
+        if self.transpose:
+            imageIn = np.transpose(imageIn)
+        if self.flipHorizontal:
+            imageIn = np.flip(imageIn, axis=1)
+        if self.flipVertical:
+            imageIn = np.flip(imageIn, axis=0)
+        return imageIn 
 
 
 class MERFISHDataSet(ImageDataSet):
@@ -204,6 +215,7 @@ class MERFISHDataSet(ImageDataSet):
         #TODO - this should be a parameter. It may be useful to load 
         #microscope specific parameters
         self.micronsPerPixel = 0.106
+        self.imageDimensions = (2048, 2048)
 
     def get_bit_names(self):
         '''Get the names of the bits for this MERFISH data set.
@@ -213,6 +225,13 @@ class MERFISHDataSet(ImageDataSet):
         '''
         return self.bitNames
 
+    def get_image_dimensions(self):
+        '''Get the dimensions of the images in this MERFISH data set.
+
+        Returns:
+            A tuple containing the width and height of each image in pixels.
+        '''
+        return self.imageDimensions
 
     def get_microns_per_pixel(self):
         '''Get the conversion factor to convert pixels to microns.

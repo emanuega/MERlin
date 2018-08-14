@@ -72,7 +72,7 @@ class SimpleGlobalAlignment(GlobalAlignment):
         minY = np.min([x[1] for x in fovBounds])
         maxY = np.max([x[1] for x in fovBounds])
 
-        return (minX, minY, minY, maxY)
+        return (minX, minY, maxY, maxY)
 
 class CorrelationGlobalAlignment(GlobalAlignment):
 

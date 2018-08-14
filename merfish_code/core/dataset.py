@@ -182,7 +182,8 @@ class MERFISHDataSet(ImageDataSet):
 
     def __init__(self, dataDirectoryName, codebookName=None, 
             dataOrganizationName=None, positionFileName=None,
-            dataName=None, dataHome=None, analysisHome=None):
+            dataName=None, dataHome=None, analysisHome=None,
+            dataParameters=None):
         super().__init__(dataDirectoryName, dataName, dataHome, analysisHome)
 
         if codebookName is not None:
@@ -199,6 +200,11 @@ class MERFISHDataSet(ImageDataSet):
         self._load_positions()
         self._map_images()
 
+        self.dataParameters = dataParameters
+        #TODO - this should be a parameter. It may be useful to load 
+        #microscope specific parameters
+        self.micronsPerPixel = 0.106
+
     def get_bit_names(self):
         '''Get the names of the bits for this MERFISH data set.
 
@@ -206,6 +212,13 @@ class MERFISHDataSet(ImageDataSet):
             A list of the names of the bits in order from the lowest to highest
         '''
         return self.bitNames
+
+
+    def get_microns_per_pixel(self):
+        '''Get the conversion factor to convert pixels to microns.
+        '''
+
+        return self.micronsPerPixel
 
     def get_fov_offset(self, fov):
         '''Get the offset of the specified fov in the global coordinate system.
@@ -217,7 +230,7 @@ class MERFISHDataSet(ImageDataSet):
             of the specified fov in pixels.
         '''
         #TODO - this should be implemented using the position of the fov. 
-        return (0,0)
+        return (self.positions.loc[fov]['X'], self.positions.loc[fov]['Y'])
 
     def calculate_global_position(self, fov, localPosition):
         '''Converts a position in the local, fov-based coordinate system

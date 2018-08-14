@@ -38,7 +38,8 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
 
-        imageSet = np.array(preprocessTask.get_images(fragmentIndex))
+        imageSet = np.array(
+                preprocessTask.get_processed_image_set(fragmentIndex))
         scaleFactors = optimizeTask.get_scale_factors()
         di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors)
 

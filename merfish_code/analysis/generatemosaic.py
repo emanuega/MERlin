@@ -58,7 +58,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
         mosaic = np.zeros(self.mosaicDimensions, dtype=np.uint16)
 
         for f in self.dataSet.get_fovs():
-            inputImage = self.dataSet.get_raw_image(0, f, 0)
+            inputImage = self.alignTask.get_aligned_image(0, f, 0)
             transformedImage = self._transform_image_to_mosaic(inputImage, f)
             divisionMask = np.bitwise_and(transformedImage>0, mosaic>0)
             cv2.add(mosaic, transformedImage, dst=mosaic,

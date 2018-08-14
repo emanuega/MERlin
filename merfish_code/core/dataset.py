@@ -9,6 +9,7 @@ import re
 import csv
 import sqlalchemy
 import fnmatch
+import tifffile
 
 from storm_analysis.sa_library import datareader
 
@@ -50,6 +51,49 @@ class DataSet(object):
 
         figure.savefig(savePath + '.png', pad_inches=0)
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
+
+    def get_analysis_image_set(self, analysisTask, imageBaseName, imageIndex):
+        return tifffile.imread(self._analysis_image_name(
+            analysisTask, imageBaseName, imageIndex))
+
+    def get_analysis_image(self, analysisTask, imageBaseName, imageIndex,
+            imagesPerSlice, sliceIndex, frameIndex):
+        '''
+
+        Args:
+            analysisTask - 
+            imageBaseName - 
+            imageIndex - the index of the image file
+            imagesPerSlice - the number of images in each slice of the image
+                file
+            sliceIndex - the index of the slice to get the image
+            frameIndex - the index of the frame in the specified slice
+        '''
+        #TODO - It may be useful to add a function that gets all 
+        #frames in a slice
+        imageFile = tifffile.TiffFile(self._analysis_image_name(
+            analysisTask, imageBaseName, imageIndex))
+        indexInFile = sliceIndex*imagesPerSlice + frameIndex
+        return imageFile.asarray(key=indexInFile)
+    
+    def _writer_for_analysis_images(
+            self, analysisTask, imageBaseName, imageIndex):
+        return tifffile.TiffWriter(self._analysis_image_name(
+            analysisTask, imageBaseName, imageIndex))
+
+    def _analysis_tiff_description(self, sliceCount, framesPerSlice):
+        imageDescription = {'ImageJ': '1.47a\n',
+                'images': sliceCount*framesPerSlice,
+                'channels': 1,
+                'slices': sliceCount,
+                'frames': framesPerSlice,
+                'hyperstack': True,
+                'loop': False}
+
+    def _analysis_image_name(self, analysisTask, imageBaseName, imageIndex):
+        destPath = self.get_analysis_subdirectory(
+                analysisTask.get_analysis_name(), subdirectory='images')
+        return os.sep.join([destPath, imageBaseName+str(imageIndex)+'.tif'])
 
     def _analysis_result_save_path(self, resultName, analysisName,
             resultIndex=None, subdirectory=None):
@@ -168,7 +212,7 @@ class ImageDataSet(DataSet):
 
         self.flipHorizontal = True
         self.flipVertical = False
-        self.transpase = True
+        self.transpose = True
 
     def get_image_file_names(self):
         return sorted(

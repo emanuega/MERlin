@@ -12,7 +12,7 @@ import storm_analysis.sa_library.sa_h5py as saH5Py
 
 from merfish_code.core import analysistask
 
-class Warp(analysistask.ImageSavingParallelTask):
+class Warp(analysistask.ParallelAnalysisTask):
 
     '''
     An abstract class for warping a set of images so that the corresponding
@@ -20,19 +20,23 @@ class Warp(analysistask.ImageSavingParallelTask):
     '''
 
     def get_transformation(self, fov, dataChannel):
-        #TODO
+        #TODO - implement
         pass
+
+    def get_aligned_image_set(self, fov):
+        return self.dataSet.get_analysis_image_set(
+                self, 'aligned_images', fov)
+
+    def get_aligned_image(self, fov, dataChannel, zIndex):
+        return self.dataSet.get_analysis_image(
+                self, 'aligned_images', fov, 
+                len(self.dataSet.get_z_positions()), dataChannel, zIndex)
 
     def _save_transformations(self, transformationList, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
                 self.analysisName, subdirectory='transformations')
         fileName = '_'.join(['tform', str(fov)])
-        #TODO 
-
-    def _image_name(self, fov):
-        destPath = self.dataSet.get_analysis_subdirectory(
-                self.analysisName, subdirectory='aligned_images')
-        return os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
+        #TODO - save
 
     def _process_transformations(self, transformationList, fov):
         '''
@@ -47,11 +51,12 @@ class Warp(analysistask.ImageSavingParallelTask):
             fov: The fov that is being transformed.
         '''
 
-        imageDescription = self._tiff_description(
+        imageDescription = self.dataSet._analysis_tiff_description(
                 len(self.dataSet.get_z_positions()),
                 len(self.dataSet.get_data_channels()))
 
-        with self._writer_for_images(fov) as outputTif:
+        with self.dataSet._writer_for_analysis_images(
+                self, 'aligned_images', fov) as outputTif:
             for t,x in zip(
                     transformationList, self.dataSet.get_data_channels()):
                 for z in self.dataSet.get_z_positions():

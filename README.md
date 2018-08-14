@@ -23,15 +23,15 @@ DATA_ORGANIZATION_HOME=D:/merfish-parameters/dataorganization
 POSITION_HOME=D:/merfish-parameters/positions
 ```
 
-### Data format specifications
+# Data format specifications
 
-# Raw images
+## Raw images
 
-# Data organization
+## Data organization
 
-# Codebook
+## Codebook
 
-# Position list
+## Position list
 
 A csv file containing a list of positions is expected either in the raw data directory or the parent directory. Alternatively, the name of a position csv file that is located in POSITION\_HOME can be provided.
 

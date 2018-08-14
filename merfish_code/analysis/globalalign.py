@@ -25,6 +25,13 @@ class GlobalAlignment(analysistask.AnalysisTask):
         pass
 
     @abstractmethod
+    def fov_to_global_transform(self, fov):
+        '''Calculates the transformation matrix for an affine transformation
+        that transforms the fov coordinates to global coordinates.
+        '''
+        pass
+
+    @abstractmethod
     def get_global_extent(self):
         '''Get the extent of the global coordinate system.
 
@@ -59,7 +66,15 @@ class SimpleGlobalAlignment(GlobalAlignment):
         micronsPerPixel = self.dataSet.get_microns_per_pixel()
         return (fovStart[0] + fovCoordinates[0]*micronsPerPixel, \
                 fovStart[1] + fovCoordinates[1]*micronsPerPixel)
-       
+      
+    def fov_to_global_transform(self, fov):
+        micronsPerPixel = self.dataSet.get_microns_per_pixel()
+        globalStart = self.fov_coordinates_to_global(fov, (0,0))
+
+        return np.float32([[micronsPerPixel, 0, globalStart[0]], \
+                           [0, micronsPerPixel, globalStart[1]], \
+                           [0, 0, 1]])
+
     def get_global_extent(self):
         fovSize = self.dataSet.get_image_dimensions()
         fovBounds = [self.fov_coordinates_to_global(x, (0, 0)) \
@@ -72,7 +87,7 @@ class SimpleGlobalAlignment(GlobalAlignment):
         minY = np.min([x[1] for x in fovBounds])
         maxY = np.max([x[1] for x in fovBounds])
 
-        return (minX, minY, maxY, maxY)
+        return (minX, minY, maxX, maxY)
 
 class CorrelationGlobalAlignment(GlobalAlignment):
 

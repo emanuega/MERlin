@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import numpy as np
 
 from merfish_code.core import analysistask
 
@@ -10,7 +11,7 @@ class GlobalAlignment(analysistask.AnalysisTask):
     '''
 
     @abstractmethod
-    def fov_coordinates_to_global(fov, fovCoordinates): 
+    def fov_coordinates_to_global(self, fov, fovCoordinates): 
         '''Calculates the global coordinates based on the local coordinates
         in the specified field of view.
 
@@ -22,7 +23,17 @@ class GlobalAlignment(analysistask.AnalysisTask):
             A tuple contaning the global x and y coordinates (in microns)
         '''
         pass
-            
+
+    @abstractmethod
+    def get_global_extent(self):
+        '''Get the extent of the global coordinate system.
+
+        Returns:
+            A tuple where the first two indexes correspond to the minimum
+            and maximum x extents and the last two indexes correspond to the
+            minimum and maximum y extends. All are is units of microns.
+        '''
+        pass
 
 class SimpleGlobalAlignment(GlobalAlignment):
 
@@ -43,12 +54,25 @@ class SimpleGlobalAlignment(GlobalAlignment):
         #This analysis task does not need computation
         pass
 
-    def fov_coordinates_to_global(fov, fovCoordinates):
+    def fov_coordinates_to_global(self, fov, fovCoordinates):
         fovStart = self.dataSet.get_fov_offset(fov)
         micronsPerPixel = self.dataSet.get_microns_per_pixel()
         return (fovStart[0] + fovCoordinates[0]*micronsPerPixel, \
-                fovStart[1] + fovCoordinates[1]*micornsPerPixel)
-        
+                fovStart[1] + fovCoordinates[1]*micronsPerPixel)
+       
+    def get_global_extent(self):
+        fovSize = self.dataSet.get_image_dimensions()
+        fovBounds = [self.fov_coordinates_to_global(x, (0, 0)) \
+                for x in self.dataSet.get_fovs()] \
+                + [self.fov_coordinates_to_global(x, fovSize) \
+                for x in self.dataSet.get_fovs()]
+
+        minX = np.min([x[0] for x in fovBounds])
+        maxX = np.max([x[0] for x in fovBounds])
+        minY = np.min([x[1] for x in fovBounds])
+        maxY = np.max([x[1] for x in fovBounds])
+
+        return (minX, maxX, minY, maxY)
 
 class CorrelationGlobalAlignment(GlobalAlignment):
 

@@ -30,8 +30,8 @@ class GlobalAlignment(analysistask.AnalysisTask):
 
         Returns:
             A tuple where the first two indexes correspond to the minimum
-            and maximum x extents and the last two indexes correspond to the
-            minimum and maximum y extends. All are is units of microns.
+            and x and y extents and the last two indexes correspond to the
+            maximum x and y extents. All are is units of microns.
         '''
         pass
 
@@ -72,7 +72,7 @@ class SimpleGlobalAlignment(GlobalAlignment):
         minY = np.min([x[1] for x in fovBounds])
         maxY = np.max([x[1] for x in fovBounds])
 
-        return (minX, maxX, minY, maxY)
+        return (minX, minY, minY, maxY)
 
 class CorrelationGlobalAlignment(GlobalAlignment):
 

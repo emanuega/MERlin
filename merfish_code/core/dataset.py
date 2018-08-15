@@ -81,14 +81,15 @@ class DataSet(object):
         return tifffile.TiffWriter(self._analysis_image_name(
             analysisTask, imageBaseName, imageIndex))
 
-    def _analysis_tiff_description(self, sliceCount, framesPerSlice):
+    def _analysis_tiff_description(self, sliceCount, frameCount):
         imageDescription = {'ImageJ': '1.47a\n',
                 'images': sliceCount*framesPerSlice,
                 'channels': 1,
                 'slices': sliceCount,
-                'frames': framesPerSlice,
+                'frames': frameCount,
                 'hyperstack': True,
                 'loop': False}
+        return imageDescription
 
     def _analysis_image_name(self, analysisTask, imageBaseName, imageIndex):
         destPath = self.get_analysis_subdirectory(

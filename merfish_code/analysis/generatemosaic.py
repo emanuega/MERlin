@@ -61,7 +61,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
                 len(self.dataSet.get_data_channels()))
 
         with self.dataSet._writer_for_analysis_images(
-                self, 'mosaics') as outputTif:
+                self, 'mosaic') as outputTif:
             for d in self.dataSet.get_data_channels():
                 for z in range(len(self.dataSet.get_z_positions())):
                     mosaic = np.zeros(self.mosaicDimensions, dtype=np.uint16)

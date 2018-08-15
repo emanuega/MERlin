@@ -79,11 +79,11 @@ class DataSet(object):
     def _writer_for_analysis_images(
             self, analysisTask, imageBaseName, imageIndex):
         return tifffile.TiffWriter(self._analysis_image_name(
-            analysisTask, imageBaseName, imageIndex))
+            analysisTask, imageBaseName, imageIndex), imagej=True)
 
     def _analysis_tiff_description(self, sliceCount, frameCount):
         imageDescription = {'ImageJ': '1.47a\n',
-                'images': sliceCount*framesPerSlice,
+                'images': sliceCount*frameCount,
                 'channels': 1,
                 'slices': sliceCount,
                 'frames': frameCount,

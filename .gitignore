@@ -1,1 +1,6 @@
 .env
+*.py[cod]
+__pycache__/
+
+pip-log.txt
+pip-delete-this-directory.txt

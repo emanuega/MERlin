@@ -77,7 +77,7 @@ class DataSet(object):
         return imageFile.asarray(key=indexInFile)
     
     def _writer_for_analysis_images(
-            self, analysisTask, imageBaseName, imageIndex):
+            self, analysisTask, imageBaseName, imageIndex=None):
         return tifffile.TiffWriter(self._analysis_image_name(
             analysisTask, imageBaseName, imageIndex), imagej=True)
 
@@ -94,7 +94,10 @@ class DataSet(object):
     def _analysis_image_name(self, analysisTask, imageBaseName, imageIndex):
         destPath = self.get_analysis_subdirectory(
                 analysisTask.get_analysis_name(), subdirectory='images')
-        return os.sep.join([destPath, imageBaseName+str(imageIndex)+'.tif'])
+        if imageIndex is None:
+            return os.sep.join([destPath, imageBaseName+'.tif'])
+        else:
+            return os.sep.join([destPath, imageBaseName+str(imageIndex)+'.tif'])
 
     def _analysis_result_save_path(self, resultName, analysisName,
             resultIndex=None, subdirectory=None):

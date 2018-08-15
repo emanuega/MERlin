@@ -2,6 +2,7 @@
 *.swo
 *.py[cod]
 __pycache__/
+.ipynb_checkpoints/
 
 pip-log.txt
 pip-delete-this-directory.txt

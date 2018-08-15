@@ -5,7 +5,7 @@ import numpy as np
 
 from merfish_code.core import analysistask
 
-class Preprocess(analysistask.ImageSavingParallelTask):
+class Preprocess(analysistask.ParallelAnalysisTask):
 
 
     '''
@@ -18,7 +18,6 @@ class Preprocess(analysistask.ImageSavingParallelTask):
         return os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
     
     def get_pixel_histogram(self, fov=None):
-        print(fov)
         if fov is not None:
             return self.dataSet.load_analysis_result('pixel_histogram',
                     self.analysisName, fov, 'histograms')
@@ -53,11 +52,20 @@ class DeconvolutionPreprocess(Preprocess):
     def get_estimated_time(self):
         return 5
 
+    def get_processed_image_set(self, fov):
+        return self.dataSet.get_analysis_image_set(
+                self, 'processed_image', fov)
+
+    def get_processed_image(self, fov, dataChannel, zIndex):
+        return self.dataSet.get_analysis_image(
+                self, 'processed_image', fov, 
+                len(self.dataSet.get_z_positions()), dataChannel, zIndex)
+
     def run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(
                 self.parameters['warp_task'])
 
-        imageDescription = self._tiff_description(
+        imageDescription = self.dataSet._analysis_tiff_description(
                 len(self.dataSet.get_bit_names()),
                 len(self.dataSet.get_data_channels()))
 
@@ -65,11 +73,12 @@ class DeconvolutionPreprocess(Preprocess):
         pixelHistogram = np.zeros(
                 (len(self.dataSet.get_bit_names()), len(histogramBins)-1))
 
-        with self._writer_for_images(fragmentIndex) as outputTif:
+        with self.dataSet._writer_for_analysis_images(
+                self, 'processed_image', fragmentIndex) as outputTif:
             for bi,b in enumerate(self.dataSet.get_bit_names()):
                 dataChannel = self.dataSet.get_data_channel_for_bit(b)
                 for i in range(len(self.dataSet.get_z_positions())):
-                    inputImage = warpTask.get_image_for_channel(
+                    inputImage = warpTask.get_aligned_image(
                             fragmentIndex, dataChannel, i)
                     filteredImage = inputImage.astype(float) \
                             - cv2.GaussianBlur(inputImage,

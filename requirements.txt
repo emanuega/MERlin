@@ -1,0 +1,9 @@
+python-dotenv==0.8.2
+pandas==0.23.0
+sqlalchemy==1.2.7
+tifffile==0.14.0
+opencv==3.3.1
+scikit-image==0.13.1
+scikit-learn==0.19.1
+numpy
+matplotlib

@@ -15,8 +15,10 @@ class Decode(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.barcodeDB = dataSet.get_database_engine(self)
         self.areaThreshold = 4
+
+    def _get_barcodeDB(self):
+        return self.dataSet.get_database_engine(self)
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -119,13 +121,38 @@ class Decode(analysistask.ParallelAnalysisTask):
     
         #TODO - the database needs to create a unique ID for each barcode
         barcodeInformation.to_sql(
-                'barcode_information', self.barcodeDB, chunksize=50,
+                'barcode_information', self._get_barcodeDB(), chunksize=50,
                 dtype=columnInformation, index=False, if_exists='append')
 
-    def get_barcode_information(self, sqlQuery=None):
-        if sqlQuery is None:
-            return pandas.read_sql_table('barcode_information', self.barcodeDB)
+    def get_barcode_information(self, columnList=None):
+        if columnList is None:
+            return pandas.read_sql_table(
+                    'barcode_information', self._get_barcodeDB())
+        else:
+            return pandas.read_sql_table('barcode_information', 
+                    self._get_barcodeDB(), 
+                    columns=columnList)
     
+    def get_barcode_intensities(self):
+        return self.get_barcode_information(
+                ['mean_intensity'])['mean_intensity']
+
+    def get_intensities_for_barcodes_with_area(self, area):
+        '''Gets the barcode intensities for barcodes that have the specified
+        area.
+        '''
+        return pandas.read_sql_query(
+                'select mean_intensity from ' \
+                + 'barcode_information where area=' + str(area), 
+                self._get_barcodeDB())['mean_intensity'] 
+
+    def get_barcode_areas(self):
+        return self.get_barcode_information(['area'])['area']
+
+    def get_barcode_distances(self):
+        return self.get_barcode_information(
+                ['mean_distance'])['mean_distance']
+
     def _bc_properties_to_dict(
             self, properties, bcIndex, fov, distances):
         #TODO update for 3D

@@ -12,6 +12,7 @@ import fnmatch
 import tifffile
 
 from storm_analysis.sa_library import datareader
+from merfish_code.core import analysistask
 
 
 class DataSet(object):
@@ -42,7 +43,7 @@ class DataSet(object):
         self.figurePath = os.sep.join([self.analysisPath, 'figures'])
         os.makedirs(self.figurePath, exist_ok=True)
 
-    def save_figure(self, figure, analysisTask, figureName):
+    def save_figure(self, analysisTask, figure, figureName):
         savePath = os.sep.join(
                 [self.get_analysis_subdirectory(analysisTask, 'figures'),
                     figureName])
@@ -124,12 +125,21 @@ class DataSet(object):
         return np.load(savePath)
 
     def get_analysis_subdirectory(self, analysisTask, subdirectory=None):
+        '''
+        analysisTask can either be the class or a string containing the
+        class name.
+        '''
+        if isinstance(analysisTask , analysistask.AnalysisTask):
+            analysisName = analysisTask.get_analysis_name()
+        else:
+            analysisName = analysisTask
+
         if subdirectory is None:
             subdirectoryPath = os.sep.join(
-                    [self.analysisPath, analysisTask.get_analysis_name()])
+                    [self.analysisPath, analysisName])
         else:
             subdirectoryPath = os.sep.join(
-                    [self.analysisPath, analysisTask.get_analysis_name(), \
+                    [self.analysisPath, analysisName, \
                             subdirectory])
         os.makedirs(subdirectoryPath, exist_ok=True)
 

@@ -42,12 +42,10 @@ class DataSet(object):
         self.figurePath = os.sep.join([self.analysisPath, 'figures'])
         os.makedirs(self.figurePath, exist_ok=True)
 
-    def save_figure(figure, figureName, subDirectory=None):
-        if subDirectory is not None:
-            savePath = os.sep.join([self.figurePath, subDirectory, figureName])
-            os.makedirs(savePath, exist_ok=True)
-        else:
-            savePath = os.sep.join([self.figurePath, figureName])
+    def save_figure(self, figure, analysisTask, figureName):
+        savePath = os.sep.join(
+                [self.get_analysis_subdirectory(analysisTask, 'figures'),
+                    figureName])
 
         figure.savefig(savePath + '.png', pad_inches=0)
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
@@ -93,7 +91,7 @@ class DataSet(object):
 
     def _analysis_image_name(self, analysisTask, imageBaseName, imageIndex):
         destPath = self.get_analysis_subdirectory(
-                analysisTask.get_analysis_name(), subdirectory='images')
+                analysisTask, subdirectory='images')
         if imageIndex is None:
             return os.sep.join([destPath, imageBaseName+'.tif'])
         else:
@@ -125,28 +123,26 @@ class DataSet(object):
                 resultName, analysisName, resultIndex, subdirectory) + '.npy'
         return np.load(savePath)
 
-    def get_analysis_subdirectory(self, analysisName, subdirectory=None):
+    def get_analysis_subdirectory(self, analysisTask, subdirectory=None):
         if subdirectory is None:
             subdirectoryPath = os.sep.join(
-                    [self.analysisPath, analysisName])
+                    [self.analysisPath, analysisTask.get_analysis_name()])
         else:
             subdirectoryPath = os.sep.join(
-                    [self.analysisPath, analysisName, subdirectory])
+                    [self.analysisPath, analysisTask.get_analysis_name(), \
+                            subdirectory])
         os.makedirs(subdirectoryPath, exist_ok=True)
 
         return subdirectoryPath
 
-    def get_task_subdirectory(self, analysisName):
-        taskDirectoryPath = os.sep.join(
-                [self.get_analysis_subdirectory(analysisName), 'tasks'])
-        os.makedirs(taskDirectoryPath, exist_ok=True)
-
-        return taskDirectoryPath
+    def get_task_subdirectory(self, analysisTask):
+        return self.get_analysis_subdirectory(
+                analysisTask, subdirectory='tasks')
         
     def save_analysis_task(self, analysisTask):
         #TODO - this should be made more adaptable to code changes
         saveName = os.sep.join([self.get_task_subdirectory(
-            analysisTask.get_analysis_name()), 'task.pkl'])
+            analysisTask), 'task.pkl'])
         
         with open(saveName, 'wb') as outFile:
             pickle.dump(
@@ -175,7 +171,7 @@ class DataSet(object):
                     '_' + str(fragmentIndex) + '.' + eventName
 
         fullName = os.sep.join([self.get_task_subdirectory(
-            analysisTask.get_analysis_name()), fileName])
+            analysisTask), fileName])
         open(fullName, 'a').close()
 
     def check_analysis_running(self, analysisTask, fragmentIndex=None):

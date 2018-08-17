@@ -40,13 +40,10 @@ class Decode(analysistask.ParallelAnalysisTask):
                 self.parameters['global_align_task'])
 
         decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
-
         imageSet = np.array(
-                preprocessTask.get_processed_image_set(fragmentIndex))
-        scaleFactors = optimizeTask.get_scale_factors()
+                self.preprocessTask.get_processed_image_set(fragmentIndex))
+        scaleFactors = self.optimizeTask.get_scale_factors()
         di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors)
-
-
         self._extract_and_save_barcodes(di, pm, npt, d, fragmentIndex)
 
     def _initialize_barcode_dataframe(self):
@@ -89,7 +86,7 @@ class Decode(analysistask.ParallelAnalysisTask):
             pixelTraces, distances, fov):
 
         for i in range(len(self.dataSet.codebook)):
-            self.get_barcode_database()._write_barcodes_to_db(
+            self.get_barcode_database().write_barcodes(
                     self._extract_barcodes_with_index(
                         i, decodedImage, pixelMagnitudes, pixelTraces, 
                         distances, fov))

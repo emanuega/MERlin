@@ -53,6 +53,8 @@ class Decode(analysistask.ParallelAnalysisTask):
     def _initialize_db(self):
         #TODO - maybe I can initialize the database with an autoincrementing
         #column
+        #TODO - it may be useful to encapsulate the barcode DB since 
+        #it is used both here and in filter
         '''
         bcTable = sqlalchemy.Table(
                 'barcode_information', sqlalchemy.MetaData(),
@@ -135,6 +137,15 @@ class Decode(analysistask.ParallelAnalysisTask):
                     self._get_barcodeDB(), 
                     columns=columnList)
     
+    def get_filtered_barcode_iterator(
+            self, areaThreshold, intensityThreshold):
+        return pandas.read_sql_query(
+                'select * from barcode_information ' \
+                        + 'where area>=' + str(areaThreshold) \
+                        + ' and mean_intensity>=' + str(intensityThreshold),
+                        self._get_barcodeDB(), chunksize=100)
+
+
     def get_barcode_intensities(self):
         return self.get_barcode_information(
                 ['mean_intensity'])['mean_intensity']

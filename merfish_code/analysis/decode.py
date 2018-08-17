@@ -32,10 +32,12 @@ class Decode(analysistask.ParallelAnalysisTask):
         '''This function generates the barcodes for a fov and saves them to the 
         barcode database.
         '''
-        preprocessTask = self.dataSet.load_analysis_task(
+        self.preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
-        optimizeTask = self.dataSet.load_analysis_task(
+        self.optimizeTask = self.dataSet.load_analysis_task(
                 self.parameters['optimize_task'])
+        self.globalTask = self.dataSet.load_analysis_task(
+                self.parameters['global_align_task'])
 
         decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
 
@@ -62,7 +64,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self, properties, bcIndex, fov, distances):
         #TODO update for 3D
         centroid = properties.centroid
-        globalCentroid = self.dataSet.calculate_global_position(fov, centroid)
+        globalCentroid = self.globalTask.fov_coordinates_to_global(
+                fov, centroid)
         d = [distances[x[0], x[1]] for x in properties.coords]
         outputDict = {'barcode': binary.bit_array_to_int(
                             self.dataSet.codebook.loc[bcIndex, 'barcode']), \

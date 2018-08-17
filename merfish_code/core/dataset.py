@@ -305,22 +305,6 @@ class MERFISHDataSet(ImageDataSet):
         #TODO - this should be implemented using the position of the fov. 
         return (self.positions.loc[fov]['X'], self.positions.loc[fov]['Y'])
 
-    def calculate_global_position(self, fov, localPosition):
-        '''Converts a position in the local, fov-based coordinate system
-        to the global coordinates.
-
-        Args:
-            fov: The fov corresponding to the localPosition
-            localPosition: a tuple specifying the x and y coordinates in fov
-        Returns:
-            A tuple specifying the x and y position corresponding to local
-                position in the global coordinate system.
-        '''
-
-        offset = self.get_fov_offset(fov)
-        return (localPosition[0] + offset[0], localPosition[1] + offset[1])
-
-
     def get_data_channels(self):
         '''Get the data channels for the MERFISH data set.
 

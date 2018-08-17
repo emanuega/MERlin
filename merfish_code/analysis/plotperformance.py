@@ -27,10 +27,13 @@ class PlotPerformance(analysistask.AnalysisTask):
         return 30
 
     #TODO - the functions in this class have too much repeated code
+    #TODO - for the following 4 plots, I can add a line indicating the
+    #barcode selection thresholds.
     def _plot_barcode_intensity_distribution(self):
-        bcIntensities = self.decodeTask.get_barcode_intensities()
+        bcIntensities = self.decodeTask.get_barcode_database() \
+                .get_barcode_intensities()
         fig = plt.figure(figsize=(4,4))
-        plt.hist(np.log(bcIntensities), bins=500)
+        plt.hist(np.log10(bcIntensities), bins=500)
         plt.xlabel('Mean intensity ($log_{10}$)')
         plt.ylabel('Count')
         plt.title('Intensity distribution for all barcodes')
@@ -38,7 +41,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_intensity_distribution')
 
     def _plot_barcode_area_distribution(self):
-        bcAreas = self.decodeTask.get_barcode_areas()
+        bcAreas = self.decodeTask.get_barcode_database() \
+                .get_barcode_areas()
         fig = plt.figure(figsize=(4,4))
         plt.hist(bcAreas, bins=np.arange(15))
         plt.xlabel('Barcode area (pixels)')
@@ -49,7 +53,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_area_distribution')
 
     def _plot_barcode_distance_distribution(self):
-        bcDistances = self.decodeTask.get_barcode_distances()
+        bcDistances = self.decodeTask.get_barcode_database() \
+                .get_barcode_distances()
         fig = plt.figure(figsize=(4,4))
         plt.hist(bcDistances, bins=500)
         plt.xlabel('Barcode distance')
@@ -59,8 +64,9 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_distance_distribution')
 
     def _plot_barcode_intensity_area_violin(self):
+        barcodeDB = self.decodeTask.get_baroced_database()
         intensityData = [np.log10(
-            self.decodeTask.get_intensities_for_barcodes_with_area(x)) \
+            barcodeDB.get_intensities_for_barcodes_with_area(x)) \
                     for x in range(1,15)]
         fig = plt.figure(figsize=(8,4))
         plt.violinplot(intensityData, showextrema=False, showmedians=True)

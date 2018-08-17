@@ -12,10 +12,12 @@ from merfish_code.util import binary
 
 class Decode(analysistask.ParallelAnalysisTask):
 
+    '''An analysis task that extracts barcodes information from 
+    images.
+    '''
+
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-
-        self.areaThreshold = 4
 
     def _get_barcodeDB(self):
         return self.dataSet.get_database_engine(self)

@@ -52,10 +52,10 @@ class SimpleGlobalAlignment(GlobalAlignment):
         super().__init__(dataSet, parameters, analysisName)
 
     def get_estimated_memory(self):
-        return 100
+        return 1
 
     def get_estimated_time(self):
-        return 1
+        return 0
 
     def run_analysis(self):
         #This analysis task does not need computation
@@ -100,5 +100,52 @@ class CorrelationGlobalAlignment(GlobalAlignment):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
+
+    def get_estimated_memory(self):
+        return 1000
+
+    def get_estimated_time(self):
+        return 60
+
+    def fov_coordinates_to_global(self, fov, fovCoordinates):
         raise NotImplementedError
 
+    def fov_to_global_transform(self, fov):
+        raise NotImplementedError
+
+    def get_global_extent(self):
+        raise NotImplementedError
+
+    def _calculate_overlap_area(self, x1, y1, x2, y2, width, height):
+        '''Calculates the overlapping area between two rectangles with 
+        equal dimensions.
+        '''
+
+        dx = min(x1+width, x2+width) - max(x1, x2)
+        dy = min(y1+height, y2+height) - max(y1,y2)
+
+        if dx>0 and dy>0:
+            return dx*dy
+        else:
+            return 0
+
+    def _get_overlapping_regions(self, fov, minArea=2000):
+        '''Get a list of all the fovs that overlap with the specified fov.
+        '''
+        positions = self.dataSet.get_stage_positions()
+        pixelToMicron = self.dataSet.get_microns_per_pixel()
+        fovMicrons = [x*pixelToMicron \
+                for x in self.dataSet.get_image_dimensions()]
+        fovPosition = positions.loc[fov]
+        overlapAreas = [i for i,p in positions.iterrows() \
+                if self._calculate_overlap_area(
+                    p['X'], p['Y'], fovPosition['X'], fovPosition['Y'],
+                    fovMicrons[0], fovMicrons[1]) > minArea and i!=fov]
+
+        return overlapAreas
+
+    def run_analysis(self):
+        fov1 = self.dataSet.get_fiducial_image(0, 0)
+        fov2 = self.dataSet.get_fiducial_image(0, 1)
+
+        return fov1, fov2

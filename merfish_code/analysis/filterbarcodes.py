@@ -21,7 +21,7 @@ class FilterBarcodes(analysistask.AnalysisTask):
         return 1000
 
     def get_estimated_time(self):
-        return 15
+        return 30
 
     def run_analysis(self):
         self.decodeTask = self.dataSet.load_analysis_task(

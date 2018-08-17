@@ -295,6 +295,7 @@ class MERFISHDataSet(ImageDataSet):
 
     def get_fov_offset(self, fov):
         '''Get the offset of the specified fov in the global coordinate system.
+        This offset is based on the anticipated stage position.
 
         Args:
             fov: The fov 
@@ -304,6 +305,9 @@ class MERFISHDataSet(ImageDataSet):
         '''
         #TODO - this should be implemented using the position of the fov. 
         return (self.positions.loc[fov]['X'], self.positions.loc[fov]['Y'])
+
+    def get_stage_positions(self):
+        return self.positions
 
     def get_data_channels(self):
         '''Get the data channels for the MERFISH data set.

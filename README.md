@@ -42,6 +42,8 @@ A csv file containing a list of positions is expected either in the raw data dir
 
 ### Installing
 
+pip install -r requirements.txt
+
 ## Running the tests
 
 

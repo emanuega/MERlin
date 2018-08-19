@@ -23,6 +23,9 @@ class FilterBarcodes(analysistask.AnalysisTask):
     def get_estimated_time(self):
         return 30
 
+    def get_dependencies(self):
+        return [self.parameters['decode_task']]
+
     def run_analysis(self):
         self.decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])        

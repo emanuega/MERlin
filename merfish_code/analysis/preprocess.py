@@ -41,6 +41,7 @@ class DeconvolutionPreprocess(Preprocess):
 
         self.highPassSigma = 3
         self.deconSigma = 2
+        #TODO -  this should be based on a convergence measure
         self.deconIterations = 20
 
     def fragment_count(self):

@@ -61,6 +61,9 @@ class SimpleGlobalAlignment(GlobalAlignment):
         #This analysis task does not need computation
         pass
 
+    def get_dependencies(self):
+        return []
+
     def fov_coordinates_to_global(self, fov, fovCoordinates):
         fovStart = self.dataSet.get_fov_offset(fov)
         micronsPerPixel = self.dataSet.get_microns_per_pixel()
@@ -97,6 +100,8 @@ class CorrelationGlobalAlignment(GlobalAlignment):
     '''
 
     #TODO - implement.  I expect rotation might be needed for this alignment
+    #if the x-y orientation of the camera is not perfectly oriented with 
+    #the microscope stage
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)

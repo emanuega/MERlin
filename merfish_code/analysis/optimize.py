@@ -40,6 +40,9 @@ class Optimize(analysistask.AnalysisTask):
     def get_estimated_time(self):
         return 120
 
+    def get_dependencies(self):
+        return [self.parameters['preprocess_task']]
+
     def run_analysis(self):
         initialScaleFactors = np.ones(self.bitCount)
         scaleFactors = np.ones((self.iterationCount, self.bitCount))

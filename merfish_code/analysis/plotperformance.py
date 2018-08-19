@@ -26,6 +26,9 @@ class PlotPerformance(analysistask.AnalysisTask):
     def get_estimated_time(self):
         return 30
 
+    def get_dependencies(self):
+        return [self.parameters['decode_task']]
+
     #TODO - the functions in this class have too much repeated code
     #TODO - for the following 4 plots, I can add a line indicating the
     #barcode selection thresholds.

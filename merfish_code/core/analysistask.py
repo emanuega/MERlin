@@ -70,6 +70,17 @@ class AnalysisTask(ABC):
         '''
         pass
 
+    @abstractmethod
+    def get_dependencies(self):
+        '''Get the analysis tasks that must be completed before this 
+        analysis task can proceed.
+
+        Returns:
+            a list containing the names of the analysis tasks that 
+                this analysis task depends on
+        '''
+        pass
+
     def is_complete(self):
         '''Determines if this analysis has completed successfully
         

@@ -20,6 +20,10 @@ class GenerateMosaic(analysistask.AnalysisTask):
     def get_estimated_time(self):
         return 30
     
+    def get_dependencies(self):
+        return [self.parameters['global_align_task'], \
+                self.parameters['warp_task']]
+
     def _micron_to_mosaic_pixel(self, micronCoordinates):
         '''Calculates the mosaic coordinates in pixels from the specified
         global coordinates.

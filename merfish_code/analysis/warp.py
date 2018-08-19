@@ -92,6 +92,9 @@ class FiducialFitWarp(Warp):
     def get_estimated_time(self):
         return 5
 
+    def get_dependencies(self):
+        return []
+
     def run_analysis(self, fragmentIndex):
         self.fit_fiducials(fragmentIndex)
         localizations = self.load_fiducials(fragmentIndex)
@@ -234,7 +237,12 @@ class FiducialCorrelationWarp(Warp):
     def get_estimated_time(self):
         return 5
 
+    def get_dependencies(self):
+        return []
+
     def run_analysis(self, fragmentIndex):
+        #TODO - this can be more efficient since some images should
+        #use the same aligned if they are from the same imaging round
         fixedImage = self.dataSet.get_fiducial_image(0, fragmentIndex)
         offsets = [feature.register_translation(
                         fixedImage, 

@@ -52,6 +52,9 @@ class DeconvolutionPreprocess(Preprocess):
     def get_estimated_time(self):
         return 5
 
+    def get_dependencies(self):
+        return [self.parameters['warp_task']]
+
     def get_processed_image_set(self, fov):
         return self.dataSet.get_analysis_image_set(
                 self, 'processed_image', fov)

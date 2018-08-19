@@ -28,7 +28,7 @@ class Decode(analysistask.ParallelAnalysisTask):
     def get_estimated_time(self):
         return 5
 
-    def get_dependences(self):
+    def get_dependencies(self):
         return [self.parameters['preprocess_task'], \
                 self.parameters['optimize_task'], \
                 self.parameters['global_align_task']]

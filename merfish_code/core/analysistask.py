@@ -1,4 +1,5 @@
 import os
+import copy
 from abc import ABC, abstractmethod
 import time
 
@@ -24,11 +25,14 @@ class AnalysisTask(ABC):
                 will default to the name of the class.
         '''
         self.dataSet = dataSet
-        self.parameters = parameters
+        self.parameters = copy.deepcopy(parameters)
         if analysisName is None:
             self.analysisName = type(self).__name__
         else:
             self.analysisName = analysisName
+
+        self.parameters['module'] = self.__class__.__module__
+        self.parameters['class'] = self.__class__.__name__
 
         self.dataSet.save_analysis_task(self)
 
@@ -80,6 +84,9 @@ class AnalysisTask(ABC):
                 this analysis task depends on
         '''
         pass
+
+    def get_parameters(self):
+        return self.parameters
 
     def is_complete(self):
         '''Determines if this analysis has completed successfully

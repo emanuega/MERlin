@@ -1,7 +1,7 @@
 import os
 import dotenv
 import errno
-import pickle
+import json
 import shutil
 import pandas
 import numpy as np
@@ -150,22 +150,22 @@ class DataSet(object):
                 analysisTask, subdirectory='tasks')
         
     def save_analysis_task(self, analysisTask):
-        #TODO - this should be made more adaptable to code changes
         saveName = os.sep.join([self.get_task_subdirectory(
-            analysisTask), 'task.pkl'])
+            analysisTask), 'task.json'])
         
-        with open(saveName, 'wb') as outFile:
-            pickle.dump(
-                    analysisTask, outFile, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(saveName, 'w') as outFile:
+            json.dump(analysisTask.get_parameters(), outFile, indent=4) 
 
     def load_analysis_task(self, analysisTaskName):
-        #TODO - this should be made more adaptable to code changes
         loadName = os.sep.join([self.get_task_subdirectory(
-            analysisTaskName), 'task.pkl'])
+            analysisTaskName), 'task.json'])
 
-        with open(loadName, 'rb') as inFile:
-            return pickle.load(inFile)
-
+        with open(loadName, 'r') as inFile:
+            parameters = json.load(inFile)
+            analysisModule = importlib.import_module(parameters['module'])
+            analysisTask = getattr(analysisModule, parameters['class'])
+            return analysisTask(self, parameters, analysisTaskName)
+            
     def record_analysis_running(self, analysisTask, fragmentIndex=None):
         self._record_analysis_event(analysisTask, 'run', fragmentIndex)
 
@@ -207,7 +207,7 @@ class DataSet(object):
             return sqlalchemy.create_engine('mysql://' + \
                     os.sep.join([self.analysisPath, 'analysis_data.db']))
         else:
-            return sqlalchemy.create_engine('sqlite:///' + \
+            return sqlalchemy.create_engine('mysql:///' + \
                     os.sep.join(
                         [self.analysisPath, analysisTask.get_analysis_name(), \
                                 'analysis_data.db']))

@@ -23,8 +23,8 @@ class Optimize(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.iterationCount = 20
-        self.fovPerIteration = 10 
+        self.iterationCount = parameters.get('iteration_count', 20)
+        self.fovPerIteration = parameters.get('fov_per_iteration', 10) 
 
         self.bitCount = len(self.dataSet.get_bit_names())
         self.barcodeCount = self.dataSet.codebook.shape[0]

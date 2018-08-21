@@ -103,11 +103,10 @@ class BarcodeDB():
                 self._get_barcodeDB())['mean_intensity'] 
 
     def get_barcode_areas(self):
-        return self.get_barcode_information(['area'])['area']
+        return self.get_barcodes(['area'])['area']
 
     def get_barcode_distances(self):
-        return self.get_barcode_information(
-                ['mean_distance'])['mean_distance']
+        return self.get_barcodes(['mean_distance'])['mean_distance']
 
     def write_barcodes(self, barcodeInformation):
         columnInformation = self._get_bc_column_types()

@@ -25,14 +25,18 @@ class AnalysisTask(ABC):
                 will default to the name of the class.
         '''
         self.dataSet = dataSet
-        self.parameters = copy.deepcopy(parameters)
+        if parameters is None:
+            self.parameters = {}
+        else:
+            self.parameters = copy.deepcopy(parameters)
+
         if analysisName is None:
             self.analysisName = type(self).__name__
         else:
             self.analysisName = analysisName
 
-        self.parameters['module'] = self.__class__.__module__
-        self.parameters['class'] = self.__class__.__name__
+        self.parameters['module'] = type(self).__module__
+        self.parameters['class'] = type(self).__name__
 
         self.dataSet.save_analysis_task(self)
 

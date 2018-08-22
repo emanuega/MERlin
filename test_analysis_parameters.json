@@ -1,0 +1,60 @@
+{
+    "analysis_tasks": [
+        {
+            "task": "FiducialCorrelationWarp",
+            "module": "warp"
+        },
+        {
+            "task": "DeconvolutionPreprocess",
+            "module": "preprocess",
+            "parameters": {
+                "warp_task": "FiducialCorrelationWarp"
+            }
+        },
+        {
+            "task": "Optimize",
+            "module": "optimize",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocess"
+            }
+        },
+        {
+            "task": "Decode",
+            "module": "decode",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocess",
+                "optimize_task": "Optimize",
+                "global_align_task": "SimpleGlobalAlignment"
+            }
+        },
+        {
+            "task": "SimpleGlobalAlignment",
+            "module": "globalalign"
+        },
+        {
+            "task": "GenerateMosaic",
+            "module": "generatemosaic",
+            "parameters": {
+                "global_align_task": "SimpleGlobalAlignment",
+                "warp_task": "FiducialCorrelationWarp"
+            }
+        },
+        {
+            "task": "PlotPerformance",
+            "module": "plotperformance",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocess",
+                "optimize_task": "Optimize",
+                "decode_task": "Decode"
+            }
+        },
+        {
+            "task": "FilterBarcodes",
+            "module": "filterbarcodes",
+            "parameters": {
+                "decode_task": "Decode"
+            }
+        }
+    ]
+
+}

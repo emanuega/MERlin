@@ -11,6 +11,7 @@ import sqlalchemy
 import fnmatch
 import tifffile
 import importlib
+import time
 
 from storm_analysis.sa_library import datareader
 from merfish_code.core import analysistask
@@ -183,7 +184,8 @@ class DataSet(object):
 
         fullName = os.sep.join([self.get_task_subdirectory(
             analysisTask), fileName])
-        open(fullName, 'a').close()
+        with open(fullName, 'w') as f:
+            f.write('%s' %time.time())
 
     def check_analysis_running(self, analysisTask, fragmentIndex=None):
         return self._check_analysis_event(analysisTask, 'run', fragmentIndex)

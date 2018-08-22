@@ -5,6 +5,11 @@ import time
 
 import numpy as np
 
+
+class AnalysisAlreadyStartedException(Exception):
+    pass
+
+
 class AnalysisTask(ABC):
 
     '''
@@ -46,6 +51,11 @@ class AnalysisTask(ABC):
         Upon completion of the analysis, this function informs the DataSet
         that analysis is complete.
         '''
+
+        if self.is_complete() or self.is_running():
+            raise AnalysisAlreadyStartedException
+
+        self.dataSet.record_analysis_running(self)
         self.run_analysis()
         self.dataSet.record_analysis_complete(self)
 
@@ -90,6 +100,11 @@ class AnalysisTask(ABC):
         pass
 
     def get_parameters(self):
+        '''Get the parameters for this analysis task.
+
+        Returns:
+            the parameter dictionary
+        '''
         return self.parameters
 
     def is_complete(self):
@@ -99,6 +114,15 @@ class AnalysisTask(ABC):
             True if the analysis is complete and otherwise False.
         '''
         return self.dataSet.check_analysis_done(self)
+
+    def is_running(self):
+        '''Determines if this analysis is currently running
+        
+        Returns:
+            True if the analysis is complete and otherwise False.
+        '''
+        return self.dataSet.check_analysis_running(self) and not \
+                self.is_complete()
 
     def get_analysis_name(self):
         '''Get the name for this AnalysisTask.
@@ -129,6 +153,10 @@ class ParallelAnalysisTask(AnalysisTask):
             for i in range(self.fragment_count()):
                 self.run(i)
         else:
+            if self.is_complete(fragmentIndex) \
+                    or self.is_running(fragmentIndex):
+                raise AnalysisAlreadyStartedException    
+            self.dataSet.record_analysis_running(self, fragmentIndex)
             self.run_analysis(fragmentIndex)
             self.dataSet.record_analysis_complete(self, fragmentIndex) 
 
@@ -146,4 +174,17 @@ class ParallelAnalysisTask(AnalysisTask):
 
         else:
             return self.dataSet.check_analysis_done(self, fragmentIndex)
+
+    def is_running(self, fragmentIndex=None):
+        if fragmentIndex is None:
+            for i in range(self.fragment_count()):
+                if self.is_running(i):
+                    return True 
+
+            return False
+
+        else:
+            return self.dataSet.check_analysis_running(self, fragmentIndex) \
+                    and not self.is_complete(fragmentIndex)
+
 

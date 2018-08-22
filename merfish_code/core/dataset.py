@@ -207,10 +207,10 @@ class DataSet(object):
 
     def get_database_engine(self, analysisTask=None):
         if analysisTask is None:
-            return sqlalchemy.create_engine('mysql://' + \
+            return sqlalchemy.create_engine('sqlite://' + \
                     os.sep.join([self.analysisPath, 'analysis_data.db']))
         else:
-            return sqlalchemy.create_engine('mysql:///' + \
+            return sqlalchemy.create_engine('sqlite:///' + \
                     os.sep.join(
                         [self.analysisPath, analysisTask.get_analysis_name(), \
                                 'analysis_data.db']))

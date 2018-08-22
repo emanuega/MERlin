@@ -68,7 +68,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
                 self, 'mosaic') as outputTif:
             for d in self.dataSet.get_data_channels():
                 for z in range(len(self.dataSet.get_z_positions())):
-                    mosaic = np.zeros(self.mosaicDimensions, dtype=np.uint16)
+                    mosaic = np.zeros(np.flip(self.mosaicDimensions,axis=0), dtype=np.uint16)
                     for f in self.dataSet.get_fovs():
                         inputImage = self.warpTask.get_aligned_image(f, d, z)
                         transformedImage = self._transform_image_to_mosaic(

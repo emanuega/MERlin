@@ -54,6 +54,13 @@
             "parameters": {
                 "decode_task": "Decode"
             }
+        },
+        {
+            "task": "SegmentCells",
+            "module": "segment",
+            "parameters": {
+                "warp_task": "FiducialCorrelationWarp"
+            }
         }
     ]
 

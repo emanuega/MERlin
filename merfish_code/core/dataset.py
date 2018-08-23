@@ -267,6 +267,8 @@ class MERFISHDataSet(ImageDataSet):
         self._load_codebook()
         self._load_positions()
         self._map_images()
+        #TODO - this should check for consistency between all the
+        #different components
 
         self.dataParameters = dataParameters
         #TODO - this should be a parameter. It may be useful to load 
@@ -330,7 +332,6 @@ class MERFISHDataSet(ImageDataSet):
         '''
         return self.dataOrganization[\
                 self.dataOrganization['bitName'] == bitName].index.item()
-
 
     def get_z_positions(self):
         '''Get the z positions present in this dataset.

@@ -39,10 +39,25 @@ A csv file containing a list of positions is expected either in the raw data dir
 
 ### Prerequisites
 
+This requires 
 
 ### Installing
 
-pip install -r requirements.txt
+This module requires python 3.6 and above. Additionally, [storm-analysis](https://github.com/ZhuangLab/storm-analysis) must be intalled prior to installing this  package.
+
+Before installation, a virtual environment can be specified:
+
+```
+python -m venv .venv
+```
+
+This module can be install with pip:
+
+```
+pip install --process-dependency-links -e merfish-code
+```
+
+## Usage
 
 ## Running the tests
 

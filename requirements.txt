@@ -1,11 +1,12 @@
 setuptools>=36.0.0
-python-dotenv==0.8.2
-pandas==0.23.0
+python-dotenv>=0.8.2
+pandas>=0.23.4
 sqlalchemy==1.2.7
 tifffile==0.14.0
 opencv-python>=3
-scikit-image==0.13.1
+scikit-image>=0.14.0
 scikit-learn==0.19.1
 numpy
 matplotlib
 networkx
+starfish

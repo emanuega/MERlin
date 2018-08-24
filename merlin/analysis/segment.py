@@ -4,7 +4,7 @@ from scipy.ndimage import morphology
 from starfish.image._segmentation import watershed
 from starfish import stats
 
-from merfish_code.core import analysistask
+from merlin.core import analysistask
 
 class SegmentCells(analysistask.ParallelAnalysisTask):
 

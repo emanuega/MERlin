@@ -3,19 +3,19 @@ dataName = '180710_HAECs_NoFlow_HAEC2\sample1'
 dataOrganization = 'Culture_16bits'
 codebook = 'HAEC1E1'
 
-from merfish_code.core import dataset
-from merfish_code.core import executor
-from merfish_code.analysis import warp
-from merfish_code.analysis import preprocess
-from merfish_code.analysis import optimize
-from merfish_code.analysis import decode
-from merfish_code.analysis import globalalign
-from merfish_code.analysis import generatemosaic
-from merfish_code.analysis import plotperformance
-from merfish_code.analysis import filterbarcodes
+from merlin.core import dataset
+from merlin.core import executor
+from merlin.analysis import warp
+from merlin.analysis import preprocess
+from merlin.analysis import optimize
+from merlin.analysis import decode
+from merlin.analysis import globalalign
+from merlin.analysis import generatemosaic
+from merlin.analysis import plotperformance
+from merlin.analysis import filterbarcodes
 
 import json
-from merfish_code.core import scheduler
+from merlin.core import scheduler
 
 dSet = dataset.MERFISHDataSet(
         dataName, 

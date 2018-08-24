@@ -10,7 +10,7 @@ import storm_analysis.sa_library.parameters as parameters
 import storm_analysis.daostorm_3d.mufit_analysis as mfit
 import storm_analysis.sa_library.sa_h5py as saH5Py
 
-from merfish_code.core import analysistask
+from merlin.core import analysistask
 
 class Warp(analysistask.ParallelAnalysisTask):
 

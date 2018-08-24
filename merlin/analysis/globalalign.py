@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import numpy as np
 
-from merfish_code.core import analysistask
+from merlin.core import analysistask
 
 class GlobalAlignment(analysistask.AnalysisTask):
 

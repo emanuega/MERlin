@@ -19,7 +19,7 @@ class Scheduler():
         analysisTasks = {} 
         for tDict in self.parameters['analysis_tasks']:
             analysisModule = importlib.import_module(
-                    'merfish_code.analysis.' + tDict['module'])
+                    'merlin.analysis.' + tDict['module'])
             analysisClass = getattr(analysisModule, tDict['task'])
             analysisParameters = tDict.get('parameters')
             analysisName = tDict.get('analysis_name')

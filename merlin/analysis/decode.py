@@ -3,10 +3,10 @@ import cv2
 import pandas
 from skimage import measure
 
-from merfish_code.core import analysistask
-from merfish_code.util import decoding
-from merfish_code.util import binary
-from merfish_code.util import barcodedb
+from merlin.core import analysistask
+from merlin.util import decoding
+from merlin.util import binary
+from merlin.util import barcodedb
 
 
 class Decode(analysistask.ParallelAnalysisTask):

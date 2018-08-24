@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 plt.style.use('./ext/default.mplstyle')
 import numpy as np
 
-from merfish_code.core import analysistask
+from merlin.core import analysistask
 
 class PlotPerformance(analysistask.AnalysisTask):
 

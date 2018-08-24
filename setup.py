@@ -19,7 +19,7 @@ dependency_links = [\
         'git+https://github.com/spacetx/starfish.git@master#egg=startfish-0']
 
 setuptools.setup(
-    name="merfish",
+    name="merlin",
     version="0.0.1",
     description="Pipelines and pipeline components for the analysis of image-based transcriptomics data",
     author="George Emanuel",
@@ -29,7 +29,7 @@ setuptools.setup(
     install_requires=install_requires,
     dependency_links=dependency_links,
     entry_points={
-        'console_scripts': "merfish=merfish_code.merfish_code:merfish"
+        'console_scripts': "merlin=merlin.merlin:merlin"
     },
     classifiers=CLASSIFIERS
 )

@@ -1,8 +1,8 @@
 import argparse
 import cProfile
 
-from merfish_code.core import dataset
-from merfish_code.core import scheduler
+from merlin.core import dataset
+from merlin.core import scheduler
 
 def build_parser():
     parser = argparse.ArgumentParser()
@@ -18,8 +18,8 @@ def build_parser():
     return parser
 
 
-def merfish():
-    print('MERFISH decoding software')
+def merlin():
+    print('MERlin - MERFISH decoding software')
     parser = build_parser()
     args, argv = parser.parse_known_args()
 

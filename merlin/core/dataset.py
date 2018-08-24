@@ -14,7 +14,7 @@ import importlib
 import time
 
 from storm_analysis.sa_library import datareader
-from merfish_code.core import analysistask
+from merlin.core import analysistask
 
 
 class DataSet(object):

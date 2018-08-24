@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from merfish_code.core import analysistask
+from merlin.core import analysistask
 
 class GenerateMosaic(analysistask.AnalysisTask):
 

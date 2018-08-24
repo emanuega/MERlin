@@ -9,8 +9,8 @@ from skimage import measure
 from sklearn import preprocessing
 import cv2
 
-from merfish_code.core import analysistask
-from merfish_code.util import decoding
+from merlin.core import analysistask
+from merlin.util import decoding
 
 
 class Optimize(analysistask.AnalysisTask):

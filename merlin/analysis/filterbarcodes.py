@@ -1,6 +1,6 @@
 
-from merfish_code.core import analysistask
-from merfish_code.util import barcodedb
+from merlin.core import analysistask
+from merlin.util import barcodedb
 
 class FilterBarcodes(analysistask.AnalysisTask):
 

@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 
-from merfish_code.core import analysistask
+from merlin.core import analysistask
 
 class Preprocess(analysistask.ParallelAnalysisTask):
 

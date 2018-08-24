@@ -33,7 +33,8 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         return 5
 
     def get_dependencies(self):
-        return [self.parameters['warp_task']]
+        return [self.parameters['warp_task'], \
+                self.parameters['global_align_task']]
 
 
     def _label_to_regions(self, inputImage):
@@ -48,13 +49,49 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
                     cv2.CHAIN_APPROX_TC89_KCOS)
             return contours
 
-        return [extract_contours(inputImage, i)[0] for i in uniqueLabels]
+        return np.array(
+                [np.array([x[0] for x in extract_contours(inputImage, i)[0]]) \
+                for i in uniqueLabels])
+
+    def _transform_contours(self, contours, transform):
+        '''Transforms the coordinates in the contours based on the 
+        provided transformation.
+
+        Args:
+            contours - a n x 2 numpy array specifying the coordinates of the n
+                points in the contour
+            transform - a 3 x 3 numpy array specifying the transformation 
+                matrix
+        '''
+        reshapedContours = np.reshape(contours, 
+                (1, contours.shape[0], 2)).astype(np.float)
+        transformedContours = cv2.transform(
+                reshapedContours, transform)[0,:,:2]
+
+        return transformedContours
+
+
+    def get_cell_boundaries(self):
+        boundaryList = []
+        for f in self.dataSet.get_fovs():
+            currentBoundaries = self.dataSet.load_analysis_result(
+                    'cell_boundaries', 'SegmentCells', resultIndex=f)
+            boundaryList += [x for x in currentBoundaries]
+
+        return boundaryList
+
+
 
     def run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
+        globalTask = self.dataSet.load_analysis_task(
+                self.parameters['global_align_task'])
 
         #TODO - extend to 3D
+        #TODO - this does not do well with image boundaries. Cell 
+        #boundaries are not traced past the edge of the field of 
+        #view 
         nucleusImage = cv2.GaussianBlur(warpTask.get_aligned_image(
                 fragmentIndex, self.nucleusIndex, 0),
                 (int(35), int(35)), 8)
@@ -66,4 +103,12 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         labels = w.segment(
                 self.nucleusThreshold, self.cellThreshold, [10, 100000])
 
-        return cellImage, self._label_to_regions(labels)
+        cellContours = self._label_to_regions(labels)
+        transformation = globalTask.fov_to_global_transform(fragmentIndex)
+        transformedContours = np.array(
+                [self._transform_contours(x, transformation) \
+                for x in cellContours])
+
+        self.dataSet.save_analysis_result(
+                transformedContours, 'cell_boundaries',
+                self.get_analysis_name(), resultIndex=fragmentIndex)

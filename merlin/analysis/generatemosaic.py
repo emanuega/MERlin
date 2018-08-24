@@ -33,7 +33,6 @@ class GenerateMosaic(analysistask.AnalysisTask):
         return tuple([int((c-e)/self.mosaicMicronsPerPixel) \
                 for c,e in zip(micronCoordinates, self.micronExtents[:2])])
 
-
     def _micron_to_mosaic_transform(self):
         s = 1/self.mosaicMicronsPerPixel
         return np.float32(
@@ -68,7 +67,9 @@ class GenerateMosaic(analysistask.AnalysisTask):
                 self, 'mosaic') as outputTif:
             for d in self.dataSet.get_data_channels():
                 for z in range(len(self.dataSet.get_z_positions())):
-                    mosaic = np.zeros(np.flip(self.mosaicDimensions,axis=0), dtype=np.uint16)
+                    mosaic = np.zeros(
+                            np.flip(
+                                self.mosaicDimensions,axis=0), dtype=np.uint16)
                     for f in self.dataSet.get_fovs():
                         inputImage = self.warpTask.get_aligned_image(f, d, z)
                         transformedImage = self._transform_image_to_mosaic(

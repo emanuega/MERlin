@@ -10,3 +10,5 @@ numpy
 matplotlib
 networkx
 starfish
+rtree
+shapely

@@ -39,7 +39,11 @@ A csv file containing a list of positions is expected either in the raw data dir
 
 ### Prerequisites
 
-This requires 
+The dependent package rtree is not properly installed by pip. It should be installed using:
+
+```
+conda install rtree
+```
 
 ### Installing
 

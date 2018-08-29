@@ -1,5 +1,6 @@
 import argparse
 import cProfile
+import dotenv
 
 from merlin.core import dataset
 from merlin.core import scheduler
@@ -22,6 +23,7 @@ def merlin():
     print('MERlin - MERFISH decoding software')
     parser = build_parser()
     args, argv = parser.parse_known_args()
+    dotenv.load_dotenv(dotenv.find_dotenv())
 
     if args.profile:
         profiler = cProfile.Profile()
@@ -31,8 +33,10 @@ def merlin():
             dataOrganizationName=args.data_organization,
             codebookName=args.codebook)
 
+    parametersHome = os.environ.get('PARAMETERS_HOME')
     with open(args.analysis_parameters, 'r') as f:
-        s = scheduler.Scheduler(dataSet, json.load(f))
+        s = scheduler.Scheduler(
+                dataSet, json.load(os.sep.join([parametersHome, f])))
 
     s.run()
 

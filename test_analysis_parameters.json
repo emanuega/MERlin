@@ -62,6 +62,13 @@
                 "warp_task": "FiducialCorrelationWarp",
                 "global_align_task": "SimpleGlobalAlignment"
             }
+        },
+        {
+            "task": "CleanCellSegmentation",
+            "module": "segment",
+            "parameters": {
+                "segment_task": "SegmentCells"
+            }
         }
     ]
 

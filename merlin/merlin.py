@@ -43,5 +43,5 @@ def merlin():
             [parametersHome, args.analysis_parameters]), 'r') as f:
         s = scheduler.Scheduler(dataSet, e, json.load(f))
 
-    s.run()
+    s.start()
 

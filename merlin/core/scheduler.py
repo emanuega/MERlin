@@ -1,6 +1,7 @@
 import json
 import importlib
 import networkx
+import time
 from . import analysistask
 
 class Scheduler():
@@ -14,6 +15,7 @@ class Scheduler():
         self.dependencyGraph = self._parse_dependency_graph()
 
         self.tasksStarted = []
+        self.tasksCompleted = []
 
     def _parse_parameters(self):
         analysisTasks = {} 
@@ -43,14 +45,34 @@ class Scheduler():
                     graph.add_edge(task.get_analysis_name(), r)
         return graph
 
-    def _on_done(self, result):
-        self.run()
-
     def _start_task(self, taskName):
         self.tasksStarted.append(taskName)
-        self.executor.run(self.analysisTasks[taskName], callback=self._on_done)
+        self.executor.run(self.analysisTasks[taskName])
 
-    def run(self):
+    def start(self):
+        self._run_ready_tasks()
+        self._begin_master_loop()
+
+    def _begin_master_loop(self, waitTime=30):
+        while not self._check_status():
+            time.sleep(waitTime)
+
+    def _check_status(self):
+        statusChanged = False
+        for a in self.tasksStarted:
+            if self.analysisTasks[a].is_complete():
+                self.tasksStarted.remove(a)
+                self.tasksCompleted.append(a)
+                statusChanged = True
+                print('Completed ' + a)
+        if statusChanged:
+            self._run_ready_tasks()
+
+        if not statusChanged and not self.tasksStarted:
+            return True
+        return False
+
+    def _run_ready_tasks(self):
         tasksComplete = {k: a for k,a in self.analysisTasks.items() \
                 if a.is_complete()}
         tasksWaiting = {k: a for k,a in self.analysisTasks.items() \

@@ -65,8 +65,11 @@ pip install --process-dependency-links -e merlin
 
 ## Usage
 
-## Running the tests
+After installation, MERlin can be run from the command line, for example:
 
+merlin -d test_data -a test_analysis_parameters.json -o Culture_16bits -c HAEC1E1
+
+## Running the tests
 
 ## Built With
 

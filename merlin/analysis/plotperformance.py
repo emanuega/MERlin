@@ -1,5 +1,9 @@
 from matplotlib import pyplot as plt
-plt.style.use('./ext/default.mplstyle')
+import merlin
+import os
+plt.style.use(
+        os.sep.join([os.path.dirname(merlin.__file__), 
+            'ext', 'default.mplstyle']))
 import numpy as np
 
 from merlin.core import analysistask

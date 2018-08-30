@@ -1,9 +1,12 @@
 import argparse
 import cProfile
 import dotenv
+import os
+import json
 
 from merlin.core import dataset
 from merlin.core import scheduler
+from merlin.core import executor
 
 def build_parser():
     parser = argparse.ArgumentParser()
@@ -12,9 +15,9 @@ def build_parser():
             help='enable profiling')
 
     parser.add_argument('-d', '--data-set', required=True)
+    parser.add_argument('-a', '--analysis-parameters', required=True)
     parser.add_argument('-o', '--data-organization')
     parser.add_argument('-c', '--codebook')
-    parser.add_argument('-a', '--analysis-parameters')
 
     return parser
 
@@ -34,9 +37,11 @@ def merlin():
             codebookName=args.codebook)
 
     parametersHome = os.environ.get('PARAMETERS_HOME')
-    with open(args.analysis_parameters, 'r') as f:
-        s = scheduler.Scheduler(
-                dataSet, json.load(os.sep.join([parametersHome, f])))
+
+    e = executor.LocalExecutor()
+    with open(os.sep.join(
+            [parametersHome, args.analysis_parameters]), 'r') as f:
+        s = scheduler.Scheduler(dataSet, e, json.load(f))
 
     s.run()
 

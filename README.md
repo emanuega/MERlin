@@ -11,16 +11,18 @@ To set the default analysis directories, the following variables should be defin
 - CODEBOOK\_HOME - The path of the directory where codebooks can be found.
 - DATA\_ORGANIZATION\_HOME - The path of the directory where data organization files can be found.
 - POSITION\_HOME - The path of the directory where position files can be found.
+- PARAMETERS\_HOME - The path to the directory where analysis parameters can be found.
 
 The contents of an example .env file are below:
 
 
 ```python
-DATA_HOME=//10.245.74.90/data/flow_differentiation
+DATA_HOME=D:/data
 ANALYSIS_HOME=D:/analysis
 CODEBOOK_HOME=D:/merfish-parameters/codebooks
 DATA_ORGANIZATION_HOME=D:/merfish-parameters/dataorganization
 POSITION_HOME=D:/merfish-parameters/positions
+PARAMETERS_HOME=D:/merfish-paramters/analysis_parameters
 ```
 
 # Data format specifications

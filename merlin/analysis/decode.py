@@ -29,25 +29,35 @@ class Decode(analysistask.ParallelAnalysisTask):
         return 5
 
     def get_dependencies(self):
-        return [self.parameters['preprocess_task'], \
+        dependencies = [self.parameters['preprocess_task'], \
                 self.parameters['optimize_task'], \
                 self.parameters['global_align_task']]
+
+        if 'segment_task' in self.parameters:
+            dependencies += [self.parameters['segment_task']]
+
+        return dependencies
 
     def run_analysis(self, fragmentIndex):
         '''This function generates the barcodes for a fov and saves them to the 
         barcode database.
         '''
-        self.preprocessTask = self.dataSet.load_analysis_task(
+        preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
-        self.optimizeTask = self.dataSet.load_analysis_task(
+        optimizeTask = self.dataSet.load_analysis_task(
                 self.parameters['optimize_task'])
         self.globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
 
+        self.segmentTask = None
+        if 'segment_task' in self.parameters:
+            self.segmentTask = self.dataSet.load_analysis_task(
+                    self.parameters['segment_task'])
+
         decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
         imageSet = np.array(
-                self.preprocessTask.get_processed_image_set(fragmentIndex))
-        scaleFactors = self.optimizeTask.get_scale_factors()
+                preprocessTask.get_processed_image_set(fragmentIndex))
+        scaleFactors = optimizeTask.get_scale_factors()
         di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors)
         self._extract_and_save_barcodes(di, pm, npt, d, fragmentIndex)
 
@@ -83,7 +93,13 @@ class Decode(analysistask.ParallelAnalysisTask):
                     'z': 0.0, \
                     'global_x': globalCentroid[0], \
                     'global_y': globalCentroid[1], \
-                    'global_z': 0.0}
+                    'global_z': 0.0, \
+                    'cell_index': -1}
+
+        if self.segmentTask is not None:
+            outputDict['cell_index'] = self.segmentTask \
+                    .get_cell_containing_position(
+                            globalCentroid[0], globalCentroid[1])
 
         return outputDict
 

@@ -44,17 +44,7 @@ class BarcodeDB():
             of all pixels covered by the barcode weighted by the magnitude
             of eachc pixel
         global_x, global_y, global_z - the global x,y,z position of the barcode 
-
-        Removed: (I am not convinced this is a useful way to quantify the errors
-            in pixel-based decoding)
-        measured_barcode - the measureed, uncorrected binary word corresponding
-            to the barcode
-        is_exact - flag indicating if non errors were detected while reading
-            out the barcode
-        error_bit - the index of the bit where an error occured if the barcode
-            is not exact
-        error_direction - the direction of othe error. True corresponds to
-            a 0 to 1 error and false corresponds to a 1 to 0 error.
+        cell_index - the cell that contains this barcode
         '''
         columnInformation={'barcode': types.BigInteger(), \
                             'barcode_id': types.SmallInteger(), \
@@ -69,7 +59,8 @@ class BarcodeDB():
                             'z': types.Float(precision=32), \
                             'global_x': types.Float(precision=32), \
                             'global_y': types.Float(precision=32), \
-                            'global_z': types.Float(precision=32)}
+                            'global_z': types.Float(precision=32), \
+                            'cell_index': types.Integer()}
         return columnInformation
 
     def get_barcodes(self, columnList=None):

@@ -78,7 +78,6 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
 
         return transformedContours
 
-
     def get_cell_boundaries(self):
         boundaryList = []
         for f in self.dataSet.get_fovs():
@@ -87,8 +86,6 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
             boundaryList += [x for x in currentBoundaries]
 
         return boundaryList
-
-
 
     def run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(

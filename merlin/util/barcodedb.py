@@ -81,7 +81,7 @@ class BarcodeDB():
                         self._get_barcodeDB(), chunksize=chunksize)
 
     def get_barcode_intensities(self):
-        return self.get_barcode_information(
+        return self.get_barcodes(
                 ['mean_intensity'])['mean_intensity']
 
     def get_intensities_for_barcodes_with_area(self, area):

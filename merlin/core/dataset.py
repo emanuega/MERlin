@@ -478,6 +478,9 @@ class MERFISHDataSet(ImageDataSet):
         else:
             self.fileMap = pandas.read_csv(mapPath)
 
+    def get_codebook(self):
+        return self.codebook
+
     def _parse_list(self, inputString, dtype=float):
         return np.fromstring(inputString.strip('[]'), dtype=dtype, sep=',')
 

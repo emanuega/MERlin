@@ -23,6 +23,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         #TODO - move this definition to run_analysis()
         self.decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])
+        self.filterTask = self.dataSet.load_analysis_task(
+                self.parameters['filter_task'])
 
     def get_estimated_memory(self):
         return 30000
@@ -31,7 +33,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         return 30
 
     def get_dependencies(self):
-        return [self.parameters['decode_task']]
+        return [self.parameters['decode_task'], self.parameters['filter_task']]
 
     #TODO - the functions in this class have too much repeated code
     #TODO - for the following 4 plots, I can add a line indicating the
@@ -71,7 +73,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_distance_distribution')
 
     def _plot_barcode_intensity_area_violin(self):
-        barcodeDB = self.decodeTask.get_baroced_database()
+        barcodeDB = self.decodeTask.get_barcode_database()
         intensityData = [np.log10(
             barcodeDB.get_intensities_for_barcodes_with_area(x)) \
                     for x in range(1,15)]
@@ -82,6 +84,16 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.title('Intensity distribution by barcode area')
         plt.tight_layout(pad=0.2)
         self.dataSet.save_figure(self, fig, 'barcode_intensity_area_violin')
+
+    def _plot_blank_distribution(self):
+        pass
+
+    def _plot_matched_barcode_distribution(self):
+        pass
+
+    def _plot_barcode_abundances(self):
+        pass
+    
 
     def run_analysis(self):
         self._plot_barcode_intensity_distribution()

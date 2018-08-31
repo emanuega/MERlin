@@ -19,7 +19,6 @@ class LocalExecutor(Executor):
         super().__init__()
 
     def run(self, task, callback=None):
-        print('Starting ' + task.get_analysis_name())
         if isinstance(task, analysistask.ParallelAnalysisTask):
             pool = multiprocessing.Pool(
                     processes=int(multiprocessing.cpu_count()*0.7))

@@ -12,6 +12,7 @@ import fnmatch
 import tifffile
 import importlib
 import time
+import logging
 
 from storm_analysis.sa_library import datareader
 from merlin.core import analysistask
@@ -150,6 +151,10 @@ class DataSet(object):
     def get_task_subdirectory(self, analysisTask):
         return self.get_analysis_subdirectory(
                 analysisTask, subdirectory='tasks')
+
+    def get_log_subdirectory(self, analysisTask):
+        return self.get_analysis_subdirectory(
+                analysisTask, subdirectory='log')
         
     def save_analysis_task(self, analysisTask):
         saveName = os.sep.join([self.get_task_subdirectory(
@@ -168,24 +173,68 @@ class DataSet(object):
             analysisTask = getattr(analysisModule, parameters['class'])
             return analysisTask(self, parameters, analysisTaskName)
             
+    def get_logger(self, analysisTask, fragmentIndex=None):
+        loggerName = analysisTask.get_analysis_name()
+        if fragmentIndex is not None:
+            loggerName += '.' + str(fragmentIndex)
+
+        logger = logging.getLogger(loggerName)
+        logger.setLevel(logging.DEBUG)
+        fileHandler = logging.FileHandler(
+                self._log_path(analysisTask, fragmentIndex))
+        fileHandler.setLevel(logging.DEBUG)
+
+        formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fileHandler.setFormatter(formatter)
+        logger.addHandler(fileHandler)
+
+        return logger
+
+    def _log_path(self, analysisTask, fragmentIndex=None):
+        logName = analysisTask.get_analysis_name()
+        if fragmentIndex is not None:
+            logName += '_' + str(fragmentIndex)
+        logName += '.log'
+
+        return os.sep.join([self.get_log_subdirectory(analysisTask), logName])
+
+    def _analysis_status_file(self, analysisTask, eventName, 
+            fragmentIndex=None):
+        if fragmentIndex is None:
+            fileName = analysisTask.get_analysis_name() + '.' + eventName
+        else:
+            fileName = analysisTask.get_analysis_name() + \
+                    '_' + str(fragmentIndex) + '.' + eventName
+        return os.sep.join([self.get_task_subdirectory(analysisTask), \
+                fileName])
+
+    def record_analysis_started(self, analysisTask, fragmentIndex=None):
+        self._record_analysis_event(analysisTask, 'start', fragmentIndex)
+
     def record_analysis_running(self, analysisTask, fragmentIndex=None):
         self._record_analysis_event(analysisTask, 'run', fragmentIndex)
 
     def record_analysis_complete(self, analysisTask, fragmentIndex=None):
         self._record_analysis_event(analysisTask, 'done', fragmentIndex)
 
+    def record_analysis_error(self, analysisTask, fragmentIndex=None):
+        self._record_analysis_event(analysisTask, 'error', fragmentIndex)
+
     def _record_analysis_event(
             self, analysisTask, eventName, fragmentIndex=None):    
-        if fragmentIndex is None:
-            fileName = analysisTask.get_analysis_name() + '.' + eventName
-        else:
-            fileName = analysisTask.get_analysis_name() + \
-                    '_' + str(fragmentIndex) + '.' + eventName
-
-        fullName = os.sep.join([self.get_task_subdirectory(
-            analysisTask), fileName])
-        with open(fullName, 'w') as f:
+        fileName = self._analysis_status_file(
+                analysisTask, eventName, fragmentIndex)
+        with open(fileName, 'w') as f:
             f.write('%s' %time.time())
+
+    def is_analysis_idle(self, analysisTask, fragmentIndex=None):
+        fileName = self._analysis_status_file(
+                analysisTask, 'run', fragmentIndex)
+        return time.time() - os.path.getmtime(fileName) > 120
+
+    def check_analysis_started(self, analysisTask, fragmentIndex=None):
+        return self._check_analysis_event(analysisTask, 'start', fragmentIndex)
 
     def check_analysis_running(self, analysisTask, fragmentIndex=None):
         return self._check_analysis_event(analysisTask, 'run', fragmentIndex)
@@ -193,21 +242,18 @@ class DataSet(object):
     def check_analysis_done(self, analysisTask, fragmentIndex=None):
         return self._check_analysis_event(analysisTask, 'done', fragmentIndex)
 
+    def check_analysis_error(self, analysisTask, fragmentIndex=None):
+        return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
+
     def _check_analysis_event(
             self, analysisTask, eventName, fragmentIndex=None):
-        if fragmentIndex is None:
-            fileName = analysisTask.get_analysis_name() + '.' + eventName
-        else:
-            fileName = analysisTask.get_analysis_name() + \
-                    '_' + str(fragmentIndex) + '.' + eventName
-    
-        fullName = os.sep.join([self.get_task_subdirectory(
-            analysisTask.get_analysis_name()), fileName])
-        return os.path.exists(fullName)
+        fileName = self._analysis_status_file(
+                analysisTask, eventName, fragmentIndex)
+        return os.path.exists(fileName)
 
     def get_database_engine(self, analysisTask=None):
         if analysisTask is None:
-            return sqlalchemy.create_engine('sqlite://' + \
+            return sqlalchemy.create_engine('sqlite:///' + \
                     os.sep.join([self.analysisPath, 'analysis_data.db']))
         else:
             return sqlalchemy.create_engine('sqlite:///' + \

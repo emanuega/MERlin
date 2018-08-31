@@ -2,6 +2,7 @@ import os
 import copy
 from abc import ABC, abstractmethod
 import time
+import threading
 
 import numpy as np
 
@@ -43,6 +44,8 @@ class AnalysisTask(ABC):
         self.parameters['module'] = type(self).__module__
         self.parameters['class'] = type(self).__name__
 
+    def save(self):
+        '''Save a copy of this AnalysisTask into the data set.'''
         self.dataSet.save_analysis_task(self)
 
     def run(self):
@@ -52,12 +55,36 @@ class AnalysisTask(ABC):
         that analysis is complete.
         '''
 
-        if self.is_complete() or self.is_running():
-            raise AnalysisAlreadyStartedException
+        logger = self.dataSet.get_logger(self)
+        logger.info('Beginning ' + self.get_analysis_name())
+
+        try:
+            if self.is_complete() or self.is_running():
+                raise AnalysisAlreadyStartedException
+
+            self.dataSet.record_analysis_started(self)
+            self._indicate_running()
+            self.run_analysis()
+            self.dataSet.record_analysis_complete(self)
+            logger.info('Completed ' + self.get_analysis_name())
+        except Exception as e:
+            logger.exception(e)
+            self.dataSet.record_analysis_error(self)
+
+
+    def _indicate_running(self):
+        '''A loop that regularly signals to the dataset that this analysis
+        task is still running successfully. 
+
+        Once this function is called, the dataset will be notified every 
+        minute that this analysis is still running until the analysis
+        completes.
+        '''
+        if self.is_complete() or self.is_error():
+            return
 
         self.dataSet.record_analysis_running(self)
-        self.run_analysis()
-        self.dataSet.record_analysis_complete(self)
+        threading.Timer(30, self._indicate_running).start()
 
     @abstractmethod
     def run_analysis(self):
@@ -107,6 +134,14 @@ class AnalysisTask(ABC):
         '''
         return self.parameters
 
+    def is_error(self):
+        '''Determines if an error has occured while running this analysis
+        
+        Returns:
+            True if the analysis is complete and otherwise False.
+        '''
+        return self.dataSet.check_analysis_error(self)
+
     def is_complete(self):
         '''Determines if this analysis has completed successfully
         
@@ -116,13 +151,23 @@ class AnalysisTask(ABC):
         return self.dataSet.check_analysis_done(self)
 
     def is_running(self):
-        '''Determines if this analysis is currently running
+        '''Determines if this analysis has started.
         
         Returns:
             True if the analysis is complete and otherwise False.
         '''
-        return self.dataSet.check_analysis_running(self) and not \
+        return self.dataSet.check_analysis_started(self) and not \
                 self.is_complete()
+
+    def is_idle(self):
+        '''Determines if this analysis task is expected to be running,
+        but has stopped for some reason.
+        '''
+        if not self.is_running():
+            return False
+
+        return self.dataSet.is_analysis_idle(self)
+
 
     def get_analysis_name(self):
         '''Get the name for this AnalysisTask.
@@ -153,16 +198,50 @@ class ParallelAnalysisTask(AnalysisTask):
             for i in range(self.fragment_count()):
                 self.run(i)
         else:
-            if self.is_complete(fragmentIndex) \
-                    or self.is_running(fragmentIndex):
-                raise AnalysisAlreadyStartedException    
-            self.dataSet.record_analysis_running(self, fragmentIndex)
-            self.run_analysis(fragmentIndex)
-            self.dataSet.record_analysis_complete(self, fragmentIndex) 
+            logger = self.dataSet.get_logger(self, fragmentIndex)
+            logger.info('Beginning ' + self.get_analysis_name())
+            try: 
+                if self.is_complete(fragmentIndex) \
+                        or self.is_running(fragmentIndex):
+                    raise AnalysisAlreadyStartedException    
+                self.dataSet.record_analysis_started(self, fragmentIndex)
+                self._indicate_running(fragmentIndex)
+                self.run_analysis(fragmentIndex)
+                self.dataSet.record_analysis_complete(self, fragmentIndex) 
+                logger.info('Completed ' + self.get_analysis_name())
+            except Exception as e:
+                logger.exception(e)
+                self.dataSet.record_analysis_error(self, fragmentIndex)
+
+
+    def _indicate_running(self, fragmentIndex):
+        '''A loop that regularly signals to the dataset that this analysis
+        task is still running successfully. 
+
+        Once this function is called, the dataset will be notified every 
+        minute that this analysis is still running until the analysis
+        completes.
+        '''
+        if self.is_complete(fragmentIndex) or self.is_error(fragmentIndex):
+            return
+
+        self.dataSet.record_analysis_running(self, fragmentIndex)
+        threading.Timer(30, self._indicate_running, [fragmentIndex]).start()
 
     @abstractmethod
     def run_analysis(self, fragmentIndex):
         pass
+
+    def is_error(self, fragmentIndex=None):
+        if fragmentIndex is None:
+            for i in range(self.fragment_count()):
+                if self.is_error(i):
+                    return True 
+
+            return False
+
+        else:
+            return self.dataSet.check_analysis_error(self, fragmentIndex)
 
     def is_complete(self, fragmentIndex=None):
         if fragmentIndex is None:
@@ -184,7 +263,11 @@ class ParallelAnalysisTask(AnalysisTask):
             return False
 
         else:
-            return self.dataSet.check_analysis_running(self, fragmentIndex) \
+            return self.dataSet.check_analysis_started(self, fragmentIndex) \
                     and not self.is_complete(fragmentIndex)
 
+    def is_idle(self, fragmentIndex=None):
+        if not self.is_running(fragmentIndex):
+            return False
 
+        return self.dataSet.is_analysis_idle(self, fragmentIndex)

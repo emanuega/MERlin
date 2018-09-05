@@ -100,6 +100,9 @@ class BarcodeDB():
         return self.get_barcodes(['mean_distance'])['mean_distance']
 
     def write_barcodes(self, barcodeInformation):
+        if len(barcodeInformation) < 0:
+            return
+
         columnInformation = self._get_bc_column_types()
     
         #TODO - the database needs to create a unique ID for each barcode

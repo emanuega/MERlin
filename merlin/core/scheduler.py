@@ -6,7 +6,7 @@ from . import analysistask
 
 class Scheduler():
 
-    def __init__(self, dataSet, executor, parameters, scheduleName=None):
+    def __init__(self, dataSet, executor, parameters, schedulerName=None):
         self.dataSet = dataSet
         self.parameters = parameters
         self.executor = executor
@@ -47,6 +47,7 @@ class Scheduler():
         return graph
 
     def _start_task(self, taskName):
+        print('Starting ' + taskName)
         self.tasksStarted.append(taskName)
         self.executor.run(self.analysisTasks[taskName])
 

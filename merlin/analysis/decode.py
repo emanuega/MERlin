@@ -18,6 +18,9 @@ class Decode(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        self.cropWidth = 100
+        #TODO - this parameter should be determined from the dataset
+        self.imageSize = [2048, 2048]
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -112,6 +115,12 @@ class Decode(analysistask.ParallelAnalysisTask):
                         i, decodedImage, pixelMagnitudes, pixelTraces, 
                         distances, fov))
 
+    def _position_within_crop(self, position):
+        return position[0] > self.cropWidth \
+                and position[1] > self.cropWidth \
+                and position[0] < self.imageSize[0] - self.cropWidth \
+                and position[1] < self.imageSize[1] - self.cropWidth
+
     def _extract_barcodes_with_index(
             self, barcodeIndex, decodedImage, pixelMagnitudes, 
             pixelTraces, distances, fov):
@@ -120,7 +129,7 @@ class Decode(analysistask.ParallelAnalysisTask):
                 measure.label(decodedImage == barcodeIndex),
                 intensity_image=pixelMagnitudes)
         dList = [self._bc_properties_to_dict(p, barcodeIndex, fov, distances) \
-                for p in properties]
+                for p in properties if self._position_within_crop(p.centroid)]
         barcodeInformation = pandas.DataFrame(dList)
 
         return barcodeInformation

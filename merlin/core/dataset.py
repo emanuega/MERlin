@@ -27,10 +27,10 @@ class DataSet(object):
         dotenv.load_dotenv(dotenvPath)
 
         if dataHome is None:
-            dataHome = os.environ.get('DATA_HOME')
+            dataHome = os.path.expanduser(os.environ.get('DATA_HOME'))
 
         if analysisHome is None:
-            analysisHome = os.environ.get('ANALYSIS_HOME')
+            analysisHome = os.path.expanduser(os.environ.get('ANALYSIS_HOME'))
 
         self.rawDataPath = os.sep.join([dataHome, dataDirectoryName])
         if not os.path.isdir(self.rawDataPath):
@@ -491,7 +491,8 @@ class MERFISHDataSet(ImageDataSet):
         return np.fromstring(inputString, dtype=int, sep=' ')
 
     def _import_codebook(self, codebookName):
-        sourcePath = os.sep.join([os.environ.get('CODEBOOK_HOME'), \
+        sourcePath = os.sep.join([os.path.expanduser(
+            os.environ.get('CODEBOOK_HOME')), \
                 codebookName + '_codebook.csv'])
         destPath = os.sep.join([self.analysisPath, 'codebook.csv'])
 
@@ -532,7 +533,8 @@ class MERFISHDataSet(ImageDataSet):
                 names=['X','Y'])
 
     def _import_positions(self, positionFileName):
-        sourcePath = os.sep.join([os.environ.get('POSITION_HOME'), \
+        sourcePath = os.sep.join([os.path.expanduser(
+            os.environ.get('POSITION_HOME')), \
                 positionFileName + '.csv'])
         destPath = os.sep.join([self.analysisPath, 'positions.csv'])
             
@@ -542,7 +544,8 @@ class MERFISHDataSet(ImageDataSet):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
 
     def _import_dataorganization(self, dataOrganizationName):
-        sourcePath = os.sep.join([os.environ.get('DATA_ORGANIZATION_HOME'), \
+        sourcePath = os.sep.join([os.path.expanduser(
+            os.environ.get('DATA_ORGANIZATION_HOME')), \
                 dataOrganizationName + '.csv'])
         destPath = os.sep.join([self.analysisPath, 'dataorganization.csv'])
             

@@ -37,7 +37,7 @@ def merlin():
             dataOrganizationName=args.data_organization,
             codebookName=args.codebook)
 
-    parametersHome = os.environ.get('PARAMETERS_HOME')
+    parametersHome = os.path.expanduser(os.environ.get('PARAMETERS_HOME'))
 
     e = executor.LocalExecutor(coreCount=args.core_count)
     with open(os.sep.join(

@@ -15,13 +15,17 @@ class Executor(object):
 
 class LocalExecutor(Executor):
 
-    def __init__(self):
+    def __init__(self, coreCount=None):
         super().__init__()
+
+        if coreCount is None:
+            self.coreCount = int(multiprocessing.cpu_count()*0.7)
+        else:
+            self.coreCount = coreCount
 
     def run(self, task, callback=None):
         if isinstance(task, analysistask.ParallelAnalysisTask):
-            pool = multiprocessing.Pool(
-                    processes=int(multiprocessing.cpu_count()*0.7))
+            pool = multiprocessing.Pool(processes=self.coreCount)
             pool.map_async(
                     task.run, range(task.fragment_count()),
                     callback=callback)

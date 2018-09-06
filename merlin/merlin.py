@@ -18,6 +18,7 @@ def build_parser():
     parser.add_argument('-a', '--analysis-parameters', required=True)
     parser.add_argument('-o', '--data-organization')
     parser.add_argument('-c', '--codebook')
+    parser.add_argument('-n', '--core-count', type=int)
 
     return parser
 
@@ -38,7 +39,7 @@ def merlin():
 
     parametersHome = os.environ.get('PARAMETERS_HOME')
 
-    e = executor.LocalExecutor()
+    e = executor.LocalExecutor(coreCount=args.core_count)
     with open(os.sep.join(
             [parametersHome, args.analysis_parameters]), 'r') as f:
         s = scheduler.Scheduler(dataSet, e, json.load(f))

@@ -240,14 +240,16 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
         for i, currentCell in enumerate(mergedCells):
             edgesFromCell = refinedComponents.edges(i)
 
-            cleanedCell = geometry.Polygon(currentCell)
-            for edge in edgesFromCell:
-                if edge[0] != edge[1] and cleanedCell is not None:
-                    if not mergedCells[edge[1]].within(cleanedCell):
-                        cleanedCell = self._clean_polygon(self._subtract_region(
-                                cleanedCell, mergedCells[edge[1]]))
-            if cleanedCell is not None:
-                cleanedCells.append(cleanedCell)
+            if currentCell.geom_type == 'Polygon': 
+                cleanedCell = geometry.Polygon(currentCell)
+                for edge in edgesFromCell:
+                    if edge[0] != edge[1] and cleanedCell is not None:
+                        if not mergedCells[edge[1]].within(cleanedCell):
+                            cleanedCell = self._clean_polygon(
+                                    self._subtract_region(
+                                    cleanedCell, mergedCells[edge[1]]))
+                if cleanedCell is not None:
+                    cleanedCells.append(cleanedCell)
 
         refinedBoundaries = np.array(
                 [np.array(x.exterior.coords) for x in cleanedCells])

@@ -60,7 +60,7 @@ python -m venv .venv
 This module can be install with pip:
 
 ```
-pip install --process-dependency-links -e merlin
+pip install --process-dependency-links -e MERlin
 ```
 
 ## Usage

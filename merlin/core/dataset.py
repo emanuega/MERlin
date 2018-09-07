@@ -109,6 +109,13 @@ class DataSet(object):
         return os.sep.join([self.get_analysis_subdirectory(
             analysisName, subdirectory), saveName])
 
+    def save_dataframe_to_csv(self, dataframe, resultName, analysisTask):
+        savePath = self._analysis_result_save_path(
+                resultName, analysisTask.get_analysis_name()) + '.csv'
+
+        with open(savePath, 'w') as f:
+            dataframe.to_csv(f)
+
     def save_analysis_result(self, analysisResult, resultName, 
             analysisName, resultIndex=None, subdirectory=None):
         #TODO - only implemented currently for ndarray

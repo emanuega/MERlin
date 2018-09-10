@@ -63,22 +63,49 @@ class BarcodeDB():
                             'cell_index': types.Integer()}
         return columnInformation
 
-    def get_barcodes(self, columnList=None):
+    def _aggregate_barcodes_from_iterator(self, barcodeIterator):
+        barcodeDF = pandas.DataFrame([])
+        for currentBarcodes in barcodeIterator:
+            barcodeDF = barcodeDF.append(currentBarcodes)
+
+        return barcodeDF
+
+    def get_barcodes(self, columnList=None, chunksize=None):
+        returnIterator = chunksize is not None
+        chunksize = chunksize or 100000
+        
+        #In order to prevent memory spikes that happen when pandas
+        #reads the whole database in at once, here it is read in 
+        #in smaller increments and aggregated.
         if columnList is None:
-            return pandas.read_sql_table(
-                    'barcode_information', self._get_barcodeDB())
+             barcodeIterator = pandas.read_sql_table(
+                    'barcode_information', self._get_barcodeDB(),
+                    chunksize=chunksize)
         else:
-            return pandas.read_sql_table('barcode_information', 
+            barcodeIterator = pandas.read_sql_table('barcode_information', 
                     self._get_barcodeDB(), 
-                    columns=columnList)
+                    columns=columnList, chunksize=chunksize)
+
+        if returnIterator:
+            return barcodeIterator
+        else:
+            return self._aggregate_barcodes_from_iterator(barcodeIterator)
 
     def get_filtered_barcodes(
             self, areaThreshold, intensityThreshold, chunksize=None):
-        return pandas.read_sql_query(
+        returnIterator = chunksize is not None
+        chunksize = chunksize or 100000
+
+        barcodeIterator = pandas.read_sql_query(
                 'select * from barcode_information ' \
                         + 'where area>=' + str(areaThreshold) \
                         + ' and mean_intensity>=' + str(intensityThreshold),
                         self._get_barcodeDB(), chunksize=chunksize)
+
+        if returnIterator:
+            return barcodeIterator
+        else:
+            return self._aggregate_barcodes_from_iterator(barcodeIterator)
 
     def get_barcode_intensities(self):
         return self.get_barcodes(

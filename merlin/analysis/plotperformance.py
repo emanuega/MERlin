@@ -4,6 +4,7 @@ import os
 plt.style.use(
         os.sep.join([os.path.dirname(merlin.__file__), 
             'ext', 'default.mplstyle']))
+import seaborn
 import numpy as np
 
 from merlin.core import analysistask
@@ -21,6 +22,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         super().__init__(dataSet, parameters, analysisName)
 
         #TODO - move this definition to run_analysis()
+        self.optimizeTask = self.dataSet.load_analysis_task(
+                self.parameters['optimize_task'])
         self.decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])
         self.filterTask = self.dataSet.load_analysis_task(
@@ -152,6 +155,22 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.title('Cell boundaries')
         self.dataSet.save_figure(self, fig, 'cell_boundaries')
 
+    def _plot_optimization_scale_factors(self):
+        fig = plt.figure(figsize=(5,5))
+        seaborn.heatmap(self.optimizeTask.get_scale_factor_history())
+        plt.xlabel('Bit index')
+        plt.ylabel('Iteration number')
+        plt.title('Scale factor optimization history')
+        self.dataSet.save_figure(self, fig, 'optimization_scale_factors')
+
+    def _plot_optimization_barcode_counts(self):
+        fig = plt.figure(figsize=(5,5))
+        seaborn.heatmap(self.optimizeTask.get_barcode_count_history())
+        plt.xlabel('Barcode index')
+        plt.ylabel('Iteration number')
+        plt.title('Barcode counts optimization history')
+        self.dataSet.save_figure(self, fig, 'optimization_barcode_counts')
+
     def _plot_barcode_abundances(self):
         pass
     
@@ -163,6 +182,9 @@ class PlotPerformance(analysistask.AnalysisTask):
         self._plot_blank_distribution()
         self._plot_matched_barcode_distribution()
         self._plot_cell_segmentation()
+        self._plot_optimization_scale_factors()
+        self._plot_optimization_barcode_counts()
+        #TODO _ analysis run times
         #TODO - barcode correlation plots
         #TODO - alignment error plots - need to save transformation information
         # first
@@ -171,5 +193,4 @@ class PlotPerformance(analysistask.AnalysisTask):
         #TODO - barcode intensity spatial distribution
         #TODO - abundance per barcode with blanks
         #TODO - confidence ratio per barcode with blanks
-        #TODO - optimization convergence
         #TODO - good barcodes/blanks per cell

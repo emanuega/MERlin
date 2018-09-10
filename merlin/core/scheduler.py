@@ -27,10 +27,10 @@ class Scheduler():
             analysisName = tDict.get('analysis_name')
             newTask = analysisClass(
                     self.dataSet, analysisParameters, analysisName)
-            newTask.save()
             if newTask.get_analysis_name() in analysisTasks:
                 raise Exception('Analysis tasks must have unique names. ' + \
                         newTask.get_analysis_name() + ' is redundant.')
+            newTask.save()
             analysisTasks[newTask.get_analysis_name()] = newTask
         return analysisTasks
 

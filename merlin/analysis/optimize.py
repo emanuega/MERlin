@@ -75,8 +75,9 @@ class Optimize(analysistask.AnalysisTask):
         '''Get the scale factors cached for each iteration of the optimization.
 
         Returns:
-            a one-dimensional numpy array where the i'th entry is the 
-            scale factor corresponding to the i'th bit.
+            a two-dimensional numpy array where the i,j'th entry is the 
+            scale factor corresponding to the i'th bit in the j'th 
+            iteration.
         '''
         return self.dataSet.load_analysis_result('scale_factors',
                 self.analysisName)

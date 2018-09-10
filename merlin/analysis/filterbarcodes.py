@@ -11,8 +11,8 @@ class FilterBarcodes(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.areaThreshold = 3
-        self.intensityThreshold = 200
+        self.areaThreshold = parameters.get('area_threshold', 3)
+        self.intensityThreshold = parameters.get('intensity_threshold', 200)
 
     def get_barcode_database(self):
         return barcodedb.BarcodeDB(self.dataSet, self)

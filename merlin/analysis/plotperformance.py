@@ -171,9 +171,36 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.title('Barcode counts optimization history')
         self.dataSet.save_figure(self, fig, 'optimization_barcode_counts')
 
-    def _plot_barcode_abundances(self):
-        pass
-    
+
+    def _plot_barcode_abundances(self, barcodes, outputName):
+        uniqueBarcodes = np.unique(barcodes['barcode_id'])
+        bcCounts = [len(barcodes[barcodes['barcode_id']==x]) \
+                for x in uniqueBarcodes]
+
+        codebook = self.dataSet.get_codebook()
+        blankIDs = codebook[codebook['name'].str.contains('Blank')]
+
+        sortedIndexes = np.argsort(bcCounts)[::-1]
+        fig = plt.figure(figsize=(12,5))
+        barList = plt.bar(np.arange(len(bcCounts)), 
+                height=np.log10([bcCounts[x] for x in sortedIndexes]), 
+                width=1, color=(0.2, 0.2, 0.2))
+        for x in blankIDs.index:
+            barList[sortedIndexes[x]].set_color('r')
+        plt.xlabel('Sorted barcode index')
+        plt.ylabel('Count (log10)')
+        plt.title('Abundances for coding (gray) and blank (red) barcodes')
+
+        self.dataSet.save_figure(self, fig, outputName)
+
+    def _plot_all_barcode_abundances(self):
+        bc = self.decodeTask.get_barcode_database().get_barcodes()
+        self._plot_barcode_abundances(bc, 'all_barcode_abundances')
+
+    def _plot_filtered_barcode_abundances(self):
+        bc = self.filterTask.get_barcode_database().get_barcodes()
+        self._plot_barcode_abundances(bc, 'flitered_barcode_abundances')
+
     def run_analysis(self):
         self._plot_barcode_intensity_distribution()
         self._plot_barcode_area_distribution()
@@ -184,6 +211,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         self._plot_cell_segmentation()
         self._plot_optimization_scale_factors()
         self._plot_optimization_barcode_counts()
+        self._plot_all_barcode_abundances()
+        self._plot_filtered_barcode_abundances()
         #TODO _ analysis run times
         #TODO - barcode correlation plots
         #TODO - alignment error plots - need to save transformation information
@@ -191,6 +220,4 @@ class PlotPerformance(analysistask.AnalysisTask):
         #TODO - barcode size spatial distribution
         #TODO - barcode distance spatial distribution
         #TODO - barcode intensity spatial distribution
-        #TODO - abundance per barcode with blanks
-        #TODO - confidence ratio per barcode with blanks
         #TODO - good barcodes/blanks per cell

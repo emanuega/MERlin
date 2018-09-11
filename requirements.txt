@@ -12,3 +12,4 @@ networkx
 starfish
 rtree
 shapely
+seaborn>0.8

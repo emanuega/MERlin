@@ -70,8 +70,8 @@ class DeconvolutionPreprocess(Preprocess):
                 self.parameters['warp_task'])
 
         imageDescription = self.dataSet._analysis_tiff_description(
-                len(self.dataSet.get_bit_names()),
-                len(self.dataSet.get_data_channels()))
+                len(self.dataSet.get_z_positions()),
+                len(self.dataSet.get_bit_names()))
 
         histogramBins = np.arange(0, np.iinfo(np.uint16).max, 1)
         pixelHistogram = np.zeros(

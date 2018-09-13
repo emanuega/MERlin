@@ -78,7 +78,9 @@ class Decode(analysistask.ParallelAnalysisTask):
     def _bc_properties_to_dict(
             self, properties, bcIndex, fov, distances):
         #TODO update for 3D
-        centroid = properties.centroid
+        #centroid is reversed since skimage regionprops returns the centroid
+        #as (r,c)
+        centroid = properties.centroid[::-1]
         globalCentroid = self.globalTask.fov_coordinates_to_global(
                 fov, centroid)
         d = [distances[x[0], x[1]] for x in properties.coords]

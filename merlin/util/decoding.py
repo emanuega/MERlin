@@ -55,7 +55,7 @@ class PixelBasedDecoder(object):
         if scaleFactors is None:
             scaleFactors = self.scaleFactors
 
-        filteredImages = np.array([cv2.GaussianBlur(x, (5, 5), 1) \
+        filteredImages = np.array([cv2.GaussianBlur(x[0][0], (5, 5), 1) \
                     for x in imageData])
         #For no z data
         pixelTraces = np.reshape(

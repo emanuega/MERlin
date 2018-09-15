@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import multiprocessing
+import threading
 
 from . import analysistask
 
@@ -31,8 +32,8 @@ class LocalExecutor(Executor):
                     callback=callback)
         elif isinstance(task, analysistask.InternallyParallelAnalysisTask):
             task.set_core_count(self.coreCount)
-            pool = multiprocessing.Pool(processes=1)
-            pool.apply_async(task.run, callback=callback)
+            thread = threading.Thread(target=task.run)
+            thread.start()
         else:
             pool = multiprocessing.Pool(processes=1)
             pool.apply_async(task.run, callback=callback)

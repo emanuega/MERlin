@@ -20,8 +20,16 @@ class Warp(analysistask.ParallelAnalysisTask):
     '''
 
     def get_transformation(self, fov, dataChannel):
-        #TODO - implement
-        pass
+        transformations = self.dataSet.load_analysis_result(
+                'offsets', self.get_analysis_name(), resultIndex=fov,
+                subdirectory='transformations')
+        return transformations[dataChannel]
+
+    def _save_transformations(self, transformationList, fov):
+        self.dataSet.save_analysis_result(
+                np.array(transformationList), 'offsets',
+                self.get_analysis_name(), resultIndex=fov,
+                subdirectory='transformations')
 
     def get_aligned_image_set(self, fov):
         return self.dataSet.get_analysis_image_set(
@@ -31,12 +39,6 @@ class Warp(analysistask.ParallelAnalysisTask):
         return self.dataSet.get_analysis_image(
                 self, 'aligned_images', fov, 
                 len(self.dataSet.get_z_positions()), dataChannel, zIndex)
-
-    def _save_transformations(self, transformationList, fov):
-        destPath = self.dataSet.get_analysis_subdirectory(
-                self.analysisName, subdirectory='transformations')
-        fileName = '_'.join(['tform', str(fov)])
-        #TODO - save
 
     def _process_transformations(self, transformationList, fov):
         '''

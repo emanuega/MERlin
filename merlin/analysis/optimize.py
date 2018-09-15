@@ -1,7 +1,7 @@
 import random
 import os
-
 import numpy as np
+import multiprocessing
 
 from skimage import morphology
 from skimage import feature
@@ -13,7 +13,7 @@ from merlin.core import analysistask
 from merlin.util import decoding
 
 
-class Optimize(analysistask.AnalysisTask):
+class Optimize(analysistask.InternallyParallelAnalysisTask):
 
     '''
     An analysis task for optimizing the parameters used for assigning barcodes
@@ -35,10 +35,10 @@ class Optimize(analysistask.AnalysisTask):
                 self.parameters['preprocess_task'])
 
     def get_estimated_memory(self):
-        return 2000
+        return 20000
 
     def get_estimated_time(self):
-        return 120
+        return 60 
 
     def get_dependencies(self):
         return [self.parameters['preprocess_task']]
@@ -47,11 +47,13 @@ class Optimize(analysistask.AnalysisTask):
         initialScaleFactors = np.ones(self.bitCount)
         scaleFactors = np.ones((self.iterationCount, self.bitCount))
         barcodeCounts = np.ones((self.iterationCount, self.barcodeCount))
+        pool = multiprocessing.Pool(processes=self.coreCount)
         for i in range(1,self.iterationCount):
             fovIndexes = random.sample(
                     list(self.dataSet.get_fovs()), self.fovPerIteration)
-            r = [self.extract_refactors_for_fov(f, scaleFactors[i-1,:]) \
-                    for f in fovIndexes]
+            self.currentScaleFactors = scaleFactors[i-1,:]
+            r = pool.map(self.extract_refactors_for_fov, fovIndexes)
+            print(r)
             scaleFactors[i,:] = scaleFactors[i-1,:]\
                     *np.mean([x[0] for x in r], axis=0)
             barcodeCounts[i,:] = np.mean([x[1] for x in r],axis=0)
@@ -83,16 +85,16 @@ class Optimize(analysistask.AnalysisTask):
                 self.analysisName)
 
     def get_barcode_count_history(self):
-        ''' Get the set of barcode counts for each iteration of the 
+        '''Get the set of barcode counts for each iteration of the 
         optimization.
         '''
         return self.dataSet.load_analysis_result('barcode_counts',
                 self.analysisName)
 
-    def extract_refactors_for_fov(self, fov, scaleFactors=None):
+    def extract_refactors_for_fov(self, fov):
         imageSet = np.array(self.preprocessTask.get_processed_image_set(fov))
         di, pm, npt, d = self.decoder.decode_pixels(
-                imageSet, scaleFactors=scaleFactors)
+                imageSet, scaleFactors=self.currentScaleFactors)
 
         sumPixelTraces = np.zeros((self.barcodeCount, self.bitCount))
         barcodesSeen = np.zeros(self.barcodeCount)

@@ -84,9 +84,8 @@ class Scheduler():
         tasksReady = {k: a for k,a in tasksWaiting.items() \
                 if all([a2 in tasksComplete for a2 in self.dependencyGraph[k]])}
 
-        parallelTaskRunning = any([isinstance(
-            a, analysistask.ParallelAnalysisTask) \
-                    for a in tasksRunning.values()])
+        parallelTaskRunning = any(
+                [a.is_parallel() for a in tasksRunning.values()])
 
         for k,a in tasksReady.items():
             if k not in self.tasksStarted:

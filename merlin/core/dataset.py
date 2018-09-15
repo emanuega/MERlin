@@ -269,7 +269,6 @@ class DataSet(object):
                                 'analysis_data.db']))
 
 
-
 class ImageDataSet(DataSet):
 
     def __init__(self, dataDirectoryName, 

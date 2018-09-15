@@ -29,7 +29,10 @@ class LocalExecutor(Executor):
             pool.map_async(
                     task.run, range(task.fragment_count()),
                     callback=callback)
-
+        elif isinstance(task, analysistask.InternallyParallelAnalysisTask):
+            task.set_core_count(self.coreCount)
+            pool = multiprocessing.Pool(processes=1)
+            pool.apply_async(task.run, callback=callback)
         else:
             pool = multiprocessing.Pool(processes=1)
             pool.apply_async(task.run, callback=callback)

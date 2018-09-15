@@ -3,6 +3,7 @@ import copy
 from abc import ABC, abstractmethod
 import time
 import threading
+import multiprocessing
 
 import numpy as np
 
@@ -177,6 +178,31 @@ class AnalysisTask(ABC):
         '''
         return self.analysisName
 
+    def is_parallel(self):
+        '''Determine if this analysis task uses multiple cores.'''
+        return False
+
+
+class InternallyParallelAnalysisTask(AnalysisTask):
+
+    '''
+    An abstract class for analysis that can only be run in one part,
+    but can internally be sped up using multiple processes. Subclasses
+    should implement the analysis to perform in te run_analysis() function.
+    '''
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+        self.coreCount = multiprocessing.cpu_count()
+
+    def set_core_count(coreCount):
+        '''Set the number of parallel processes this analysis task is 
+        allowed to use.
+        '''
+        self.coreCount = coreCount
+
+    def is_parallel(self):
+        return True 
 
 class ParallelAnalysisTask(AnalysisTask):
 
@@ -271,3 +297,6 @@ class ParallelAnalysisTask(AnalysisTask):
             return False
 
         return self.dataSet.is_analysis_idle(self, fragmentIndex)
+
+    def is_parallel(self):
+        return True

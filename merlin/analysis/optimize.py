@@ -53,7 +53,6 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
                     list(self.dataSet.get_fovs()), self.fovPerIteration)
             self.currentScaleFactors = scaleFactors[i-1,:]
             r = pool.map(self.extract_refactors_for_fov, fovIndexes)
-            print(r)
             scaleFactors[i,:] = scaleFactors[i-1,:]\
                     *np.mean([x[0] for x in r], axis=0)
             barcodeCounts[i,:] = np.mean([x[1] for x in r],axis=0)

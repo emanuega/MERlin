@@ -195,7 +195,7 @@ class InternallyParallelAnalysisTask(AnalysisTask):
         super().__init__(dataSet, parameters, analysisName)
         self.coreCount = multiprocessing.cpu_count()
 
-    def set_core_count(coreCount):
+    def set_core_count(self, coreCount):
         '''Set the number of parallel processes this analysis task is 
         allowed to use.
         '''

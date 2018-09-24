@@ -61,7 +61,7 @@ After installation, MERlin can be run from the command line with the input param
 ```
 merlin -d test_data -a test_analysis_parameters.json -o Culture_16bits -c HAEC1E1 -n 5
 ```
-
+Here the images are contained in the directory %DATA_HOME%\test_data\ and the analysis tasks listed in test_analysis_parameters.json are run with data organization Culture_16bits and codebook HAEC1E1 using 5 cores for each process. 
 ## Running the tests
 
 ## Built With

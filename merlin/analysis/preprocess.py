@@ -39,8 +39,8 @@ class DeconvolutionPreprocess(Preprocess):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.highPassSigma = 3
-        self.deconSigma = 2
+        self.highPassSigma = parameters.get('highpass_sigma', 3)
+        self.deconSigma = parameters.get('decon_sigma', 2)
         #TODO -  this should be based on a convergence measure
         self.deconIterations = 20
 

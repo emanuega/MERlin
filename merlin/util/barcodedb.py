@@ -91,6 +91,20 @@ class BarcodeDB():
         else:
             return self._aggregate_barcodes_from_iterator(barcodeIterator)
 
+    def get_barcodes_in_fov(self, fov, chunksize=None):
+        returnIterator = chunksize is not None
+        chunksize = chunksize or 1000000
+
+        barcodeIterator = pandas.read_sql_query(
+                'select * from barcode_information ' \
+                        + 'where fov=' + str(fov),
+                        self._get_barcodeDB(), chunksize=chunksize)
+
+        if returnIterator:
+            return barcodeIterator
+        else:
+            return self._aggregate_barcodes_from_iterator(barcodeIterator)
+
     def get_filtered_barcodes(
             self, areaThreshold, intensityThreshold, chunksize=None):
         returnIterator = chunksize is not None

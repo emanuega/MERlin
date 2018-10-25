@@ -65,7 +65,9 @@ Here the images are contained in the directory %DATA_HOME%\test_data\ and the an
 
 The MERlin analysis results can be explored using MERlinView. The analysis of the data set test_data can be explored with MERlinView from the command line as:
 
+```
 merlinview -d test_data
+```
 
 ## Analysis tasks
 

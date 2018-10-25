@@ -63,6 +63,10 @@ merlin -d test_data -a test_analysis_parameters.json -o Culture_16bits -c HAEC1E
 ```
 Here the images are contained in the directory %DATA_HOME%\test_data\ and the analysis tasks listed in test_analysis_parameters.json are run with data organization Culture_16bits and codebook HAEC1E1 using 5 cores for each process. 
 
+The MERlin analysis results can be explored using MERlinView. The analysis of the data set test_data can be explored with MERlinView from the command line as:
+
+merlinview -d test_data
+
 ## Analysis tasks
 
 ### warp.FiducialFitWarp

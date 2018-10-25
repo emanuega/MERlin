@@ -29,7 +29,8 @@ setuptools.setup(
     install_requires=install_requires,
     dependency_links=dependency_links,
     entry_points={
-        'console_scripts': "merlin=merlin.merlin:merlin"
+        'console_scripts': ["merlin=merlin.merlin:merlin",\
+                "merlinview=merlin.view.merlinview:merlin_view"]
     },
     classifiers=CLASSIFIERS
 )

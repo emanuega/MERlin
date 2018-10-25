@@ -1,4 +1,5 @@
 import pandas
+import sqlalchemy
 from sqlalchemy import types
 
 class BarcodeDB():
@@ -147,8 +148,18 @@ class BarcodeDB():
         columnInformation = self._get_bc_column_types()
     
         #TODO - the database needs to create a unique ID for each barcode
-        barcodeInformation.to_sql(
-                'barcode_information', self._get_barcodeDB(), chunksize=50,
-                dtype=columnInformation, index=False, if_exists='append')
+        written = False 
+        attempts = 0
+        while not written and attempts < 100:
+            try: 
+                barcodeInformation.to_sql(
+                        'barcode_information', self._get_barcodeDB(), 
+                        chunksize=50, dtype=columnInformation, index=False, 
+                        if_exists='append')
+                written = True
+            except sqlalchemy.exc.OperationalError:
+                attempts += 1
 
-
+        if not written:
+            raise sqlalchemy.exc.OperationalError('Failed to write barcodes',
+                    None, self)

@@ -80,7 +80,7 @@ class Decode(analysistask.ParallelAnalysisTask):
         #TODO update for 3D
         #centroid is reversed since skimage regionprops returns the centroid
         #as (r,c)
-        centroid = properties.centroid[::-1]
+        centroid = properties.weighted_centroid[::-1]
         globalCentroid = self.globalTask.fov_coordinates_to_global(
                 fov, centroid)
         d = [distances[x[0], x[1]] for x in properties.coords]

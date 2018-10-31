@@ -147,7 +147,6 @@ class FiducialFitWarp(Warp):
             for f in fiducialList:
                 f['y'] = self.dataSet.imageDimensions[1] - np.array(f['y'])
 
-        return fiducialList
 
     def load_fiducials(self, fov):
         fiducials = []
@@ -167,11 +166,15 @@ class FiducialFitWarp(Warp):
                     saH5Py.SAH5Py(outputName).getLocalizationsInFrame(
                         int(fiducialFrame)))
 
-        return self._transform_fiducials_for_image_orientation(fiducials)
+        self._transform_fiducials_for_image_orientation(fiducials)
 
-    def extract_coordinates(self, localizationSet):
-        return np.array(
-            [[x, y] for x,y in zip(localizationSet['x'], localizationSet['y'])])
+        return fiducials
+
+    def extract_coordinates(self, localizationSet, significanceThreshold=50):
+        return np.array([[x, y] for x,y,s \
+                    in zip(localizationSet['x'], localizationSet['y'],
+                        localizationSet['significance']) 
+                    if s>significanceThreshold])
 
     def extract_control_points(self, referencePoints, movingPoints):
         edgeSpacing = 0.5

@@ -10,7 +10,27 @@ This repository contains code for analyzing and decoding MERFISH images.
 
 ## Data organization
 
+The data organization file specifies which the images correspond to each readout. The data organization file is a csv file where each row designates one readout with a one row header. The information provided for each readout indicates where to find the corresponding images in the raw data and how to align the images between rounds.
+
+The columns in the data organization file are:
+
+- bitName - The name of the readout.
+- imageType - The base name for the image file that contains the images for this readout, for example ```Conventional_750_650_561_488_405```
+- imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are imageType, fov, and imagingRound, for example: ```(?P<imageType>[\w|-]+)_(?P<fov>[0-9]+)_(?P<imagingRound>[0-9]+)```
+- bitNumber - The bit number corresponding to this readout.
+- imagingRound - The round of imaging where this readout is measured, starting from zero.
+- color - The illumination color that is used to measure this readout.
+- frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as ```[0, 1, 2, 3, 4, 5, 6]```
+- zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.
+- fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example ```Conventional_750_650_561_488_405```
+- fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as imageRegExp
+- fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.
+- fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.
+- fiducialColor - The illumination color that is used to measure the fiducials.
+
 ## Codebook
+
+The codebook specifies 
 
 ## Position list
 

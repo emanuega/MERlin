@@ -132,6 +132,23 @@ class FiducialFitWarp(Warp):
             else:
                 print(outputName + ' already exists')
 
+    def _transform_fiducials_for_image_orientation(self, fiducialList):
+        if self.dataSet.transpose:
+            for f in fiducialList:
+                oldX = f['x']
+                f['x'] = f['y']
+                f['y'] = oldX
+        
+        if self.dataSet.flipHorizontal:
+            for f in fiducialList:
+                f['x'] = self.dataSet.imageDimensions[0] - np.array(f['x'])
+
+        if self.dataSet.flipVertical:
+            for f in fiducialList:
+                f['y'] = self.dataSet.imageDimensions[1] - np.array(f['y'])
+
+        return fiducialList
+
     def load_fiducials(self, fov):
         fiducials = []
         for dataChannel in self.dataSet.get_data_channels():
@@ -150,7 +167,7 @@ class FiducialFitWarp(Warp):
                     saH5Py.SAH5Py(outputName).getLocalizationsInFrame(
                         int(fiducialFrame)))
 
-        return fiducials
+        return self._transform_fiducials_for_image_orientation(fiducials)
 
     def extract_coordinates(self, localizationSet):
         return np.array(

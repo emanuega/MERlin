@@ -86,12 +86,12 @@ class DeconvolutionPreprocess(Preprocess):
                             fragmentIndex, dataChannel, i)
                     filteredImage = inputImage.astype(float) \
                             - cv2.GaussianBlur(inputImage,
-                                (int(5*self.highPassSigma), \
-                                        int(5*self.highPassSigma)),
+                                (int(4*np.ceil(self.highPassSigma)+1), \
+                                        int(4*np.ceil(self.highPassSigma)+1)),
                                 self.highPassSigma).astype(float)
                     filteredImage[filteredImage < 0] = 0
                     deconvolvedImage = deconvolve_lr(
-                            filteredImage, self.deconSigma*4+1,
+                            filteredImage, int(np.ceil(self.deconSigma)*4+1),
                             self.deconSigma, self.deconIterations)\
                                     .astype(np.uint16)
                     

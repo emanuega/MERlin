@@ -95,9 +95,19 @@ merlinview -d test_data
 
 Description: Aligns image stacks by fitting fiducial spots.
 
+Parameters:
+* write_fiducial_images - Flag indicating whether the aligned fiducial images
+should be saved. These images are helpful for visually verifying the quality 
+of the image alignment.
+
 ### warp.FiducialCorrelationWarp
 
 Description: Aligns image stacks by maximizing the cross correlation between fiducial images. 
+
+Parameters:
+* write_fiducial_images - Flag indicating whether the aligned fiducial images
+should be saved. These images are helpful for visually verifying the quality 
+of the image alignment.
 
 ### preprocess.DecovolutionPreprocess
 

@@ -19,6 +19,12 @@ class Warp(analysistask.ParallelAnalysisTask):
     pixels align between images taken in different imaging rounds.
     '''
 
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        self.writeAlignedFiducialImages = self.parameters.get(
+                'write_fiducial_images', False)
+
     def get_transformation(self, fov, dataChannel):
         transformations = self.dataSet.load_analysis_result(
                 'offsets', self.get_analysis_name(), resultIndex=fov,
@@ -53,15 +59,15 @@ class Warp(analysistask.ParallelAnalysisTask):
             fov: The fov that is being transformed.
         '''
 
+        dataChannels = self.dataSet.get_data_channels()
+        zPositions = self.dataSet.get_z_positions()
         imageDescription = self.dataSet._analysis_tiff_description(
-                len(self.dataSet.get_z_positions()),
-                len(self.dataSet.get_data_channels()))
+                len(zPositions), len(dataChannels))
 
         with self.dataSet._writer_for_analysis_images(
                 self, 'aligned_images', fov) as outputTif:
-            for t,x in zip(
-                    transformationList, self.dataSet.get_data_channels()):
-                for z in self.dataSet.get_z_positions():
+            for t,x in zip(transformationList, dataChannels):
+                for z in zPositions:
                     inputImage = self.dataSet.get_raw_image(x, fov, z)
                     transformedImage = transform.warp(
                             inputImage, t, preserve_range=True) \
@@ -70,6 +76,25 @@ class Warp(analysistask.ParallelAnalysisTask):
                             transformedImage, 
                             photometric='MINISBLACK',
                             metadata=imageDescription)
+
+        if self.writeAlignedFiducialImages:
+
+            fiducialImageDescription = self.dataSet._analysis_tiff_description(
+                    1, len(dataChannels))
+
+            with self.dataSet._writer_for_analysis_images(
+                    self, 'aligned_fiducial_images', fov) as outputTif:
+                for t,x in zip(transformationList, dataChannels):
+                    inputImage = self.dataSet.get_fiducial_image(x, fov)
+                    transformedImage = transform.warp(
+                            inputImage, t, preserve_range=True) \
+                                    .astype(inputImage.dtype)
+                    outputTif.save(
+                            transformedImage, 
+                            photometric='MINISBLACK',
+                            metadata=imageDescription)
+
+
 
         self._save_transformations(transformationList, fov)
 

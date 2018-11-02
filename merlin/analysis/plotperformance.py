@@ -171,7 +171,6 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.title('Barcode counts optimization history')
         self.dataSet.save_figure(self, fig, 'optimization_barcode_counts')
 
-
     def _plot_barcode_abundances(self, barcodes, outputName):
         uniqueBarcodes = np.unique(barcodes['barcode_id'])
         bcCounts = [len(barcodes[barcodes['barcode_id']==x]) \
@@ -185,8 +184,9 @@ class PlotPerformance(analysistask.AnalysisTask):
         barList = plt.bar(np.arange(len(bcCounts)), 
                 height=np.log10([bcCounts[x] for x in sortedIndexes]), 
                 width=1, color=(0.2, 0.2, 0.2))
-        for x in blankIDs.index:
-            barList[sortedIndexes[x]].set_color('r')
+        for i,x in enumerate(sortedIndexes):
+            if x in blankIDs.index):
+                barList[i].set_color('r')
         plt.xlabel('Sorted barcode index')
         plt.ylabel('Count (log10)')
         plt.title('Abundances for coding (gray) and blank (red) barcodes')

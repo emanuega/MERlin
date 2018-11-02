@@ -19,6 +19,7 @@ def build_parser():
     parser.add_argument('-o', '--data-organization')
     parser.add_argument('-c', '--codebook')
     parser.add_argument('-n', '--core-count', type=int)
+    parser.add_argument('-m', '--microscope-parameters')
 
     return parser
 
@@ -35,13 +36,16 @@ def merlin():
 
     dataSet = dataset.MERFISHDataSet(args.data_set, 
             dataOrganizationName=args.data_organization,
-            codebookName=args.codebook)
+            codebookName=args.codebook,
+            microscopeParametersName=args.microscope_parameters)
 
-    parametersHome = os.path.expanduser(os.environ.get('PARAMETERS_HOME'))
+    
+    parametersHome = os.path.expanduser(
+            os.environ.get('ANALYSIS_PARAMETERS_HOME'))
 
     e = executor.LocalExecutor(coreCount=args.core_count)
     with open(os.sep.join(
-            [parametersHome, args.analysis_parameters]), 'r') as f:
+            [parametersHome, args.analysis_parameters + '.json']), 'r') as f:
         s = scheduler.Scheduler(dataSet, e, json.load(f))
 
     s.start()

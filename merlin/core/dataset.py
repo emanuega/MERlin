@@ -271,13 +271,15 @@ class DataSet(object):
 
 class ImageDataSet(DataSet):
 
-    def __init__(self, dataDirectoryName, 
-            dataName=None, dataHome=None, analysisHome=None):
+    def __init__(self, dataDirectoryName, dataName=None, dataHome=None, 
+            analysisHome=None, microscopeParametersName=None):
         super().__init__(dataDirectoryName, dataName, dataHome, analysisHome)
 
-        self.flipHorizontal = True
-        self.flipVertical = False
-        self.transpose = True
+
+        if microscopeParametersName is not None:
+            self._import_microscope_parameters(microscopeParametersName)
+    
+        self._load_microscope_parameters()
 
     def get_image_file_names(self):
         return sorted(
@@ -297,14 +299,41 @@ class ImageDataSet(DataSet):
             imageIn = np.flip(imageIn, axis=0)
         return imageIn 
 
+    def _import_microscope_parameters(self, microscopeParametersName):
+        sourcePath = os.sep.join([os.path.expanduser(
+                os.environ.get('MICROSCOPE_PARAMETERS_HOME')),
+                microscopeParametersName + '.json'])
+        destPath = os.sep.join(
+                [self.analysisPath, 'microscope_parameters.json'])
+
+        shutil.copyfile(sourcePath, destPath) 
+
+    def _load_microscope_parameters(self): 
+        path = os.sep.join(
+                [self.analysisPath, 'microscope_parameters.json'])
+        
+        if os.path.exists(path):
+            with open(path) as inputFile:
+                self.microscopeParameters = json.load(inputFile)
+        else:
+            self.microscopeParameters = {}
+
+        self.flipHorizontal = self.microscopeParameters.get(
+            'flip_horizontal', True)
+        self.flipVertical = self.microscopeParameters.get(
+            'flip_vertical', False)
+        self.transpose = self.microscopeParameters.get('transpose', True)
+        self.micronsPerPixel = self.microscopeParameters.get(
+                'microns_per_pixel', 106)
 
 class MERFISHDataSet(ImageDataSet):
 
     def __init__(self, dataDirectoryName, codebookName=None, 
             dataOrganizationName=None, positionFileName=None,
             dataName=None, dataHome=None, analysisHome=None,
-            dataParameters=None):
-        super().__init__(dataDirectoryName, dataName, dataHome, analysisHome)
+            dataParameters=None, microscopeParametersName=None):
+        super().__init__(dataDirectoryName, dataName, dataHome, analysisHome, 
+                microscopeParametersName)
 
         if codebookName is not None:
             self._import_codebook(codebookName)
@@ -323,9 +352,7 @@ class MERFISHDataSet(ImageDataSet):
         #different components
 
         self.dataParameters = dataParameters
-        #TODO - this should be a parameter. It may be useful to load 
-        #microscope specific parameters
-        self.micronsPerPixel = 0.106
+        #TODO - This should not be hard coded
         self.imageDimensions = (2048, 2048)
 
     def get_bit_names(self):
@@ -413,6 +440,9 @@ class MERFISHDataSet(ImageDataSet):
         return(self.get_image_path(imageType, fov, imagingRound))
 
     def get_fiducial_frame(self, dataChannel):
+        '''Get the index of the frame containing the fiducial image
+        for the specified data channel.
+        '''
         return self.dataOrganization.loc[dataChannel, 'fiducialFrame']
 
     def get_raw_image(self, dataChannel, fov, zPosition):

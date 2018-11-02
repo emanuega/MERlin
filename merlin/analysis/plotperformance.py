@@ -185,7 +185,7 @@ class PlotPerformance(analysistask.AnalysisTask):
                 height=np.log10([bcCounts[x] for x in sortedIndexes]), 
                 width=1, color=(0.2, 0.2, 0.2))
         for i,x in enumerate(sortedIndexes):
-            if x in blankIDs.index):
+            if x in blankIDs.index:
                 barList[i].set_color('r')
         plt.xlabel('Sorted barcode index')
         plt.ylabel('Count (log10)')
@@ -217,7 +217,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         #TODO - barcode correlation plots
         #TODO - alignment error plots - need to save transformation information
         # first
-        #TODO - barcode size spatial distribution
-        #TODO - barcode distance spatial distribution
-        #TODO - barcode intensity spatial distribution
+        #TODO - barcode size spatial distribution global and FOV average
+        #TODO - barcode distance spatial distribution global and FOV average
+        #TODO - barcode intensity spatial distribution global and FOV average
         #TODO - good barcodes/blanks per cell

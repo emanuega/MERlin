@@ -39,8 +39,8 @@ class DeconvolutionPreprocess(Preprocess):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.highPassSigma = parameters.get('highpass_sigma', 3)
-        self.deconSigma = parameters.get('decon_sigma', 2)
+        self.highPassSigma = self.parameters.get('highpass_sigma', 3)
+        self.deconSigma = self.parameters.get('decon_sigma', 2)
         #TODO -  this should be based on a convergence measure
         self.deconIterations = 20
 
@@ -56,9 +56,15 @@ class DeconvolutionPreprocess(Preprocess):
     def get_dependencies(self):
         return [self.parameters['warp_task']]
 
-    def get_processed_image_set(self, fov):
-        return self.dataSet.get_analysis_image_set(
-                self, 'processed_image', fov)
+    def get_processed_image_set(self, fov, zIndex=None):
+        if zIndex is None:
+            return self.dataSet.get_analysis_image_set(
+                    self, 'processed_image', fov)
+        else:
+            return np.array([self.get_processed_image(fov,
+                self.dataSet.get_data_channel_for_bit(b), zIndex) \
+                        for b in self.dataSet.get_bit_names()])
+
 
     def get_processed_image(self, fov, dataChannel, zIndex):
         return self.dataSet.get_analysis_image(

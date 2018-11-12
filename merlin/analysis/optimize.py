@@ -35,7 +35,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
                 self.parameters['preprocess_task'])
 
     def get_estimated_memory(self):
-        return 20000
+        return 4000*self.coreCount
 
     def get_estimated_time(self):
         return 60 
@@ -51,8 +51,11 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         for i in range(1,self.iterationCount):
             fovIndexes = random.sample(
                     list(self.dataSet.get_fovs()), self.fovPerIteration)
+            zIndexes = random.sample(
+                    list(range(len(self.dataSet.get_z_positions()))),
+                    self.fovPerIteration)
             self.currentScaleFactors = scaleFactors[i-1,:]
-            r = pool.map(self.extract_refactors_for_fov, fovIndexes)
+            r = pool.starmap(self._extract_refactors, zip(fovIndexes, zIndexes))
             scaleFactors[i,:] = scaleFactors[i-1,:]\
                     *np.mean([x[0] for x in r], axis=0)
             barcodeCounts[i,:] = np.mean([x[1] for x in r],axis=0)
@@ -90,8 +93,9 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         return self.dataSet.load_analysis_result('barcode_counts',
                 self.analysisName)
 
-    def extract_refactors_for_fov(self, fov):
-        imageSet = np.array(self.preprocessTask.get_processed_image_set(fov))
+    def _extract_refactors(self, fov, zIndex):
+        imageSet = self.preprocessTask\
+                .get_processed_image_set(fov, zIndex=zIndex)
         di, pm, npt, d = self.decoder.decode_pixels(
                 imageSet, scaleFactors=self.currentScaleFactors)
 

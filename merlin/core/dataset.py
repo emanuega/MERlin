@@ -412,13 +412,19 @@ class MERFISHDataSet(ImageDataSet):
         return self.dataOrganization[\
                 self.dataOrganization['bitName'] == bitName].index.item()
 
+    def z_index_to_position(self, zIndex):
+        '''Get the z position associated with the provided z index.'''
+
+        return self.get_z_positions()[zIndex]
+
     def get_z_positions(self):
         '''Get the z positions present in this dataset.
 
         Returns:
             A sorted list of all unique z positions
         '''
-        return(sorted(np.unique([x for x in self.dataOrganization['zPos']])))
+        return(sorted(np.unique(
+            [y for x in self.dataOrganization['zPos'] for y in x])))
 
     def get_image_path(self, imageType, fov, imagingRound):
         selection = self.fileMap[(self.fileMap['imageType'] == imageType) & \
@@ -524,7 +530,7 @@ class MERFISHDataSet(ImageDataSet):
         return self._parse_list(inputString, dtype=int)
 
     def _parse_barcode_from_string(self, inputString):
-        return np.fromstring(inputString, dtype=int, sep=' ')
+        return np.array([int(x) for x in inputString if x is not ' '])
 
     def _import_codebook(self, codebookName):
         sourcePath = os.sep.join([os.path.expanduser(

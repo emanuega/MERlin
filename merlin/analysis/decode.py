@@ -73,11 +73,10 @@ class Decode(analysistask.ParallelAnalysisTask):
         return df
 
     def get_barcode_database(self):
-        return barcodedb.BarcodeDB(self.dataSet, self)
+        return barcodedb.SQLiteBarcodeDB(self.dataSet, self)
 
     def _bc_properties_to_dict(
             self, properties, bcIndex, fov, zIndex, distances):
-        #TODO update for 3D
         #centroid is reversed since skimage regionprops returns the centroid
         #as (r,c)
         centroid = properties.weighted_centroid[::-1]
@@ -116,7 +115,7 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.get_barcode_database().write_barcodes(
                     self._extract_barcodes_with_index(
                         i, decodedImage, pixelMagnitudes, pixelTraces, 
-                        distances, fov, zIndex))
+                        distances, fov, zIndex), fov=fov)
 
     def _position_within_crop(self, position):
         return position[0] > self.cropWidth \

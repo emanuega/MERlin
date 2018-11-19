@@ -15,7 +15,7 @@ class FilterBarcodes(analysistask.AnalysisTask):
         self.intensityThreshold = parameters.get('intensity_threshold', 200)
 
     def get_barcode_database(self):
-        return barcodedb.BarcodeDB(self.dataSet, self)
+        return barcodedb.SQLiteBarcodeDB(self.dataSet, self)
 
     def get_estimated_memory(self):
         return 1000
@@ -31,8 +31,9 @@ class FilterBarcodes(analysistask.AnalysisTask):
                 self.parameters['decode_task'])        
 
         barcodeDB = self.get_barcode_database()
-        for currentBC in self.decodeTask.get_barcode_database() \
-                .get_filtered_barcodes(
-                    self.areaThreshold, self.intensityThreshold, 
-                    chunksize=10000):
-            barcodeDB.write_barcodes(currentBC)
+        for fov in self.dataSet.get_fovs():
+            for currentBC in self.decodeTask.get_barcode_database() \
+                    .get_filtered_barcodes(
+                        self.areaThreshold, self.intensityThreshold, 
+                        fov=fov, chunksize=10000):
+                barcodeDB.write_barcodes(currentBC, fov=fov)

@@ -258,15 +258,24 @@ class DataSet(object):
                 analysisTask, eventName, fragmentIndex)
         return os.path.exists(fileName)
 
-    def get_database_engine(self, analysisTask=None):
+    def get_database_engine(self, analysisTask=None, index=None):
         if analysisTask is None:
             return sqlalchemy.create_engine('sqlite:///' + \
                     os.sep.join([self.analysisPath, 'analysis_data.db']))
         else:
-            return sqlalchemy.create_engine('sqlite:///' + \
-                    os.sep.join(
+            dbPath = os.sep.join(
                         [self.analysisPath, analysisTask.get_analysis_name(), \
-                                'analysis_data.db']))
+                                'db'])
+            os.makedirs(dbPath, exist_ok=True)
+
+            if index is None:
+                dbName = 'analysis_data.db'
+            else:
+                dbName = 'analysis_data' + str(index) + '.db'
+
+
+            return sqlalchemy.create_engine(os.sep.join(
+                        ['sqlite:///' + dbPath, dbName]))
 
 
 class ImageDataSet(DataSet):

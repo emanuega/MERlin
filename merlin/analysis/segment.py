@@ -28,6 +28,7 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         self.cellThreshold = parameters.get('cell_thershold', 0.08)
         self.nucleusIndex = parameters.get('nucleus_index', 17)
         self.cellIndex = parameters.get('cell_index', 16)
+        self.zIndex = parameters.get('z_index', 0)
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -98,10 +99,10 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         #boundaries are not traced past the edge of the field of 
         #view 
         nucleusImage = cv2.GaussianBlur(warpTask.get_aligned_image(
-                fragmentIndex, self.nucleusIndex, 0),
+                fragmentIndex, self.nucleusIndex, self.zIndex),
                 (int(35), int(35)), 8)
         cellImage = cv2.GaussianBlur(warpTask.get_aligned_image(
-                fragmentIndex, self.cellIndex, 0),
+                fragmentIndex, self.cellIndex, self.zIndex),
                 (int(35), int(35)), 8)
 
         w = watershed._WatershedSegmenter(nucleusImage, cellImage)

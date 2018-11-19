@@ -159,6 +159,7 @@ Parameters:
 * cell\_threshold - The relative intensity threshold for setting boundaries for the watershed.
 * nucleus\_index - The image index for the nucleus image.
 * cell\_index - The image index for the cell image.
+* z\_index - The z index of the nucleus and cell images to use for segmentation.
 
 ### segment.CleanCellSegmentation
 

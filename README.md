@@ -1,6 +1,6 @@
 # MERFISH Analysis Code
 
-This repository contains code for analyzing and decoding MERFISH images.
+This repository contains code for decoding and visualizing MERFISH datasets.
 
 ## Getting Started
 

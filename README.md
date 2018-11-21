@@ -55,22 +55,14 @@ A .env file is required to specify the search locations for the various input an
 
 - DATA\_HOME - The path of the root directory to the raw data.
 - ANALYSIS\_HOME - The path of the root directory where analysis results should be stored.
-- CODEBOOK\_HOME - The path of the directory where codebooks can be found.
-- DATA\_ORGANIZATION\_HOME - The path of the directory where data organization files can be found.
-- POSITION\_HOME - The path of the directory where position files can be found.
-- ANALYSIS\_PARAMETERS\_HOME - The path to the directory where analysis parameters can be found.
-- MICROSCOPE\_PARAMETERS\_HOME - The path to the directory where microscope parameters can be found.
+- PARAMETERS\_HOME - The path to the directory where the merfish-parameters directory resides.
 
 The contents of an example .env file are below:
 
 ```python
 DATA_HOME=D:/data
 ANALYSIS_HOME=D:/analysis
-CODEBOOK_HOME=D:/merfish-parameters/codebooks
-DATA_ORGANIZATION_HOME=D:/merfish-parameters/dataorganization
-POSITION_HOME=D:/merfish-parameters/positions
-ANALYSIS_PARAMETERS_HOME=D:/merfish-parameters/analysis_parameters
-MICROSCOPE_PARAMETERS_HOME=D:/merfish-parameters/microscope_parameters
+PARAMETERS_HOME=D:/merfish-parameters/analysis_parameters
 ```
 
 ## Installing prerequisites

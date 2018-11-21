@@ -4,6 +4,7 @@ import dotenv
 import os
 import json
 
+import merlin as m
 from merlin.core import dataset
 from merlin.core import scheduler
 from merlin.core import executor
@@ -40,8 +41,7 @@ def merlin():
             microscopeParametersName=args.microscope_parameters)
 
     
-    parametersHome = os.path.expanduser(
-            os.environ.get('ANALYSIS_PARAMETERS_HOME'))
+    parametersHome = m.ANALYSIS_PARAMETERS_HOME
 
     e = executor.LocalExecutor(coreCount=args.core_count)
     with open(os.sep.join(

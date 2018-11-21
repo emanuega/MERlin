@@ -24,7 +24,7 @@ class RegionViewWidget(QWidget):
         vSynchronize = ImageViewSynchronizer()
         imageData = self.warpTask.get_aligned_image_set(self.fov)
         imageCount = imageData.shape[0]
-        barcodes = self.barcodeDB.get_barcodes_in_fov(self.fov)
+        barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
 
         self.imageViews = [RegionImageViewWidget(imageData[i][0][0],
             vSynchronize, bitIndex=i, barcodes=barcodes) \
@@ -63,7 +63,7 @@ class RegionViewWidget(QWidget):
 
     def _update_fov_data(self):
         imageSet = self.warpTask.get_aligned_image_set(self.fov)
-        barcodes = self.barcodeDB.get_barcodes_in_fov(self.fov)
+        barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
         for i, iView in enumerate(self.imageViews):
             iView.set_data(imageSet[i][0][0], barcodes)
 

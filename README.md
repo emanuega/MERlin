@@ -1,6 +1,6 @@
 # MERFISH Analysis Code
 
-This repository contains code for analyzing and decoding MERFISH images.
+This repository contains code for decoding and visualizing MERFISH datasets.
 
 ## Getting Started
 
@@ -16,14 +16,14 @@ The columns in the data organization file are:
 
 - bitName - The name of the readout.
 - imageType - The base name for the image file that contains the images for this readout, for example ```Conventional_750_650_561_488_405```
-- imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are imageType, fov, and imagingRound, for example: ```(?P<imageType>[\w|-]+)_(?P<fov>[0-9]+)_(?P<imagingRound>[0-9]+)```
+- imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are imageType, fov, and imagingRound, for example: ```(?P<imageType>[\w|-]+)_(?P<fov>[0-9]+)_(?P<imagingRound>[0-9]+)```. Here, ```imageType``` specifies the string indicated in the ```imageType``` column for the corresponding row, ```imagingRound``` specifies the designated ```imagingRound``` for the corresponding row, and ```fov``` is filled with all field of view indexes in the data set. 
 - bitNumber - The bit number corresponding to this readout.
 - imagingRound - The round of imaging where this readout is measured, starting from zero.
 - color - The illumination color that is used to measure this readout.
 - frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as ```[0, 1, 2, 3, 4, 5, 6]```
 - zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.
 - fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example ```Conventional_750_650_561_488_405```
-- fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as imageRegExp
+- fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as ```imageRegExp```.
 - fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.
 - fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.
 - fiducialColor - The illumination color that is used to measure the fiducials.
@@ -47,7 +47,9 @@ Microscope parameters specify properties specific to the image acquisition. The 
 - flip_vertical - flag indicating whether the images should be flipped vertically in order to align with neighboring images.
 - transpose - flag indicating whether the images should be transposed in order to align with neighboring images.
 
-# Prerequisites
+# Installation
+
+## Specifying paths with a .env file
 
 A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the project root directory:
 
@@ -71,28 +73,39 @@ ANALYSIS_PARAMETERS_HOME=D:/merfish-parameters/analysis_parameters
 MICROSCOPE_PARAMETERS_HOME=D:/merfish-parameters/microscope_parameters
 ```
 
-# Installing
+## Installing prerequisites
 
-This module requires python 3.6 and above. [Storm-analysis](https://github.com/ZhuangLab/storm-analysis) must be intalled prior to installing this package. Additionally, the package rtree is not properly installed by pip and should be installed independently. For example, using Anaconda:
+MERlin requires python 3.6 and above. [Storm-analysis](https://github.com/ZhuangLab/storm-analysis) must be intalled prior to installing this package. Additionally, the package rtree is not properly installed by pip and should be installed independently. For example, using Anaconda:
 
 ```
 conda install rtree
 ```
 
-This module can be install with pip:
+## Installing MERlin
+
+MERlin can be install with pip:
 
 ```
 pip install --process-dependency-links -e MERlin
 ```
 
-## Usage
+# Usage
+
+## Executing locally
 
 After installation, MERlin can be run from the command line with the input parameters specified, such as: 
 
 ```
 merlin -d test_data -a test_analysis_parameters -m STORM5 -o Culture_16bits -c HAEC1E1 -n 5
 ```
+
 Here the images are contained in the directory %DATA\_HOME%\test\_data\ and the analysis tasks listed in test\_analysis\_parameters.json are run with microscope parameters STORM5.json, data organization Culture\_16bits.csv, codebook HAEC1E1 using 5 cores for each process. 
+
+## Executing with Snakemake (Anticipated December 2018)
+
+[Snakemake](https://snakemake.readthedocs.io/en/stable/) is a workflow management system that enables scalable analysis across a wide range of platforms. MERlin can generate a Snakemake workflow that can then be executed using Snakemake. 
+
+## Visualizing the results
 
 The MERlin analysis results can be explored using MERlinView. The analysis of the data set test\_data can be explored with MERlinView from the command line as:
 
@@ -173,8 +186,6 @@ Parameters:
 * microns\_per\_pixel - The number of microns to correspond with a pixel in the mosaic.
 
 ## Running the tests
-
-## Built With
 
 ## Authors
 

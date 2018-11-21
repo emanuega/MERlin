@@ -15,6 +15,7 @@ import time
 import logging
 
 from storm_analysis.sa_library import datareader
+import merlin
 from merlin.core import analysistask
 
 
@@ -309,8 +310,7 @@ class ImageDataSet(DataSet):
         return imageIn 
 
     def _import_microscope_parameters(self, microscopeParametersName):
-        sourcePath = os.sep.join([os.path.expanduser(
-                os.environ.get('MICROSCOPE_PARAMETERS_HOME')),
+        sourcePath = os.sep.join([merlin.MICROSCOPE_PARAMETERS_HOME,
                 microscopeParametersName + '.json'])
         destPath = os.sep.join(
                 [self.analysisPath, 'microscope_parameters.json'])
@@ -542,8 +542,7 @@ class MERFISHDataSet(ImageDataSet):
         return np.array([int(x) for x in inputString if x is not ' '])
 
     def _import_codebook(self, codebookName):
-        sourcePath = os.sep.join([os.path.expanduser(
-            os.environ.get('CODEBOOK_HOME')), \
+        sourcePath = os.sep.join([merlin.CODEBOOK_HOME,
                 codebookName + '_codebook.csv'])
         destPath = os.sep.join([self.analysisPath, 'codebook.csv'])
 
@@ -584,8 +583,7 @@ class MERFISHDataSet(ImageDataSet):
                 names=['X','Y'])
 
     def _import_positions(self, positionFileName):
-        sourcePath = os.sep.join([os.path.expanduser(
-            os.environ.get('POSITION_HOME')), \
+        sourcePath = os.sep.join([merlin.POSITION_HOME, \
                 positionFileName + '.csv'])
         destPath = os.sep.join([self.analysisPath, 'positions.csv'])
             
@@ -595,8 +593,7 @@ class MERFISHDataSet(ImageDataSet):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
 
     def _import_dataorganization(self, dataOrganizationName):
-        sourcePath = os.sep.join([os.path.expanduser(
-            os.environ.get('DATA_ORGANIZATION_HOME')), \
+        sourcePath = os.sep.join([merlin.DATA_ORGANIZATION_HOME, \
                 dataOrganizationName + '.csv'])
         destPath = os.sep.join([self.analysisPath, 'dataorganization.csv'])
             

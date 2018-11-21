@@ -169,8 +169,11 @@ class SQLiteBarcodeDB(BarcodeDB):
         queryString = 'select mean_intensity from ' \
                 + 'barcode_information where area=' + str(area)
         barcodeIterator = self._iterator_for_query(queryString)
-        return self._aggregate_barcodes_from_iterator(barcodeIterator)\
-                ['mean_intensity']
+        barcodes = self._aggregate_barcodes_from_iterator(barcodeIterator)
+        if len(barcodes)>0:
+            return barcodes['mean_intensity'].tolist()
+        else:
+            return []
 
     def _iterator_for_query(self, queryString, fov=None, chunksize=100000):
         if fov is None:

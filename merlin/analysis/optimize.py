@@ -51,7 +51,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         for i in range(1,self.iterationCount):
             fovIndexes = random.sample(
                     list(self.dataSet.get_fovs()), self.fovPerIteration)
-            zIndexes = random.sample(
+            zIndexes = np.random.choice(
                     list(range(len(self.dataSet.get_z_positions()))),
                     self.fovPerIteration)
             self.currentScaleFactors = scaleFactors[i-1,:]

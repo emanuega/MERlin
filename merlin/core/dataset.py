@@ -77,7 +77,7 @@ class DataSet(object):
         imageFile = tifffile.TiffFile(self._analysis_image_name(
             analysisTask, imageBaseName, imageIndex))
         indexInFile = sliceIndex*imagesPerSlice + frameIndex
-        return imageFile.asarray(key=indexInFile)
+        return imageFile.asarray(key=int(indexInFile))
     
     def _writer_for_analysis_images(
             self, analysisTask, imageBaseName, imageIndex=None):

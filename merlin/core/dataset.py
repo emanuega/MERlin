@@ -416,6 +416,13 @@ class MERFISHDataSet(ImageDataSet):
         '''
         return self.dataOrganization.index
 
+    def get_data_channel_name(self, dataChannelIndex):
+        '''Get the name for the data channel with the specified index.
+        '''
+
+        return self.dataOrganization['bitName'][dataChannelIndex]
+
+
     def get_data_channel_for_bit(self, bitName):
         '''Get the data channel associated with the specified bit.
 

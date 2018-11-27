@@ -22,12 +22,15 @@ class RegionViewWidget(QWidget):
         self.barcodeDB = barcodeDB
 
         vSynchronize = ImageViewSynchronizer()
-        imageData = self.warpTask.get_aligned_image_set(self.fov)
-        imageCount = imageData.shape[0]
-        barcodes = self.barcodeDB.get_barcodes_in_fov(self.fov)
+        imageData =[self.warpTask.get_aligned_image(
+            self.fov, dc, self.zIndex) \
+                    for dc in self.dataSet.get_data_channels()]
+        imageCount = len(imageData)
+        barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
 
-        self.imageViews = [RegionImageViewWidget(imageData[i][0][0],
-            vSynchronize, bitIndex=i, barcodes=barcodes) \
+        self.imageViews = [RegionImageViewWidget(imageData[i],
+            vSynchronize, bitIndex=i, barcodes=barcodes,
+            title=self.dataSet.get_data_channel_name(i)) \
                     for i in range(imageCount)]
 
         self._initialize_layout()
@@ -38,9 +41,14 @@ class RegionViewWidget(QWidget):
         self.fovScrollBar.setMaximum(np.max(self.dataSet.get_fovs()))
         self.fovScrollBar.sliderReleased.connect(self.fov_scroll_update)
 
+        self.zScrollBar = QScrollBar(Qt.Horizontal)
+        self.zScrollBar.setMaximum(len(self.dataSet.get_z_positions())-1)
+        self.zScrollBar.sliderReleased.connect(self.z_scroll_update)
+
         self.controlForm = QGroupBox()
         controlFormLayout = QFormLayout()
         controlFormLayout.addRow(QLabel('Field of view'), self.fovScrollBar)
+        controlFormLayout.addRow(QLabel('Z index'), self.zScrollBar)
         self.controlForm.setLayout(controlFormLayout)
         self.controlForm.setMaximumHeight(50)
 
@@ -61,11 +69,16 @@ class RegionViewWidget(QWidget):
     def fov_scroll_update(self):
         self.set_fov(self.fovScrollBar.value())
 
+    def z_scroll_update(self):
+        self.set_z_index(self.zScrollBar.value())
+
     def _update_fov_data(self):
-        imageSet = self.warpTask.get_aligned_image_set(self.fov)
-        barcodes = self.barcodeDB.get_barcodes_in_fov(self.fov)
+        imageData = [self.warpTask.get_aligned_image(
+            self.fov, dc, self.zIndex) \
+                    for dc in self.dataSet.get_data_channels()]
+        barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
         for i, iView in enumerate(self.imageViews):
-            iView.set_data(imageSet[i][0][0], barcodes)
+            iView.set_data(imageData[i], barcodes)
 
     def set_fov(self, fov):
         if fov == self.fov:
@@ -79,7 +92,8 @@ class RegionViewWidget(QWidget):
 
 
 class RegionImageViewWidget(QWidget):
-    def __init__(self, imageData, vSynchronize, bitIndex=None, barcodes=None):
+    def __init__(self, imageData, vSynchronize, bitIndex=None, barcodes=None,
+            title=''):
         super().__init__()
         self._synchronizer = vSynchronize
         self._synchronizer.updateViewSignal.connect(self.update)
@@ -89,6 +103,7 @@ class RegionImageViewWidget(QWidget):
 
         self.bitIndex = bitIndex
         self.set_data(imageData, barcodes)
+        self.title = title
 
         self.setMouseTracking(True)
 
@@ -128,6 +143,7 @@ class RegionImageViewWidget(QWidget):
         start = time.time()
         painter = QPainter(self)
 
+
         transform = self._synchronizer.get_transform()
         inverseTransform = transform.inverted()[0]
 
@@ -154,6 +170,10 @@ class RegionImageViewWidget(QWidget):
                     clippingBounds.right(), cursorPosition.y())
             painter.drawLine(cursorPosition.x(), clippingBounds.top(),
                     cursorPosition.x(), clippingBounds.bottom())
+
+        painter.resetTransform()
+        painter.setPen(QColor(255, 255, 255))
+        painter.drawText(10, 20, self.title) 
 
         print(time.time()-start)
 

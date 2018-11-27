@@ -22,11 +22,13 @@ class RegionViewWidget(QWidget):
         self.barcodeDB = barcodeDB
 
         vSynchronize = ImageViewSynchronizer()
-        imageData = self.warpTask.get_aligned_image_set(self.fov)
-        imageCount = imageData.shape[0]
+        imageData =[self.warpTask.get_aligned_image(
+            self.fov, dc, self.zIndex) \
+                    for dc in self.dataSet.get_data_channels()]
+        imageCount = len(imageData)
         barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
 
-        self.imageViews = [RegionImageViewWidget(imageData[i][0][0],
+        self.imageViews = [RegionImageViewWidget(imageData[i],
             vSynchronize, bitIndex=i, barcodes=barcodes) \
                     for i in range(imageCount)]
 
@@ -38,9 +40,14 @@ class RegionViewWidget(QWidget):
         self.fovScrollBar.setMaximum(np.max(self.dataSet.get_fovs()))
         self.fovScrollBar.sliderReleased.connect(self.fov_scroll_update)
 
+        self.zScrollBar = QScrollBar(Qt.Horizontal)
+        self.zScrollBar.setMaximum(len(self.dataSet.get_z_positions())-1)
+        self.zScrollBar.sliderReleased.connect(self.z_scroll_update)
+
         self.controlForm = QGroupBox()
         controlFormLayout = QFormLayout()
         controlFormLayout.addRow(QLabel('Field of view'), self.fovScrollBar)
+        controlFormLayout.addRow(QLabel('Z index'), self.zScrollBar)
         self.controlForm.setLayout(controlFormLayout)
         self.controlForm.setMaximumHeight(50)
 
@@ -61,11 +68,16 @@ class RegionViewWidget(QWidget):
     def fov_scroll_update(self):
         self.set_fov(self.fovScrollBar.value())
 
+    def z_scroll_update(self):
+        self.set_z_index(self.zScrollBar.value())
+
     def _update_fov_data(self):
-        imageSet = self.warpTask.get_aligned_image_set(self.fov)
+        imageData = [self.warpTask.get_aligned_image(
+            self.fov, dc, self.zIndex) \
+                    for dc in self.dataSet.get_data_channels()]
         barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
         for i, iView in enumerate(self.imageViews):
-            iView.set_data(imageSet[i][0][0], barcodes)
+            iView.set_data(imageData[i], barcodes)
 
     def set_fov(self, fov):
         if fov == self.fov:

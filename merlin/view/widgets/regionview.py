@@ -29,7 +29,8 @@ class RegionViewWidget(QWidget):
         barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
 
         self.imageViews = [RegionImageViewWidget(imageData[i],
-            vSynchronize, bitIndex=i, barcodes=barcodes) \
+            vSynchronize, bitIndex=i, barcodes=barcodes,
+            title=self.dataSet.get_data_channel_name(i)) \
                     for i in range(imageCount)]
 
         self._initialize_layout()
@@ -91,7 +92,8 @@ class RegionViewWidget(QWidget):
 
 
 class RegionImageViewWidget(QWidget):
-    def __init__(self, imageData, vSynchronize, bitIndex=None, barcodes=None):
+    def __init__(self, imageData, vSynchronize, bitIndex=None, barcodes=None,
+            title=''):
         super().__init__()
         self._synchronizer = vSynchronize
         self._synchronizer.updateViewSignal.connect(self.update)
@@ -101,6 +103,7 @@ class RegionImageViewWidget(QWidget):
 
         self.bitIndex = bitIndex
         self.set_data(imageData, barcodes)
+        self.title = title
 
         self.setMouseTracking(True)
 
@@ -140,6 +143,7 @@ class RegionImageViewWidget(QWidget):
         start = time.time()
         painter = QPainter(self)
 
+
         transform = self._synchronizer.get_transform()
         inverseTransform = transform.inverted()[0]
 
@@ -166,6 +170,10 @@ class RegionImageViewWidget(QWidget):
                     clippingBounds.right(), cursorPosition.y())
             painter.drawLine(cursorPosition.x(), clippingBounds.top(),
                     cursorPosition.x(), clippingBounds.bottom())
+
+        painter.resetTransform()
+        painter.setPen(QColor(255, 255, 255))
+        painter.drawText(10, 20, self.title) 
 
         print(time.time()-start)
 

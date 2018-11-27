@@ -66,17 +66,17 @@ class Decode(analysistask.ParallelAnalysisTask):
             self._extract_and_save_barcodes(
                     di, pm, npt, d, fragmentIndex, zIndex)
 
+    def get_barcode_database(self):
+        return barcodedb.SQLiteBarcodeDB(self.dataSet, self)
+
     def _initialize_barcode_dataframe(self):
         columnInformation = self._get_bc_column_types()
         df = pandas.DataFrame(columns=columnInformation.keys())
 
         return df
 
-    def get_barcode_database(self):
-        return barcodedb.SQLiteBarcodeDB(self.dataSet, self)
-
     def _bc_properties_to_dict(
-            self, properties, bcIndex, fov, zIndex, distances):
+            self, properties, bcIndex, fov, zIndex, distances, pixelTraces):
         #centroid is reversed since skimage regionprops returns the centroid
         #as (r,c)
         centroid = properties.weighted_centroid[::-1]
@@ -100,6 +100,11 @@ class Decode(analysistask.ParallelAnalysisTask):
                     'global_y': globalCentroid[1], \
                     'global_z': zPosition, \
                     'cell_index': -1}
+
+        for i in range(len(pixelTraces)):
+            outputDict['intensity_' + str(i)] = \
+                np.mean([pixelTraces[i,x[0],x[1]] \
+                        for x in properties.coords])
 
         if self.segmentTask is not None:
             outputDict['cell_index'] = self.segmentTask \
@@ -131,7 +136,7 @@ class Decode(analysistask.ParallelAnalysisTask):
                 measure.label(decodedImage == barcodeIndex),
                 intensity_image=pixelMagnitudes)
         dList = [self._bc_properties_to_dict(p, barcodeIndex, fov, zIndex, 
-            distances) \
+            distances, pixelTraces) \
                 for p in properties if self._position_within_crop(p.centroid)]
         barcodeInformation = pandas.DataFrame(dList)
 

@@ -31,6 +31,8 @@ class BarcodeDB():
             of eachc pixel
         global_x, global_y, global_z - the global x,y,z position of the barcode 
         cell_index - the cell that contains this barcode
+        intensity_i - the mean intensity across corresponding pixels for
+            bit i where i is an integer from 0 to the number of bits-1. 
         '''
         columnInformation={'barcode': types.BigInteger(), \
                             'barcode_id': types.SmallInteger(), \
@@ -47,6 +49,10 @@ class BarcodeDB():
                             'global_y': types.Float(precision=32), \
                             'global_z': types.Float(precision=32), \
                             'cell_index': types.Integer()}
+
+        for i in range(self._dataSet.get_bit_count()):
+            columnInformation['intensity_'+str(i)] = types.Float(precision=32)
+
         return columnInformation
 
     @abstractmethod

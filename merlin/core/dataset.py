@@ -364,6 +364,12 @@ class MERFISHDataSet(ImageDataSet):
         #TODO - This should not be hard coded
         self.imageDimensions = (2048, 2048)
 
+    def get_bit_count(self):
+        '''Get the number of bits used for MERFISH barcodes in this data set.
+        '''
+
+        return len(self.bitNames)
+
     def get_bit_names(self):
         '''Get the names of the bits for this MERFISH data set.
 

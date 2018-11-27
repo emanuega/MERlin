@@ -1,6 +1,6 @@
 # MERlin
 
-This repository contains code for decoding and visualizing MERFISH datasets.
+MERlin is a software package for decoding and visualizing MERFISH datasets.
 
 # Installation
 

@@ -24,16 +24,25 @@ class LocalExecutor(Executor):
         else:
             self.coreCount = coreCount
 
-    def run(self, task, callback=None):
+    def run(self, task, index=None, callback=None, join=False):
         if isinstance(task, analysistask.ParallelAnalysisTask):
             pool = multiprocessing.Pool(processes=self.coreCount)
             pool.map_async(
                     task.run, range(task.fragment_count()),
                     callback=callback)
-        elif isinstance(task, analysistask.InternallyParallelAnalysisTask):
+        elif isinstance(task, analysistask.InternallyParallelAnalysisTask) \
+                and index is None:
             task.set_core_count(self.coreCount)
             thread = threading.Thread(target=task.run)
             thread.start()
+        elif isinstance(task, analysistask.InternallyParallelAnalysisTask) \
+                and index is not None:
+            pool = multiprocessing.Pool(processes=1)
+            pool.apply_async(task.run, index, callback=callback)
         else:
             pool = multiprocessing.Pool(processes=1)
             pool.apply_async(task.run, callback=callback)
+
+        if join:
+            pool.close()
+            pool.join()

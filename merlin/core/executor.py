@@ -36,6 +36,7 @@ class LocalExecutor(Executor):
                 and index is None:
             task.set_core_count(self.coreCount)
             thread = threading.Thread(target=task.run)
+            thread.daemon = True
             thread.start()
         elif isinstance(task, analysistask.InternallyParallelAnalysisTask) \
                 and index is not None:
@@ -50,5 +51,4 @@ class LocalExecutor(Executor):
                 pool.close()
                 pool.join()
             if thread:
-                print('joining thread')
                 thread.join()

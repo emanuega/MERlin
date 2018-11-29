@@ -25,6 +25,8 @@ class LocalExecutor(Executor):
             self.coreCount = coreCount
 
     def run(self, task, index=None, callback=None, join=False):
+        pool = None
+        thread = None
         if isinstance(task, analysistask.ParallelAnalysisTask):
             pool = multiprocessing.Pool(processes=self.coreCount)
             pool.map_async(
@@ -44,5 +46,9 @@ class LocalExecutor(Executor):
             pool.apply_async(task.run, callback=callback)
 
         if join:
-            pool.close()
-            pool.join()
+            if pool:
+                pool.close()
+                pool.join()
+            if thread:
+                print('joining thread')
+                thread.join()

@@ -25,8 +25,11 @@ def test_task_save(simple_data, simple_task):
 
 def test_task_run(simple_task):
     task1 = simple_task
+    assert not task1.is_complete()
+    assert not task1.is_running()
     e = executor.LocalExecutor()
     e.run(task1, join=True)
+    assert not task1.is_running()
     assert task1.is_complete()
     print(task1.is_error())
     assert not task1.is_error()

@@ -27,6 +27,44 @@ class SimpleAnalysisTask(analysistask.AnalysisTask):
     def get_dependencies(self):
         return []
 
+class SimpleParallelAnalysisTask(analysistask.ParallelAnalysisTask):
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+    def run_analysis(self, fragmentIndex):
+        pass
+
+    def get_estimated_memory(self):
+        return 100
+
+    def get_estimated_time(self):
+        return 1
+
+    def get_dependencies(self):
+        return []
+
+    def fragment_count(self):
+        return 5
+
+class SimpleInternallyParallelAnalysisTask(
+        analysistask.InternallyParallelAnalysisTask):
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+    def run_analysis(self):
+        pass
+
+    def get_estimated_memory(self):
+        return 100
+
+    def get_estimated_time(self):
+        return 1
+
+    def get_dependencies(self):
+        return []
+
 
 @pytest.fixture(scope='session')
 def simple_data():
@@ -44,9 +82,11 @@ def simple_data():
     shutil.rmtree(merlin.DATA_HOME)
     shutil.rmtree(merlin.ANALYSIS_HOME)
 
-@pytest.fixture(scope='session')
-def simple_task(simple_data):
-    task = SimpleAnalysisTask(
+@pytest.fixture(scope='session', params=[SimpleAnalysisTask, \
+        SimpleParallelAnalysisTask, \
+        SimpleInternallyParallelAnalysisTask])
+def simple_task(simple_data, request):
+    task = request.param(
             simple_data, parameters={'a': 5, 'b': 'b_string'})
     yield task
     simple_data.delete_analysis(task)

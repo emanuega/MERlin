@@ -3,6 +3,8 @@ import os
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
+DATA_HOME = os.path.expanduser(os.environ.get('DATA_HOME'))
+ANALYSIS_HOME = os.path.expanduser(os.environ.get('ANALYSIS_HOME'))
 PARAMETERS_HOME = os.path.expanduser(os.environ.get('PARAMETERS_HOME'))
 ANALYSIS_PARAMETERS_HOME = os.sep.join(
         [PARAMETERS_HOME, 'analysis_parameters'])

@@ -24,14 +24,11 @@ class DataSet(object):
     def __init__(self, dataDirectoryName, 
             dataName=None, dataHome=None, analysisHome=None):
 
-        dotenvPath = dotenv.find_dotenv()
-        dotenv.load_dotenv(dotenvPath)
-
         if dataHome is None:
-            dataHome = os.path.expanduser(os.environ.get('DATA_HOME'))
+            dataHome = merlin.DATA_HOME
 
         if analysisHome is None:
-            analysisHome = os.path.expanduser(os.environ.get('ANALYSIS_HOME'))
+            analysisHome = merlin.ANALYSIS_HOME
 
         self.rawDataPath = os.sep.join([dataHome, dataDirectoryName])
         if not os.path.isdir(self.rawDataPath):

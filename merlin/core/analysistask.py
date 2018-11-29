@@ -72,6 +72,7 @@ class AnalysisTask(ABC):
             logger.exception(e)
             self.dataSet.record_analysis_error(self)
 
+        self.dataSet.close_logger(self)
 
     def _indicate_running(self):
         '''A loop that regularly signals to the dataset that this analysis
@@ -240,6 +241,7 @@ class ParallelAnalysisTask(AnalysisTask):
                 logger.exception(e)
                 self.dataSet.record_analysis_error(self, fragmentIndex)
 
+            self.dataSet.close_logger(self, fragmentIndex)
 
     def _indicate_running(self, fragmentIndex):
         '''A loop that regularly signals to the dataset that this analysis

@@ -222,6 +222,19 @@ class DataSet(object):
 
         return logger
 
+    def close_logger(self, analysisTask, fragmentIndex=None):
+        loggerName = analysisTask.get_analysis_name()
+        if fragmentIndex is not None:
+            loggerName += '.' + str(fragmentIndex)
+
+        logger = logging.getLogger(loggerName)
+
+        handlerList = list(logger.handlers)
+        for handler in handlerList:
+            logger.removeHandler(handler)
+            handler.flush()
+            handler.close()
+
     def _log_path(self, analysisTask, fragmentIndex=None):
         logName = analysisTask.get_analysis_name()
         if fragmentIndex is not None:

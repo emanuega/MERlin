@@ -132,10 +132,14 @@ class DataSet(object):
                 resultName, analysisName, resultIndex, subdirectory) + '.npy'
         return np.load(savePath)
 
-    def get_analysis_subdirectory(self, analysisTask, subdirectory=None):
+    def get_analysis_subdirectory(self, analysisTask, subdirectory=None,
+            create=True):
         '''
         analysisTask can either be the class or a string containing the
         class name.
+
+        create - Flag indicating if the analysis subdirectory should be
+            created if it does not already exist.
         '''
         if isinstance(analysisTask , analysistask.AnalysisTask):
             analysisName = analysisTask.get_analysis_name()
@@ -149,7 +153,9 @@ class DataSet(object):
             subdirectoryPath = os.sep.join(
                     [self.analysisPath, analysisName, \
                             subdirectory])
-        os.makedirs(subdirectoryPath, exist_ok=True)
+
+        if create:
+            os.makedirs(subdirectoryPath, exist_ok=True)
 
         return subdirectoryPath
 
@@ -178,6 +184,26 @@ class DataSet(object):
             analysisTask = getattr(analysisModule, parameters['class'])
             return analysisTask(self, parameters, analysisTaskName)
             
+    def delete_analysis(self, analysisTask):
+        '''
+        Remove all files associated with the provided analysis 
+        from this data set.
+
+        Before deleting an analysis task, it must be verified that the
+        analysis task is not running.
+        '''
+        analysisDirectory = self.get_analysis_subdirectory(analysisTask)
+        shutil.rmtree(analysisDirectory)
+
+    def analysis_exists(self, analysisTaskName):
+        '''
+        Determine if an analysis task with the specified name exists in this 
+        dataset.
+        '''
+        analysisPath = self.get_analysis_subdirectory(
+                analysisTaskName, create=False)
+        return os.path.exists(analysisPath)
+
     def get_logger(self, analysisTask, fragmentIndex=None):
         loggerName = analysisTask.get_analysis_name()
         if fragmentIndex is not None:

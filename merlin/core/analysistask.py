@@ -123,7 +123,8 @@ class AnalysisTask(ABC):
 
         Returns:
             a list containing the names of the analysis tasks that 
-                this analysis task depends on
+                this analysis task depends on. If there are no dependencies,
+                an empty list is returned.
         '''
         pass
 

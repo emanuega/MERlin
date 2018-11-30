@@ -55,7 +55,6 @@ class AnalysisTask(ABC):
         Upon completion of the analysis, this function informs the DataSet
         that analysis is complete.
         '''
-
         logger = self.dataSet.get_logger(self)
         logger.info('Beginning ' + self.get_analysis_name())
 
@@ -86,7 +85,9 @@ class AnalysisTask(ABC):
             return
 
         self.dataSet.record_analysis_running(self)
-        threading.Timer(30, self._indicate_running).start()
+        self.runTimer = threading.Timer(30, self._indicate_running)
+        self.runTimer.daemon = True
+        self.runTimer.start()
 
     @abstractmethod
     def run_analysis(self):

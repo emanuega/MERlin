@@ -241,7 +241,7 @@ class ParallelAnalysisTask(AnalysisTask):
             except Exception as e:
                 logger.exception(e)
                 self.dataSet.record_analysis_error(self, fragmentIndex)
-
+            
             self.dataSet.close_logger(self, fragmentIndex)
 
     def _indicate_running(self, fragmentIndex):
@@ -256,7 +256,10 @@ class ParallelAnalysisTask(AnalysisTask):
             return
 
         self.dataSet.record_analysis_running(self, fragmentIndex)
-        threading.Timer(30, self._indicate_running, [fragmentIndex]).start()
+        self.runTimer = threading.Timer(
+                30, self._indicate_running, [fragmentIndex])
+        self.runTimer.daemon = True
+        self.runTimer.start()
 
     @abstractmethod
     def run_analysis(self, fragmentIndex):

@@ -6,7 +6,8 @@ from sqlalchemy import types
 
 class BarcodeDB():
 
-    '''A class for storing and retrieving barcode information.
+    '''
+    An abstract class for storing and retrieving barcode information.
     '''
 
     def __init__(self, dataSet, analysisTask):
@@ -112,13 +113,6 @@ class SQLiteBarcodeDB(BarcodeDB):
                 self._analysisTask, index=fov)
     
     def _initialize_db(self):
-        #TODO - maybe I can initialize the database with an autoincrementing
-        #column
-        '''
-        bcTable = sqlalchemy.Table(
-                'barcode_information', sqlalchemy.MetaData(),
-                Column('id', types.Integer, primary_key=True),
-        '''
         pass    
 
     def _aggregate_barcodes_from_iterator(self, barcodeIterator):
@@ -129,6 +123,7 @@ class SQLiteBarcodeDB(BarcodeDB):
         return barcodeDF
 
     def get_barcodes(self, fov=None, columnList=None, chunksize=None):
+        #TODO - this creates an error if no barcodes have been writen
         returnIterator = chunksize is not None
         chunksize = chunksize or 100000
         
@@ -138,17 +133,19 @@ class SQLiteBarcodeDB(BarcodeDB):
                         chunksize=chunksize) \
                                 for x in self._dataSet.get_fovs()))
         else:
+            dbEngine = self._get_barcodeDB(fov)
+            if not dbEngine.dialect.has_table(dbEngine, 'barcode_information'):
+                return []
+
             #In order to prevent memory spikes that happen when pandas
             #reads the whole database in at once, here it is read in 
             #in smaller increments and aggregated.
             if columnList is None:
                 barcodeIterator = pandas.read_sql_table(
-                        'barcode_information', self._get_barcodeDB(fov), 
-                        chunksize=chunksize)
+                        'barcode_information', dbEngine, chunksize=chunksize)
             else:
                 barcodeIterator = pandas.read_sql_table('barcode_information', 
-                        self._get_barcodeDB(fov), 
-                        columns=columnList, chunksize=chunksize)
+                        dbEngine, columns=columnList, chunksize=chunksize)
 
         if returnIterator:
             return barcodeIterator
@@ -188,8 +185,12 @@ class SQLiteBarcodeDB(BarcodeDB):
                         chunksize=chunksize)) \
                                 for x in self._dataSet.get_fovs())
         else:
+            dbEngine = self._get_barcodeDB(fov)
+            if not dbEngine.dialect.has_table(dbEngine, 'barcode_information'):
+                return []
+
             barcodeIterator = pandas.read_sql_query(queryString,
-                    self._get_barcodeDB(fov), chunksize=chunksize)
+                    dbEngine, chunksize=chunksize)
 
         return barcodeIterator
 

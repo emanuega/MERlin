@@ -57,6 +57,10 @@ class BarcodeDB():
         return columnInformation
 
     @abstractmethod
+    def empty_database(self, fov=None):
+        pass
+
+    @abstractmethod
     def get_barcodes(self, fov=None, columnList=None, chunksize=None):
         pass
 
@@ -194,7 +198,6 @@ class SQLiteBarcodeDB(BarcodeDB):
 
         return barcodeIterator
 
-
     def write_barcodes(self, barcodeInformation, fov=None):
         if len(barcodeInformation) <= 0:
             return
@@ -219,3 +222,11 @@ class SQLiteBarcodeDB(BarcodeDB):
         if not written:
             raise sqlalchemy.exc.OperationalError('Failed to write barcodes',
                     None, self)
+
+    def empty_database(self, fov=None):
+        if fov is None:
+            raise NotImplementedError
+
+        self._get_barcodeDB(fov).execute(
+                'DROP TABLE IF EXISTS barcode_information;')
+

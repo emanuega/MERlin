@@ -310,7 +310,6 @@ class DataSet(object):
             else:
                 dbName = 'analysis_data' + str(index) + '.db'
 
-
             return sqlalchemy.create_engine(os.sep.join(
                         ['sqlite:///' + dbPath, dbName]))
 

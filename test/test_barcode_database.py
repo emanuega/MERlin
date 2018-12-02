@@ -121,6 +121,15 @@ def test_write_and_read_multiple_fov(barcode_db):
     barcode_db.empty_database()
     assert len(barcode_db.get_barcodes()) == 0
 
-
 def test_read_select_columns(barcode_db):
-    pass
+    assert len(barcode_db.get_barcodes()) == 0
+    barcodesToWrite = pandas.DataFrame(
+            [generate_random_barcode(0) for i in range(20)])
+    barcode_db.write_barcodes(barcodesToWrite, fov=0)
+    readBarcodes = barcode_db.get_barcodes(
+            columnList=['mean_intensity', 'x', 'intensity_0'])
+    assert np.array_equal(
+            barcodesToWrite[['mean_intensity', 'x', 'intensity_0']].values, 
+            readBarcodes.values)
+    barcode_db.empty_database(fov=0)
+    assert len(barcode_db.get_barcodes()) == 0

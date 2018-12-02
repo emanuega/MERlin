@@ -85,6 +85,12 @@ def base_files():
             shutil.rmtree(folder)
         os.makedirs(folder)
 
+    shutil.copyfile(
+        os.sep.join(
+            ['.', 'auxiliary_files', 'test_data_organization.csv']),
+        os.sep.join(
+            [merlin.DATA_ORGANIZATION_HOME, 'test_data_organization.csv']))
+
     yield
 
     for folder in folderList:

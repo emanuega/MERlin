@@ -7,8 +7,17 @@ import merlin
 
 merlin.DATA_HOME = os.sep.join(['.', 'test_data'])
 merlin.ANALYSIS_HOME = os.sep.join(['.', 'test_analysis'])
-dataDirectory = os.sep.join([merlin.DATA_HOME, 'test'])
+merlin.ANALYSIS_PARAMETERS_HOME = os.sep.join(
+        ['.', 'test_analysis_parameters'])
+merlin.CODEBOOK_HOME = os.sep.join(['.', 'test_codebooks'])
+merlin.DATA_ORGANIZATION_HOME = os.sep.join(['.', 'test_dataorganization'])
+merlin.POSITION_HOME = os.sep.join(['.', 'test_poitions'])
+merlin.MICROSCOPE_PARAMETERS_HOME = os.sep.join(
+        ['.', 'test_microcope_parameters'])
 
+
+dataDirectory = os.sep.join([merlin.DATA_HOME, 'test'])
+merfishDataDirectory = os.sep.join([merlin.DATA_HOME, 'merfish_test'])
 
 class SimpleAnalysisTask(analysistask.AnalysisTask):
 
@@ -65,26 +74,40 @@ class SimpleInternallyParallelAnalysisTask(
     def get_dependencies(self):
         return []
 
+@pytest.fixture(scope='session')
+def base_files():
+    folderList = [merlin.DATA_HOME, merlin.ANALYSIS_HOME, \
+            merlin.ANALYSIS_PARAMETERS_HOME, merlin.CODEBOOK_HOME, \
+            merlin.DATA_ORGANIZATION_HOME, merlin.POSITION_HOME, \
+            merlin.MICROSCOPE_PARAMETERS_HOME]
+    for folder in folderList:
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+        os.makedirs(folder)
+
+    yield
+
+    for folder in folderList:
+        shutil.rmtree(folder)
 
 @pytest.fixture(scope='session')
-def simple_data():
-    if os.path.exists(merlin.DATA_HOME):
-        shutil.rmtree(merlin.DATA_HOME)
-    if os.path.exists(merlin.ANALYSIS_HOME):
-        shutil.rmtree(merlin.ANALYSIS_HOME)
-    os.mkdir(merlin.DATA_HOME)
-    os.mkdir(merlin.ANALYSIS_HOME)
+def simple_data(base_files):
     os.mkdir(dataDirectory)
-    
     testData = dataset.DataSet('test')
+
     yield testData
 
-    shutil.rmtree(merlin.DATA_HOME)
-    shutil.rmtree(merlin.ANALYSIS_HOME)
+    shutil.rmtree(dataDirectory)
 
 @pytest.fixture(scope='session')
+def simple_merfish_data(base_files):
+    pass
+
+
+@pytest.fixture(scope='function')
 def single_task(simple_data):
-    task = SimpleInternallyParallelAnalysisTask(simple_data, parameters={'a': 5, 'b': 'b_string'})
+    task = SimpleInternallyParallelAnalysisTask(
+            simple_data, parameters={'a': 5, 'b': 'b_string'})
     yield task
     simple_data.delete_analysis(task)
 

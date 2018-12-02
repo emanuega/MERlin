@@ -2,10 +2,7 @@ import os
 import shutil
 import pytest
 
-from merlin.core import dataset
 from merlin.core import executor
-from merlin.core import analysistask
-import merlin
 
     
 def test_task_delete(simple_data, simple_task):
@@ -28,7 +25,20 @@ def test_task_save(simple_data, simple_task):
     assert len(unsharedKeys2)==0
     assert loadedTask.analysisName == task1.analysisName
 
-def test_task_run(simple_task):
+def test_task_run(single_task):
+    task1 = single_task
+    assert not task1.is_complete()
+    assert not task1.is_running()
+    assert not task1.is_idle()
+    assert not task1.is_error()
+    task1.run()
+    assert not task1.is_running()
+    assert not task1.is_idle()
+    assert not task1.is_error()
+    assert task1.is_complete()
+
+@pytest.mark.slowtest
+def test_task_run_with_executor(simple_task):
     task1 = simple_task
     assert not task1.is_complete()
     assert not task1.is_running()

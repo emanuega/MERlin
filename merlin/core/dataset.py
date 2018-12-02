@@ -335,15 +335,15 @@ class ImageDataSet(DataSet):
                 or currentFile.endswith('.tif')])
 
     def load_image(self, imagePath, frameIndex):
-        reader = datareader.inferReader(imagePath)
-        imageIn = reader.loadAFrame(frameIndex)
-        if self.transpose:
-            imageIn = np.transpose(imageIn)
-        if self.flipHorizontal:
-            imageIn = np.flip(imageIn, axis=1)
-        if self.flipVertical:
-            imageIn = np.flip(imageIn, axis=0)
-        return imageIn 
+        with datareader.inferReader(imagePath) as reader:
+            imageIn = reader.loadAFrame(frameIndex)
+            if self.transpose:
+                imageIn = np.transpose(imageIn)
+            if self.flipHorizontal:
+                imageIn = np.flip(imageIn, axis=1)
+            if self.flipVertical:
+                imageIn = np.flip(imageIn, axis=0)
+            return imageIn 
 
     def _import_microscope_parameters(self, microscopeParametersName):
         sourcePath = os.sep.join([merlin.MICROSCOPE_PARAMETERS_HOME,

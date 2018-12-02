@@ -1,6 +1,7 @@
 import os
 import pytest
 import shutil
+import glob
 from merlin.core import analysistask
 from merlin.core import dataset
 import merlin
@@ -90,6 +91,16 @@ def base_files():
             ['.', 'auxiliary_files', 'test_data_organization.csv']),
         os.sep.join(
             [merlin.DATA_ORGANIZATION_HOME, 'test_data_organization.csv']))
+    shutil.copyfile(
+        os.sep.join(
+            ['.', 'auxiliary_files', 'test_codebook.csv']),
+        os.sep.join(
+            [merlin.CODEBOOK_HOME, 'test_codebook.csv']))
+    shutil.copyfile(
+        os.sep.join(
+            ['.', 'auxiliary_files', 'test_positions.csv']),
+        os.sep.join(
+            [merlin.POSITION_HOME, 'test_positions.csv']))
 
     yield
 
@@ -107,12 +118,26 @@ def simple_data(base_files):
 
 @pytest.fixture(scope='session')
 def simple_merfish_data(base_files):
-    pass
+    os.mkdir(merfishDataDirectory)
+
+    for imageFile in glob.iglob(
+            os.sep.join(['.', 'auxiliary_files', '*.tif'])):
+        if os.path.isfile(imageFile):
+            shutil.copy(imageFile, merfishDataDirectory)
+
+    testMERFISHData = dataset.MERFISHDataSet(
+            'merfish_test', 
+            dataOrganizationName='test_data_organization',
+            codebookName='test',
+            positionFileName='test_positions')
+    yield testMERFISHData
+
+    shutil.rmtree(merfishDataDirectory)
 
 
 @pytest.fixture(scope='function')
 def single_task(simple_data):
-    task = SimpleInternallyParallelAnalysisTask(
+    task = SimpleAnalysisTask(
             simple_data, parameters={'a': 5, 'b': 'b_string'})
     yield task
     simple_data.delete_analysis(task)

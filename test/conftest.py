@@ -82,7 +82,13 @@ def simple_data():
     shutil.rmtree(merlin.DATA_HOME)
     shutil.rmtree(merlin.ANALYSIS_HOME)
 
-@pytest.fixture(scope='session', params=[SimpleAnalysisTask, \
+@pytest.fixture(scope='session')
+def single_task(simple_data):
+    task = SimpleInternallyParallelAnalysisTask(simple_data, parameters={'a': 5, 'b': 'b_string'})
+    yield task
+    simple_data.delete_analysis(task)
+
+@pytest.fixture(scope='function', params=[SimpleAnalysisTask, \
         SimpleParallelAnalysisTask, \
         SimpleInternallyParallelAnalysisTask])
 def simple_task(simple_data, request):
@@ -90,3 +96,6 @@ def simple_task(simple_data, request):
             simple_data, parameters={'a': 5, 'b': 'b_string'})
     yield task
     simple_data.delete_analysis(task)
+
+
+

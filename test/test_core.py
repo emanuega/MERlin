@@ -25,8 +25,8 @@ def test_task_save(simple_data, simple_task):
     assert len(unsharedKeys2)==0
     assert loadedTask.analysisName == task1.analysisName
 
-def test_task_run(single_task):
-    task1 = single_task
+def test_task_run(simple_task):
+    task1 = simple_task
     assert not task1.is_complete()
     assert not task1.is_running()
     assert not task1.is_idle()

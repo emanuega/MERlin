@@ -123,8 +123,11 @@ def test_write_and_read_multiple_fov(barcode_db):
 
 def test_read_select_columns(barcode_db):
     assert len(barcode_db.get_barcodes()) == 0
-    barcodesToWrite = pandas.DataFrame(
+    barcodeSet1 = pandas.DataFrame(
             [generate_random_barcode(0) for i in range(20)])
+    barcodeSet2 = pandas.DataFrame(
+            [generate_random_barcode(1) for i in range(20)])
+    barcodesToWrite = pandas.concat([barcodeSet1, barcodeSet2])
     barcode_db.write_barcodes(barcodesToWrite, fov=0)
     readBarcodes = barcode_db.get_barcodes(
             columnList=['mean_intensity', 'x', 'intensity_0'])
@@ -133,3 +136,36 @@ def test_read_select_columns(barcode_db):
             readBarcodes.values)
     barcode_db.empty_database(fov=0)
     assert len(barcode_db.get_barcodes()) == 0
+
+def test_read_filtered_barcodes(barcode_db):
+    assert len(barcode_db.get_barcodes()) == 0
+    barcodeSet1 = pandas.DataFrame(
+            [generate_random_barcode(0) for i in range(20)])
+    barcodeSet2 = pandas.DataFrame(
+            [generate_random_barcode(1) for i in range(20)])
+    barcodesToWrite = pandas.concat([barcodeSet1, barcodeSet2])
+    barcode_db.write_barcodes(barcodesToWrite, fov=0)
+
+    for area in range(0, 11, 2):
+        for intensity in np.arange(0, 20, 5.1):
+            readBarcodes = barcode_db.get_filtered_barcodes(area, intensity)
+            selectBarcodes = barcodesToWrite[\
+                    (barcodesToWrite['area'] >= area) & \
+                    (barcodesToWrite['mean_intensity'] >= intensity)]
+            assert len(readBarcodes) == len(selectBarcodes)
+            if len(readBarcodes) > 0: 
+                readBarcodes.sort_values(
+                        by=list(readBarcodes.columns)[1:], inplace=True)
+                selectBarcodes = selectBarcodes.sort_values(
+                        by=list(selectBarcodes.columns)[1:], inplace=False)
+                print(str(area) + ' ' + str(intensity))
+                assert np.array_equal(
+                        readBarcodes.values, selectBarcodes.values)
+
+    barcode_db.empty_database(fov=0)
+    assert len(barcode_db.get_barcodes()) == 0
+
+def test_get_barcode_intensities_with_area(barcode_db):
+    pass
+
+

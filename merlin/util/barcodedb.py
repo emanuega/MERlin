@@ -160,7 +160,6 @@ class SQLiteBarcodeDB(BarcodeDB):
         returnIterator = chunksize is not None
         chunksize = chunksize or 100000
 
-
         queryString = 'select * from barcode_information ' \
                 + 'where area>=' + str(areaThreshold) \
                 + ' and mean_intensity>=' + str(intensityThreshold)
@@ -209,7 +208,6 @@ class SQLiteBarcodeDB(BarcodeDB):
                         fov=f)
 
         columnInformation = self._get_bc_column_types()
-    
         written = False 
         attempts = 0
         while not written and attempts < 100:

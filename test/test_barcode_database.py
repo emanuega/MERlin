@@ -106,7 +106,20 @@ def test_multiple_write_one_fov(barcode_db):
     assert len(barcode_db.get_barcodes()) == 0
 
 def test_write_and_read_multiple_fov(barcode_db):
-    pass
+    assert len(barcode_db.get_barcodes()) == 0
+    barcodeSet1 = pandas.DataFrame(
+            [generate_random_barcode(0) for i in range(10)])
+    barcodeSet2 = pandas.DataFrame(
+            [generate_random_barcode(1) for i in range(10)])
+    combinedBarcodes = pandas.concat([barcodeSet1, barcodeSet2])
+    barcode_db.write_barcodes(combinedBarcodes, fov=0)
+    readBarcodes = barcode_db.get_barcodes()
+    readBarcodes.sort_values(by=list(readBarcodes.columns)[1:], inplace=True)
+    combinedBarcodes.sort_values(
+            by=list(combinedBarcodes.columns)[1:], inplace=True)
+    assert np.array_equal(readBarcodes.values, combinedBarcodes.values)
+    barcode_db.empty_database()
+    assert len(barcode_db.get_barcodes()) == 0
 
 
 def test_read_select_columns(barcode_db):

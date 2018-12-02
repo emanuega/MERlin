@@ -127,7 +127,6 @@ class SQLiteBarcodeDB(BarcodeDB):
         return barcodeDF
 
     def get_barcodes(self, fov=None, columnList=None, chunksize=None):
-        #TODO - this creates an error if no barcodes have been writen
         returnIterator = chunksize is not None
         chunksize = chunksize or 100000
         
@@ -201,12 +200,16 @@ class SQLiteBarcodeDB(BarcodeDB):
     def write_barcodes(self, barcodeInformation, fov=None):
         if len(barcodeInformation) <= 0:
             return
+
         if fov is None:
-            raise NotImplementedError
+            for f in barcodeInformation.fov.unique():
+                self.write_barcodes(
+                        barcodeInformation.loc[barcodeInformation['fov'] \
+                                == f],
+                        fov=f)
 
         columnInformation = self._get_bc_column_types()
     
-        #TODO - the database needs to create a unique ID for each barcode
         written = False 
         attempts = 0
         while not written and attempts < 100:
@@ -225,7 +228,8 @@ class SQLiteBarcodeDB(BarcodeDB):
 
     def empty_database(self, fov=None):
         if fov is None:
-            raise NotImplementedError
+            for f in self._dataSet.get_fovs():
+                self.empty_database(fov=f)
 
         self._get_barcodeDB(fov).execute(
                 'DROP TABLE IF EXISTS barcode_information;')

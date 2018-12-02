@@ -178,6 +178,12 @@ Parameters:
 
 ## Running the tests
 
+Unit tests are implemented using the pytest framework. The tests are in the test directory. They can be run by running pytest in the test directory. Tests that take more than few seconds are marked with slowtest and the test cases can be run with the slow tests excluded using the command:
+
+```
+pytest -v -m "not slowtest"
+```
+
 ## Authors
 
 * **George Emanuel** - *Initial work* 

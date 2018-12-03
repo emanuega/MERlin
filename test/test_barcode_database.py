@@ -2,6 +2,7 @@ import pytest
 import random
 import numpy as np
 import pandas
+
 from merlin.util import barcodedb
 
 @pytest.fixture(scope='function')
@@ -112,7 +113,7 @@ def test_write_and_read_multiple_fov(barcode_db):
     barcodeSet2 = pandas.DataFrame(
             [generate_random_barcode(1) for i in range(10)])
     combinedBarcodes = pandas.concat([barcodeSet1, barcodeSet2])
-    barcode_db.write_barcodes(combinedBarcodes, fov=0)
+    barcode_db.write_barcodes(combinedBarcodes)
     readBarcodes = barcode_db.get_barcodes()
     readBarcodes.sort_values(by=list(readBarcodes.columns)[1:], inplace=True)
     combinedBarcodes.sort_values(
@@ -128,13 +129,13 @@ def test_read_select_columns(barcode_db):
     barcodeSet2 = pandas.DataFrame(
             [generate_random_barcode(1) for i in range(20)])
     barcodesToWrite = pandas.concat([barcodeSet1, barcodeSet2])
-    barcode_db.write_barcodes(barcodesToWrite, fov=0)
+    barcode_db.write_barcodes(barcodesToWrite)
     readBarcodes = barcode_db.get_barcodes(
             columnList=['mean_intensity', 'x', 'intensity_0'])
     assert np.array_equal(
             barcodesToWrite[['mean_intensity', 'x', 'intensity_0']].values, 
             readBarcodes.values)
-    barcode_db.empty_database(fov=0)
+    barcode_db.empty_database()
     assert len(barcode_db.get_barcodes()) == 0
 
 def test_read_filtered_barcodes(barcode_db):
@@ -144,7 +145,7 @@ def test_read_filtered_barcodes(barcode_db):
     barcodeSet2 = pandas.DataFrame(
             [generate_random_barcode(1) for i in range(20)])
     barcodesToWrite = pandas.concat([barcodeSet1, barcodeSet2])
-    barcode_db.write_barcodes(barcodesToWrite, fov=0)
+    barcode_db.write_barcodes(barcodesToWrite)
 
     for area in range(0, 11, 2):
         for intensity in np.arange(0, 20, 5.1):
@@ -162,7 +163,7 @@ def test_read_filtered_barcodes(barcode_db):
                 assert np.array_equal(
                         readBarcodes.values, selectBarcodes.values)
 
-    barcode_db.empty_database(fov=0)
+    barcode_db.empty_database()
     assert len(barcode_db.get_barcodes()) == 0
 
 def test_get_barcode_intensities_with_area(barcode_db):
@@ -172,7 +173,7 @@ def test_get_barcode_intensities_with_area(barcode_db):
     barcodeSet2 = pandas.DataFrame(
             [generate_random_barcode(1) for i in range(20)])
     barcodesToWrite = pandas.concat([barcodeSet1, barcodeSet2])
-    barcode_db.write_barcodes(barcodesToWrite, fov=0)
+    barcode_db.write_barcodes(barcodesToWrite)
 
     for area in range(11):
         readIntensities = barcode_db.get_intensities_for_barcodes_with_area(
@@ -181,4 +182,26 @@ def test_get_barcode_intensities_with_area(barcode_db):
                 ['mean_intensity'].tolist()
         assert sorted(readIntensities) == sorted(selectIntensities)
 
+    barcode_db.empty_database()
+    assert len(barcode_db.get_barcodes()) == 0
 
+@pytest.mark.parametrize('test_function, column_name', [
+    ('get_barcode_intensities', 'mean_intensity'),
+    ('get_barcode_areas', 'area'),
+    ('get_barcode_distances', 'mean_distance'),
+])
+def test_get_barcode_values(barcode_db, test_function, column_name):
+    assert len(barcode_db.get_barcodes()) == 0
+    barcodeSet1 = pandas.DataFrame(
+            [generate_random_barcode(0) for i in range(20)])
+    barcodeSet2 = pandas.DataFrame(
+            [generate_random_barcode(1) for i in range(20)])
+    barcodesToWrite = pandas.concat([barcodeSet1, barcodeSet2])
+    barcode_db.write_barcodes(barcodesToWrite)
+
+    readIntensities = getattr(barcode_db, test_function)()
+    selectIntensities = barcodesToWrite[column_name].tolist()
+    assert sorted(readIntensities) == sorted(selectIntensities)
+
+    barcode_db.empty_database()
+    assert len(barcode_db.get_barcodes()) == 0

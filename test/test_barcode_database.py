@@ -166,6 +166,19 @@ def test_read_filtered_barcodes(barcode_db):
     assert len(barcode_db.get_barcodes()) == 0
 
 def test_get_barcode_intensities_with_area(barcode_db):
-    pass
+    assert len(barcode_db.get_barcodes()) == 0
+    barcodeSet1 = pandas.DataFrame(
+            [generate_random_barcode(0) for i in range(20)])
+    barcodeSet2 = pandas.DataFrame(
+            [generate_random_barcode(1) for i in range(20)])
+    barcodesToWrite = pandas.concat([barcodeSet1, barcodeSet2])
+    barcode_db.write_barcodes(barcodesToWrite, fov=0)
+
+    for area in range(11):
+        readIntensities = barcode_db.get_intensities_for_barcodes_with_area(
+                area)
+        selectIntensities = barcodesToWrite[barcodesToWrite['area'] == area] \
+                ['mean_intensity'].tolist()
+        assert sorted(readIntensities) == sorted(selectIntensities)
 
 

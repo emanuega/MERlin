@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from skimage import measure
 from sklearn.neighbors import NearestNeighbors
 
 '''
@@ -42,6 +43,9 @@ class PixelBasedDecoder(object):
     def __init__(self, codebook, scaleFactors=None):
         self.codebook = codebook
         self.decodingMatrix = self._calculate_normalized_barcodes()
+        self.barcodeCount = self.decodingMatrix.shape[0]
+        self.bitCount = self.decodingMatrix.shape[1]
+
         if scaleFactors is None:
             self.scaleFactors = np.ones(self.decodingMatrix.shape[1])
         else:
@@ -49,7 +53,8 @@ class PixelBasedDecoder(object):
 
     def decode_pixels(
             self, imageData, scaleFactors=None, distanceThreshold=0.5176):
-        '''Match the pixels in imagaDate to the barcodes present in the 
+        '''
+        Match the pixels in imagaDate to the barcodes present in the 
         codebook. 
         '''
         if scaleFactors is None:
@@ -119,3 +124,25 @@ class PixelBasedDecoder(object):
                 barcodesWithSingleErrors.append(weightedBC)
             return np.array(barcodesWithSingleErrors)
             
+    def extract_refactors(self, imageSet):
+        di, pm, npt, d = self.decode_pixels(imageSet)
+
+        sumPixelTraces = np.zeros((self.barcodeCount, self.bitCount))
+        barcodesSeen = np.zeros(self.barcodeCount)
+        for b in range(self.barcodeCount):
+            barcodeRegions = [x \
+                    for x in measure.regionprops(
+                        measure.label((di==b).astype(np.int))) if x.area >= 4]
+            barcodesSeen[b] = len(barcodeRegions)
+            for br in barcodeRegions:
+                meanPixelTrace = \
+                    np.mean([npt[:, y[0], y[1]]*pm[y[0],y[1]] \
+                    for y in br.coords], axis=0)
+                normPixelTrace = meanPixelTrace/np.linalg.norm(meanPixelTrace)
+                sumPixelTraces[b,:] += normPixelTrace/barcodesSeen[b]
+
+        sumPixelTraces[self.decodingMatrix == 0] = np.nan
+        onBitIntensity = np.nanmean(sumPixelTraces, axis=0)
+        refactors = onBitIntensity/np.mean(onBitIntensity)
+        return refactors, barcodesSeen
+

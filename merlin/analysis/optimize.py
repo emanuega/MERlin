@@ -5,7 +5,7 @@ import multiprocessing
 
 from skimage import morphology
 from skimage import feature
-from skimage import measure
+
 from sklearn import preprocessing
 import cv2
 
@@ -54,8 +54,10 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
             zIndexes = np.random.choice(
                     list(range(len(self.dataSet.get_z_positions()))),
                     self.fovPerIteration)
-            self.currentScaleFactors = scaleFactors[i-1,:]
-            r = pool.starmap(self._extract_refactors, zip(fovIndexes, zIndexes))
+            self.decoder.scaleFactors = scaleFactors[i-1,:]
+            r = pool.starmap(self.decoder.extract_refactors, 
+                    ([self.preprocessTask.get_processed_image_set(f, zIndex=z)]
+                        for f,z in zip(fovIndexes, zIndexes))) 
             scaleFactors[i,:] = scaleFactors[i-1,:]\
                     *np.mean([x[0] for x in r], axis=0)
             barcodeCounts[i,:] = np.mean([x[1] for x in r],axis=0)
@@ -93,29 +95,6 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         return self.dataSet.load_analysis_result('barcode_counts',
                 self.analysisName)
 
-    def _extract_refactors(self, fov, zIndex):
-        imageSet = self.preprocessTask\
-                .get_processed_image_set(fov, zIndex=zIndex)
-        di, pm, npt, d = self.decoder.decode_pixels(
-                imageSet, scaleFactors=self.currentScaleFactors)
 
-        sumPixelTraces = np.zeros((self.barcodeCount, self.bitCount))
-        barcodesSeen = np.zeros(self.barcodeCount)
-        for b in range(self.barcodeCount):
-            barcodeRegions = [x \
-                    for x in measure.regionprops(
-                        measure.label((di==b).astype(np.int))) if x.area >= 4]
-            barcodesSeen[b] = len(barcodeRegions)
-            for br in barcodeRegions:
-                meanPixelTrace = \
-                    np.mean([npt[:, y[0], y[1]]*pm[y[0],y[1]] \
-                    for y in br.coords], axis=0)
-                normPixelTrace = meanPixelTrace/np.linalg.norm(meanPixelTrace)
-                sumPixelTraces[b,:] += normPixelTrace/barcodesSeen[b]
-
-        sumPixelTraces[self.decoder.decodingMatrix == 0] = np.nan
-        onBitIntensity = np.nanmean(sumPixelTraces, axis=0)
-        refactors = onBitIntensity/np.mean(onBitIntensity)
-        return refactors, barcodesSeen
 
                     

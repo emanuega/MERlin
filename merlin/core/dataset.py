@@ -335,7 +335,7 @@ class ImageDataSet(DataSet):
 
     def load_image(self, imagePath, frameIndex):
         with datareader.inferReader(imagePath) as reader:
-            imageIn = reader.loadAFrame(frameIndex)
+            imageIn = reader.loadAFrame(int(frameIndex))
             if self.transpose:
                 imageIn = np.transpose(imageIn)
             if self.flipHorizontal:
@@ -368,7 +368,7 @@ class ImageDataSet(DataSet):
             'flip_vertical', False)
         self.transpose = self.microscopeParameters.get('transpose', True)
         self.micronsPerPixel = self.microscopeParameters.get(
-                'microns_per_pixel', 106)
+                'microns_per_pixel', 0.106)
 
 class MERFISHDataSet(ImageDataSet):
 

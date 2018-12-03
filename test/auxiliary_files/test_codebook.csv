@@ -1,6 +1,6 @@
 version,1,,,,,,,,,,,,,,,
 codebook_name, HAEC1E1,,,,,,,,,,,,,,,
-bit_names, RS0015, RS0083, RS0095, RS0109, RS0175, RS0237, RS0247, RS0255, RS0307, RS0332, RS0343, RS0384, RS0406, RS0451, RS0468, RS0548
+bit_names,bit1,bit2,bit3,bit4,bit5,bit6,bit7,bit8,bit9,bit10,bit11,bit12,bit13,bit14,bit15,bit16
 name,id,barcode,,,,,,,,,,,,,,
 STMN1, ENST00000465604.1, 0  0  1  1  1  0  0  0  0  0  0  0  1  0  0  0,,,,,,,,,,,,,,
 DHCR24, ENST00000535035.5, 1  0  0  1  1  0  0  1  0  0  0  0  0  0  0  0,,,,,,,,,,,,,,

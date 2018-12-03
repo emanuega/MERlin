@@ -1,6 +1,6 @@
 # MERlin
 
-MERlin is a software package for decoding and visualizing MERFISH datasets.
+MERlin decodes and visualizes MERFISH datasets.
 
 # Installation
 
@@ -124,7 +124,7 @@ Parameters:
 should be saved. These images are helpful for visually verifying the quality 
 of the image alignment.
 
-### preprocess.DecovolutionPreprocess
+### preprocess.DeconvolutionPreprocess
 
 Description: High-pass filters and deconvolves the image data in peparation for bit calling.
 

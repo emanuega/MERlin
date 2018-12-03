@@ -101,6 +101,11 @@ def base_files():
             ['.', 'auxiliary_files', 'test_positions.csv']),
         os.sep.join(
             [merlin.POSITION_HOME, 'test_positions.csv']))
+    shutil.copyfile(
+        os.sep.join(
+            ['.', 'auxiliary_files', 'test_analysis_parameters.json']),
+        os.sep.join(
+            [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_parameters.json']))
 
     yield
 

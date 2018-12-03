@@ -18,7 +18,7 @@ class Decode(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.cropWidth = 100
+        self.cropWidth = parameters.get('crop_width', 100)
         self.imageSize = dataSet.imageDimensions
 
     def fragment_count(self):

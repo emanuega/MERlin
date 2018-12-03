@@ -145,6 +145,9 @@ Parameters:
 
 Description: Extract barcodes from all field of views.
 
+Parameters:
+* crop\_width - The number of pixels from each edge of the image to exclude from decoding. 
+
 ### filterbarcodes.FilterBarcodes
 
 Description: Filters the decoded barcodes based on area and intensity

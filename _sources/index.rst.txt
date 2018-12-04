@@ -9,9 +9,9 @@ MERlin
 .. toctree::
    :maxdepth: 2
 
-    modules
-    installation
-    usage
+   modules
+   installation
+   usage
 
 
 Indices and tables

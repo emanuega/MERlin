@@ -1,12 +1,24 @@
 Contributing to MERlin
 ************************
 
-Suggesting changes to MERlin should be submitted as a pull request. 
+Contributions to MERlin can either be submitted by opening an issue to raise concerns or offer suggestions or by opening a pull request to offer improvementsto the code base.  
+
+Opening a pull request
+========================
+
+A pull request allows code to be proposed to be incorporated into MERlin. To receive feedback on work in progress, mark the pull request with WIP in the subject line. To open a pull request:
+
+#. Fork the repository to your github account and clone it locally.
+#. Create a new branch for your edits.
+#. Make your desired edits to the code.
+#. Run the tests to ensure MERlin is still functional. Write new tests to cover your new contribution as necessary. 
+#. Submit a pull request from your edited branch to the master branch of the MERlin repository. Be sure to reference any relevant issues. 
+
 
 Formating guidelines
 =====================
 
-
+Code contributions should follow the `PEP 8 <https://www.python.org/dev/peps/pep-0008/>` style guide with the exception that variable names should be mixedCase instead of words separated by underscores.
 
 Running the tests
 =================

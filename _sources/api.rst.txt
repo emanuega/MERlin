@@ -1,6 +1,9 @@
 API
 ****
 
-.. automodule:: merlin
-    :members:
-    :show-inheritance:
+.. autosummary:: merlin
+    :toctree: _autosummary
+
+    merlin.core
+    merlin.analysis
+    merlin.util

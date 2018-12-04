@@ -8,8 +8,7 @@ Description: Aligns image stacks by fitting fiducial spots.
 
 Parameters:
 
-* write\_fiducial\_images -- Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality 
-of the image alignment.
+* write\_fiducial\_images -- Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.
 
 warp.FiducialCorrelationWarp
 -----------------------------
@@ -18,8 +17,7 @@ Description: Aligns image stacks by maximizing the cross correlation between fid
 
 Parameters:
 
-* write\_fiducial\_images - Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality 
-of the image alignment.
+* write\_fiducial\_images - Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.
 
 preprocess.DeconvolutionPreprocess
 -----------------------------------
@@ -60,7 +58,7 @@ Parameters:
 
 * area\_threshold - Barcodes with areas below the specified area\_threshold are
 removed.
-* intensity\_threshold - Barcodes with intensities below this threshold are removed.
+* intensity\_threshold - Barcodes with intensities below this threshold are removed.  
 
 segment.SegmentCells
 ----------------------

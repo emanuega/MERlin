@@ -12,6 +12,7 @@ MERlin
    modules
    installation
    usage
+   tasks
 
 
 Indices and tables

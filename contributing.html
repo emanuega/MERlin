@@ -84,7 +84,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tasks.html">Analysis tasks</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing to MERlin</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#opening-a-pull-request">Opening a pull request</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#formating-guidelines">Formating guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-formating">Code formating</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
 </ul>
 </li>
@@ -154,7 +154,7 @@
             
   <div class="section" id="contributing-to-merlin">
 <h1>Contributing to MERlin<a class="headerlink" href="#contributing-to-merlin" title="Permalink to this headline">¶</a></h1>
-<p>Contributions to MERlin can either be submitted by opening an issue to raise concerns or offer suggestions or by opening a pull request to offer improvementsto the code base.</p>
+<p>Contributions to MERlin can either be submitted by opening an issue to raise concerns or offer suggestions or by opening a pull request to offer improvements to the code base.</p>
 <div class="section" id="opening-a-pull-request">
 <h2>Opening a pull request<a class="headerlink" href="#opening-a-pull-request" title="Permalink to this headline">¶</a></h2>
 <p>A pull request allows code to be proposed to be incorporated into MERlin. To receive feedback on work in progress, mark the pull request with WIP in the subject line. To open a pull request:</p>
@@ -166,13 +166,13 @@
 <li>Submit a pull request from your edited branch to the master branch of the MERlin repository. Be sure to reference any relevant issues.</li>
 </ol>
 </div>
-<div class="section" id="formating-guidelines">
-<h2>Formating guidelines<a class="headerlink" href="#formating-guidelines" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="code-formating">
+<h2>Code formating<a class="headerlink" href="#code-formating" title="Permalink to this headline">¶</a></h2>
 <p>Code contributions should follow the <cite>PEP 8 &lt;https://www.python.org/dev/peps/pep-0008/&gt;</cite> style guide with the exception that variable names should be mixedCase instead of words separated by underscores.</p>
 </div>
 <div class="section" id="running-the-tests">
 <h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
-<p>All contributions to MERlin must maintain the integrity of the tests. Before submitting a pull request, please ensure that all tests pass. Tests are implemented using the <a class="reference external" href="https://docs.pytest.org/">pytest</a> framework. The tests are in the test directory and they can be run by executing pytest in the test directory. To facilitate efficient debugging, tests that take more than few seconds are marked with slowtest and can be excluded from the run using the command:</p>
+<p>All contributions to MERlin must maintain the integrity of the tests. Before submitting a pull request, please ensure that all tests pass. Tests are implemented using the <a class="reference external" href="https://docs.pytest.org/">pytest</a> framework. The tests are in the test directory and they can be run by executing pytest in the test directory. To facilitate efficient debugging, tests that take more than few seconds are marked with <code class="docutils literal notranslate"><span class="pre">`slowtest`</span></code> and can be excluded from the run using the command:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pytest -v -m &quot;not slowtest&quot;
 </pre></div>
 </div>

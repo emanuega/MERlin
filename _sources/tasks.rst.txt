@@ -13,7 +13,7 @@ Parameters:
 warp.FiducialCorrelationWarp
 -----------------------------
 
-Description: Aligns image stacks by maximizing the cross correlation between fiducial images. 
+Description: Aligns image stacks by maximizing the cross-correlation between fiducial images. 
 
 Parameters:
 
@@ -22,13 +22,13 @@ Parameters:
 preprocess.DeconvolutionPreprocess
 -----------------------------------
 
-Description: High-pass filters and deconvolves the image data in peparation for bit calling.
+Description: High-pass filters and deconvolves the image data in preparation for bit-calling.
 
 Parameters:
 
 * warp\_task -- The name of the warp task that provides the aligned image stacks.
 * highpass\_pass -- The standard deviation to use for the high pass filter.
-* decon\_sigma -- The standard deviation to use for the lucy richardson deconvolution.
+* decon\_sigma -- The standard deviation to use for the Lucy-Richardson deconvolution.
 
 optimize.Optimize
 ------------------

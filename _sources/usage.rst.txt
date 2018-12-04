@@ -15,14 +15,14 @@ The data organization file specifies which the images correspond to each readout
 The columns in the data organization file are:
 
 - bitName - The name of the readout.
-- imageType - The base name for the image file that contains the images for this readout, for example ``Conventional_750_650_561_488_405``
+- imageType - The base name for the image file that contains the images for this readout, for example, ``Conventional_750_650_561_488_405``
 - imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are ``imageType``, ``fov``, and ``imagingRound``, for example: ``(?P<imageType>[\w|-]+)_(?P<fov>[0-9]+)_(?P<imagingRound>[0-9]+)``. Here, ``imageType`` specifies the string indicated in the ``imageType`` column for the corresponding row, ``imagingRound`` specifies the designated ``imagingRound`` for the corresponding row, and ``fov`` is filled with all field of view indexes in the data set. 
 - bitNumber - The bit number corresponding to this readout.
 - imagingRound - The round of imaging where this readout is measured, starting from zero.
 - color - The illumination color that is used to measure this readout.
 - frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as ``[0, 1, 2, 3, 4, 5, 6]``
 - zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.
-- fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example ``Conventional_750_650_561_488_405``
+- fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example, ``Conventional_750_650_561_488_405``
 - fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as ``imageRegExp``.
 - fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.
 - fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.
@@ -43,7 +43,7 @@ This file is expected to contain 'positions' in the file name and should be pres
 Microscope parameters
 -----------------------
 
-Microscope parameters specify properties specific to the image acquisition. The microscope parameter file should be place in the MICROSCOPE_PARAMETERS_HOME directory. The parameters that can be set are:
+Microscope parameters specify properties specific to the image acquisition. The microscope parameter file should be placed in the MICROSCOPE_PARAMETERS_HOME directory. The parameters that can be set are:
 
 - microns_per_pixel - the number of microns corresponding to one pixel in the image.
 - flip_horizontal - flag indicating whether the images should be flipped horizontally in order to align with neighboring images.

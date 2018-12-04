@@ -1,0 +1,265 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Analysis tasks &mdash; MERlin  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> MERlin
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Project Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MERlin</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Analysis tasks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/tasks.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="analysis-tasks">
+<h1>Analysis tasks<a class="headerlink" href="#analysis-tasks" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="warp-fiducialfitwarp">
+<h2>warp.FiducialFitWarp<a class="headerlink" href="#warp-fiducialfitwarp" title="Permalink to this headline">¶</a></h2>
+<p>Description: Aligns image stacks by fitting fiducial spots.</p>
+<p>Parameters:
+* write_fiducial_images - Flag indicating whether the aligned fiducial images
+should be saved. These images are helpful for visually verifying the quality
+of the image alignment.</p>
+</div>
+<div class="section" id="warp-fiducialcorrelationwarp">
+<h2>warp.FiducialCorrelationWarp<a class="headerlink" href="#warp-fiducialcorrelationwarp" title="Permalink to this headline">¶</a></h2>
+<p>Description: Aligns image stacks by maximizing the cross correlation between fiducial images.</p>
+<p>Parameters:
+* write_fiducial_images - Flag indicating whether the aligned fiducial images
+should be saved. These images are helpful for visually verifying the quality
+of the image alignment.</p>
+</div>
+<div class="section" id="preprocess-deconvolutionpreprocess">
+<h2>preprocess.DeconvolutionPreprocess<a class="headerlink" href="#preprocess-deconvolutionpreprocess" title="Permalink to this headline">¶</a></h2>
+<p>Description: High-pass filters and deconvolves the image data in peparation for bit calling.</p>
+<p>Parameters:
+* warp_task - The name of the warp task that provides the aligned image stacks.
+* highpass_pass - The standard deviation to use for the high pass filter.
+* decon_sigma - The standard deviation to use for the lucy richardson deconvolution.</p>
+</div>
+<div class="section" id="optimize-optimize">
+<h2>optimize.Optimize<a class="headerlink" href="#optimize-optimize" title="Permalink to this headline">¶</a></h2>
+<p>Description: Determines the optimal per-bit scale factors for barcode decoding.</p>
+<p>Parameters:
+* iteration_count - The number of iterations to perform for the optimization.
+* fov_per_iteration - The number of fields of view to decode in each round of optimization.</p>
+</div>
+<div class="section" id="decode-decode">
+<h2>decode.Decode<a class="headerlink" href="#decode-decode" title="Permalink to this headline">¶</a></h2>
+<p>Description: Extract barcodes from all field of views.</p>
+<p>Parameters:
+* crop_width - The number of pixels from each edge of the image to exclude from decoding.</p>
+</div>
+<div class="section" id="filterbarcodes-filterbarcodes">
+<h2>filterbarcodes.FilterBarcodes<a class="headerlink" href="#filterbarcodes-filterbarcodes" title="Permalink to this headline">¶</a></h2>
+<p>Description: Filters the decoded barcodes based on area and intensity</p>
+<p>Parameters:
+* area_threshold - Barcodes with areas below the specified area_threshold are
+removed.
+* intensity_threshold - Barcodes with intensities below this threshold are removed.</p>
+</div>
+<div class="section" id="segment-segmentcells">
+<h2>segment.SegmentCells<a class="headerlink" href="#segment-segmentcells" title="Permalink to this headline">¶</a></h2>
+<p>Description: Determines cell boundaries using a nuclear stain and a cell stain.</p>
+<p>Parameters:
+* nucleus_threshold - The relative intensity threshold for seeding the nuclei.
+* cell_threshold - The relative intensity threshold for setting boundaries for the watershed.
+* nucleus_index - The image index for the nucleus image.
+* cell_index - The image index for the cell image.
+* z_index - The z index of the nucleus and cell images to use for segmentation.</p>
+</div>
+<div class="section" id="segment-cleancellsegmentation">
+<h2>segment.CleanCellSegmentation<a class="headerlink" href="#segment-cleancellsegmentation" title="Permalink to this headline">¶</a></h2>
+<p>Description: Cleans the cell segmentation by merging cells that were fargmented along the field of view boundaries.</p>
+</div>
+<div class="section" id="generatemosaic-generatemosaic">
+<h2>generatemosaic.GenerateMosaic<a class="headerlink" href="#generatemosaic-generatemosaic" title="Permalink to this headline">¶</a></h2>
+<p>Description: Assembles the images from each field of view into a low resolution mosaic.</p>
+<p>Parameters:
+* microns_per_pixel - The number of microns to correspond with a pixel in the mosaic.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, George Emanuel
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

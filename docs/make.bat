@@ -8,7 +8,7 @@ if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
 set SOURCEDIR=.
-set BUILDDIR=_build
+set BUILDDIR=..\..\MERlin-docs
 
 if "%1" == "" goto help
 
@@ -32,4 +32,13 @@ goto end
 %SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS%
 
 :end
+
+cd ..\..\MERlin-docs\html
+git add . 
+git commit -m "rebuilt docs"
+git push origin gh-pages
+
 popd
+
+
+

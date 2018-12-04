@@ -27,7 +27,8 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -76,23 +77,25 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Usage</a><ul>
-<li><a class="reference internal" href="#input-specifications">Input specifications</a><ul>
-<li><a class="reference internal" href="#raw-images">Raw images</a></li>
-<li><a class="reference internal" href="#data-organization">Data organization</a></li>
-<li><a class="reference internal" href="#codebook">Codebook</a></li>
-<li><a class="reference internal" href="#position-list">Position list</a></li>
-<li><a class="reference internal" href="#microscope-parameters">Microscope parameters</a></li>
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Project Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#input-specifications">Input specifications</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#raw-images">Raw images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-organization">Data organization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codebook">Codebook</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#position-list">Position list</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#microscope-parameters">Microscope parameters</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#executing-locally">Executing locally</a></li>
-<li><a class="reference internal" href="#executing-with-snakemake-anticipated-december-2018">Executing with Snakemake (Anticipated December 2018)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#executing-locally">Executing locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#executing-with-snakemake-anticipated-december-2018">Executing with Snakemake (Anticipated December 2018)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualizing-the-results">Visualizing the results</a></li>
 </ul>
 </li>
 </ul>
-</div>
+
             
           
         </div>
@@ -168,15 +171,15 @@
 <p>The columns in the data organization file are:</p>
 <ul class="simple">
 <li>bitName - The name of the readout.</li>
-<li>imageType - The base name for the image file that contains the images for this readout, for example <code class="docutils literal notranslate"><span class="pre">`Conventional_750_650_561_488_405`</span></code></li>
-<li>imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are imageType, fov, and imagingRound, for example: <code class="docutils literal notranslate"><span class="pre">`(?P&lt;imageType&gt;[\w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)`</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">`imageType`</span></code> specifies the string indicated in the <code class="docutils literal notranslate"><span class="pre">`imageType`</span></code> column for the corresponding row, <code class="docutils literal notranslate"><span class="pre">`imagingRound`</span></code> specifies the designated <code class="docutils literal notranslate"><span class="pre">`imagingRound`</span></code> for the corresponding row, and <code class="docutils literal notranslate"><span class="pre">`fov`</span></code> is filled with all field of view indexes in the data set.</li>
+<li>imageType - The base name for the image file that contains the images for this readout, for example <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></li>
+<li>imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are <code class="docutils literal notranslate"><span class="pre">imageType</span></code>, <code class="docutils literal notranslate"><span class="pre">fov</span></code>, and <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code>, for example: <code class="docutils literal notranslate"><span class="pre">(?P&lt;imageType&gt;[\w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">imageType</span></code> specifies the string indicated in the <code class="docutils literal notranslate"><span class="pre">imageType</span></code> column for the corresponding row, <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> specifies the designated <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> for the corresponding row, and <code class="docutils literal notranslate"><span class="pre">fov</span></code> is filled with all field of view indexes in the data set.</li>
 <li>bitNumber - The bit number corresponding to this readout.</li>
 <li>imagingRound - The round of imaging where this readout is measured, starting from zero.</li>
 <li>color - The illumination color that is used to measure this readout.</li>
-<li>frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as <code class="docutils literal notranslate"><span class="pre">`[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6]`</span></code></li>
+<li>frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6]</span></code></li>
 <li>zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.</li>
-<li>fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example <code class="docutils literal notranslate"><span class="pre">`Conventional_750_650_561_488_405`</span></code></li>
-<li>fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as <code class="docutils literal notranslate"><span class="pre">`imageRegExp`</span></code>.</li>
+<li>fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></li>
+<li>fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as <code class="docutils literal notranslate"><span class="pre">imageRegExp</span></code>.</li>
 <li>fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.</li>
 <li>fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.</li>
 <li>fiducialColor - The illumination color that is used to measure the fiducials.</li>
@@ -205,19 +208,21 @@
 <div class="section" id="executing-locally">
 <h2>Executing locally<a class="headerlink" href="#executing-locally" title="Permalink to this headline">¶</a></h2>
 <p>After installation, MERlin can be run from the command line with the input parameters specified, such as:</p>
-<p><code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">merlin</span> <span class="pre">-a</span> <span class="pre">test_analysis_parameters</span> <span class="pre">-m</span> <span class="pre">STORM5</span> <span class="pre">-o</span> <span class="pre">Culture_16bits</span> <span class="pre">-c</span> <span class="pre">HAEC1E1</span> <span class="pre">-n</span> <span class="pre">5</span> <span class="pre">testdata</span>
-<span class="pre">`</span></code></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlin -a test_analysis_parameters -m STORM5 -o Culture_16bits -c HAEC1E1 -n 5 testdata
+</pre></div>
+</div>
 <p>Here the MERFISH images contained in the directory %DATA_HOME%testdataare processed using the analysis tasks listed in test_analysis_parameters.json with microscope parameters STORM5.json, data organization Culture_16bits.csv, codebook HAEC1E1 using 5 cores for each process.</p>
 </div>
 <div class="section" id="executing-with-snakemake-anticipated-december-2018">
 <h2>Executing with Snakemake (Anticipated December 2018)<a class="headerlink" href="#executing-with-snakemake-anticipated-december-2018" title="Permalink to this headline">¶</a></h2>
-<p>[Snakemake](<a class="reference external" href="https://snakemake.readthedocs.io/en/stable/">https://snakemake.readthedocs.io/en/stable/</a>) is a workflow management system that enables scalable analysis across a wide range of platforms. MERlin can generate a Snakemake workflow that can then be executed using Snakemake.</p>
-<p>## Visualizing the results</p>
+<p><a class="reference external" href="https://snakemake.readthedocs.io/en/stable/">Snakemake</a> is a workflow management system that enables scalable analysis across a wide range of platforms. MERlin can generate a Snakemake workflow that can then be executed using Snakemake.</p>
+</div>
+<div class="section" id="visualizing-the-results">
+<h2>Visualizing the results<a class="headerlink" href="#visualizing-the-results" title="Permalink to this headline">¶</a></h2>
 <p>The MERlin analysis results can be explored using MERlinView. The analysis of the data set test_data can be explored with MERlinView from the command line as:</p>
-<p><code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">merlinview</span> <span class="pre">-d</span> <span class="pre">test_data</span>
-<span class="pre">`</span></code></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlinview -d test_data
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -226,6 +231,13 @@
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

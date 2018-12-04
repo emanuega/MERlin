@@ -16,7 +16,7 @@ The contents of an example .env file are below:
 
     DATA_HOME=D:/data
     ANALYSIS_HOME=D:/analysis
-    PARAMETERS_HOME=D:/merfish-parameters/analysis_parameters
+    PARAMETERS_HOME=D:/merfish-parameters
 
 Installing prerequisites
 ==========================

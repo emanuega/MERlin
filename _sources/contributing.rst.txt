@@ -18,7 +18,7 @@ A pull request allows code to be proposed to be incorporated into MERlin. To rec
 Code formating 
 ===============
 
-Code contributions should follow the `PEP 8 <https://www.python.org/dev/peps/pep-0008/>` style guide with the exception that variable names should be mixedCase instead of words separated by underscores.
+Code contributions should follow the `PEP 8 <https://www.python.org/dev/peps/pep-0008/>` style guide with the exception that variable names should be mixedCase instead of words separated by underscores. Comments should follow the `Google docstring style <http://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings>`.
 
 Running the tests
 =================
@@ -30,3 +30,12 @@ All contributions to MERlin must maintain the integrity of the tests. Before sub
 .. code-block:: none
 
     pytest -v -m "not slowtest"
+
+Generating documentation
+=============================
+
+Documentation for MERlin is generated using Sphinx. The API documentation can be generated with the command from the root MERlin directory:
+
+.. code-block:: none
+
+    sphinx-apidoc -f -o ./docs/_modules .

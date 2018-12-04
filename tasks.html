@@ -27,7 +27,8 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -76,10 +77,22 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Project Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Analysis tasks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#warp-fiducialfitwarp">warp.FiducialFitWarp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#warp-fiducialcorrelationwarp">warp.FiducialCorrelationWarp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#preprocess-deconvolutionpreprocess">preprocess.DeconvolutionPreprocess</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optimize-optimize">optimize.Optimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#decode-decode">decode.Decode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filterbarcodes-filterbarcodes">filterbarcodes.FilterBarcodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#segment-segmentcells">segment.SegmentCells</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#segment-cleancellsegmentation">segment.CleanCellSegmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generatemosaic-generatemosaic">generatemosaic.GenerateMosaic</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -150,7 +163,7 @@
 <h2>warp.FiducialFitWarp<a class="headerlink" href="#warp-fiducialfitwarp" title="Permalink to this headline">¶</a></h2>
 <p>Description: Aligns image stacks by fitting fiducial spots.</p>
 <p>Parameters:
-* write_fiducial_images - Flag indicating whether the aligned fiducial images
+- write_fiducial_images - Flag indicating whether the aligned fiducial images
 should be saved. These images are helpful for visually verifying the quality
 of the image alignment.</p>
 </div>
@@ -218,6 +231,13 @@ removed.
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="usage.html" class="btn btn-neutral" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

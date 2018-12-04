@@ -56,8 +56,7 @@ Description: Filters the decoded barcodes based on area and intensity
 
 Parameters:
 
-* area\_threshold -- Barcodes with areas below the specified area\_threshold are
-removed.
+* area\_threshold -- Barcodes with areas below the specified area\_threshold are removed.
 * intensity\_threshold -- Barcodes with intensities below this threshold are removed.  
 
 segment.SegmentCells

@@ -7,13 +7,13 @@ MERlin
 ******
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   modules
-   installation
-   usage
-   tasks
-
+    modules
+    installation
+    usage
+    tasks
+    contributing
 
 Indices and tables
 ==================

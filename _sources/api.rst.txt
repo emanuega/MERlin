@@ -1,0 +1,6 @@
+API
+****
+
+.. automodule:: merlin
+    :members:
+    :show-inheritance:

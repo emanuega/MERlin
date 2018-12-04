@@ -8,8 +8,7 @@ Description: Aligns image stacks by fitting fiducial spots.
 
 Parameters:
 
-* write\_fiducial\_images -- Flag indicating whether the aligned fiducial images
-should be saved. These images are helpful for visually verifying the quality 
+* write\_fiducial\_images -- Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality 
 of the image alignment.
 
 warp.FiducialCorrelationWarp
@@ -19,8 +18,7 @@ Description: Aligns image stacks by maximizing the cross correlation between fid
 
 Parameters:
 
-* write\_fiducial\_images - Flag indicating whether the aligned fiducial images
-should be saved. These images are helpful for visually verifying the quality 
+* write\_fiducial\_images - Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality 
 of the image alignment.
 
 preprocess.DeconvolutionPreprocess

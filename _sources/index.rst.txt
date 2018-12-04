@@ -9,7 +9,6 @@ MERlin
 .. toctree::
     :maxdepth: 2
 
-    modules
     installation
     usage
     tasks

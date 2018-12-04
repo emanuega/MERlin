@@ -28,6 +28,5 @@ All contributions to MERlin must maintain the integrity of the tests. Before sub
 .. _pytest: https://docs.pytest.org/
 
 .. code-block:: none
+
     pytest -v -m "not slowtest"
-
-

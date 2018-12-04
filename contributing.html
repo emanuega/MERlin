@@ -173,6 +173,9 @@
 <div class="section" id="running-the-tests">
 <h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
 <p>All contributions to MERlin must maintain the integrity of the tests. Before submitting a pull request, please ensure that all tests pass. Tests are implemented using the <a class="reference external" href="https://docs.pytest.org/">pytest</a> framework. The tests are in the test directory and they can be run by executing pytest in the test directory. To facilitate efficient debugging, tests that take more than few seconds are marked with slowtest and can be excluded from the run using the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pytest -v -m &quot;not slowtest&quot;
+</pre></div>
+</div>
 </div>
 </div>
 

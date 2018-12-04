@@ -1,0 +1,493 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>merlin.analysis.warp &mdash; MERlin  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> MERlin
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MERlin</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>merlin.analysis.warp</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for merlin.analysis.warp</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">transform</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">feature</span>
+
+<span class="kn">import</span> <span class="nn">storm_analysis.sa_library.parameters</span> <span class="k">as</span> <span class="nn">parameters</span>
+<span class="kn">import</span> <span class="nn">storm_analysis.daostorm_3d.mufit_analysis</span> <span class="k">as</span> <span class="nn">mfit</span>
+<span class="kn">import</span> <span class="nn">storm_analysis.sa_library.sa_h5py</span> <span class="k">as</span> <span class="nn">saH5Py</span>
+
+<span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
+
+<div class="viewcode-block" id="Warp"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.Warp">[docs]</a><span class="k">class</span> <span class="nc">Warp</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    An abstract class for warping a set of images so that the corresponding</span>
+<span class="sd">    pixels align between images taken in different imaging rounds.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeAlignedFiducialImages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s1">&#39;write_fiducial_images&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Warp.get_transformation"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.Warp.get_transformation">[docs]</a>    <span class="k">def</span> <span class="nf">get_transformation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">dataChannel</span><span class="p">):</span>
+        <span class="n">transformations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_result</span><span class="p">(</span>
+                <span class="s1">&#39;offsets&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">(),</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">fov</span><span class="p">,</span>
+                <span class="n">subdirectory</span><span class="o">=</span><span class="s1">&#39;transformations&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">transformations</span><span class="p">[</span><span class="n">dataChannel</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_save_transformations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformationList</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_analysis_result</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">transformationList</span><span class="p">),</span> <span class="s1">&#39;offsets&#39;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">(),</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">fov</span><span class="p">,</span>
+                <span class="n">subdirectory</span><span class="o">=</span><span class="s1">&#39;transformations&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Warp.get_aligned_image_set"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.Warp.get_aligned_image_set">[docs]</a>    <span class="k">def</span> <span class="nf">get_aligned_image_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_analysis_image_set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;aligned_images&#39;</span><span class="p">,</span> <span class="n">fov</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Warp.get_aligned_image"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.Warp.get_aligned_image">[docs]</a>    <span class="k">def</span> <span class="nf">get_aligned_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">dataChannel</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_analysis_image</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;aligned_images&#39;</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> 
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()),</span> <span class="n">dataChannel</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_process_transformations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformationList</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Process the transformations determined for a given fov. </span>
+
+<span class="sd">        The list of transformation is used to write registered images and </span>
+<span class="sd">        the transformation list is archived.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transformationList: A list of transformations that contains a</span>
+<span class="sd">                transformation for each data channel. </span>
+<span class="sd">            fov: The fov that is being transformed.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">dataChannels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()</span>
+        <span class="n">zPositions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()</span>
+        <span class="n">imageDescription</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">_analysis_tiff_description</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">zPositions</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataChannels</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">_writer_for_analysis_images</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;aligned_images&#39;</span><span class="p">,</span> <span class="n">fov</span><span class="p">)</span> <span class="k">as</span> <span class="n">outputTif</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span><span class="p">,</span><span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">transformationList</span><span class="p">,</span> <span class="n">dataChannels</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">zPositions</span><span class="p">:</span>
+                    <span class="n">inputImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_raw_image</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+                    <span class="n">transformedImage</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">warp</span><span class="p">(</span>
+                            <span class="n">inputImage</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> \
+                                    <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">inputImage</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                    <span class="n">outputTif</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                            <span class="n">transformedImage</span><span class="p">,</span> 
+                            <span class="n">photometric</span><span class="o">=</span><span class="s1">&#39;MINISBLACK&#39;</span><span class="p">,</span>
+                            <span class="n">metadata</span><span class="o">=</span><span class="n">imageDescription</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">writeAlignedFiducialImages</span><span class="p">:</span>
+
+            <span class="n">fiducialImageDescription</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">_analysis_tiff_description</span><span class="p">(</span>
+                    <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataChannels</span><span class="p">))</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">_writer_for_analysis_images</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;aligned_fiducial_images&#39;</span><span class="p">,</span> <span class="n">fov</span><span class="p">)</span> <span class="k">as</span> <span class="n">outputTif</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">t</span><span class="p">,</span><span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">transformationList</span><span class="p">,</span> <span class="n">dataChannels</span><span class="p">):</span>
+                    <span class="n">inputImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fiducial_image</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fov</span><span class="p">)</span>
+                    <span class="n">transformedImage</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">warp</span><span class="p">(</span>
+                            <span class="n">inputImage</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> \
+                                    <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">inputImage</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                    <span class="n">outputTif</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                            <span class="n">transformedImage</span><span class="p">,</span> 
+                            <span class="n">photometric</span><span class="o">=</span><span class="s1">&#39;MINISBLACK&#39;</span><span class="p">,</span>
+                            <span class="n">metadata</span><span class="o">=</span><span class="n">imageDescription</span><span class="p">)</span>
+
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_transformations</span><span class="p">(</span><span class="n">transformationList</span><span class="p">,</span> <span class="n">fov</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FiducialFitWarp"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp">[docs]</a><span class="k">class</span> <span class="nc">FiducialFitWarp</span><span class="p">(</span><span class="n">Warp</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    An analysis task that warps a set of images taken in different imaging</span>
+<span class="sd">    rounds based on fitting fiducials.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FiducialFitWarp.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">2048</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">5</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_fiducials</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="n">localizations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_fiducials</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
+
+        <span class="n">tforms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">referencePoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_coordinates</span><span class="p">(</span><span class="n">localizations</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">currentLocalizations</span> <span class="ow">in</span> <span class="n">localizations</span><span class="p">:</span>
+            <span class="n">movingPoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_coordinates</span><span class="p">(</span><span class="n">currentLocalizations</span><span class="p">)</span>
+            <span class="n">rc</span><span class="p">,</span> <span class="n">mc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_control_points</span><span class="p">(</span><span class="n">referencePoints</span><span class="p">,</span> <span class="n">movingPoints</span><span class="p">)</span>
+            <span class="n">tforms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimate_affine_transform</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">mc</span><span class="p">))</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_transformations</span><span class="p">(</span><span class="n">tforms</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.fit_fiducials"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.fit_fiducials">[docs]</a>    <span class="k">def</span> <span class="nf">fit_fiducials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">dataChannel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">():</span>
+            <span class="n">fiducialFrame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fiducial_frame</span><span class="p">(</span><span class="n">dataChannel</span><span class="p">)</span>
+            <span class="n">fiducialName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fiducial_filename</span><span class="p">(</span><span class="n">dataChannel</span><span class="p">,</span> <span class="n">fov</span><span class="p">)</span>
+            <span class="n">destPath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_analysis_subdirectory</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">subdirectory</span><span class="o">=</span><span class="s1">&#39;fiducials&#39;</span><span class="p">)</span>
+
+            <span class="n">baseName</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fiducialName</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> \
+                            <span class="nb">str</span><span class="p">(</span><span class="n">dataChannel</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">fov</span><span class="p">)])</span>
+            <span class="n">parametersName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">destPath</span><span class="p">,</span> <span class="n">baseName</span> <span class="o">+</span> <span class="s1">&#39;_parameters.xml&#39;</span><span class="p">])</span>
+            <span class="n">outputName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">destPath</span><span class="p">,</span> <span class="n">baseName</span> <span class="o">+</span> <span class="s1">&#39;_spots.hdf5&#39;</span><span class="p">])</span>
+
+            <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getDefaultParameters</span><span class="p">(</span><span class="n">fiducialFrame</span><span class="p">,</span> <span class="n">fiducialFrame</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">toXMLFile</span><span class="p">(</span><span class="n">parametersName</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">outputName</span><span class="p">):</span>
+                <span class="n">mfit</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">fiducialName</span><span class="p">,</span> <span class="n">outputName</span><span class="p">,</span> <span class="n">parametersName</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">outputName</span> <span class="o">+</span> <span class="s1">&#39; already exists&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_transform_fiducials_for_image_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fiducialList</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">transpose</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fiducialList</span><span class="p">:</span>
+                <span class="n">oldX</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+                <span class="n">f</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+                <span class="n">f</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">oldX</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">flipHorizontal</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fiducialList</span><span class="p">:</span>
+                <span class="n">f</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">imageDimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">flipVertical</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fiducialList</span><span class="p">:</span>
+                <span class="n">f</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">imageDimensions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="FiducialFitWarp.load_fiducials"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.load_fiducials">[docs]</a>    <span class="k">def</span> <span class="nf">load_fiducials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
+        <span class="n">fiducials</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dataChannel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">():</span>
+            <span class="n">fiducialFrame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fiducial_frame</span><span class="p">(</span><span class="n">dataChannel</span><span class="p">)</span>
+            <span class="n">fiducialName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fiducial_filename</span><span class="p">(</span><span class="n">dataChannel</span><span class="p">,</span> <span class="n">fov</span><span class="p">)</span>
+            <span class="n">destPath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_analysis_subdirectory</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">subdirectory</span><span class="o">=</span><span class="s1">&#39;fiducials&#39;</span><span class="p">)</span>
+
+            <span class="n">baseName</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fiducialName</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> \
+                            <span class="nb">str</span><span class="p">(</span><span class="n">dataChannel</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">fov</span><span class="p">)])</span>
+            <span class="n">parametersName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">destPath</span><span class="p">,</span> <span class="n">baseName</span> <span class="o">+</span> <span class="s1">&#39;_parameters.xml&#39;</span><span class="p">])</span>
+            <span class="n">outputName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">destPath</span><span class="p">,</span> <span class="n">baseName</span> <span class="o">+</span> <span class="s1">&#39;_spots.hdf5&#39;</span><span class="p">])</span>
+
+            <span class="n">fiducials</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">saH5Py</span><span class="o">.</span><span class="n">SAH5Py</span><span class="p">(</span><span class="n">outputName</span><span class="p">)</span><span class="o">.</span><span class="n">getLocalizationsInFrame</span><span class="p">(</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">fiducialFrame</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transform_fiducials_for_image_orientation</span><span class="p">(</span><span class="n">fiducials</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fiducials</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.extract_coordinates"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.extract_coordinates">[docs]</a>    <span class="k">def</span> <span class="nf">extract_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">localizationSet</span><span class="p">,</span> <span class="n">significanceThreshold</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">s</span> \
+                    <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">localizationSet</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">localizationSet</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span>
+                        <span class="n">localizationSet</span><span class="p">[</span><span class="s1">&#39;significance&#39;</span><span class="p">])</span> 
+                    <span class="k">if</span> <span class="n">s</span><span class="o">&gt;</span><span class="n">significanceThreshold</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.extract_control_points"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.extract_control_points">[docs]</a>    <span class="k">def</span> <span class="nf">extract_control_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">referencePoints</span><span class="p">,</span> <span class="n">movingPoints</span><span class="p">):</span>
+        <span class="n">edgeSpacing</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">edgeSpacing</span><span class="p">)</span>
+
+        <span class="n">neighbors</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">neighbors</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">referencePoints</span><span class="p">)</span>
+        <span class="n">distances</span><span class="p">,</span> <span class="n">indexes</span> <span class="o">=</span> <span class="n">neighbors</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span>
+                <span class="n">movingPoints</span><span class="p">,</span> <span class="n">return_distance</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">differences</span> <span class="o">=</span> <span class="p">[[</span><span class="n">referencePoints</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">-</span> <span class="n">movingPoints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> \
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> \
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">movingPoints</span><span class="p">))]</span>
+        <span class="n">counts</span><span class="p">,</span> <span class="n">xedges</span><span class="p">,</span> <span class="n">yedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">differences</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">y</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">differences</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">y</span><span class="p">],</span>
+                <span class="n">bins</span> <span class="o">=</span> <span class="n">edges</span><span class="p">)</span>
+        <span class="n">maxIndex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">argmax</span><span class="p">(),</span> <span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">xedges</span><span class="p">[</span><span class="n">maxIndex</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="o">-</span><span class="n">yedges</span><span class="p">[</span><span class="n">maxIndex</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+
+        <span class="n">distancesShifted</span><span class="p">,</span> <span class="n">indexesShifted</span> <span class="o">=</span> <span class="n">neighbors</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span>
+                <span class="n">movingPoints</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="p">(</span><span class="n">movingPoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)),</span>
+                <span class="n">return_distance</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">controlIndexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">edgeSpacing</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">distancesShifted</span><span class="p">]</span>
+        <span class="n">referenceControls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">referencePoints</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> \
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">indexesShifted</span><span class="p">[</span><span class="n">controlIndexes</span><span class="p">]])</span>
+        <span class="n">movingControls</span> <span class="o">=</span> <span class="n">movingPoints</span><span class="p">[</span><span class="n">controlIndexes</span><span class="p">,:]</span>
+
+        <span class="k">return</span> <span class="n">referenceControls</span><span class="p">,</span> <span class="n">movingControls</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.estimate_affine_transform"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.estimate_affine_transform">[docs]</a>    <span class="k">def</span> <span class="nf">estimate_affine_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">referenceControls</span><span class="p">,</span> <span class="n">movingControls</span><span class="p">):</span>
+        <span class="n">tform</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">AffineTransform</span><span class="p">()</span>
+        <span class="n">tform</span><span class="o">.</span><span class="n">estimate</span><span class="p">(</span><span class="n">referenceControls</span><span class="p">,</span> <span class="n">movingControls</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tform</span></div>
+
+<div class="viewcode-block" id="FiducialFitWarp.getDefaultParameters"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialFitWarp.getDefaultParameters">[docs]</a>    <span class="k">def</span> <span class="nf">getDefaultParameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startFrame</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">endFrame</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">ParametersDAO</span><span class="p">()</span>
+
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;max_frame&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="n">endFrame</span><span class="p">)</span>    
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;start_frame&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="n">startFrame</span><span class="p">)</span>
+        
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;background_sigma&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;camera_gain&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;camera_offset&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;find_max_radius&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;foreground_sigma&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;iterations&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s1">&#39;2dfixed&#39;</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;pixel_size&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mi">106</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;roi_size&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;sigma&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">)</span>
+
+        <span class="c1"># Do tracking.</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;descriptor&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;radius&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Do drift-correction.</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;d_scale&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;drift_correction&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;frame_step&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;z_correction&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">params</span></div></div>
+
+<div class="viewcode-block" id="FiducialCorrelationWarp"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialCorrelationWarp">[docs]</a><span class="k">class</span> <span class="nc">FiducialCorrelationWarp</span><span class="p">(</span><span class="n">Warp</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    An analysis task that warps a set of images taken in different imaging</span>
+<span class="sd">    rounds based on the crosscorrelation between fiducial images.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FiducialCorrelationWarp.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialCorrelationWarp.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="FiducialCorrelationWarp.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialCorrelationWarp.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">2048</span></div>
+
+<div class="viewcode-block" id="FiducialCorrelationWarp.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialCorrelationWarp.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">5</span></div>
+
+<div class="viewcode-block" id="FiducialCorrelationWarp.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialCorrelationWarp.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="FiducialCorrelationWarp.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.warp.FiducialCorrelationWarp.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
+        <span class="c1">#TODO - this can be more efficient since some images should</span>
+        <span class="c1">#use the same aligned if they are from the same imaging round</span>
+        <span class="n">fixedImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fiducial_image</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="n">offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">register_translation</span><span class="p">(</span>
+                        <span class="n">fixedImage</span><span class="p">,</span> 
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fiducial_image</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">),</span>
+                        <span class="mi">100</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> \
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()]</span>
+        <span class="n">transformations</span> <span class="o">=</span> <span class="p">[</span><span class="n">transform</span><span class="o">.</span><span class="n">SimilarityTransform</span><span class="p">(</span>
+            <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">offsets</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_transformations</span><span class="p">(</span><span class="n">transformations</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, George Emanuel
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

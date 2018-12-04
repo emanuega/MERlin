@@ -1,0 +1,462 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>merlin.view.widgets.regionview &mdash; MERlin  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> MERlin
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">MERlin</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>merlin.view.widgets.regionview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for merlin.view.widgets.regionview</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtGui</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtCore</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">dataset</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">binary</span>
+<span class="kn">from</span> <span class="nn">merlin.view.widgets</span> <span class="k">import</span> <span class="n">regionview</span>
+
+
+<div class="viewcode-block" id="RegionViewWidget"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionViewWidget">[docs]</a><span class="k">class</span> <span class="nc">RegionViewWidget</span><span class="p">(</span><span class="n">QWidget</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">warpTask</span><span class="p">,</span> <span class="n">barcodeDB</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fov</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warpTask</span> <span class="o">=</span> <span class="n">warpTask</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span> <span class="o">=</span> <span class="n">dataSet</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">barcodeDB</span> <span class="o">=</span> <span class="n">barcodeDB</span>
+
+        <span class="n">vSynchronize</span> <span class="o">=</span> <span class="n">ImageViewSynchronizer</span><span class="p">()</span>
+        <span class="n">imageData</span> <span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">,</span> <span class="n">dc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">)</span> \
+                    <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()]</span>
+        <span class="n">imageCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">imageData</span><span class="p">)</span>
+        <span class="n">barcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">barcodeDB</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span> <span class="o">=</span> <span class="p">[</span><span class="n">RegionImageViewWidget</span><span class="p">(</span><span class="n">imageData</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">vSynchronize</span><span class="p">,</span> <span class="n">bitIndex</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">barcodes</span><span class="o">=</span><span class="n">barcodes</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channel_name</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> \
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">imageCount</span><span class="p">)]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_layout</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fovLabel</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s1">&#39;Field of view&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fovScrollBar</span> <span class="o">=</span> <span class="n">QScrollBar</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">Horizontal</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fovScrollBar</span><span class="o">.</span><span class="n">setMaximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fovScrollBar</span><span class="o">.</span><span class="n">sliderReleased</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fov_scroll_update</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">zScrollBar</span> <span class="o">=</span> <span class="n">QScrollBar</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">Horizontal</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zScrollBar</span><span class="o">.</span><span class="n">setMaximum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">())</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zScrollBar</span><span class="o">.</span><span class="n">sliderReleased</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_scroll_update</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlForm</span> <span class="o">=</span> <span class="n">QGroupBox</span><span class="p">()</span>
+        <span class="n">controlFormLayout</span> <span class="o">=</span> <span class="n">QFormLayout</span><span class="p">()</span>
+        <span class="n">controlFormLayout</span><span class="o">.</span><span class="n">addRow</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s1">&#39;Field of view&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fovScrollBar</span><span class="p">)</span>
+        <span class="n">controlFormLayout</span><span class="o">.</span><span class="n">addRow</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s1">&#39;Z index&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">zScrollBar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlForm</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="n">controlFormLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlForm</span><span class="o">.</span><span class="n">setMaximumHeight</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+
+        <span class="n">mainLayout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">mainLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlForm</span><span class="p">)</span>
+        <span class="n">imageLayout</span> <span class="o">=</span> <span class="n">QGridLayout</span><span class="p">()</span>
+        <span class="n">mainLayout</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">imageLayout</span><span class="p">)</span>
+        <span class="n">columnCount</span> <span class="o">=</span> <span class="mi">6</span>
+        <span class="n">imageCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span><span class="p">)</span>
+        <span class="n">rowCount</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">imageCount</span><span class="o">/</span><span class="n">columnCount</span><span class="p">))</span>
+
+        <span class="n">imageIndex</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">rowCount</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">columnCount</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">imageLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span><span class="p">[</span><span class="n">imageIndex</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+                <span class="n">imageIndex</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="RegionViewWidget.fov_scroll_update"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionViewWidget.fov_scroll_update">[docs]</a>    <span class="k">def</span> <span class="nf">fov_scroll_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_fov</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fovScrollBar</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RegionViewWidget.z_scroll_update"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionViewWidget.z_scroll_update">[docs]</a>    <span class="k">def</span> <span class="nf">z_scroll_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_z_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zScrollBar</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_update_fov_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">imageData</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">,</span> <span class="n">dc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">)</span> \
+                    <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()]</span>
+        <span class="n">barcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">barcodeDB</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">iView</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span><span class="p">):</span>
+            <span class="n">iView</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">imageData</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">barcodes</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegionViewWidget.set_fov"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionViewWidget.set_fov">[docs]</a>    <span class="k">def</span> <span class="nf">set_fov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">fov</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fov</span> <span class="o">=</span> <span class="n">fov</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_fov_data</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RegionViewWidget.set_z_index"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionViewWidget.set_z_index">[docs]</a>    <span class="k">def</span> <span class="nf">set_z_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span> <span class="o">=</span> <span class="n">zIndex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_fov_data</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="RegionImageViewWidget"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget">[docs]</a><span class="k">class</span> <span class="nc">RegionImageViewWidget</span><span class="p">(</span><span class="n">QWidget</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imageData</span><span class="p">,</span> <span class="n">vSynchronize</span><span class="p">,</span> <span class="n">bitIndex</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">barcodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span> <span class="o">=</span> <span class="n">vSynchronize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">updateViewSignal</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mousePressed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pressPosition</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bitIndex</span> <span class="o">=</span> <span class="n">bitIndex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">imageData</span><span class="p">,</span> <span class="n">barcodes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">setMouseTracking</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegionImageViewWidget.set_data"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.set_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">barcodes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">imageData</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_image</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">barcodes</span> <span class="o">=</span> <span class="n">barcodes</span>
+
+        <span class="k">if</span> <span class="n">barcodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[[</span><span class="n">bc</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">bc</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">binary</span><span class="o">.</span><span class="n">k_bit_set</span><span class="p">(</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">bc</span><span class="p">[</span><span class="s1">&#39;barcode&#39;</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">bitIndex</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">bc</span> <span class="ow">in</span> 
+                        <span class="bp">self</span><span class="o">.</span><span class="n">barcodes</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span><span class="p">[</span>\
+                    <span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RegionImageViewWidget.scale_image"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.scale_image">[docs]</a>    <span class="k">def</span> <span class="nf">scale_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">):</span>
+        <span class="n">imageMax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">inputImage</span><span class="p">)</span>
+        <span class="n">imageMin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">inputImage</span><span class="p">)</span>
+
+        <span class="n">lookupTable</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;uint16&#39;</span><span class="p">)</span>
+        <span class="n">lookupTable</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">imageMin</span><span class="p">,</span> <span class="n">imageMax</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">lookupTable</span><span class="p">)</span>
+        <span class="n">lookupTable</span> <span class="o">-=</span> <span class="n">imageMin</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">floor_divide</span><span class="p">(</span><span class="n">lookupTable</span><span class="p">,</span> <span class="p">(</span><span class="n">imageMax</span><span class="o">-</span><span class="n">imageMin</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">out</span><span class="o">=</span><span class="n">lookupTable</span><span class="p">,</span> <span class="n">casting</span><span class="o">=</span><span class="s1">&#39;unsafe&#39;</span><span class="p">)</span>
+        <span class="n">lookupTable</span> <span class="o">=</span> <span class="n">lookupTable</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">lookupTable</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RegionImageViewWidget.paintEvent"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.paintEvent">[docs]</a>    <span class="k">def</span> <span class="nf">paintEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">painter</span> <span class="o">=</span> <span class="n">QPainter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+
+        <span class="n">transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">get_transform</span><span class="p">()</span>
+        <span class="n">inverseTransform</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">inverted</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">painter</span><span class="o">.</span><span class="n">setTransform</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span>
+        <span class="n">painter</span><span class="o">.</span><span class="n">setRenderHint</span><span class="p">(</span><span class="n">QPainter</span><span class="o">.</span><span class="n">Antialiasing</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">windowSize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="n">clippingBounds</span> <span class="o">=</span> <span class="n">inverseTransform</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="n">QPolygon</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">())))</span>\
+                        <span class="o">.</span><span class="n">boundingRect</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paint_image</span><span class="p">(</span><span class="n">painter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paint_barcodes</span><span class="p">(</span><span class="n">painter</span><span class="p">,</span> <span class="n">clippingBounds</span><span class="p">)</span>
+
+        <span class="n">rawCursorPosition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">get_cursor_position</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">rawCursorPosition</span><span class="p">:</span>
+            <span class="n">cursorPosition</span> <span class="o">=</span> <span class="n">inverseTransform</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">get_cursor_position</span><span class="p">())</span>
+
+            <span class="n">cursorPen</span> <span class="o">=</span> <span class="n">QPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+            <span class="n">cursorPen</span><span class="o">.</span><span class="n">setWidthF</span><span class="p">(</span><span class="mf">0.01</span><span class="o">*</span><span class="n">clippingBounds</span><span class="o">.</span><span class="n">width</span><span class="p">())</span>
+            <span class="n">painter</span><span class="o">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">cursorPen</span><span class="p">)</span>
+            <span class="n">painter</span><span class="o">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">clippingBounds</span><span class="o">.</span><span class="n">left</span><span class="p">(),</span> <span class="n">cursorPosition</span><span class="o">.</span><span class="n">y</span><span class="p">(),</span>
+                    <span class="n">clippingBounds</span><span class="o">.</span><span class="n">right</span><span class="p">(),</span> <span class="n">cursorPosition</span><span class="o">.</span><span class="n">y</span><span class="p">())</span>
+            <span class="n">painter</span><span class="o">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">cursorPosition</span><span class="o">.</span><span class="n">x</span><span class="p">(),</span> <span class="n">clippingBounds</span><span class="o">.</span><span class="n">top</span><span class="p">(),</span>
+                    <span class="n">cursorPosition</span><span class="o">.</span><span class="n">x</span><span class="p">(),</span> <span class="n">clippingBounds</span><span class="o">.</span><span class="n">bottom</span><span class="p">())</span>
+
+        <span class="n">painter</span><span class="o">.</span><span class="n">resetTransform</span><span class="p">()</span>
+        <span class="n">painter</span><span class="o">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+        <span class="n">painter</span><span class="o">.</span><span class="n">drawText</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> 
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_paint_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">painter</span><span class="p">):</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">imageData</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">qimage</span> <span class="o">=</span> <span class="n">QImage</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">imageData</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">QImage</span><span class="o">.</span><span class="n">Format_Grayscale8</span><span class="p">)</span>
+        <span class="n">painter</span><span class="o">.</span><span class="n">drawImage</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">qimage</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_paint_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">painter</span><span class="p">,</span> <span class="n">clippingBounds</span><span class="p">):</span>
+        <span class="n">regionTooLarge</span> <span class="o">=</span> <span class="n">clippingBounds</span><span class="o">.</span><span class="n">width</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">500</span> \
+                <span class="ow">or</span> <span class="n">clippingBounds</span><span class="o">.</span><span class="n">height</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">500</span> 
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">regionTooLarge</span><span class="p">:</span>
+            <span class="n">indexBounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="p">[</span><span class="n">clippingBounds</span><span class="o">.</span><span class="n">left</span><span class="p">(),</span> <span class="n">clippingBounds</span><span class="o">.</span><span class="n">right</span><span class="p">()])</span>
+            <span class="k">for</span> <span class="n">currentBarcode</span> <span class="ow">in</span> \
+                    <span class="bp">self</span><span class="o">.</span><span class="n">barcodePositions</span><span class="p">[</span><span class="n">indexBounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">indexBounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]]:</span>
+                <span class="k">if</span> <span class="n">clippingBounds</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                        <span class="n">currentBarcode</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">currentBarcode</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+
+                    <span class="k">if</span> <span class="n">currentBarcode</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+                        <span class="n">painter</span><span class="o">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">191</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">150</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">painter</span><span class="o">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">129</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">50</span><span class="p">))</span>
+
+                    <span class="n">painter</span><span class="o">.</span><span class="n">drawEllipse</span><span class="p">(</span>
+                            <span class="n">currentBarcode</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">currentBarcode</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                            <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegionImageViewWidget.mousePressEvent"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.mousePressEvent">[docs]</a>    <span class="k">def</span> <span class="nf">mousePressEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">button</span><span class="p">()</span> <span class="o">==</span> <span class="n">Qt</span><span class="o">.</span><span class="n">LeftButton</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mousePressed</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pressPosition</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">globalPos</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RegionImageViewWidget.mouseReleaseEvent"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.mouseReleaseEvent">[docs]</a>    <span class="k">def</span> <span class="nf">mouseReleaseEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mousePressed</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="RegionImageViewWidget.mouseMoveEvent"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.mouseMoveEvent">[docs]</a>    <span class="k">def</span> <span class="nf">mouseMoveEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mousePressed</span><span class="p">:</span>
+            <span class="n">positionDifference</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">globalPos</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pressPosition</span>
+            <span class="n">transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">get_transform</span><span class="p">()</span>
+            <span class="n">transform</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span>
+                    <span class="n">positionDifference</span><span class="o">.</span><span class="n">x</span><span class="p">()</span><span class="o">/</span><span class="n">transform</span><span class="o">.</span><span class="n">m11</span><span class="p">(),</span>
+                    <span class="n">positionDifference</span><span class="o">.</span><span class="n">y</span><span class="p">()</span><span class="o">/</span><span class="n">transform</span><span class="o">.</span><span class="n">m22</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pressPosition</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">globalPos</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">set_cursor_position</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">localPos</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">updateViewSignal</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RegionImageViewWidget.wheelEvent"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.wheelEvent">[docs]</a>    <span class="k">def</span> <span class="nf">wheelEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="n">angleDelta</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">angleDelta</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">angleDelta</span><span class="p">:</span>
+            <span class="n">transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">get_transform</span><span class="p">()</span>
+
+            <span class="n">scaleFactor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">angleDelta</span><span class="o">.</span><span class="n">y</span><span class="p">()</span><span class="o">/</span><span class="p">(</span><span class="mi">10</span><span class="o">*</span><span class="mi">8</span><span class="o">*</span><span class="mi">15</span><span class="p">))</span>
+            <span class="n">oldCenter</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">inverted</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                    <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">())</span>
+            <span class="n">transform</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">scaleFactor</span><span class="p">,</span>  <span class="n">scaleFactor</span><span class="p">)</span>
+            <span class="n">newCenter</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">inverted</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                    <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">())</span>
+            <span class="n">transform</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">newCenter</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">oldCenter</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">newCenter</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">oldCenter</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">updateViewSignal</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="ImageViewSynchronizer"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.ImageViewSynchronizer">[docs]</a><span class="k">class</span> <span class="nc">ImageViewSynchronizer</span><span class="p">(</span><span class="n">QObject</span><span class="p">):</span>
+
+    <span class="n">updateViewSignal</span> <span class="o">=</span> <span class="n">pyqtSignal</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">QTransform</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectedBarcode</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ImageViewSynchronizer.get_transform"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.ImageViewSynchronizer.get_transform">[docs]</a>    <span class="k">def</span> <span class="nf">get_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span></div>
+
+<div class="viewcode-block" id="ImageViewSynchronizer.get_cursor_position"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.ImageViewSynchronizer.get_cursor_position">[docs]</a>    <span class="k">def</span> <span class="nf">get_cursor_position</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span></div>
+
+<div class="viewcode-block" id="ImageViewSynchronizer.set_cursor_position"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.ImageViewSynchronizer.set_cursor_position">[docs]</a>    <span class="k">def</span> <span class="nf">set_cursor_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newPosition</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span> <span class="o">=</span> <span class="n">newPosition</span></div>
+
+<div class="viewcode-block" id="ImageViewSynchronizer.get_selected_barcode"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.ImageViewSynchronizer.get_selected_barcode">[docs]</a>    <span class="k">def</span> <span class="nf">get_selected_barcode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectedBarcode</span></div>
+
+<div class="viewcode-block" id="ImageViewSynchronizer.set_selected_barcode"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.ImageViewSynchronizer.set_selected_barcode">[docs]</a>    <span class="k">def</span> <span class="nf">set_selected_barcode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newSelection</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectedBarcode</span> <span class="o">=</span> <span class="n">newSelection</span></div></div>
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, George Emanuel
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

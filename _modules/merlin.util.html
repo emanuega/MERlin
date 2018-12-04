@@ -1,0 +1,381 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>merlin.util package &mdash; MERlin  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> MERlin
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">merlin.util package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-merlin.util.barcodedb">merlin.util.barcodedb module</a></li>
+<li><a class="reference internal" href="#module-merlin.util.binary">merlin.util.binary module</a></li>
+<li><a class="reference internal" href="#module-merlin.util.decoding">merlin.util.decoding module</a></li>
+<li><a class="reference internal" href="#module-merlin.util">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MERlin</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>merlin.util package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/_modules/merlin.util.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="merlin-util-package">
+<h1>merlin.util package<a class="headerlink" href="#merlin-util-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-merlin.util.barcodedb">
+<span id="merlin-util-barcodedb-module"></span><h2>merlin.util.barcodedb module<a class="headerlink" href="#module-merlin.util.barcodedb" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.util.barcodedb.BarcodeDB">
+<em class="property">class </em><code class="descclassname">merlin.util.barcodedb.</code><code class="descname">BarcodeDB</code><span class="sig-paren">(</span><em>dataSet</em>, <em>analysisTask</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An abstract class for storing and retrieving barcode information.</p>
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.empty_database">
+<code class="descname">empty_database</code><span class="sig-paren">(</span><em>fov=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.empty_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.empty_database" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcodes">
+<code class="descname">get_barcodes</code><span class="sig-paren">(</span><em>fov=None</em>, <em>columnList=None</em>, <em>chunksize=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_filtered_barcodes">
+<code class="descname">get_filtered_barcodes</code><span class="sig-paren">(</span><em>areaThreshold</em>, <em>intensityThreshold</em>, <em>fov=None</em>, <em>chunksize=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_filtered_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_filtered_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_intensities_for_barcodes_with_area">
+<code class="descname">get_intensities_for_barcodes_with_area</code><span class="sig-paren">(</span><em>area</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_intensities_for_barcodes_with_area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_intensities_for_barcodes_with_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the barcode intensities for barcodes that have the specified
+area.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.write_barcodes">
+<code class="descname">write_barcodes</code><span class="sig-paren">(</span><em>barcodeInformation</em>, <em>fov=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.write_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.write_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the barcodes specified in barcodeInformation into the
+barcode database. If all the barcodes correspond to the same fov,
+then fov can be specified to improve performance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcode_intensities">
+<code class="descname">get_barcode_intensities</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcode_intensities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcode_intensities" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcode_areas">
+<code class="descname">get_barcode_areas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcode_areas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcode_areas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcode_distances">
+<code class="descname">get_barcode_distances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcode_distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcode_distances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB">
+<em class="property">class </em><code class="descclassname">merlin.util.barcodedb.</code><code class="descname">SQLiteBarcodeDB</code><span class="sig-paren">(</span><em>dataSet</em>, <em>analysisTask</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.util.barcodedb.BarcodeDB" title="merlin.util.barcodedb.BarcodeDB"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.util.barcodedb.BarcodeDB</span></code></a></p>
+<p>A class for storing and retrieving barcode information using a
+SQLite back end.</p>
+<p>This barcode database stores the barcodes corresponding to each FOV
+into its own SQLite file so that multiple FOVS can be processed
+in parallel efficiently.</p>
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.get_barcodes">
+<code class="descname">get_barcodes</code><span class="sig-paren">(</span><em>fov=None</em>, <em>columnList=None</em>, <em>chunksize=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.get_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.get_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.get_filtered_barcodes">
+<code class="descname">get_filtered_barcodes</code><span class="sig-paren">(</span><em>areaThreshold</em>, <em>intensityThreshold</em>, <em>fov=None</em>, <em>chunksize=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.get_filtered_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.get_filtered_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.get_intensities_for_barcodes_with_area">
+<code class="descname">get_intensities_for_barcodes_with_area</code><span class="sig-paren">(</span><em>area</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.get_intensities_for_barcodes_with_area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.get_intensities_for_barcodes_with_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the barcode intensities for barcodes that have the specified
+area.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.write_barcodes">
+<code class="descname">write_barcodes</code><span class="sig-paren">(</span><em>barcodeInformation</em>, <em>fov=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.write_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.write_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the barcodes specified in barcodeInformation into the
+barcode database. If all the barcodes correspond to the same fov,
+then fov can be specified to improve performance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.empty_database">
+<code class="descname">empty_database</code><span class="sig-paren">(</span><em>fov=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.empty_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.empty_database" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-merlin.util.binary">
+<span id="merlin-util-binary-module"></span><h2>merlin.util.binary module<a class="headerlink" href="#module-merlin.util.binary" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="merlin.util.binary.bit_array_to_int">
+<code class="descclassname">merlin.util.binary.</code><code class="descname">bit_array_to_int</code><span class="sig-paren">(</span><em>bitArray</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/binary.html#bit_array_to_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.binary.bit_array_to_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a binary array to an integer</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="merlin.util.binary.int_to_bit_array">
+<code class="descclassname">merlin.util.binary.</code><code class="descname">int_to_bit_array</code><span class="sig-paren">(</span><em>intIn</em>, <em>bitCount</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/binary.html#int_to_bit_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.binary.int_to_bit_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an integer to a binary list with the specified number of bits.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="merlin.util.binary.k_bit_set">
+<code class="descclassname">merlin.util.binary.</code><code class="descname">k_bit_set</code><span class="sig-paren">(</span><em>n</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/binary.html#k_bit_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.binary.k_bit_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the k’th bit of the integer n is 1, otherwise false. If
+k is None, this function returns None. The index k is 0-based.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-merlin.util.decoding">
+<span id="merlin-util-decoding-module"></span><h2>merlin.util.decoding module<a class="headerlink" href="#module-merlin.util.decoding" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="merlin.util.decoding.flip_bit">
+<code class="descclassname">merlin.util.decoding.</code><code class="descname">flip_bit</code><span class="sig-paren">(</span><em>barcode</em>, <em>bitIndex</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#flip_bit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.flip_bit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip the specified bit in the barcode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>barcode</strong> – A binary array where the i’th entry corresponds with the
+value of the i’th bit</li>
+<li><strong>bitIndex</strong> – The index of the bit to reverse</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="merlin.util.decoding.normalize">
+<code class="descclassname">merlin.util.decoding.</code><code class="descname">normalize</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.normalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="merlin.util.decoding.extract_barcodes">
+<code class="descclassname">merlin.util.decoding.</code><code class="descname">extract_barcodes</code><span class="sig-paren">(</span><em>codebook</em>, <em>ignoreBlanks=False</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#extract_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.extract_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract the barcodes from a codebook.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.util.decoding.PixelBasedDecoder">
+<em class="property">class </em><code class="descclassname">merlin.util.decoding.</code><code class="descname">PixelBasedDecoder</code><span class="sig-paren">(</span><em>codebook</em>, <em>scaleFactors=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#PixelBasedDecoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.PixelBasedDecoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="merlin.util.decoding.PixelBasedDecoder.decode_pixels">
+<code class="descname">decode_pixels</code><span class="sig-paren">(</span><em>imageData</em>, <em>scaleFactors=None</em>, <em>distanceThreshold=0.5176</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#PixelBasedDecoder.decode_pixels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.PixelBasedDecoder.decode_pixels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Match the pixels in imagaDate to the barcodes present in the
+codebook.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.decoding.PixelBasedDecoder.extract_refactors">
+<code class="descname">extract_refactors</code><span class="sig-paren">(</span><em>imageSet</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#PixelBasedDecoder.extract_refactors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.PixelBasedDecoder.extract_refactors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-merlin.util">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-merlin.util" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, George Emanuel
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

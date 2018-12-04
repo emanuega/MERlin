@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>merlin.analysis.decode &mdash; MERlin  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> MERlin
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MERlin</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>merlin.analysis.decode</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for merlin.analysis.decode</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">measure</span>
+
+<span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">decoding</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">binary</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">barcodedb</span>
+
+
+<div class="viewcode-block" id="Decode"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode">[docs]</a><span class="k">class</span> <span class="nc">Decode</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    An analysis task that extracts barcodes from images.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;crop_width&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">imageSize</span> <span class="o">=</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">imageDimensions</span>
+
+<div class="viewcode-block" id="Decode.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Decode.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">2048</span></div>
+
+<div class="viewcode-block" id="Decode.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">5</span></div>
+
+<div class="viewcode-block" id="Decode.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">],</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;optimize_task&#39;</span><span class="p">],</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">]]</span>
+
+        <span class="k">if</span> <span class="s1">&#39;segment_task&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">dependencies</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="n">dependencies</span></div>
+
+<div class="viewcode-block" id="Decode.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;This function generates the barcodes for a fov and saves them to the </span>
+<span class="sd">        barcode database.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">])</span>
+        <span class="n">optimizeTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;optimize_task&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">globalTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">segmentTask</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;segment_task&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">segmentTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">])</span>
+
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">decoding</span><span class="o">.</span><span class="n">PixelBasedDecoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">codebook</span><span class="p">)</span>
+        <span class="n">scaleFactors</span> <span class="o">=</span> <span class="n">optimizeTask</span><span class="o">.</span><span class="n">get_scale_factors</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">zIndex</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">())):</span>
+            <span class="n">imageSet</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span>
+                    <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">)</span>
+            <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode_pixels</span><span class="p">(</span><span class="n">imageSet</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_extract_and_save_barcodes</span><span class="p">(</span>
+                    <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Decode.get_barcode_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.get_barcode_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">SQLiteBarcodeDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_initialize_barcode_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">columnInformation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_bc_column_types</span><span class="p">()</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">columnInformation</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">_bc_properties_to_dict</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">bcIndex</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">pixelTraces</span><span class="p">):</span>
+        <span class="c1">#centroid is reversed since skimage regionprops returns the centroid</span>
+        <span class="c1">#as (r,c)</span>
+        <span class="n">centroid</span> <span class="o">=</span> <span class="n">properties</span><span class="o">.</span><span class="n">weighted_centroid</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">globalCentroid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">globalTask</span><span class="o">.</span><span class="n">fov_coordinates_to_global</span><span class="p">(</span>
+                <span class="n">fov</span><span class="p">,</span> <span class="n">centroid</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">[</span><span class="n">distances</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">coords</span><span class="p">]</span>
+        <span class="n">zPosition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">z_index_to_position</span><span class="p">(</span><span class="n">zIndex</span><span class="p">)</span>
+        <span class="n">outputDict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;barcode&#39;</span><span class="p">:</span> <span class="n">binary</span><span class="o">.</span><span class="n">bit_array_to_int</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">codebook</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">bcIndex</span><span class="p">,</span> <span class="s1">&#39;barcode&#39;</span><span class="p">]),</span> \
+                    <span class="s1">&#39;barcode_id&#39;</span><span class="p">:</span> <span class="n">bcIndex</span><span class="p">,</span> \
+                    <span class="s1">&#39;fov&#39;</span><span class="p">:</span> <span class="n">fov</span><span class="p">,</span> \
+                    <span class="s1">&#39;mean_intensity&#39;</span><span class="p">:</span> <span class="n">properties</span><span class="o">.</span><span class="n">mean_intensity</span><span class="p">,</span> \
+                    <span class="s1">&#39;max_intensity&#39;</span><span class="p">:</span> <span class="n">properties</span><span class="o">.</span><span class="n">max_intensity</span><span class="p">,</span> \
+                    <span class="s1">&#39;area&#39;</span><span class="p">:</span> <span class="n">properties</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> \
+                    <span class="s1">&#39;mean_distance&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> \
+                    <span class="s1">&#39;min_distance&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> \
+                    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">centroid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
+                    <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">centroid</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> \
+                    <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">zPosition</span><span class="p">,</span> \
+                    <span class="s1">&#39;global_x&#39;</span><span class="p">:</span> <span class="n">globalCentroid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
+                    <span class="s1">&#39;global_y&#39;</span><span class="p">:</span> <span class="n">globalCentroid</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> \
+                    <span class="s1">&#39;global_z&#39;</span><span class="p">:</span> <span class="n">zPosition</span><span class="p">,</span> \
+                    <span class="s1">&#39;cell_index&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pixelTraces</span><span class="p">)):</span>
+            <span class="n">outputDict</span><span class="p">[</span><span class="s1">&#39;intensity_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> \
+                <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">pixelTraces</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> \
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">coords</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">segmentTask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">outputDict</span><span class="p">[</span><span class="s1">&#39;cell_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">segmentTask</span> \
+                    <span class="o">.</span><span class="n">get_cell_containing_position</span><span class="p">(</span>
+                            <span class="n">globalCentroid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">globalCentroid</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">outputDict</span>
+
+    <span class="k">def</span> <span class="nf">_extract_and_save_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decodedImage</span><span class="p">,</span> <span class="n">pixelMagnitudes</span><span class="p">,</span> 
+            <span class="n">pixelTraces</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">):</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">codebook</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_extract_barcodes_with_index</span><span class="p">(</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="n">decodedImage</span><span class="p">,</span> <span class="n">pixelMagnitudes</span><span class="p">,</span> <span class="n">pixelTraces</span><span class="p">,</span> 
+                        <span class="n">distances</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">),</span> <span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_position_within_crop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span> \
+                <span class="ow">and</span> <span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span> \
+                <span class="ow">and</span> <span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">imageSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span> \
+                <span class="ow">and</span> <span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">imageSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span>
+
+    <span class="k">def</span> <span class="nf">_extract_barcodes_with_index</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">barcodeIndex</span><span class="p">,</span> <span class="n">decodedImage</span><span class="p">,</span> <span class="n">pixelMagnitudes</span><span class="p">,</span> 
+            <span class="n">pixelTraces</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">):</span>
+
+        <span class="n">properties</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">regionprops</span><span class="p">(</span>
+                <span class="n">measure</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">decodedImage</span> <span class="o">==</span> <span class="n">barcodeIndex</span><span class="p">),</span>
+                <span class="n">intensity_image</span><span class="o">=</span><span class="n">pixelMagnitudes</span><span class="p">)</span>
+        <span class="n">dList</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_bc_properties_to_dict</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">barcodeIndex</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> 
+            <span class="n">distances</span><span class="p">,</span> <span class="n">pixelTraces</span><span class="p">)</span> \
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position_within_crop</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">centroid</span><span class="p">)]</span>
+        <span class="n">barcodeInformation</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dList</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">barcodeInformation</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, George Emanuel
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

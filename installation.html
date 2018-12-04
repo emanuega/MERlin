@@ -162,14 +162,25 @@
 <li>PARAMETERS_HOME - The path to the directory where the merfish-parameters directory resides.</li>
 </ul>
 <p>The contents of an example .env file are below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>DATA_HOME=D:/data
+ANALYSIS_HOME=D:/analysis
+PARAMETERS_HOME=D:/merfish-parameters/analysis_parameters
+</pre></div>
+</div>
 </div>
 <div class="section" id="installing-prerequisites">
 <h2>Installing prerequisites<a class="headerlink" href="#installing-prerequisites" title="Permalink to this headline">¶</a></h2>
 <p>MERlin requires python 3.6 and above. <a class="reference external" href="https://github.com/ZhuangLab/storm-analysis">Storm-analysis</a> must be intalled prior to installing this package. Additionally, the package rtree is not properly installed by pip and should be installed independently. For example, using Anaconda:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda install rtree
+</pre></div>
+</div>
 </div>
 <div class="section" id="installing-merlin">
 <h2>Installing MERlin<a class="headerlink" href="#installing-merlin" title="Permalink to this headline">¶</a></h2>
 <p>MERlin can be install with pip:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install --process-dependency-links -e MERlin
+</pre></div>
+</div>
 </div>
 </div>
 

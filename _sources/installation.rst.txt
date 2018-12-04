@@ -13,6 +13,7 @@ A .env file is required to specify the search locations for the various input an
 The contents of an example .env file are below:
 
 .. code-block:: none
+
     DATA_HOME=D:/data
     ANALYSIS_HOME=D:/analysis
     PARAMETERS_HOME=D:/merfish-parameters/analysis_parameters
@@ -23,7 +24,9 @@ Installing prerequisites
 MERlin requires python 3.6 and above. Storm-analysis_ must be intalled prior to installing this package. Additionally, the package rtree is not properly installed by pip and should be installed independently. For example, using Anaconda:
 
 .. _Storm-analysis: https://github.com/ZhuangLab/storm-analysis
+
 .. code-block:: none
+
     conda install rtree
 
 Installing MERlin
@@ -32,4 +35,5 @@ Installing MERlin
 MERlin can be install with pip:
 
 .. code-block:: none
+
     pip install --process-dependency-links -e MERlin

@@ -21,7 +21,7 @@ class Decode(analysistask.ParallelAnalysisTask):
         if 'crop_width' not in self.parameters:
             self.parameters['crop_width'] = 100
 
-        self.cropWidth = parameters['crop_width']
+        self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.imageDimensions
 
     def fragment_count(self):

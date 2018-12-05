@@ -23,16 +23,13 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.iterationCount = parameters.get('iteration_count', 20)
-        self.fovPerIteration = parameters.get('fov_per_iteration', 10) 
+        if 'iteration_count' not in self.parameters:
+            parameters['iteration_count'] = 20
+        if 'fov_per_iteration' not in self.parameters:
+            parameters['fov_per_iteration'] = 10
 
-        self.bitCount = len(self.dataSet.get_bit_names())
-        self.barcodeCount = self.dataSet.codebook.shape[0]
-
-        self.decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
-
-        self.preprocessTask = self.dataSet.load_analysis_task(
-                self.parameters['preprocess_task'])
+        self.iterationCount = parameters['iteration_count']
+        self.fovPerIteration = parameters['fov_per_iteration'] 
 
     def get_estimated_memory(self):
         return 4000*self.coreCount
@@ -44,9 +41,16 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         return [self.parameters['preprocess_task']]
 
     def run_analysis(self):
-        initialScaleFactors = np.ones(self.bitCount)
-        scaleFactors = np.ones((self.iterationCount, self.bitCount))
-        barcodeCounts = np.ones((self.iterationCount, self.barcodeCount))
+        preprocessTask = self.dataSet.load_analysis_task(
+                self.parameters['preprocess_task'])
+
+        bitCount = len(self.dataSet.get_bit_names())
+        barcodeCount = self.dataSet.codebook.shape[0]
+        decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
+
+        initialScaleFactors = np.ones(bitCount)
+        scaleFactors = np.ones((self.iterationCount, bitCount))
+        barcodeCounts = np.ones((self.iterationCount, barcodeCount))
         pool = multiprocessing.Pool(processes=self.coreCount)
         for i in range(1,self.iterationCount):
             fovIndexes = random.sample(
@@ -54,9 +58,9 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
             zIndexes = np.random.choice(
                     list(range(len(self.dataSet.get_z_positions()))),
                     self.fovPerIteration)
-            self.decoder.scaleFactors = scaleFactors[i-1,:]
-            r = pool.starmap(self.decoder.extract_refactors, 
-                    ([self.preprocessTask.get_processed_image_set(f, zIndex=z)]
+            decoder.scaleFactors = scaleFactors[i-1,:]
+            r = pool.starmap(decoder.extract_refactors, 
+                    ([preprocessTask.get_processed_image_set(f, zIndex=z)]
                         for f,z in zip(fovIndexes, zIndexes))) 
             scaleFactors[i,:] = scaleFactors[i-1,:]\
                     *np.mean([x[0] for x in r], axis=0)

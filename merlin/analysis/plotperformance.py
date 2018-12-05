@@ -37,7 +37,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         return 30000
 
     def get_estimated_time(self):
-        return 30
+        return 180
 
     def get_dependencies(self):
         return [self.parameters['decode_task'], self.parameters['filter_task']]

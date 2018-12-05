@@ -22,8 +22,11 @@ class Warp(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.writeAlignedFiducialImages = self.parameters.get(
-                'write_fiducial_images', False)
+        if 'write_fiducial_images' not in self.parameters:
+            self.parameters['write_fiducial_images'] = False
+
+        self.writeAlignedFiducialImages = self.parameters[\
+                'write_fiducial_images']
 
     def get_transformation(self, fov, dataChannel):
         transformations = self.dataSet.load_analysis_result(

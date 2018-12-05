@@ -11,8 +11,13 @@ class FilterBarcodes(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.areaThreshold = parameters.get('area_threshold', 3)
-        self.intensityThreshold = parameters.get('intensity_threshold', 200)
+        if 'area_threshold' not in self.parameters:
+            self.parameters['area_threshold'] = 3
+        if 'intensity_threshold' not in self.parameters:
+            self.parameters['intensity_threshold'] = 200
+
+        self.areaThreshold = parameters['area_threshold']
+        self.intensityThreshold = parameters['intensity_threshold']
 
     def get_barcode_database(self):
         return barcodedb.SQLiteBarcodeDB(self.dataSet, self)

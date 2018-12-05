@@ -11,14 +11,17 @@ from merlin.util import barcodedb
 
 class Decode(analysistask.ParallelAnalysisTask):
 
-    '''An analysis task that extracts barcodes information from 
-    images.
+    '''
+    An analysis task that extracts barcodes from images.
     '''
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.cropWidth = parameters.get('crop_width', 100)
+        if 'crop_width' not in self.parameters:
+            self.parameters['crop_width'] = 100
+
+        self.cropWidth = parameters['crop_width']
         self.imageSize = dataSet.imageDimensions
 
     def fragment_count(self):

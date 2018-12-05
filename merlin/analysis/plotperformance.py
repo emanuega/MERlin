@@ -88,6 +88,11 @@ class PlotPerformance(analysistask.AnalysisTask):
         #This will cause an error if one of the lists in intensity data
         #is empty.
         plt.violinplot(intensityData, showextrema=False, showmedians=True)
+        plt.axvline(x=self.filterTask.parameters['area_threshold']-0.5,
+                color='green', linestyle=':')
+        plt.axhline(y=np.log10(
+            self.filterTask.parameters['intensity_threshold']),
+                color='green', linestyle=':')
         plt.xlabel('Barcode area (pixels)')
         plt.ylabel('Mean intensity ($log_{10}$)')
         plt.title('Intensity distribution by barcode area')

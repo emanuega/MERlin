@@ -1,6 +1,7 @@
-from matplotlib import pyplot as plt
-import merlin
 import os
+from matplotlib import pyplot as plt
+from matplotlib import patches
+import merlin
 plt.style.use(
         os.sep.join([os.path.dirname(merlin.__file__), 
             'ext', 'default.mplstyle']))
@@ -8,12 +9,13 @@ import seaborn
 import numpy as np
 
 from merlin.core import analysistask
+from merlin.util import binary
 
 class PlotPerformance(analysistask.AnalysisTask):
 
-    '''An analysis task that generates plots depicting metrics of the MERFISH
+    '''
+    An analysis task that generates plots depicting metrics of the MERFISH
     decoding.
-
     '''
     #TODO - I expect the plots of the barcode information can be 
     #made much more memory efficient.
@@ -83,12 +85,42 @@ class PlotPerformance(analysistask.AnalysisTask):
             barcodeDB.get_intensities_for_barcodes_with_area(x)) \
                     for x in range(1,15)]
         fig = plt.figure(figsize=(8,4))
+        #This will cause an error if one of the lists in intensity data
+        #is empty.
         plt.violinplot(intensityData, showextrema=False, showmedians=True)
         plt.xlabel('Barcode area (pixels)')
         plt.ylabel('Mean intensity ($log_{10}$)')
         plt.title('Intensity distribution by barcode area')
         plt.tight_layout(pad=0.2)
         self.dataSet.save_figure(self, fig, 'barcode_intensity_area_violin')
+
+    def _plot_bitwise_intensity_violin(self):
+        bc = self.filterTask.get_barcode_database().get_barcodes()
+        bitCount = self.dataSet.get_bit_count()
+
+        zeroBitSet = [[i for i,x in zip(
+                        bc['intensity_' + str(j)], bc['barcode']) \
+                    if not binary.k_bit_set(x, j)] for j in range(bitCount)]
+        oneBitSet = [[i for i,x in zip(
+                        bc['intensity_' + str(j)], bc['barcode']) \
+                    if binary.k_bit_set(x, j)] for j in range(bitCount)]
+
+        fig = plt.figure(figsize=(15,5))
+        zeroViolin = plt.violinplot(
+                zeroBitSet, np.arange(bitCount)-0.15, widths=0.3, 
+                showmedians=True)
+        zeroPatch = patches.Patch(
+                color=zeroViolin['bodies'][0].get_facecolor()[0], label='0')
+        oneViolin = plt.violinplot(
+                oneBitSet, np.arange(bitCount)+0.15, widths=0.3, 
+                showmedians=True)
+        onePatch = patches.Patch(
+                color=oneViolin['bodies'][0].get_facecolor()[0], label='1')
+        plt.xticks(np.arange(bitCount))
+        plt.xlabel('Bit index')
+        plt.ylabel('Normalized and scaled intensity')
+        plt.title('Bit-wise intensity distributions for filtered barcodes')
+        self.dataSet.save_figure(self, fig, 'barcode_bitwise_intensity_violin')
 
     def _plot_blank_distribution(self):
         codebook = self.dataSet.get_codebook()

@@ -24,11 +24,23 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.nucleusThreshold = parameters.get('nucleus_threshold', 0.41)
-        self.cellThreshold = parameters.get('cell_thershold', 0.08)
-        self.nucleusIndex = parameters.get('nucleus_index', 17)
-        self.cellIndex = parameters.get('cell_index', 16)
-        self.zIndex = parameters.get('z_index', 0)
+
+        if 'nucleus_threshold' not in self.parameters:
+            self.parameters['nucleus_threshold'] = 0.41
+        if 'cell_threshold' not in self.parameters:
+            self.parameters['cell_threshold'] = 0.08
+        if 'nucleus_index' not in self.parameters:
+            self.parameters['nucleus_index'] = 17
+        if 'cell_index' not in self.parameters:
+            self.parameters['cell_index'] = 16
+        if 'z_index' not in self.parameters:
+            self.parameters['z_index'] = 0
+
+        self.nucleusThreshold = self.parameters['nucleus_threshold']
+        self.cellThreshold = self.parameters['cell_threshold']
+        self.nucleusIndex = self.parameters['nucleus_index']
+        self.cellIndex = self.parameters['cell_index']
+        self.zIndex = self.parameters['z_index']
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())

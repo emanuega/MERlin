@@ -12,7 +12,10 @@ class GenerateMosaic(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        self.mosaicMicronsPerPixel = parameters.get('microns_per_pixel', 3) 
+        if 'microns_per_pixel' not in self.parameters:
+            self.parameters['microns_per_pixel'] = 3
+
+        self.mosaicMicronsPerPixel = self.parameters['microns_per_pixel'] 
 
     def get_estimated_memory(self):
         return 10000

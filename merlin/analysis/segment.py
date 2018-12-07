@@ -6,7 +6,6 @@ import rtree
 from shapely import geometry
 from shapely.ops import unary_union
 from starfish.image._segmentation import watershed
-from starfish import stats
 
 from merlin.core import analysistask
 

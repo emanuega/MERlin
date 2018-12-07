@@ -18,6 +18,8 @@ from storm_analysis.sa_library import datareader
 import merlin
 from merlin.core import analysistask
 
+class InputDataError(Exception):
+    pass
 
 class DataSet(object):
 
@@ -344,6 +346,20 @@ class ImageDataSet(DataSet):
                 imageIn = np.flip(imageIn, axis=0)
             return imageIn 
 
+    def image_stack_size(self, imagePath):
+        '''
+        Get the size of the image stack stored in the specified image path.
+
+        Returns:
+            a three element list with [width, height, frameCount] or None
+                    if the file does not exist
+        '''
+        if not os.path.exists(imagePath):
+            return None
+
+        with datareader.inferReader(imagePath) as reader:
+            return reader.filmSize()
+
     def _import_microscope_parameters(self, microscopeParametersName):
         sourcePath = os.sep.join([merlin.MICROSCOPE_PARAMETERS_HOME,
                 microscopeParametersName + '.json'])
@@ -392,8 +408,6 @@ class MERFISHDataSet(ImageDataSet):
         self._load_codebook()
         self._load_positions()
         self._map_images()
-        #TODO - this should check for consistency between all the
-        #different components
 
         self.dataParameters = dataParameters
         #TODO - This should not be hard coded
@@ -482,6 +496,54 @@ class MERFISHDataSet(ImageDataSet):
         '''
         return(sorted(np.unique(
             [y for x in self.dataOrganization['zPos'] for y in x])))
+
+    def _validate_file_map(self):
+        '''
+        This function ensures that all the files specified in the file map
+        of the raw images are present.
+
+        If an image file is not as expected, a InputDataError is raised.
+        '''
+
+        expectedImageSize = None
+        for dataChannel in self.get_data_channels():
+            for fov in self.get_fovs():
+                channelInfo = self.dataOrganization.loc[dataChannel]
+                imagePath = self.get_image_path(channelInfo['imageType'], 
+                        fov, channelInfo['imagingRound'])
+
+                if not os.path.exists(imagePath):
+                    print('{0}'.format(dataChannel))
+                    raise InputDataError(('Image data for channel {0} '  
+                            'and fov {1} not found. Expected at {2}')
+                                    .format(dataChannel, fov, imagePath))
+
+                imageSize = self.image_stack_size(imagePath)
+                frames = channelInfo['frame']
+
+                #this assumes fiducials are stored in the same image file
+                requiredFrames = max(np.max(frames), \
+                        channelInfo['fiducialFrame'])
+                if requiredFrames >= imageSize[2]:
+                    raise InputDataError(('Insufficient frames in data for '
+                            'channel {0} and fov {1}. Expected {2} frames '
+                            'but only found {3} in file {4}')
+                                .format(dataChannel, fov, requiredFrames, 
+                                    imageSize[2], imagePath))
+
+                if expectedImageSize is None:
+                    expectedImageSize = [imageSize[0], imageSize[1]]
+                else:
+                    if expectedImageSize[0] != imageSize[0] \
+                            or expectedImageSize[1] != imageSize[1]:
+                        raise InputDataError(('Image data for channel {0} '
+                                'and fov {1} has unexpected dimensions. '
+                                'Expected {1}x{2} but found {3}x{4} in '
+                                'image file {5}')
+                                .format(dataChannel, fov, expectedImageSize[0],
+                                    expectedImageSize[1], imageSize[0],
+                                    imageSize[1], imagePath))
+
 
     def get_image_path(self, imageType, fov, imagingRound):
         selection = self.fileMap[(self.fileMap['imageType'] == imageType) & \
@@ -572,6 +634,8 @@ class MERFISHDataSet(ImageDataSet):
             self.fileMap[['imagingRound', 'fov']] = \
                     self.fileMap[['imagingRound', 'fov']].astype(int)
     
+            self._validate_file_map()
+
             self.fileMap.to_csv(mapPath)
 
         else:

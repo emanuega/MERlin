@@ -5,7 +5,6 @@ import json
 import shutil
 import pandas
 import numpy as np
-import re
 import csv
 import sqlalchemy
 import fnmatch
@@ -13,13 +12,13 @@ import tifffile
 import importlib
 import time
 import logging
+from typing import List
 
 from storm_analysis.sa_library import datareader
 import merlin
 from merlin.core import analysistask
+from merlin.data import dataorganization
 
-class InputDataError(Exception):
-    pass
 
 class DataSet(object):
 
@@ -109,12 +108,26 @@ class DataSet(object):
         return os.sep.join([self.get_analysis_subdirectory(
             analysisName, subdirectory), saveName])
 
-    def save_dataframe_to_csv(self, dataframe, resultName, analysisTask):
-        savePath = self._analysis_result_save_path(
-                resultName, analysisTask.get_analysis_name()) + '.csv'
+    def save_dataframe_to_csv(self, dataframe, resultName, 
+            analysisTask=None, **kwargs):
+        if analysisTask is not None:
+            savePath = self._analysis_result_save_path(
+                    resultName, analysisTask.get_analysis_name()) + '.csv'
+        else:
+            savePath = os.sep.join([self.analysisPath, resultName]) + '.csv'
 
         with open(savePath, 'w') as f:
-            dataframe.to_csv(f)
+            dataframe.to_csv(f, **kwargs)
+
+    def load_dataframe_from_csv(self, resultName, analysisTask=None, **kwargs):
+        if analysisTask is not None:
+            savePath = self._analysis_result_save_path(
+                    resultName, analysisTask.get_analysis_name()) + '.csv'
+        else:
+            savePath = os.sep.join([self.analysisPath, resultName]) + '.csv'
+
+        with open(savePath, 'r') as f:
+            return pandas.read_csv(f, **kwargs)
 
     def save_analysis_result(self, analysisResult, resultName, 
             analysisName, resultIndex=None, subdirectory=None):
@@ -328,6 +341,9 @@ class ImageDataSet(DataSet):
     
         self._load_microscope_parameters()
 
+        #TODO - This should not be hard coded
+        self.imageDimensions = (2048, 2048)
+
     def get_image_file_names(self):
         return sorted(
                 [os.sep.join([self.rawDataPath, currentFile]) \
@@ -386,60 +402,47 @@ class ImageDataSet(DataSet):
         self.micronsPerPixel = self.microscopeParameters.get(
                 'microns_per_pixel', 0.106)
 
-class MERFISHDataSet(ImageDataSet):
+    def get_microns_per_pixel(self):
+        '''Get the conversion factor to convert pixels to microns.'''
 
-    def __init__(self, dataDirectoryName, codebookName=None, 
-            dataOrganizationName=None, positionFileName=None,
-            dataName=None, dataHome=None, analysisHome=None,
-            dataParameters=None, microscopeParametersName=None):
-        super().__init__(dataDirectoryName, dataName, dataHome, analysisHome, 
-                microscopeParametersName)
-
-        if codebookName is not None:
-            self._import_codebook(codebookName)
-
-        if dataOrganizationName is not None:
-            self._import_dataorganization(dataOrganizationName)
-
-        if positionFileName is not None:
-            self._import_positions(positionFileName)
-
-        self._load_dataorganization()
-        self._load_codebook()
-        self._load_positions()
-        self._map_images()
-
-        self.dataParameters = dataParameters
-        #TODO - This should not be hard coded
-        self.imageDimensions = (2048, 2048)
-
-    def get_bit_count(self):
-        '''Get the number of bits used for MERFISH barcodes in this data set.
-        '''
-
-        return len(self.bitNames)
-
-    def get_bit_names(self):
-        '''Get the names of the bits for this MERFISH data set.
-
-        Returns:
-            A list of the names of the bits in order from the lowest to highest
-        '''
-        return self.bitNames
+        return self.micronsPerPixel
 
     def get_image_dimensions(self):
-        '''Get the dimensions of the images in this MERFISH data set.
+        '''Get the dimensions of the images in this data set.
 
         Returns:
             A tuple containing the width and height of each image in pixels.
         '''
         return self.imageDimensions
 
-    def get_microns_per_pixel(self):
-        '''Get the conversion factor to convert pixels to microns.
-        '''
 
-        return self.micronsPerPixel
+class MERFISHDataSet(ImageDataSet):
+
+    def __init__(self, dataDirectoryName, codebookName=None, 
+            dataOrganizationName=None, positionFileName=None,
+            dataName=None, dataHome=None, analysisHome=None,
+            microscopeParametersName=None):
+        super().__init__(dataDirectoryName, dataName, dataHome, analysisHome, 
+                microscopeParametersName)
+
+        #it is possible to also extract positions from the images. This
+        #should be implemented
+        if positionFileName is not None:
+            self._import_positions(positionFileName)
+
+        self.dataOrganization = dataorganization.DataOrganization(
+                self, dataOrganizationName)
+        #self.codebook = codebook.Codebook(self, codebookName)
+        self._load_positions()
+
+    def get_codebook(self):
+        return self.codebook
+
+    def get_data_organization(self):
+        return self.dataOrganization
+
+    def get_stage_positions(self):
+        return self.positions
 
     def get_fov_offset(self, fov):
         '''Get the offset of the specified fov in the global coordinate system.
@@ -454,224 +457,36 @@ class MERFISHDataSet(ImageDataSet):
         #TODO - this should be implemented using the position of the fov. 
         return (self.positions.loc[fov]['X'], self.positions.loc[fov]['Y'])
 
-    def get_stage_positions(self):
-        return self.positions
-
-    def get_data_channels(self):
-        '''Get the data channels for the MERFISH data set.
-
-        Returns:
-            A list of the data channels
-        '''
-        return self.dataOrganization.index
-
-    def get_data_channel_name(self, dataChannelIndex):
-        '''Get the name for the data channel with the specified index.
-        '''
-
-        return self.dataOrganization['bitName'][dataChannelIndex]
-
-
-    def get_data_channel_for_bit(self, bitName):
-        '''Get the data channel associated with the specified bit.
-
-        Args:
-            bitName: the name of the bit to search for
-        Returns:
-            The associated data channel
-        '''
-        return self.dataOrganization[\
-                self.dataOrganization['bitName'] == bitName].index.item()
 
     def z_index_to_position(self, zIndex):
         '''Get the z position associated with the provided z index.'''
 
         return self.get_z_positions()[zIndex]
 
-    def get_z_positions(self):
+    def get_z_positions(self) -> List[float]:
         '''Get the z positions present in this dataset.
 
         Returns:
             A sorted list of all unique z positions
         '''
-        return(sorted(np.unique(
-            [y for x in self.dataOrganization['zPos'] for y in x])))
+        return self.dataOrganization.get_z_positions()
 
-    def _validate_file_map(self):
-        '''
-        This function ensures that all the files specified in the file map
-        of the raw images are present.
-
-        If an image file is not as expected, a InputDataError is raised.
-        '''
-
-        expectedImageSize = None
-        for dataChannel in self.get_data_channels():
-            for fov in self.get_fovs():
-                channelInfo = self.dataOrganization.loc[dataChannel]
-                imagePath = self.get_image_path(channelInfo['imageType'], 
-                        fov, channelInfo['imagingRound'])
-
-                if not os.path.exists(imagePath):
-                    print('{0}'.format(dataChannel))
-                    raise InputDataError(('Image data for channel {0} '  
-                            'and fov {1} not found. Expected at {2}')
-                                    .format(dataChannel, fov, imagePath))
-
-                imageSize = self.image_stack_size(imagePath)
-                frames = channelInfo['frame']
-
-                #this assumes fiducials are stored in the same image file
-                requiredFrames = max(np.max(frames), \
-                        channelInfo['fiducialFrame'])
-                if requiredFrames >= imageSize[2]:
-                    raise InputDataError(('Insufficient frames in data for '
-                            'channel {0} and fov {1}. Expected {2} frames '
-                            'but only found {3} in file {4}')
-                                .format(dataChannel, fov, requiredFrames, 
-                                    imageSize[2], imagePath))
-
-                if expectedImageSize is None:
-                    expectedImageSize = [imageSize[0], imageSize[1]]
-                else:
-                    if expectedImageSize[0] != imageSize[0] \
-                            or expectedImageSize[1] != imageSize[1]:
-                        raise InputDataError(('Image data for channel {0} '
-                                'and fov {1} has unexpected dimensions. '
-                                'Expected {1}x{2} but found {3}x{4} in '
-                                'image file {5}')
-                                .format(dataChannel, fov, expectedImageSize[0],
-                                    expectedImageSize[1], imageSize[0],
-                                    imageSize[1], imagePath))
-
-
-    def get_image_path(self, imageType, fov, imagingRound):
-        selection = self.fileMap[(self.fileMap['imageType'] == imageType) & \
-                (self.fileMap['fov'] == fov) & \
-                (self.fileMap['imagingRound'] == imagingRound)]
-
-        return selection['imagePath'].values[0]
-
-    def get_fovs(self):
-        return np.unique(self.fileMap['fov'])
+    def get_fovs(self) -> List[int]:
+        return self.dataOrganization.get_fovs()
 
     def get_imaging_rounds(self):
         return np.unique(self.fileMap['imagingRound'])
 
-    def get_fiducial_filename(self, dataChannel, fov):
-        imageType = self.dataOrganization.loc[dataChannel, 'fiducialImageType']
-        imagingRound = \
-                self.dataOrganization.loc[dataChannel, 'fiducialImagingRound']
-        return(self.get_image_path(imageType, fov, imagingRound))
-
-    def get_fiducial_frame(self, dataChannel):
-        '''Get the index of the frame containing the fiducial image
-        for the specified data channel.
-        '''
-        return self.dataOrganization.loc[dataChannel, 'fiducialFrame']
-
     def get_raw_image(self, dataChannel, fov, zPosition):
-        channelInfo = self.dataOrganization.loc[dataChannel]
-        imagePath = self.get_image_path(
-                channelInfo['imageType'], fov, channelInfo['imagingRound'])
-
-        channelZ = channelInfo['zPos']
-        if isinstance(channelZ, np.ndarray):
-            zIndex = np.where(channelZ == zPosition)[0]
-            if len(zIndex) == 0:
-                frameIndex = 0
-            else:
-                frameIndex = zIndex[0]
-        else:
-            frameIndex = 0
-
-        frames = channelInfo['frame']
-        if isinstance(frames, np.ndarray):
-            frame = frames[frameIndex]
-        else:
-            frame = frames
-
-        return self.load_image(imagePath, frame)
+        return self.load_image(
+                self.dataOrganization.get_image_filename(dataChannel, fov),
+                self.dataOrganization.get_image_frame_index(
+                    dataChannel, zPosition))
 
     def get_fiducial_image(self, dataChannel, fov):
-        channelInfo = self.dataOrganization.loc[dataChannel]
-        imagePath = self.get_image_path(
-                channelInfo['fiducialImageType'], 
-                fov, 
-                channelInfo['fiducialImagingRound'])
-        frame = channelInfo['fiducialFrame']
-        return self.load_image(imagePath, frame)
-
-    def _map_images(self):
-        #TODO: This doesn't map the fiducial image types and currently assumes
-        #that the fiducial image types and regular expressions are part of the 
-        #standard image types.
-        #TODO: This doesn't verify that all files are present
-        mapPath = os.sep.join([self.analysisPath, 'filemap.csv'])
-
-        if not os.path.exists(mapPath):
-            uniqueTypes, uniqueIndexes = np.unique(
-                self.dataOrganization['imageType'], return_index=True)
-
-            fileNames = self.get_image_file_names()
-            fileData = []
-            for currentType, currentIndex in zip(uniqueTypes, uniqueIndexes):
-                matchRE = re.compile(
-                        self.dataOrganization.imageRegExp[currentIndex])
-
-
-                for currentFile in fileNames:
-                    matchedName = matchRE.match(os.path.split(currentFile)[-1])
-                    if matchedName is not None:
-                        transformedName = matchedName.groupdict()
-                        if transformedName['imageType'] == currentType:
-                            if 'imagingRound' not in transformedName:
-                                transformedName['imagingRound'] = -1
-                            transformedName['imagePath'] = currentFile
-                            fileData.append(transformedName)
-        
-            self.fileMap = pandas.DataFrame(fileData)
-            self.fileMap[['imagingRound', 'fov']] = \
-                    self.fileMap[['imagingRound', 'fov']].astype(int)
-    
-            self._validate_file_map()
-
-            self.fileMap.to_csv(mapPath)
-
-        else:
-            self.fileMap = pandas.read_csv(mapPath)
-
-    def get_codebook(self):
-        return self.codebook
-
-    def _parse_list(self, inputString, dtype=float):
-        return np.fromstring(inputString.strip('[]'), dtype=dtype, sep=',')
-
-    def _parse_int_list(self, inputString):
-        return self._parse_list(inputString, dtype=int)
-
-    def _parse_barcode_from_string(self, inputString):
-        return np.array([int(x) for x in inputString if x is not ' '])
-
-    def _import_codebook(self, codebookName):
-        sourcePath = os.sep.join([merlin.CODEBOOK_HOME,
-                codebookName + '_codebook.csv'])
-        destPath = os.sep.join([self.analysisPath, 'codebook.csv'])
-
-        shutil.copyfile(sourcePath, destPath)    
-
-    def _load_codebook(self):
-        path = os.sep.join([self.analysisPath, 'codebook.csv'])
-
-        headerLength = 3
-        self.codebook = pandas.read_csv(
-                path, header=headerLength, skipinitialspace=True,
-                usecols=['name','id','barcode'],
-                converters={'barcode': self._parse_barcode_from_string})
-        with open(path, 'r') as inFile:
-            csvReader = csv.reader(inFile, delimiter=',')
-            header = [row for i,row in enumerate(csvReader) if i<headerLength]
-        self.bitNames = [x.strip() for x in header[2][1:]]
+        return self.load_image(
+                self.dataOrganization.get_fiducial_filename(dataChannel, fov),
+                self.dataOrganization.get_fiducial_frame_index(dataChannel))
 
     def _load_positions(self):
         positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
@@ -704,17 +519,5 @@ class MERFISHDataSet(ImageDataSet):
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
 
-    def _import_dataorganization(self, dataOrganizationName):
-        sourcePath = os.sep.join([merlin.DATA_ORGANIZATION_HOME, \
-                dataOrganizationName + '.csv'])
-        destPath = os.sep.join([self.analysisPath, 'dataorganization.csv'])
-            
-        shutil.copyfile(sourcePath, destPath)    
 
-    def _load_dataorganization(self):
-        path = os.sep.join([self.analysisPath, 'dataorganization.csv'])
-        self.dataOrganization = pandas.read_csv(
-                path, 
-                converters={'frame': self._parse_int_list,
-                    'zPos': self._parse_list})
 

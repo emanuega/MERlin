@@ -132,7 +132,7 @@ def simple_merfish_data(base_files):
 
     testMERFISHData = dataset.MERFISHDataSet(
             'merfish_test', 
-            dataOrganizationName='test_data_organization',
+            dataOrganizationName='test_data_organization.csv',
             codebookName='test',
             positionFileName='test_positions')
     yield testMERFISHData

@@ -3,21 +3,11 @@ import cv2
 from skimage import measure
 from sklearn.neighbors import NearestNeighbors
 
+from merlin.util import binary
+
 '''
 Utility functions for pixel based decoding.
 '''
-
-def flip_bit(barcode, bitIndex):
-    '''Flip the specified bit in the barcode.
-
-    Args:
-        barcode: A binary array where the i'th entry corresponds with the 
-            value of the i'th bit
-        bitIndex: The index of the bit to reverse
-    '''
-    bcCopy = np.copy(barcode)
-    bcCopy[bitIndex] = not bcCopy[bitIndex]
-    return bcCopy
 
 def normalize(x):
     norm = np.linalg.norm(x)
@@ -105,7 +95,7 @@ class PixelBasedDecoder(object):
             barcodesWithSingleErrors = []
             for b in barcodeSet:
                 barcodeSet = np.array([b] \
-                        + [flip_bit(b, i) for i in range(len(b))])
+                        + [binary.flip_bit(b, i) for i in range(len(b))])
                 bcMagnitudes = np.sqrt(np.sum(barcodeSet*barcodeSet, axis=1))
                 weightedBC = np.array(
                     [x/m for x,m in zip(barcodeSet, bcMagnitudes)])

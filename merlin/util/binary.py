@@ -1,3 +1,5 @@
+import numpy as np
+
 #TODO array should be changed to list to be consistent with python nomenclature
 def bit_array_to_int(bitArray):
     '''Converts a binary array to an integer'''
@@ -25,3 +27,16 @@ def k_bit_set(n, k):
     else:
         return False
 
+def flip_bit(barcode, bitIndex):
+    '''Get a copy of the provided barcode with the specified bit inverted.
+
+    Args:
+        barcode: A binary array where the i'th entry corresponds with the 
+            value of the i'th bit
+        bitIndex: The index of the bit to reverse
+    Returns:
+        A copy of barcode with bitIndex inverted
+    '''
+    bcCopy = np.copy(barcode)
+    bcCopy[bitIndex] = not bcCopy[bitIndex]
+    return bcCopy

@@ -26,18 +26,6 @@ def normalize(x):
     else:
         return x
 
-def extract_barcodes(codebook, ignoreBlanks=False):
-    '''Extract the barcodes from a codebook.'''
-
-    if ignoreBlanks:
-        barcodeSet = np.array([x['barcode'] for i,x \
-                in codebook.iterrows() if 'Blank' not in x['name']])
-    else:
-        barcodeSet = np.array([x['barcode'] for i,x in codebook.iterrows()])
-
-    return barcodeSet
-
-
 class PixelBasedDecoder(object):
 
     def __init__(self, codebook, scaleFactors=None):
@@ -105,7 +93,7 @@ class PixelBasedDecoder(object):
             column is the corresponding normalized bit value.
         '''
         
-        barcodeSet = extract_barcodes(self.codebook, ignoreBlanks=ignoreBlanks)
+        barcodeSet = self.codebook.get_barcodes(ignoreBlanks=ignoreBlanks)
         magnitudes = np.sqrt(np.sum(barcodeSet*barcodeSet, axis=1))
        
         if not includeErrors:

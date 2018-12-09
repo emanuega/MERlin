@@ -57,7 +57,9 @@ class Codebook(object):
         dfData = np.array([[currentRow['name'], currentRow['id']] \
                     + currentRow['barcode'].tolist()\
                for i, currentRow in barcodeData.iterrows()])
-        return pandas.DataFrame(dfData, columns=['name', 'id'] + bitNames)
+        df = pandas.DataFrame(dfData, columns=['name', 'id'] + bitNames)
+        df[bitNames] = df[bitNames].astype('uint8')
+        return df
 
     def get_bit_count(self) -> int:
         '''
@@ -73,3 +75,19 @@ class Codebook(object):
         '''
         return [s for s in self._data.columns if s not in ['name', 'id']]
 
+    def get_barcodes(self, ignoreBlanks=False) -> np.array:
+        '''Get the barcodes present in this codebook.
+        
+        Args:
+            ignoreBlanks: flag indicating whether barcodes corresponding 
+                    to blanks should be included.
+        Returns:
+            A list of the barcodes reperesented as lists of bits.
+        '''
+        bitNames = self.get_bit_names()
+        if ignoreBlanks:
+            return np.array([[x[n] for n in bitNames] for i,x \
+                    in self._data.iterrows() if 'Blank' not in x['name']])
+        else:
+            return np.array([[x[n] for n in bitNames] \
+                    for i,x in self._data.iterrows()])

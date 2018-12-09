@@ -51,7 +51,7 @@ class BarcodeDB():
                             'global_z': types.Float(precision=32), \
                             'cell_index': types.Integer()}
 
-        for i in range(self._dataSet.get_bit_count()):
+        for i in range(self._dataSet.get_codebook().get_bit_count()):
             columnInformation['intensity_'+str(i)] = types.Float(precision=32)
 
         return columnInformation
@@ -105,7 +105,6 @@ class SQLiteBarcodeDB(BarcodeDB):
     in parallel efficiently.
     '''
 
-    #TODO - the functions in this class can be consolidated
     #TODO - the read functions take a lot of memory, much more than the final
     #dataframe. This can be reduced by reading in smaller batches.
 

@@ -1,11 +1,9 @@
 import os
-import dotenv
 import errno
 import json
 import shutil
 import pandas
 import numpy as np
-import csv
 import sqlalchemy
 import fnmatch
 import tifffile
@@ -18,6 +16,7 @@ from storm_analysis.sa_library import datareader
 import merlin
 from merlin.core import analysistask
 from merlin.data import dataorganization
+from merlin.data import codebook
 
 
 class DataSet(object):
@@ -432,7 +431,7 @@ class MERFISHDataSet(ImageDataSet):
 
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
-        #self.codebook = codebook.Codebook(self, codebookName)
+        self.codebook = codebook.Codebook(self, codebookName)
         self._load_positions()
 
     def get_codebook(self):

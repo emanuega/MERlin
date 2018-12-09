@@ -82,6 +82,3 @@ def test_dataorganization_load_from_dataset(simple_merfish_data):
             assert originalOrganization.get_image_frame_index(channel, z) \
                     == loadedOrganization.get_image_frame_index(channel, z)
 
-
-
-

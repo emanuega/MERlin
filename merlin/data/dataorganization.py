@@ -15,11 +15,14 @@ def _parse_list(inputString: str, dtype=float):
         return np.fromstring(
                 inputString.strip('[] '), dtype=dtype, sep=' ')
 
+
 def _parse_int_list(inputString: str):
     return _parse_list(inputString, dtype=int)
 
+
 class InputDataError(Exception):
     pass
+
 
 class DataOrganization(object):
 

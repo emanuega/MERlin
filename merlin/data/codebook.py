@@ -122,5 +122,14 @@ class Codebook(object):
         return self._data[\
                 ~self._data['name'].str.contains('Blank', case=False)].index
     
+    def get_blank_indexes(self) -> List[int]:
+        '''Get the barcode indexes that do not correspond with genes.
+
+        Returns:
+            A list of barcode indexes that correspond with blanks
+        '''
+        return self._data[\
+                self._data['name'].str.contains('Blank', case=False)].index
+    
 
 

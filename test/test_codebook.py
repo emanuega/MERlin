@@ -22,6 +22,11 @@ def test_codebook_get_coding_indexes(simple_merfish_data):
             simple_merfish_data.get_codebook().get_coding_indexes(), 
             np.arange(70))
 
+def test_codebook_get_blank_indexes(simple_merfish_data):
+    assert np.array_equal(
+            simple_merfish_data.get_codebook().get_blank_indexes(), 
+            np.arange(70, 140))
+
 def test_codebook_get_barcodes(simple_merfish_data):
     bcSetWithBlanks = simple_merfish_data.get_codebook().get_barcodes()
     assert len(bcSetWithBlanks) == 140

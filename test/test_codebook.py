@@ -16,7 +16,11 @@ def test_codebook_get_barcode(simple_merfish_data):
         assert np.sum(codebook.get_barcode(i)) == 4
     assert np.array_equal(codebook.get_barcode(0), \
              [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
-            
+
+def test_codebook_get_coding_indexes(simple_merfish_data):
+    assert np.array_equal(
+            simple_merfish_data.get_codebook().get_coding_indexes(), 
+            np.arange(70))
 
 def test_codebook_get_barcodes(simple_merfish_data):
     bcSetWithBlanks = simple_merfish_data.get_codebook().get_barcodes()

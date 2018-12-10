@@ -106,8 +106,21 @@ class Codebook(object):
         bitNames = self.get_bit_names()
         if ignoreBlanks:
             return np.array([[x[n] for n in bitNames] for i,x \
-                    in self._data.iterrows() if 'Blank' not in x['name']])
+                    in self._data.iterrows() \
+                    if 'BLANK' not in x['name'].upper()])
         else:
             return np.array([[x[n] for n in bitNames] \
                     for i,x in self._data.iterrows()])
+
+    def get_coding_indexes(self) -> List[int]:
+        '''Get the barcode indexes that corresponding with genes.
+
+        Returns:
+            A list of barcode indexes that correspond with genes and not 
+                    blanks
+        '''
+        return self._data[\
+                ~self._data['name'].str.contains('Blank', case=False)].index
+    
+
 

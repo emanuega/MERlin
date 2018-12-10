@@ -211,7 +211,7 @@
 <div class="section" id="executing-locally">
 <h2>Executing locally<a class="headerlink" href="#executing-locally" title="Permalink to this headline">¶</a></h2>
 <p>After installation, MERlin can be run from the command line with the input parameters specified, such as:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlin -a test_analysis_parameters -m STORM5 -o Culture_16bits -c HAEC1E1 -n 5 testdata
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlin -a test_analysis_parameters.json -m STORM5.json -o Culture_16bits.csv -c HAEC1E1.csv -n 5 testdata
 </pre></div>
 </div>
 <p>Here the MERFISH images contained in the directory <cite>%DATA_HOME%/testdata/</cite> are processed using the analysis tasks listed in <cite>test_analysis_parameters.json</cite> with microscope parameters <cite>STORM5.json</cite>, data organization <cite>Culture_16bits.csv</cite>, codebook <cite>HAEC1E1</cite> using 5 cores for each process.</p>
@@ -270,7 +270,17 @@
 
     
     
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>

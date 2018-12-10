@@ -59,7 +59,7 @@ def merlin():
         #This is run in all cases that analysis parameters are provided
         #so that new analysis tasks are generated to match the new parameters
         with open(os.sep.join(
-                [parametersHome, args.analysis_parameters+'.json']), 'r') as f:
+                [parametersHome, args.analysis_parameters]), 'r') as f:
             s = scheduler.Scheduler(dataSet, e, json.load(f))
 
     if args.analysis_task:

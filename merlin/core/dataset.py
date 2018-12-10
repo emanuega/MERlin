@@ -377,7 +377,7 @@ class ImageDataSet(DataSet):
 
     def _import_microscope_parameters(self, microscopeParametersName):
         sourcePath = os.sep.join([merlin.MICROSCOPE_PARAMETERS_HOME,
-                microscopeParametersName + '.json'])
+                microscopeParametersName])
         destPath = os.sep.join(
                 [self.analysisPath, 'microscope_parameters.json'])
 

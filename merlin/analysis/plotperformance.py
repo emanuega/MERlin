@@ -135,9 +135,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         maxX = np.max(bc['global_x'])
         maxY = np.max(bc['global_y'])
 
-        blankIDs = codebook[codebook['name'].str.contains('Blank')]
-        blankBC = bc[bc['barcode_id'].isin(blankIDs.index)]
-        codingIDs = codebook[~codebook['name'].str.contains('Blank')]
+        blankIDs = codebook.get_blank_indexes()
+        blankBC = bc[bc['barcode_id'].isin(blankIDs)]
 
         fig = plt.figure(figsize=(10,10))
         ax = fig.add_subplot(111)
@@ -160,8 +159,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         maxX = np.max(bc['global_x'])
         maxY = np.max(bc['global_y'])
 
-        codingIDs = codebook[~codebook['name'].str.contains('Blank')]
-        codingBC = bc[bc['barcode_id'].isin(codingIDs.index)]
+        codingIDs = codebook.get_coding_indexes()
+        codingBC = bc[bc['barcode_id'].isin(codingIDs)]
 
         fig = plt.figure(figsize=(10,10))
         ax = fig.add_subplot(111)
@@ -214,7 +213,7 @@ class PlotPerformance(analysistask.AnalysisTask):
                 for x in uniqueBarcodes]
 
         codebook = self.dataSet.get_codebook()
-        blankIDs = codebook[codebook['name'].str.contains('Blank')]
+        blankIDs = codebook.get_blank_indexes()
 
         sortedIndexes = np.argsort(bcCounts)[::-1]
         fig = plt.figure(figsize=(12,5))
@@ -222,7 +221,7 @@ class PlotPerformance(analysistask.AnalysisTask):
                 height=np.log10([bcCounts[x] for x in sortedIndexes]), 
                 width=1, color=(0.2, 0.2, 0.2))
         for i,x in enumerate(sortedIndexes):
-            if x in blankIDs.index:
+            if x in blankIDs:
                 barList[i].set_color('r')
         plt.xlabel('Sorted barcode index')
         plt.ylabel('Count (log10)')

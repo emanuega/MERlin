@@ -44,9 +44,10 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
 
-        bitCount = len(self.dataSet.get_bit_names())
-        barcodeCount = self.dataSet.codebook.shape[0]
-        decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
+        codebook = self.dataSet.get_codebook()
+        bitCount = codebook.get_bit_count()
+        barcodeCount = codebook.get_barcode_count()
+        decoder = decoding.PixelBasedDecoder(codebook)
 
         initialScaleFactors = np.ones(bitCount)
         scaleFactors = np.ones((self.iterationCount, bitCount))

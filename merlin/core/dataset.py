@@ -428,11 +428,11 @@ class MERFISHDataSet(ImageDataSet):
         #should be implemented
         if positionFileName is not None:
             self._import_positions(positionFileName)
+        self._load_positions()
 
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
         self.codebook = codebook.Codebook(self, codebookName)
-        self._load_positions()
 
     def get_codebook(self):
         return self.codebook

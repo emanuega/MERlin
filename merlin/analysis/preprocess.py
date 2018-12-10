@@ -68,8 +68,9 @@ class DeconvolutionPreprocess(Preprocess):
                     self, 'processed_image', fov)
         else:
             return np.array([self.get_processed_image(fov,
-                self.dataSet.get_data_channel_for_bit(b), zIndex) \
-                        for b in self.dataSet.get_bit_names()])
+                self.dataSet.get_data_organization()\
+                        .get_data_channel_for_bit(b), zIndex) \
+                    for b in self.dataSet.get_codebook().get_bit_names()])
 
 
     def get_processed_image(self, fov, dataChannel, zIndex):
@@ -83,16 +84,18 @@ class DeconvolutionPreprocess(Preprocess):
 
         imageDescription = self.dataSet._analysis_tiff_description(
                 len(self.dataSet.get_z_positions()),
-                len(self.dataSet.get_bit_names()))
+                len(self.dataSet.get_codebook().get_bit_names()))
 
         histogramBins = np.arange(0, np.iinfo(np.uint16).max, 1)
         pixelHistogram = np.zeros(
-                (len(self.dataSet.get_bit_names()), len(histogramBins)-1))
+                (len(self.dataSet.get_codebook().get_bit_names()), 
+                    len(histogramBins)-1))
 
         with self.dataSet._writer_for_analysis_images(
                 self, 'processed_image', fragmentIndex) as outputTif:
-            for bi,b in enumerate(self.dataSet.get_bit_names()):
-                dataChannel = self.dataSet.get_data_channel_for_bit(b)
+            for bi,b in enumerate(self.dataSet.get_codebook().get_bit_names()):
+                dataChannel = self.dataSet.get_data_organization()\
+                        .get_data_channel_for_bit(b)
                 for i in range(len(self.dataSet.get_z_positions())):
                     inputImage = warpTask.get_aligned_image(
                             fragmentIndex, dataChannel, i)

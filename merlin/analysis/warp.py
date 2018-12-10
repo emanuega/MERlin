@@ -62,7 +62,7 @@ class Warp(analysistask.ParallelAnalysisTask):
             fov: The fov that is being transformed.
         '''
 
-        dataChannels = self.dataSet.get_data_channels()
+        dataChannels = self.dataSet.get_data_organization().get_data_channels()
         zPositions = self.dataSet.get_z_positions()
         imageDescription = self.dataSet._analysis_tiff_description(
                 len(zPositions), len(dataChannels))
@@ -96,8 +96,6 @@ class Warp(analysistask.ParallelAnalysisTask):
                             transformedImage, 
                             photometric='MINISBLACK',
                             metadata=imageDescription)
-
-
 
         self._save_transformations(transformationList, fov)
 
@@ -139,7 +137,8 @@ class FiducialFitWarp(Warp):
         self._process_transformations(tforms, fragmentIndex)
 
     def fit_fiducials(self, fov):
-        for dataChannel in self.dataSet.get_data_channels():
+        for dataChannel in self.dataSet.get_data_organization()\
+                .get_data_channels():
             fiducialFrame = self.dataSet.get_fiducial_frame(dataChannel)
             fiducialName = self.dataSet.get_fiducial_filename(dataChannel, fov)
             destPath = self.dataSet.get_analysis_subdirectory(
@@ -178,7 +177,8 @@ class FiducialFitWarp(Warp):
 
     def load_fiducials(self, fov):
         fiducials = []
-        for dataChannel in self.dataSet.get_data_channels():
+        for dataChannel in self.dataSet.get_data_organization()\
+                .get_data_channels():
             fiducialFrame = self.dataSet.get_fiducial_frame(dataChannel)
             fiducialName = self.dataSet.get_fiducial_filename(dataChannel, fov)
             destPath = self.dataSet.get_analysis_subdirectory(
@@ -298,7 +298,8 @@ class FiducialCorrelationWarp(Warp):
                         fixedImage, 
                         self.dataSet.get_fiducial_image(x, fragmentIndex),
                         100)[0] \
-                    for x in self.dataSet.get_data_channels()]
+                    for x in self.dataSet.get_data_organization() \
+                        .get_data_channels()]
         transformations = [transform.SimilarityTransform(
             translation=[-x[1], -x[0]]) for x in offsets]
         self._process_transformations(transformations, fragmentIndex)

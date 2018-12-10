@@ -59,7 +59,7 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.segmentTask = self.dataSet.load_analysis_task(
                     self.parameters['segment_task'])
 
-        decoder = decoding.PixelBasedDecoder(self.dataSet.codebook)
+        decoder = decoding.PixelBasedDecoder(self.dataSet.get_codebook())
         scaleFactors = optimizeTask.get_scale_factors()
 
         for zIndex in range(len(self.dataSet.get_z_positions())):
@@ -88,7 +88,7 @@ class Decode(analysistask.ParallelAnalysisTask):
         d = [distances[x[0], x[1]] for x in properties.coords]
         zPosition = self.dataSet.z_index_to_position(zIndex)
         outputDict = {'barcode': binary.bit_array_to_int(
-                            self.dataSet.codebook.loc[bcIndex, 'barcode']), \
+                            self.dataSet.get_codebook().get_barcode(bcIndex)), \
                     'barcode_id': bcIndex, \
                     'fov': fov, \
                     'mean_intensity': properties.mean_intensity, \
@@ -119,7 +119,7 @@ class Decode(analysistask.ParallelAnalysisTask):
     def _extract_and_save_barcodes(self, decodedImage, pixelMagnitudes, 
             pixelTraces, distances, fov, zIndex):
 
-        for i in range(len(self.dataSet.codebook)):
+        for i in range(self.dataSet.get_codebook().get_barcode_count()):
             self.get_barcode_database().write_barcodes(
                     self._extract_barcodes_with_index(
                         i, decodedImage, pixelMagnitudes, pixelTraces, 

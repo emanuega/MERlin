@@ -64,11 +64,11 @@ class GenerateMosaic(analysistask.AnalysisTask):
 
         imageDescription = self.dataSet._analysis_tiff_description(
                 len(self.dataSet.get_z_positions()),
-                len(self.dataSet.get_data_channels()))
+                len(self.dataSet.get_data_organization().get_data_channels()))
 
         with self.dataSet._writer_for_analysis_images(
                 self, 'mosaic') as outputTif:
-            for d in self.dataSet.get_data_channels():
+            for d in self.dataSet.get_data_organization().get_data_channels():
                 for z in range(len(self.dataSet.get_z_positions())):
                     mosaic = np.zeros(
                             np.flip(

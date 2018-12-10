@@ -1,11 +1,22 @@
 import numpy as np
 
+def test_codebook_get_barcode_count(simple_merfish_data):
+    assert simple_merfish_data.get_codebook().get_barcode_count() == 140
+
 def test_codebook_get_bit_count(simple_merfish_data):
     assert simple_merfish_data.get_codebook().get_bit_count() == 16
 
 def test_codebook_get_bit_names(simple_merfish_data):
     for i,n in enumerate(simple_merfish_data.get_codebook().get_bit_names()):
         assert n == 'bit' + str(i+1)
+
+def test_codebook_get_barcode(simple_merfish_data):
+    codebook = simple_merfish_data.get_codebook()
+    for i in range(codebook.get_barcode_count()):
+        assert np.sum(codebook.get_barcode(i)) == 4
+    assert np.array_equal(codebook.get_barcode(0), \
+             [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
+            
 
 def test_codebook_get_barcodes(simple_merfish_data):
     bcSetWithBlanks = simple_merfish_data.get_codebook().get_barcodes()

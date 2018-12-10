@@ -2,7 +2,7 @@ import os
 import csv
 import numpy as np
 import pandas
-from typing import List
+from typing import List, Iterator
 
 import merlin
 
@@ -61,6 +61,25 @@ class Codebook(object):
         df[bitNames] = df[bitNames].astype('uint8')
         return df
 
+    def get_barcode(self, index: int) -> List[int]:
+        '''Get the barcode with the specified index.
+
+        Args:
+            index: the index of the barcode in the barcode list
+        Returns:
+            A list of 0's and 1's denoting the barcode
+        '''    
+        return [self._data.loc[index][n] for n in self.get_bit_names()]
+
+    def get_barcode_count(self) -> int: 
+        '''
+        Get the number of barcodes in this codebook.
+
+        Returns:
+            The number of barcodes, counting barcodes for blanks and genes
+        '''
+        return len(self._data)
+
     def get_bit_count(self) -> int:
         '''
         Get the number of bits used for MERFISH barcodes in this codebook.
@@ -91,3 +110,4 @@ class Codebook(object):
         else:
             return np.array([[x[n] for n in bitNames] \
                     for i,x in self._data.iterrows()])
+

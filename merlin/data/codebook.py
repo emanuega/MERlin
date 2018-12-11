@@ -113,7 +113,7 @@ class Codebook(object):
                     for i,x in self._data.iterrows()])
 
     def get_coding_indexes(self) -> List[int]:
-        '''Get the barcode indexes that corresponding with genes.
+        '''Get the barcode indexes that correspond with genes.
 
         Returns:
             A list of barcode indexes that correspond with genes and not 

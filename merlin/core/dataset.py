@@ -21,12 +21,23 @@ from merlin.data import codebook
 
 class DataSet(object):
 
-    def __init__(self, dataDirectoryName, 
-            dataName=None, dataHome=None, analysisHome=None):
+    def __init__(self, dataDirectoryName: str,
+            dataHome: str=None, analysisHome: str=None):
+        '''Create a dataset for the specified raw data.
 
+        Args:
+            dataDirectoryName: the relative directory to the raw data
+            dataHome: the base path to the data. The data is expected
+                    to be in dataHome/dataDirectoryName. If dataHome
+                    is not specified, DATA_HOME is read from the
+                    .env file.
+            analysisHome: the base path for storing analysis results. Analysis
+                    results for this DataSet will be stored in
+                    analysisHome/dataDirectoryName. If analysisHome is not
+                    specified, ANALYSIS_HOME is read from the .env file.
+        '''
         if dataHome is None:
             dataHome = merlin.DATA_HOME
-
         if analysisHome is None:
             analysisHome = merlin.ANALYSIS_HOME
 
@@ -45,6 +56,16 @@ class DataSet(object):
         os.makedirs(self.figurePath, exist_ok=True)
 
     def save_figure(self, analysisTask, figure, figureName):
+        '''Save the figure into the analysis results for this DataSet
+
+        This function will save the figure in both png and pdf formats.
+
+        Args:
+            analysisTask: the analysis task that generated this figure.
+            figure: the figure handle for the figure to save
+            figureName: the name of the file to store the figure in, excluding
+                    extension
+        '''
         savePath = os.sep.join(
                 [self.get_analysis_subdirectory(analysisTask, 'figures'),
                     figureName])
@@ -330,9 +351,25 @@ class DataSet(object):
 
 class ImageDataSet(DataSet):
 
-    def __init__(self, dataDirectoryName, dataName=None, dataHome=None, 
-            analysisHome=None, microscopeParametersName=None):
-        super().__init__(dataDirectoryName, dataName, dataHome, analysisHome)
+    def __init__(self, dataDirectoryName: str, dataHome: str=None,
+                analysisHome: str=None, microscopeParametersName: str=None):
+        '''Create a dataset for the specified raw data.
+
+        Args:
+            dataDirectoryName: the relative directory to the raw data
+            dataHome: the base path to the data. The data is expected
+                    to be in dataHome/dataDirectoryName. If dataHome
+                    is not specified, DATA_HOME is read from the
+                    .env file.
+            analysisHome: the base path for storing analysis results. Analysis
+                    results for this DataSet will be stored in
+                    analysisHome/dataDirectoryName. If analysisHome is not
+                    specified, ANALYSIS_HOME is read from the .env file.
+            microscopeParametersName: the name of the microscope parameters
+                    file that specifies properties of the microscope used
+                    to acquire the images represented by this ImageDataSet
+        '''
+        super().__init__(dataDirectoryName, dataHome, analysisHome)
 
 
         if microscopeParametersName is not None:
@@ -340,13 +377,13 @@ class ImageDataSet(DataSet):
     
         self._load_microscope_parameters()
 
-        #TODO - This should not be hard coded
+        # TODO - This should not be hard coded
         self.imageDimensions = (2048, 2048)
 
     def get_image_file_names(self):
         return sorted(
-                [os.sep.join([self.rawDataPath, currentFile]) \
-                    for currentFile in os.listdir(self.rawDataPath) \
+                [os.sep.join([self.rawDataPath, currentFile])
+                    for currentFile in os.listdir(self.rawDataPath)
                 if currentFile.endswith('.dax') \
                 or currentFile.endswith('.tif')])
 
@@ -417,11 +454,37 @@ class ImageDataSet(DataSet):
 
 class MERFISHDataSet(ImageDataSet):
 
-    def __init__(self, dataDirectoryName, codebookName=None, 
-            dataOrganizationName=None, positionFileName=None,
-            dataName=None, dataHome=None, analysisHome=None,
-            microscopeParametersName=None):
-        super().__init__(dataDirectoryName, dataName, dataHome, analysisHome, 
+    def __init__(self, dataDirectoryName: str, codebookName: str=None,
+                dataOrganizationName: str=None, positionFileName: str=None,
+                dataHome: str=None, analysisHome: str=None,
+                microscopeParametersName: str=None):
+        '''Create a dataset for the specified raw data.
+
+        Args:
+            dataDirectoryName: the relative directory to the raw data
+            codebookName: the name of the codebook to use. The codebook
+                    should be present in the analysis parameters
+                    directory. A full path can be provided for a codebook
+                    present in another directory.
+            dataOrganizationName: the name of the data organization to use.
+                    The data organization should be present in the analysis
+                    parameters directory. A full path can be provided for
+                    a codebook present in another directory.
+            positionFileName: the name of the position file to use.
+            dataHome: the base path to the data. The data is expected
+                    to be in dataHome/dataDirectoryName. If dataHome
+                    is not specified, DATA_HOME is read from the
+                    .env file.
+            analysisHome: the base path for storing analysis results. Analysis
+                    results for this DataSet will be stored in
+                    analysisHome/dataDirectoryName. If analysisHome is not
+                    specified, ANALYSIS_HOME is read from the .env file.
+            microscopeParametersName: the name of the microscope parameters
+                    file that specifies properties of the microscope used
+                    to acquire the images represented by this ImageDataSet
+        '''
+
+        super().__init__(dataDirectoryName, dataHome, analysisHome,
                 microscopeParametersName)
 
         #it is possible to also extract positions from the images. This

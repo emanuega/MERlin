@@ -20,6 +20,8 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         if 'crop_width' not in self.parameters:
             self.parameters['crop_width'] = 100
+        if 'write_decoded_images' not in self.parameters:
+            self.parameters['write_decoded_images'] = True
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.imageDimensions
@@ -62,12 +64,36 @@ class Decode(analysistask.ParallelAnalysisTask):
         decoder = decoding.PixelBasedDecoder(self.dataSet.get_codebook())
         scaleFactors = optimizeTask.get_scale_factors()
 
-        for zIndex in range(len(self.dataSet.get_z_positions())):
+        decodedImages = []
+        magnitudeImages = []
+        zPositionCount = len(self.dataSet.get_z_positions())
+        for zIndex in range(zPositionCount):
             imageSet = preprocessTask.get_processed_image_set(
                     fragmentIndex, zIndex)
+            imageSet = imageSet.reshape(
+                (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
             di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors)
             self._extract_and_save_barcodes(
                     di, pm, npt, d, fragmentIndex, zIndex)
+            decodedImages.append(di)
+            magnitudeImages.append(pm)
+
+        if self.parameters['write_decoded_images']:
+
+            imageDescription = self.dataSet._analysis_tiff_description(
+                zPositionCount, 2)
+            with self.dataSet._writer_for_analysis_images(
+                    self, 'decoded', fragmentIndex) as outputTif:
+                for i in range(zPositionCount):
+                    outputTif.save(decodedImages[i].astype(np.float32),
+                                   photometric='MINISBLACK',
+                                   metadata=imageDescription)
+                    # rescale image so that it can be viewed with the decoded
+                    # image without adjusting contrast
+                    outputTif.save((magnitudeImages[i]/np.max(
+                        magnitudeImages[i])*256).astype(np.float32),
+                                   photometric='MINISBLACK',
+                                   metadata=imageDescription)
 
     def get_barcode_database(self):
         return barcodedb.SQLiteBarcodeDB(self.dataSet, self)

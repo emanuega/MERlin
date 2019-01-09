@@ -11,6 +11,7 @@ import importlib
 import time
 import logging
 from typing import List
+from typing import Tuple
 
 from storm_analysis.sa_library import datareader
 import merlin
@@ -73,7 +74,15 @@ class DataSet(object):
         figure.savefig(savePath + '.png', pad_inches=0)
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
 
-    def get_analysis_image_set(self, analysisTask, imageBaseName, imageIndex):
+    def get_analysis_image_set(self, analysisTask, imageBaseName: str,
+                               imageIndex: int) -> np.ndarray:
+        '''Get an analysis image set saved in the analysis for this data set.
+
+        Args:
+            analysisTask:
+            imageBaseName:
+            imageIndex:
+        '''
         return tifffile.imread(self._analysis_image_name(
             analysisTask, imageBaseName, imageIndex))
 
@@ -98,9 +107,9 @@ class DataSet(object):
         return imageFile.asarray(key=int(indexInFile))
     
     def _writer_for_analysis_images(
-            self, analysisTask, imageBaseName, imageIndex=None):
+            self, analysisTask, imageBaseName, imageIndex=None, imagej=True):
         return tifffile.TiffWriter(self._analysis_image_name(
-            analysisTask, imageBaseName, imageIndex), imagej=True)
+            analysisTask, imageBaseName, imageIndex), imagej=imagej)
 
     def _analysis_tiff_description(self, sliceCount, frameCount):
         imageDescription = {'ImageJ': '1.47a\n',
@@ -377,15 +386,14 @@ class ImageDataSet(DataSet):
     
         self._load_microscope_parameters()
 
-        # TODO - This should not be hard coded
-        self.imageDimensions = (2048, 2048)
 
     def get_image_file_names(self):
         return sorted(
                 [os.sep.join([self.rawDataPath, currentFile])
                     for currentFile in os.listdir(self.rawDataPath)
                 if currentFile.endswith('.dax') \
-                or currentFile.endswith('.tif')])
+                or currentFile.endswith('.tif') \
+                or currentFile.endswith('.tiff')])
 
     def load_image(self, imagePath, frameIndex):
         with datareader.inferReader(imagePath) as reader:
@@ -437,6 +445,8 @@ class ImageDataSet(DataSet):
         self.transpose = self.microscopeParameters.get('transpose', True)
         self.micronsPerPixel = self.microscopeParameters.get(
                 'microns_per_pixel', 0.106)
+        self.imageDimensions = self.microscopeParameters.get(
+                'image_dimensions', [2048, 2048])
 
     def get_microns_per_pixel(self):
         '''Get the conversion factor to convert pixels to microns.'''
@@ -458,7 +468,7 @@ class MERFISHDataSet(ImageDataSet):
                 dataOrganizationName: str=None, positionFileName: str=None,
                 dataHome: str=None, analysisHome: str=None,
                 microscopeParametersName: str=None):
-        '''Create a dataset for the specified raw data.
+        '''Create a MERFISH dataset for the specified raw data.
 
         Args:
             dataDirectoryName: the relative directory to the raw data
@@ -487,8 +497,8 @@ class MERFISHDataSet(ImageDataSet):
         super().__init__(dataDirectoryName, dataHome, analysisHome,
                 microscopeParametersName)
 
-        #it is possible to also extract positions from the images. This
-        #should be implemented
+        # it is possible to also extract positions from the images. This
+        # should be implemented
         if positionFileName is not None:
             self._import_positions(positionFileName)
         self._load_positions()
@@ -497,16 +507,16 @@ class MERFISHDataSet(ImageDataSet):
                 self, dataOrganizationName)
         self.codebook = codebook.Codebook(self, codebookName)
 
-    def get_codebook(self):
+    def get_codebook(self) -> codebook.Codebook:
         return self.codebook
 
-    def get_data_organization(self):
+    def get_data_organization(self) -> dataorganization.DataOrganization:
         return self.dataOrganization
 
-    def get_stage_positions(self):
+    def get_stage_positions(self) -> List[List[float]]:
         return self.positions
 
-    def get_fov_offset(self, fov):
+    def get_fov_offset(self, fov) -> Tuple[float, float]:
         '''Get the offset of the specified fov in the global coordinate system.
         This offset is based on the anticipated stage position.
 
@@ -517,10 +527,10 @@ class MERFISHDataSet(ImageDataSet):
             of the specified fov in pixels.
         '''
         #TODO - this should be implemented using the position of the fov. 
-        return (self.positions.loc[fov]['X'], self.positions.loc[fov]['Y'])
+        return self.positions.loc[fov]['X'], self.positions.loc[fov]['Y']
 
 
-    def z_index_to_position(self, zIndex):
+    def z_index_to_position(self, zIndex) -> float:
         '''Get the z position associated with the provided z index.'''
 
         return self.get_z_positions()[zIndex]
@@ -536,8 +546,9 @@ class MERFISHDataSet(ImageDataSet):
     def get_fovs(self) -> List[int]:
         return self.dataOrganization.get_fovs()
 
-    def get_imaging_rounds(self):
-        return np.unique(self.fileMap['imagingRound'])
+    def get_imaging_rounds(self) -> List[int]:
+        # TODO - check this function
+        return np.unique(self.dataOrganization.fileMap['imagingRound'])
 
     def get_raw_image(self, dataChannel, fov, zPosition):
         return self.load_image(

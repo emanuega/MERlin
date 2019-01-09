@@ -62,7 +62,7 @@ class DeconvolutionPreprocess(Preprocess):
     def get_dependencies(self):
         return [self.parameters['warp_task']]
 
-    def get_processed_image_set(self, fov, zIndex=None):
+    def get_processed_image_set(self, fov, zIndex=None) -> np.ndarray:
         if zIndex is None:
             return self.dataSet.get_analysis_image_set(
                     self, 'processed_image', fov)
@@ -101,7 +101,7 @@ class DeconvolutionPreprocess(Preprocess):
                             fragmentIndex, dataChannel, i)
                     filteredImage = inputImage.astype(float) \
                             - cv2.GaussianBlur(inputImage,
-                                (int(4*np.ceil(self.highPassSigma)+1), \
+                                (int(4*np.ceil(self.highPassSigma)+1),
                                         int(4*np.ceil(self.highPassSigma)+1)),
                                 self.highPassSigma).astype(float)
                     filteredImage[filteredImage < 0] = 0

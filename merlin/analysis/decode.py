@@ -35,8 +35,8 @@ class Decode(analysistask.ParallelAnalysisTask):
         return 5
 
     def get_dependencies(self):
-        dependencies = [self.parameters['preprocess_task'], \
-                self.parameters['optimize_task'], \
+        dependencies = [self.parameters['preprocess_task'],
+                self.parameters['optimize_task'],
                 self.parameters['global_align_task']]
 
         if 'segment_task' in self.parameters:

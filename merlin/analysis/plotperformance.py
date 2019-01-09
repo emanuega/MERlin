@@ -30,8 +30,11 @@ class PlotPerformance(analysistask.AnalysisTask):
                 self.parameters['decode_task'])
         self.filterTask = self.dataSet.load_analysis_task(
                 self.parameters['filter_task'])
-        self.segmentTask = self.dataSet.load_analysis_task(
-                self.parameters['segment_task'])
+        if 'segment_task' in self.parameters:
+            self.segmentTask = self.dataSet.load_analysis_task(
+                    self.parameters['segment_task'])
+        else:
+            self.segmentTask = None
 
     def get_estimated_memory(self):
         return 30000
@@ -244,11 +247,12 @@ class PlotPerformance(analysistask.AnalysisTask):
         self._plot_barcode_intensity_area_violin()
         self._plot_blank_distribution()
         self._plot_matched_barcode_distribution()
-        self._plot_cell_segmentation()
         self._plot_optimization_scale_factors()
         self._plot_optimization_barcode_counts()
         self._plot_all_barcode_abundances()
         self._plot_filtered_barcode_abundances()
+        if self.segmentTask is not None:
+            self._plot_cell_segmentation()
         #TODO _ analysis run times
         #TODO - barcode correlation plots
         #TODO - alignment error plots - need to save transformation information

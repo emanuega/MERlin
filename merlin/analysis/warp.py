@@ -95,7 +95,7 @@ class Warp(analysistask.ParallelAnalysisTask):
                     outputTif.save(
                             transformedImage, 
                             photometric='MINISBLACK',
-                            metadata=imageDescription)
+                            metadata=fiducialImageDescription)
 
         self._save_transformations(transformationList, fov)
 

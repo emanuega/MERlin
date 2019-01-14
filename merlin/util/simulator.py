@@ -40,12 +40,15 @@ class MERFISHDataFactory(object):
         barcodeNumber = codebook.get_barcode_count()
         barcodeAbundances = abundanceScale*np.array(
                 [10**np.random.uniform(3) for i in range(barcodeNumber)])
-        barcodeAbundances[-10:] = 0
+        barcodeAbundances[:10] = 0
 
         for i in range(fovCount):
             merfishImages, rnaPositions  = self._simulate_single_fov(
                     codebook, barcodeAbundances, fluorophoreCount)
             fiducialImage = self._simulate_fiducial_image()
+            tifffile.imsave(
+                    os.sep.join([dataDir, 'full_stack_' + str(i) + '.tiff']), 
+                        merfishImages.astype(np.uint16))
 
             imageCount = np.max([x[0] for x in self.bitOrganization]) + 1
             for j in range(imageCount):
@@ -103,8 +106,10 @@ class MERFISHDataFactory(object):
 
     def _add_spots_for_barcode(self, barcode, positions, fluorophoreCount,
             upsampledStack):
-        upsampledImage = np.histogram2d(positions[:,0], positions[:,1], 
-                        bins=self.upsampleFactor*self.imageSize)[0]
+        upsampledImage = np.zeros(self.upsampleFactor*self.imageSize)
+        for p in positions:
+            upsampledImage[int(np.floor(p[0]*self.upsampleFactor)), \
+                            int(np.floor(p[1]*self.upsampleFactor))] += 1
         upsampledImage = self.fluorophoreBrightness*np.random.poisson(
                 upsampledImage*fluorophoreCount)
 

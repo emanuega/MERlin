@@ -1,7 +1,7 @@
 import os
-
+from typing import List
+from typing import Dict
 import numpy as np
-
 from sklearn.neighbors import NearestNeighbors
 from skimage import transform
 from skimage import feature
@@ -11,6 +11,7 @@ import storm_analysis.daostorm_3d.mufit_analysis as mfit
 import storm_analysis.sa_library.sa_h5py as saH5Py
 
 from merlin.core import analysistask
+
 
 class Warp(analysistask.ParallelAnalysisTask):
 
@@ -28,23 +29,45 @@ class Warp(analysistask.ParallelAnalysisTask):
         self.writeAlignedFiducialImages = self.parameters[\
                 'write_fiducial_images']
 
-    def get_transformation(self, fov, dataChannel):
+    def get_transformation(self, fov: int, dataChannel: int):
+        '''Get the transformation that aligns the image from the specified
+        data channel and the specified fov to data channel 0.
+
+        Args:
+            fov: index of the field of view
+            dataChnnel: index of the data channel
+        Returns:
+            a skimage transformation
+        '''
         transformations = self.dataSet.load_analysis_result(
                 'offsets', self.get_analysis_name(), resultIndex=fov,
                 subdirectory='transformations')
         return transformations[dataChannel]
 
-    def _save_transformations(self, transformationList, fov):
-        self.dataSet.save_analysis_result(
-                np.array(transformationList), 'offsets',
-                self.get_analysis_name(), resultIndex=fov,
-                subdirectory='transformations')
 
-    def get_aligned_image_set(self, fov):
+    def get_aligned_image_set(self, fov: int) -> np.ndarray:
+        '''Get the set of transformed images for the specified fov.
+
+        Args:
+            fov: index of the field of view
+        Returns:
+            a 5-dimensional numpy array containing the aligned images. The
+                images are arranged as [channel, zIndex, 1, x, y]
+        '''
         return self.dataSet.get_analysis_image_set(
                 self, 'aligned_images', fov)
 
-    def get_aligned_image(self, fov, dataChannel, zIndex):
+    def get_aligned_image(
+            self, fov: int, dataChannel: int, zIndex: int) -> np.ndarray:
+        '''Get the specified transformed image
+
+        Args:
+            fov: index of the field of view
+            dataChannel: index of the data channel
+            zIndex: index of the z position
+        Returns:
+            a 2-dimensional numpy array containing the specified image
+        '''
         return self.dataSet.get_analysis_image(
                 self, 'aligned_images', fov, 
                 len(self.dataSet.get_z_positions()), dataChannel, zIndex)
@@ -99,14 +122,18 @@ class Warp(analysistask.ParallelAnalysisTask):
 
         self._save_transformations(transformationList, fov)
 
+    def _save_transformations(self, transformationList, fov):
+        self.dataSet.save_analysis_result(
+            np.array(transformationList), 'offsets',
+            self.get_analysis_name(), resultIndex=fov,
+            subdirectory='transformations')
 
 class FiducialFitWarp(Warp):
 
     '''
     An analysis task that warps a set of images taken in different imaging
-    rounds based on fitting fiducials.
+    rounds based on fitting fiducial spots.
     '''
-
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
@@ -124,7 +151,7 @@ class FiducialFitWarp(Warp):
         return []
 
     def run_analysis(self, fragmentIndex):
-        self.fit_fiducials(fragmentIndex)
+        self._fit_fiducials(fragmentIndex)
         localizations = self.load_fiducials(fragmentIndex)
 
         tforms = []
@@ -136,7 +163,15 @@ class FiducialFitWarp(Warp):
         
         self._process_transformations(tforms, fragmentIndex)
 
-    def fit_fiducials(self, fov):
+    def _fit_fiducials(self, fov: int) -> None:
+        '''Fit the fiducial spots for all channels for the specified fov.
+
+        The output files containing the fiducial fits are saved into the data
+        set directory for this analysis task.
+
+        Args:
+            fov: index of the field of view
+        '''
         for dataChannel in self.dataSet.get_data_organization()\
                 .get_data_channels():
             fiducialFrame = self.dataSet.get_fiducial_frame(dataChannel)
@@ -159,7 +194,16 @@ class FiducialFitWarp(Warp):
             else:
                 print(outputName + ' already exists')
 
-    def _transform_fiducials_for_image_orientation(self, fiducialList):
+    def _transform_fiducials_for_image_orientation(
+            self, fiducialList: List[Dict]):
+        '''Transform the list of fiducials to correspond with image
+        transformations specified by the data set
+
+        The input list is modified and no copy is made.
+
+        Args:
+            fiducialList: list of fiducial points
+        '''
         if self.dataSet.transpose:
             for f in fiducialList:
                 oldX = f['x']
@@ -174,7 +218,6 @@ class FiducialFitWarp(Warp):
             for f in fiducialList:
                 f['y'] = self.dataSet.imageDimensions[1] - np.array(f['y'])
 
-
     def load_fiducials(self, fov):
         fiducials = []
         for dataChannel in self.dataSet.get_data_organization()\
@@ -186,8 +229,6 @@ class FiducialFitWarp(Warp):
 
             baseName = '_'.join([os.path.split(fiducialName)[1].split('.')[0], \
                             str(dataChannel), str(fov)])
-            parametersName = os.sep.join(
-                    [destPath, baseName + '_parameters.xml'])
             outputName = os.sep.join([destPath, baseName + '_spots.hdf5'])
 
             fiducials.append(
@@ -199,10 +240,10 @@ class FiducialFitWarp(Warp):
         return fiducials
 
     def extract_coordinates(self, localizationSet, significanceThreshold=50):
-        return np.array([[x, y] for x,y,s \
+        return np.array([[x, y] for x, y, s
                     in zip(localizationSet['x'], localizationSet['y'],
                         localizationSet['significance']) 
-                    if s>significanceThreshold])
+                    if s > significanceThreshold])
 
     def extract_control_points(self, referencePoints, movingPoints):
         edgeSpacing = 0.5
@@ -229,7 +270,7 @@ class FiducialFitWarp(Warp):
         controlIndexes = [x[0] < edgeSpacing for x in distancesShifted]
         referenceControls = np.array([referencePoints[x[0]] \
                 for x in indexesShifted[controlIndexes]])
-        movingControls = movingPoints[controlIndexes,:]
+        movingControls = movingPoints[controlIndexes, :]
 
         return referenceControls, movingControls
 
@@ -256,11 +297,9 @@ class FiducialFitWarp(Warp):
         params.setAttr("sigma", "float", 2)
         params.setAttr("threshold", "float", 6.0)
 
-        # Do tracking.
         params.setAttr("descriptor", "string", "1")
         params.setAttr("radius", "float", 0)
 
-        # Do drift-correction.
         params.setAttr("d_scale", "int", 2)
         params.setAttr("drift_correction", "int", 0)
         params.setAttr("frame_step", "int", 500)

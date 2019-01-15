@@ -45,7 +45,7 @@ class Decode(analysistask.ParallelAnalysisTask):
         return dependencies
 
     def run_analysis(self, fragmentIndex):
-        '''This function generates the barcodes for a fov and saves them to the 
+        '''This function decodes the barcodes in a fov and saves them to the
         barcode database.
         '''
         preprocessTask = self.dataSet.load_analysis_task(
@@ -112,7 +112,7 @@ class Decode(analysistask.ParallelAnalysisTask):
                 fov, centroid)
         d = [distances[x[0], x[1]] for x in properties.coords]
         zPosition = self.dataSet.z_index_to_position(zIndex)
-        outputDict = {'barcode': binary.bit_array_to_int(
+        outputDict = {'barcode': binary.bit_list_to_int(
                             self.dataSet.get_codebook().get_barcode(bcIndex)), \
                     'barcode_id': bcIndex, \
                     'fov': fov, \

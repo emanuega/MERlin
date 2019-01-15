@@ -173,7 +173,6 @@ class DataOrganization(object):
             A sorted list of all unique z positions
         '''
         return(sorted(np.unique([y for x in self.data['zPos'] for y in x])))        
-
     def get_fovs(self) -> List[int]:
         return np.unique(self.fileMap['fov'])
 

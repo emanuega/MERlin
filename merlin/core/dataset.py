@@ -497,7 +497,7 @@ class MERFISHDataSet(ImageDataSet):
         super().__init__(dataDirectoryName, dataHome, analysisHome,
                 microscopeParametersName)
 
-        # it is possible to also extract positions from the images. This
+        # TODO: it is possible to also extract positions from the images. This
         # should be implemented
         if positionFileName is not None:
             self._import_positions(positionFileName)
@@ -516,12 +516,12 @@ class MERFISHDataSet(ImageDataSet):
     def get_stage_positions(self) -> List[List[float]]:
         return self.positions
 
-    def get_fov_offset(self, fov) -> Tuple[float, float]:
+    def get_fov_offset(self, fov: int) -> Tuple[float, float]:
         '''Get the offset of the specified fov in the global coordinate system.
         This offset is based on the anticipated stage position.
 
         Args:
-            fov: The fov 
+            fov: index of the field of view
         Returns:
             A tuple specificing the x and y offset of the top right corner 
             of the specified fov in pixels.
@@ -530,7 +530,7 @@ class MERFISHDataSet(ImageDataSet):
         return self.positions.loc[fov]['X'], self.positions.loc[fov]['Y']
 
 
-    def z_index_to_position(self, zIndex) -> float:
+    def z_index_to_position(self, zIndex: int) -> float:
         '''Get the z position associated with the provided z index.'''
 
         return self.get_z_positions()[zIndex]
@@ -578,7 +578,6 @@ class MERFISHDataSet(ImageDataSet):
                     shutil.copyfile(
                             os.sep.join([self.rawDataPath, '..', f]), 
                             positionPath)
-
         self.positions = pandas.read_csv(positionPath, header=None,
                 names=['X','Y'])
 

@@ -24,14 +24,19 @@ class RegionViewWidget(QWidget):
         vSynchronize = ImageViewSynchronizer()
         imageData =[self.warpTask.get_aligned_image(
             self.fov, dc, self.zIndex) \
-                    for dc in self.dataSet.get_data_channels()]
+                    for dc in self.dataSet.get_data_organization()\
+                        .get_data_channels()]
         imageCount = len(imageData)
+
+        zPosition = self.dataSet.get_data_organization().get_z_positions()[
+                self.zIndex]
         barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
+        selectBarcodes = barcodes[barcodes['z'] == zPosition]
 
         self.imageViews = [RegionImageViewWidget(imageData[i],
-            vSynchronize, bitIndex=i, barcodes=barcodes,
-            title=self.dataSet.get_data_channel_name(i)) \
-                    for i in range(imageCount)]
+            vSynchronize, bitIndex=i, barcodes=selectBarcodes,
+            title=self.dataSet.get_data_organization()\
+                    .get_data_channel_name(i)) for i in range(imageCount)]
 
         self._initialize_layout()
 
@@ -63,8 +68,9 @@ class RegionViewWidget(QWidget):
         imageIndex = 0
         for i in range(1,rowCount+1):
             for j in range(1,columnCount+1):
-                imageLayout.addWidget(self.imageViews[imageIndex], i, j)
-                imageIndex += 1
+                if imageIndex < imageCount:
+                    imageLayout.addWidget(self.imageViews[imageIndex], i, j)
+                    imageIndex += 1
 
     def fov_scroll_update(self):
         self.set_fov(self.fovScrollBar.value())
@@ -73,12 +79,16 @@ class RegionViewWidget(QWidget):
         self.set_z_index(self.zScrollBar.value())
 
     def _update_fov_data(self):
+        zPosition = self.dataSet.get_data_organization().get_z_positions()[
+                self.zIndex]
         imageData = [self.warpTask.get_aligned_image(
             self.fov, dc, self.zIndex) \
-                    for dc in self.dataSet.get_data_channels()]
+                    for dc in self.dataSet.get_data_organization()\
+                        .get_data_channels()]
         barcodes = self.barcodeDB.get_barcodes(fov=self.fov)
+        selectBarcodes = barcodes[barcodes['z'] == zPosition]
         for i, iView in enumerate(self.imageViews):
-            iView.set_data(imageData[i], barcodes)
+            iView.set_data(imageData[i], selectBarcodes)
 
     def set_fov(self, fov):
         if fov == self.fov:
@@ -124,7 +134,6 @@ class RegionImageViewWidget(QWidget):
 
         self.update()
 
-
     def scale_image(self, inputImage):
         imageMax = np.max(inputImage)
         imageMin = np.min(inputImage)
@@ -142,7 +151,6 @@ class RegionImageViewWidget(QWidget):
 
         start = time.time()
         painter = QPainter(self)
-
 
         transform = self._synchronizer.get_transform()
         inverseTransform = transform.inverted()[0]

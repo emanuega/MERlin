@@ -17,7 +17,8 @@ def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
 
     Args:
         image: the input image to be deconvolved
-        windowSize: the size of the window over which to perform the gaussian
+        windowSize: the size of the window over which to perform the gaussian.
+            This must be an odd number.
         sigmaG: the standard deviation of the Gaussian point spread function
         iterationCount: the number of iterations to perform
 
@@ -50,8 +51,8 @@ def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
         cv2.divide(wI, reblurred, imR)
         imR += eps
         cv2.GaussianBlur(imR, (windowSize, windowSize), sigmaG, imR)
-        J2 = J1
+        np.copyto(J2, J1)
         np.multiply(Y, imR, out=J1)
-        T2 = T1
+        np.copyto(T2, T1)
         np.subtract(J1, Y, out=T1)
     return J1

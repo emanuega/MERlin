@@ -22,10 +22,10 @@ class Preprocess(analysistask.ParallelAnalysisTask):
             return self.dataSet.load_analysis_result('pixel_histogram',
                     self.analysisName, fov, 'histograms')
         
-        pixelHistogram = np.array(self.get_pixel_histogram(
+        pixelHistogram = np.zeros(self.get_pixel_histogram(
                 self.dataSet.get_fovs()[0]).shape)
         for f in self.dataSet.get_fovs():
-            pixelHistogram += self.get_pixel_histogram(f).astype(np.float64)
+            pixelHistogram += self.get_pixel_histogram(f)
 
         return pixelHistogram
 
@@ -72,7 +72,6 @@ class DeconvolutionPreprocess(Preprocess):
                         .get_data_channel_for_bit(b), zIndex) \
                     for b in self.dataSet.get_codebook().get_bit_names()])
 
-
     def get_processed_image(self, fov, dataChannel, zIndex):
         return self.dataSet.get_analysis_image(
                 self, 'processed_image', fov, 
@@ -88,12 +87,12 @@ class DeconvolutionPreprocess(Preprocess):
 
         histogramBins = np.arange(0, np.iinfo(np.uint16).max, 1)
         pixelHistogram = np.zeros(
-                (len(self.dataSet.get_codebook().get_bit_names()), 
+                (self.dataSet.get_codebook().get_bit_count(),
                     len(histogramBins)-1))
 
         with self.dataSet._writer_for_analysis_images(
                 self, 'processed_image', fragmentIndex) as outputTif:
-            for bi,b in enumerate(self.dataSet.get_codebook().get_bit_names()):
+            for bi, b in enumerate(self.dataSet.get_codebook().get_bit_names()):
                 dataChannel = self.dataSet.get_data_organization()\
                         .get_data_channel_for_bit(b)
                 for i in range(len(self.dataSet.get_z_positions())):
@@ -114,7 +113,7 @@ class DeconvolutionPreprocess(Preprocess):
                             deconvolvedImage, photometric='MINISBLACK',
                             metadata=imageDescription)
 
-                    pixelHistogram[bi,:] += np.histogram(
+                    pixelHistogram[bi, :] += np.histogram(
                             deconvolvedImage, bins=histogramBins)[0]
 
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)

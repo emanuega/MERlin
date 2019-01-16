@@ -1,12 +1,13 @@
-
 from merlin.core import analysistask
 from merlin.util import barcodedb
 
+
 class FilterBarcodes(analysistask.AnalysisTask):
 
-    '''An analysis task that filters barcodes based on area and mean 
+    """
+    An analysis task that filters barcodes based on area and mean
     intensity.
-    '''
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
@@ -32,12 +33,12 @@ class FilterBarcodes(analysistask.AnalysisTask):
         return [self.parameters['decode_task']]
 
     def run_analysis(self):
-        self.decodeTask = self.dataSet.load_analysis_task(
+        decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])        
 
         barcodeDB = self.get_barcode_database()
         for fov in self.dataSet.get_fovs():
-            for currentBC in self.decodeTask.get_barcode_database() \
+            for currentBC in decodeTask.get_barcode_database() \
                     .get_filtered_barcodes(
                         self.areaThreshold, self.intensityThreshold, 
                         fov=fov, chunksize=10000):

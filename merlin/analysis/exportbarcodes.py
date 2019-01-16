@@ -1,18 +1,19 @@
 from merlin.core import analysistask
 
+
 class ExportBarcodes(analysistask.AnalysisTask):
 
-    '''
+    """
     An analysis task that filters barcodes based on area and mean 
     intensity.
-    '''
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
         if 'columns' not in self.parameters:
-            self.parameters['columns'] = ['barcode_id', 'global_x', \
-                    'global_y', 'cell_index'] 
+            self.parameters['columns'] = ['barcode_id', 'global_x',
+                                          'global_y', 'cell_index']
         if 'exclude_blanks' not in self.parameters:
             self.parameters['exclude_blanks'] = True
 
@@ -29,15 +30,15 @@ class ExportBarcodes(analysistask.AnalysisTask):
         return [self.parameters['filter_task']]
 
     def run_analysis(self):
-        self.filterTask = self.dataSet.load_analysis_task(
+        filterTask = self.dataSet.load_analysis_task(
                 self.parameters['filter_task'])        
 
-        barcodeData = self.filterTask.get_barcode_database() \
-                .get_barcodes(columnList = self.columns)
+        barcodeData = filterTask.get_barcode_database() \
+                .get_barcodes(columnList=self.columns)
 
         if self.excludeBlanks:
             codebook = self.dataSet.get_codebook()
-            barcodeData = barcodeData[\
+            barcodeData = barcodeData[
                     barcodeData['barcode_id'].isin(
                         codebook.get_coding_indexes())]
 

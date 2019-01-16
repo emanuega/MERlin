@@ -9,20 +9,20 @@ from starfish.image._segmentation import watershed
 
 from merlin.core import analysistask
 
+
 class SegmentCells(analysistask.ParallelAnalysisTask):
 
-    '''
+    """
     An analysis task that determines the boundaries of features in the
     image data in each field of view. 
     
     Since each field of view is analyzed individually, the segmentations
     should be cleaned in order to merge cells that cross the field of 
     view boundary.
-    '''
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-
 
         if 'nucleus_threshold' not in self.parameters:
             self.parameters['nucleus_threshold'] = 0.41
@@ -45,22 +45,22 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         return len(self.dataSet.get_fovs())
 
     def get_estimated_memory(self):
-        #TODO - refine estimate
+        # TODO - refine estimate
         return 2048
 
     def get_estimated_time(self):
-        #TODO - refine estimate
+        # TODO - refine estimate
         return 5
 
     def get_dependencies(self):
-        return [self.parameters['warp_task'], \
+        return [self.parameters['warp_task'],
                 self.parameters['global_align_task']]
 
-
-    def _label_to_regions(self, inputImage):
+    @staticmethod
+    def _label_to_regions(inputImage: np.ndarray) -> np.ndarray:
         uniqueLabels = sorted(np.unique(inputImage))[1:]
 
-        def extract_contours(labelImage, label):
+        def extract_contours(labelImage: np.ndarray, label: int) -> np.ndarray:
             filledImage = morphology.binary_fill_holes(
                     labelImage==label)
             im2, contours, hierarchy = cv2.findContours(
@@ -70,23 +70,27 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
             return contours
 
         return np.array(
-                [np.array([x[0] for x in extract_contours(inputImage, i)[0]]) \
-                for i in uniqueLabels])
+                [np.array([x[0] for x in extract_contours(inputImage, i)[0]])
+                 for i in uniqueLabels])
 
-    def _transform_contours(self, contours, transform):
-        '''Transforms the coordinates in the contours based on the 
+    @staticmethod
+    def _transform_contours(
+            contours: np.ndarray, transform: np.ndarray) -> np.ndarray:
+        """Transforms the coordinates in the contours based on the
         provided transformation.
 
         Args:
-            contours - a n x 2 numpy array specifying the coordinates of the n
+            contours: a n x 2 numpy array specifying the coordinates of the n
                 points in the contour
-            transform - a 3 x 3 numpy array specifying the transformation 
+            transform: a 3 x 3 numpy array specifying the transformation
                 matrix
-        '''
-        reshapedContours = np.reshape(contours, 
-                (1, contours.shape[0], 2)).astype(np.float)
+        Returns:
+            a n x 2 numpy array containing the transformed coordinates
+        """
+        reshapedContours = np.reshape(
+            contours, (1, contours.shape[0], 2)).astype(np.float)
         transformedContours = cv2.transform(
-                reshapedContours, transform)[0,:,:2]
+                reshapedContours, transform)[0, :, :2]
 
         return transformedContours
 
@@ -105,10 +109,10 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
 
-        #TODO - extend to 3D
-        #TODO - this does not do well with image boundaries. Cell 
-        #boundaries are not traced past the edge of the field of 
-        #view 
+        # TODO - extend to 3D
+        # TODO - this does not do well with image boundaries. Cell
+        # boundaries are not traced past the edge of the field of
+        # view
         nucleusImage = cv2.GaussianBlur(warpTask.get_aligned_image(
                 fragmentIndex, self.nucleusIndex, self.zIndex),
                 (int(35), int(35)), 8)
@@ -123,8 +127,8 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         cellContours = self._label_to_regions(labels)
         transformation = globalTask.fov_to_global_transform(fragmentIndex)
         transformedContours = np.array(
-                [self._transform_contours(x, transformation) \
-                for x in cellContours])
+                [self._transform_contours(x, transformation)
+                 for x in cellContours])
 
         self.dataSet.save_analysis_result(
                 transformedContours, 'cell_boundaries',
@@ -209,20 +213,20 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
         return intersectionGraph
 
     def _subtract_region(self, region1, region2):
-        '''Substracts region 2 from region 1 and returns the modified 
+        """Substracts region 2 from region 1 and returns the modified
         region 1.
-        '''
+        """
         return region1.symmetric_difference(region2).difference(region2)
 
     def _clean_polygon(self, inputPolygon):
-        '''Cleans the polygon if polygon manipulations resulted in
+        """Cleans the polygon if polygon manipulations resulted in
         a multipolygon or an empty shape. 
 
         Returns:
             The cleaned polygon. If the multipolygon is passed, this will 
             return the largest polygon within the multipolygon. If a 
             non-polygon shape is passed, this function will return None.
-        '''
+        """
         if inputPolygon.geom_type == 'Polygon':
             return inputPolygon
         elif inputPolygon.geom_type == 'MultiPolygon':
@@ -234,8 +238,8 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
         segmentTask = self.dataSet.load_analysis_task(
                 self.parameters['segment_task'])
 
-        #The boundaries are filtered to avoid empty boundaries and to 
-        #prevent intersection in the boundary path.
+        # The boundaries are filtered to avoid empty boundaries and to
+        # prevent intersection in the boundary path.
         rawBoundaries = [geometry.Polygon(x).buffer(0) \
                 for x in segmentTask.get_cell_boundaries()]
         rawBoundaries = [x for x in rawBoundaries if x.area>0]

@@ -3,8 +3,8 @@ from matplotlib import pyplot as plt
 from matplotlib import patches
 import merlin
 plt.style.use(
-        os.sep.join([os.path.dirname(merlin.__file__), 
-            'ext', 'default.mplstyle']))
+        os.sep.join([os.path.dirname(merlin.__file__),
+                     'ext', 'default.mplstyle']))
 import seaborn
 import numpy as np
 
@@ -13,12 +13,15 @@ from merlin.util import binary
 
 class PlotPerformance(analysistask.AnalysisTask):
 
-    '''
+    """
     An analysis task that generates plots depicting metrics of the MERFISH
     decoding.
-    '''
-    #TODO - I expect the plots of the barcode information can be 
-    #made much more memory efficient.
+    """
+
+    # TODO all the plotting should be refactored. I do not like the way
+    # this class is structured as a long list of plotting functions. It would
+    # be more convenient if each plot could track it's dependent tasks and
+    # be executed once those tasks are complete.
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
@@ -45,9 +48,9 @@ class PlotPerformance(analysistask.AnalysisTask):
     def get_dependencies(self):
         return [self.parameters['decode_task'], self.parameters['filter_task']]
 
-    #TODO - the functions in this class have too much repeated code
-    #TODO - for the following 4 plots, I can add a line indicating the
-    #barcode selection thresholds.
+    # TODO - the functions in this class have too much repeated code
+    # TODO - for the following 4 plots, I can add a line indicating the
+    # barcode selection thresholds.
     def _plot_barcode_intensity_distribution(self):
         bcIntensities = self.decodeTask.get_barcode_database() \
                 .get_barcode_intensities()
@@ -86,10 +89,10 @@ class PlotPerformance(analysistask.AnalysisTask):
         barcodeDB = self.decodeTask.get_barcode_database()
         intensityData = [np.log10(
             barcodeDB.get_intensities_for_barcodes_with_area(x)) \
-                    for x in range(1,15)]
-        fig = plt.figure(figsize=(8,4))
-        #This will cause an error if one of the lists in intensity data
-        #is empty.
+                    for x in range(1, 15)]
+        fig = plt.figure(figsize=(8, 4))
+        # This will cause an error if one of the lists in intensity data
+        # is empty.
         plt.violinplot(intensityData, showextrema=False, showmedians=True)
         plt.axvline(x=self.filterTask.parameters['area_threshold']-0.5,
                 color='green', linestyle=':')
@@ -253,11 +256,11 @@ class PlotPerformance(analysistask.AnalysisTask):
         self._plot_filtered_barcode_abundances()
         if self.segmentTask is not None:
             self._plot_cell_segmentation()
-        #TODO _ analysis run times
-        #TODO - barcode correlation plots
-        #TODO - alignment error plots - need to save transformation information
+        # TODO _ analysis run times
+        # TODO - barcode correlation plots
+        # TODO - alignment error plots - need to save transformation information
         # first
-        #TODO - barcode size spatial distribution global and FOV average
-        #TODO - barcode distance spatial distribution global and FOV average
-        #TODO - barcode intensity spatial distribution global and FOV average
-        #TODO - good barcodes/blanks per cell
+        # TODO - barcode size spatial distribution global and FOV average
+        # TODO - barcode distance spatial distribution global and FOV average
+        # TODO - barcode intensity spatial distribution global and FOV average
+        # TODO - good barcodes/blanks per cell

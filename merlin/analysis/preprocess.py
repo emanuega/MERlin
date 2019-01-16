@@ -4,13 +4,15 @@ import cv2
 import numpy as np
 
 from merlin.core import analysistask
+from merlin.util import deconvolve
+
 
 class Preprocess(analysistask.ParallelAnalysisTask):
 
 
-    '''
+    """
     An abstract class for preparing data for barcode calling. 
-    '''
+    """
 
     def _image_name(self, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
@@ -19,8 +21,8 @@ class Preprocess(analysistask.ParallelAnalysisTask):
     
     def get_pixel_histogram(self, fov=None):
         if fov is not None:
-            return self.dataSet.load_analysis_result('pixel_histogram',
-                    self.analysisName, fov, 'histograms')
+            return self.dataSet.load_analysis_result(
+                'pixel_histogram', self.analysisName, fov, 'histograms')
         
         pixelHistogram = np.zeros(self.get_pixel_histogram(
                 self.dataSet.get_fovs()[0]).shape)
@@ -30,8 +32,8 @@ class Preprocess(analysistask.ParallelAnalysisTask):
         return pixelHistogram
 
     def _save_pixel_histogram(self, histogram, fov):
-        self.dataSet.save_analysis_result(histogram, 'pixel_histogram',
-                self.analysisName, fov, 'histograms')
+        self.dataSet.save_analysis_result(
+            histogram, 'pixel_histogram', self.analysisName, fov, 'histograms')
 
 
 class DeconvolutionPreprocess(Preprocess):
@@ -99,15 +101,15 @@ class DeconvolutionPreprocess(Preprocess):
                     inputImage = warpTask.get_aligned_image(
                             fragmentIndex, dataChannel, i)
                     filteredImage = inputImage.astype(float) \
-                            - cv2.GaussianBlur(inputImage,
-                                (int(4*np.ceil(self.highPassSigma)+1),
-                                        int(4*np.ceil(self.highPassSigma)+1)),
-                                self.highPassSigma).astype(float)
+                                    - cv2.GaussianBlur(
+                        inputImage, (int(4*np.ceil(self.highPassSigma)+1),
+                                     int(4*np.ceil(self.highPassSigma)+1)),
+                        self.highPassSigma).astype(float)
                     filteredImage[filteredImage < 0] = 0
-                    deconvolvedImage = deconvolve_lr(
+                    deconvolvedImage = deconvolve.deconvolve_lucyrichardson(
                             filteredImage, int(np.ceil(self.deconSigma)*4+1),
                             self.deconSigma, self.deconIterations)\
-                                    .astype(np.uint16)
+                        .astype(np.uint16)
                     
                     outputTif.save(
                             deconvolvedImage, photometric='MINISBLACK',
@@ -117,44 +119,3 @@ class DeconvolutionPreprocess(Preprocess):
                             deconvolvedImage, bins=histogramBins)[0]
 
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)
-
-#TODO - move the utility functions below to their own file and clean
-#up the above into utility functions
-
-def deconvolve_lr(image, windowSize, sigmaG, iterationCount):
-    '''Ported from Matlab deconvlucy'''
-    eps = np.finfo(float).eps
-    Y = np.copy(image)
-    J1 = np.copy(image)
-    J2 = np.copy(image)
-    wI = np.copy(image)
-    imR = np.copy(image)
-    reblurred = np.copy(image)
-    tmpMat1 = np.zeros(image.shape, dtype=float)
-    tmpMat2 = np.zeros(image.shape, dtype=float)
-    T1 = np.zeros(image.shape, dtype=float)
-    T2 = np.zeros(image.shape, dtype=float)
-    l = 0
-    for i in range(iterationCount):
-        if i > 1:
-            cv2.multiply(T1, T2, tmpMat1)
-            cv2.multiply(T2, T2, tmpMat2)
-            l = np.sum(tmpMat1)/(np.sum(tmpMat2) + eps)
-            l = max(min(l, 1), 0)
-        cv2.subtract(J1, J2, Y)
-        cv2.addWeighted(J1, 1, Y, l, 0, Y)
-        np.clip(Y, 0, None, Y)
-        cv2.GaussianBlur(Y, (windowSize, windowSize), sigmaG, reblurred) 
-        np.clip(reblurred, eps, None, reblurred)
-        cv2.divide(wI, reblurred, imR)
-        imR += eps
-        cv2.GaussianBlur(imR, (windowSize, windowSize), sigmaG, imR)
-        J2 = J1
-        np.multiply(Y, imR, out=J1)
-        T2 = T1
-        np.subtract(J1, Y, out=T1)
-    return J1
-
-
-                
-        

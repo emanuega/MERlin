@@ -39,6 +39,7 @@ Parameters:
 
 * iteration\_count -- The number of iterations to perform for the optimization.
 * fov\_per\_iteration -- The number of fields of view to decode in each round of optimization.
+* estimate\_initial\_scale\_factors\_from\_cdf -- Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.
 
 decode.Decode
 ---------------

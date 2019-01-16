@@ -17,7 +17,8 @@
             "parameters": {
                 "preprocess_task": "DeconvolutionPreprocess",
                 "fov_per_iteration": 2,
-                "iteration_count": 2
+                "iteration_count": 2,
+                "estimate_initial_scale_factors_from_cdf": true
             }
         },
         {
@@ -50,7 +51,7 @@
             "parameters": {
                 "decode_task": "Decode",
                 "area_threshold": 5,
-                "intensity_threshold": 400
+                "intensity_threshold": 1
             }
         },
         {

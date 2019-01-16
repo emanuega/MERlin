@@ -3,20 +3,20 @@ from typing import List
 
 
 def bit_list_to_int(bitList: List[bool]) -> int:
-    '''Converts a binary list to an integer
+    """Converts a binary list to an integer
 
     Args:
         bitList: the binary list to convert
     Returns:
         The integer corresponding to the input bit list
-    '''
+    """
     out = 0
     for b in reversed(bitList):
         out = (out << 1) | b
     return out
 
 def int_to_bit_list(intIn: int, bitCount: int) -> List[bool]:
-    '''Converts an integer to a binary list with the specified number of bits.
+    """Converts an integer to a binary list with the specified number of bits.
 
     Args:
         intIn: the integer to convert
@@ -24,11 +24,11 @@ def int_to_bit_list(intIn: int, bitCount: int) -> List[bool]:
     Returns:
         A list of bit that specifies the input integer. The least significant
             bit is first in the list.
-    '''
+    """
     return [k_bit_set(intIn, k) for k in range(bitCount)]
 
 def k_bit_set(n: int, k: int) -> bool:
-    '''Determine if the k'th bit of integer n is set to 1.
+    """Determine if the k'th bit of integer n is set to 1.
 
     Args:
         n: the integer to check
@@ -37,7 +37,7 @@ def k_bit_set(n: int, k: int) -> bool:
     Returns:
          true if the k'th bit of the integer n is 1, otherwise false. If
             k is None, this function returns None.
-    '''
+    """
     if k is None:
         return None
 
@@ -47,7 +47,7 @@ def k_bit_set(n: int, k: int) -> bool:
         return False
 
 def flip_bit(barcode: List[bool], bitIndex: int) -> List[bool]:
-    '''Generates a version of the provided barcode where the bit at the
+    """Generates a version of the provided barcode where the bit at the
     specified index is inverted.
 
     The provided barcode is left unchanged. It is copied before flipping the
@@ -59,7 +59,7 @@ def flip_bit(barcode: List[bool], bitIndex: int) -> List[bool]:
         bitIndex: The index of the bit to reverse
     Returns:
         A copy of barcode with bitIndex inverted
-    '''
+    """
     bcCopy = np.copy(barcode)
     bcCopy[bitIndex] = not bcCopy[bitIndex]
     return bcCopy

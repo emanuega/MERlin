@@ -11,9 +11,9 @@ from merlin.data import codebook as cb
 
 class MERFISHDataFactory(object):
 
-    '''
+    """
     A class for simulating MERFISH data sets.
-    '''
+    """
 
     def __init__(self):
         self.codebookPath = 'L26E1.csv'
@@ -23,13 +23,40 @@ class MERFISHDataFactory(object):
         self.fluorophoreBrightness = 1000
         self.fiducialBrightness = 10000
         self.background = 100
-        self.bitOrganization = [[0, 1], [0, 0], [1, 0], [1, 1], \
-                [2, 1], [2, 0], [3, 1], [3, 0], [4, 0], [4, 1], \
+        self.bitOrganization = [[0, 1], [0, 0], [1, 0], [1, 1],
+                [2, 1], [2, 0], [3, 1], [3, 0], [4, 0], [4, 1],
                 [5, 1], [5, 0], [6, 1], [6, 0], [7, 0], [7, 1]]
+
+    def simulate_image(self, spotPositions: np.ndarray=None,
+                       addNoise: bool=False) -> np.ndarray:
+        """Simulate a single image consisting of point sources with a Gaussian
+        point spread function
+
+        Args:
+            spotPositions: a n x 2 numpy array containing the positions to
+                simulate the point sources. If not specified, 1000 random
+                positions are selected.
+            addNoise: flag indicating whether poisson noise should be added
+                to the simulated image.
+        Returns:
+            the simulated image
+        """
+        if spotPositions is None:
+            spotPositions = np.random.uniform(size=(1000, 2))
+            spotPositions[:, 0] *= self.imageSize[0]
+            spotPositions[:, 1] *= self.imageSize[1]
+
+        upsampledImage = np.zeros(self.upsampleFactor*self.imageSize)
+        for p in spotPositions:
+            upsampledImage[int(np.floor(p[0]*self.upsampleFactor)),
+                            int(np.floor(p[1]*self.upsampleFactor))] += 1000
+
+        return self._downsample_image_stack([upsampledImage],
+                                            addNoise=addNoise)[0]
 
     def simulate_dataset(self, datasetName, abundanceScale=1, 
             fluorophoreCount=5, fovCount=10):
-
+        """Simulate a full MERFISH dataset"""
         dataDir = os.sep.join([merlin.DATA_HOME, datasetName])
         if not os.path.exists(dataDir):
             os.mkdir(dataDir)
@@ -90,8 +117,8 @@ class MERFISHDataFactory(object):
         rnaCounts = np.random.poisson(barcodeAbundances)
         rnaPositions = [np.random.uniform(size=(c, 2)) for c in rnaCounts]
         for b in range(barcodeCount):
-            rnaPositions[b][:,0] *= imageSize[0]
-            rnaPositions[b][:,1] *= imageSize[1]
+            rnaPositions[b][:, 0] *= imageSize[0]
+            rnaPositions[b][:, 1] *= imageSize[1]
 
         upsampledStack = np.zeros((bitNumber, *self.upsampleFactor*imageSize)) 
 
@@ -102,7 +129,7 @@ class MERFISHDataFactory(object):
 
         imageStack = self._downsample_image_stack(upsampledStack)
 
-        return (imageStack, rnaPositions)
+        return imageStack, rnaPositions
 
     def _add_spots_for_barcode(self, barcode, positions, fluorophoreCount,
             upsampledStack):
@@ -116,7 +143,7 @@ class MERFISHDataFactory(object):
         for i in np.where(barcode)[0]:
             np.add(upsampledStack[i], upsampledImage, out=upsampledStack[i])
 
-    def _downsample_image_stack(self, upsampledStack):
+    def _downsample_image_stack(self, upsampledStack, addNoise=True):
         imageStack = np.zeros((len(upsampledStack), *self.imageSize))
 
         for i in range(len(imageStack)):
@@ -126,8 +153,11 @@ class MERFISHDataFactory(object):
                     convolve2d(blurredImage, 
                         np.ones((self.upsampleFactor, self.upsampleFactor))))\
                                 .resize(self.imageSize, PIL.Image.BILINEAR))
-            imageStack[i] = np.random.poisson(
-                    downsampledImage + self.background)
+            if addNoise:
+                imageStack[i] = np.random.poisson(
+                        downsampledImage + self.background)
+            else:
+                imageStack[i] = downsampledImage + self.background
 
         return imageStack
 

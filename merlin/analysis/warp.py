@@ -239,8 +239,10 @@ class FiducialFitWarp(Warp):
         fiducials = []
         for dataChannel in self.dataSet.get_data_organization()\
                 .get_data_channels():
-            fiducialFrame = self.dataSet.get_fiducial_frame(dataChannel)
-            fiducialName = self.dataSet.get_fiducial_filename(dataChannel, fov)
+            fiducialFrame = self.dataSet.get_data_organization()\
+                .get_fiducial_frame_index(dataChannel)
+            fiducialName = self.dataSet.get_data_organization()\
+                .get_fiducial_filename(dataChannel, fov)
             destPath = self.dataSet.get_analysis_subdirectory(
                     self.analysisName, subdirectory='fiducials')
 

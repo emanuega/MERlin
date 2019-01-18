@@ -9,7 +9,6 @@ from merlin.util import deconvolve
 
 class Preprocess(analysistask.ParallelAnalysisTask):
 
-
     """
     An abstract class for preparing data for barcode calling. 
     """
@@ -45,12 +44,12 @@ class DeconvolutionPreprocess(Preprocess):
             self.parameters['highpass_sigma'] = 3
         if 'decon_sigma' not in self.parameters:
             self.parameters['decon_sigma'] = 2
-
+        if 'decon_iterations' not in self.parameters:
+            self.parameters['decon_iterations'] = 20
         self.highPassSigma = self.parameters['highpass_sigma']
         self.deconSigma = self.parameters['decon_sigma']
+        self.deconIterations = self.parameters['decon_iterations']
 
-        #TODO -  this should be based on a convergence measure
-        self.deconIterations = 20
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -70,8 +69,8 @@ class DeconvolutionPreprocess(Preprocess):
                     self, 'processed_image', fov)
         else:
             return np.array([self.get_processed_image(fov,
-                self.dataSet.get_data_organization()\
-                        .get_data_channel_for_bit(b), zIndex) \
+                self.dataSet.get_data_organization()
+                        .get_data_channel_for_bit(b), zIndex)
                     for b in self.dataSet.get_codebook().get_bit_names()])
 
     def get_processed_image(self, fov, dataChannel, zIndex):
@@ -83,7 +82,7 @@ class DeconvolutionPreprocess(Preprocess):
         warpTask = self.dataSet.load_analysis_task(
                 self.parameters['warp_task'])
 
-        imageDescription = self.dataSet._analysis_tiff_description(
+        imageDescription = self.dataSet.analysis_tiff_description(
                 len(self.dataSet.get_z_positions()),
                 len(self.dataSet.get_codebook().get_bit_names()))
 
@@ -92,7 +91,7 @@ class DeconvolutionPreprocess(Preprocess):
                 (self.dataSet.get_codebook().get_bit_count(),
                     len(histogramBins)-1))
 
-        with self.dataSet._writer_for_analysis_images(
+        with self.dataSet.writer_for_analysis_images(
                 self, 'processed_image', fragmentIndex) as outputTif:
             for bi, b in enumerate(self.dataSet.get_codebook().get_bit_names()):
                 dataChannel = self.dataSet.get_data_organization()\

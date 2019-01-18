@@ -15,6 +15,7 @@ def bit_list_to_int(bitList: List[bool]) -> int:
         out = (out << 1) | b
     return out
 
+
 def int_to_bit_list(intIn: int, bitCount: int) -> List[bool]:
     """Converts an integer to a binary list with the specified number of bits.
 
@@ -26,6 +27,7 @@ def int_to_bit_list(intIn: int, bitCount: int) -> List[bool]:
             bit is first in the list.
     """
     return [k_bit_set(intIn, k) for k in range(bitCount)]
+
 
 def k_bit_set(n: int, k: int) -> bool:
     """Determine if the k'th bit of integer n is set to 1.
@@ -45,6 +47,7 @@ def k_bit_set(n: int, k: int) -> bool:
         return True
     else:
         return False
+
 
 def flip_bit(barcode: List[bool], bitIndex: int) -> List[bool]:
     """Generates a version of the provided barcode where the bit at the

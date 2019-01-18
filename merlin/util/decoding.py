@@ -47,7 +47,7 @@ class PixelBasedDecoder(object):
 
         Args:
             imageData: input image stack. The first dimension indexes the bit
-                number while the second and third dimensions contain the
+                number and the second and third dimensions contain the
                 corresponding image.
             scaleFactors: factors to rescale each bit prior to normalization.
                 The length of scaleFactors must be equal to the number of bits.
@@ -68,8 +68,10 @@ class PixelBasedDecoder(object):
         if scaleFactors is None:
             scaleFactors = self._scaleFactors
 
-        filteredImages = np.array([cv2.GaussianBlur(x, (5, 5), 1)
-                                   for x in imageData])
+        filteredImages = np.zeros(imageData.shape)
+        for i in range(imageData.shape[0]):
+            filteredImages[i, :, :] = cv2.GaussianBlur(
+                imageData[i, :, :], (5, 5), 1)
 
         pixelTraces = np.reshape(
                 filteredImages, 

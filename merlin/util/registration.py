@@ -1,9 +1,12 @@
 import numpy as np
+from typing import Tuple
 from sklearn.neighbors import NearestNeighbors
 from skimage import transform
 
 
-def extract_control_points(referencePoints, movingPoints, gridSpacing=0.5):
+def extract_control_points(
+        referencePoints: np.ndarray, movingPoints: np.ndarray,
+        gridSpacing: float=0.5) -> Tuple[np.ndarray, np.ndarray]:
     edges = np.arange(-30, 30, gridSpacing)
 
     neighbors = NearestNeighbors(n_neighbors=10)
@@ -32,7 +35,9 @@ def extract_control_points(referencePoints, movingPoints, gridSpacing=0.5):
     return referenceControls, movingControls
 
 
-def estimate_affine_transform(referenceControls, movingControls):
+def estimate_affine_transform(
+        referenceControls: np.ndarray, movingControls: np.ndarray) \
+        -> transform.AffineTransform:
     tform = transform.AffineTransform()
     tform.estimate(referenceControls, movingControls)
     return tform

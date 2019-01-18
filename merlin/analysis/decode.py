@@ -57,6 +57,7 @@ class Decode(analysistask.ParallelAnalysisTask):
         decodedImages = []
         magnitudeImages = []
         zPositionCount = len(self.dataSet.get_z_positions())
+
         for zIndex in range(zPositionCount):
             imageSet = preprocessTask.get_processed_image_set(
                     fragmentIndex, zIndex)
@@ -80,9 +81,9 @@ class Decode(analysistask.ParallelAnalysisTask):
     def _save_decoded_images(self, fov: int, zPositionCount: int,
                              decodedImages: List[np.ndarray],
                              magnitudeImages: List[np.ndarray]) -> None:
-            imageDescription = self.dataSet._analysis_tiff_description(
+            imageDescription = self.dataSet.analysis_tiff_description(
                 zPositionCount, 2)
-            with self.dataSet._writer_for_analysis_images(
+            with self.dataSet.writer_for_analysis_images(
                     self, 'decoded', fov) as outputTif:
                 for i in range(zPositionCount):
                     outputTif.save(decodedImages[i].astype(np.float32),

@@ -87,10 +87,10 @@ class Warp(analysistask.ParallelAnalysisTask):
 
         dataChannels = self.dataSet.get_data_organization().get_data_channels()
         zPositions = self.dataSet.get_z_positions()
-        imageDescription = self.dataSet._analysis_tiff_description(
+        imageDescription = self.dataSet.analysis_tiff_description(
                 len(zPositions), len(dataChannels))
 
-        with self.dataSet._writer_for_analysis_images(
+        with self.dataSet.writer_for_analysis_images(
                 self, 'aligned_images', fov) as outputTif:
             for t, x in zip(transformationList, dataChannels):
                 for z in zPositions:
@@ -105,10 +105,10 @@ class Warp(analysistask.ParallelAnalysisTask):
 
         if self.writeAlignedFiducialImages:
 
-            fiducialImageDescription = self.dataSet._analysis_tiff_description(
+            fiducialImageDescription = self.dataSet.analysis_tiff_description(
                     1, len(dataChannels))
 
-            with self.dataSet._writer_for_analysis_images(
+            with self.dataSet.writer_for_analysis_images(
                     self, 'aligned_fiducial_images', fov) as outputTif:
                 for t, x in zip(transformationList, dataChannels):
                     inputImage = self.dataSet.get_fiducial_image(x, fov)
@@ -235,7 +235,6 @@ class FiducialFitWarp(Warp):
             A list of fiducial information where each index in the list
                 corresponds to a data channel.
         """
-
         fiducials = []
         for dataChannel in self.dataSet.get_data_organization()\
                 .get_data_channels():

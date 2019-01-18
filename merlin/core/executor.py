@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import multiprocessing
 import threading
 
-from . import analysistask
+from merlin.core import analysistask
+
 
 class Executor(object):
 

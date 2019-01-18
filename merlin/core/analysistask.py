@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import time
 import threading
 import multiprocessing
+from typing import List
 
 import numpy as np
 
@@ -14,13 +15,13 @@ class AnalysisAlreadyStartedException(Exception):
 
 class AnalysisTask(ABC):
 
-    '''
+    """
     An abstract class for performing analysis on a DataSet. Subclasses
     should implement the analysis to perform in the run_analysis() function.
-    '''
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
-        '''Creates an AnalysisTask object that performs analysis on the
+        """Creates an AnalysisTask object that performs analysis on the
         specified DataSet.
 
         Args:
@@ -30,7 +31,7 @@ class AnalysisTask(ABC):
             analysisName: specifies a unique identifier for this
                 AnalysisTask. If analysisName is not set, the analysis name
                 will default to the name of the class.
-        '''
+        """
         self.dataSet = dataSet
         if parameters is None:
             self.parameters = {}
@@ -45,16 +46,16 @@ class AnalysisTask(ABC):
         self.parameters['module'] = type(self).__module__
         self.parameters['class'] = type(self).__name__
 
-    def save(self):
-        '''Save a copy of this AnalysisTask into the data set.'''
+    def save(self) -> None:
+        """Save a copy of this AnalysisTask into the data set."""
         self.dataSet.save_analysis_task(self)
 
-    def run(self):
-        '''Run this AnalysisTask.
+    def run(self) -> None:
+        """Run this AnalysisTask.
         
         Upon completion of the analysis, this function informs the DataSet
         that analysis is complete.
-        '''
+        """
         logger = self.dataSet.get_logger(self)
         logger.info('Beginning ' + self.get_analysis_name())
 
@@ -73,14 +74,14 @@ class AnalysisTask(ABC):
 
         self.dataSet.close_logger(self)
 
-    def _indicate_running(self):
-        '''A loop that regularly signals to the dataset that this analysis
+    def _indicate_running(self) -> None:
+        """A loop that regularly signals to the dataset that this analysis
         task is still running successfully. 
 
         Once this function is called, the dataset will be notified every 
         minute that this analysis is still running until the analysis
         completes.
-        '''
+        """
         if self.is_complete() or self.is_error():
             return
 
@@ -90,83 +91,83 @@ class AnalysisTask(ABC):
         self.runTimer.start()
 
     @abstractmethod
-    def run_analysis(self):
-        '''Perform the analysis for this AnalysisTask.
+    def run_analysis(self) -> None:
+        """Perform the analysis for this AnalysisTask.
 
         This function should be implemented in all subclasses with the
         logic to complete the analysis.
-        '''
+        """
         pass
 
     @abstractmethod
-    def get_estimated_memory(self):
-        '''Get an estimate of how much memory is required for this
+    def get_estimated_memory(self) -> float:
+        """Get an estimate of how much memory is required for this
         AnalysisTask.
 
         Returns:
             a memory estimate in megabytes.
-        '''
+        """
         pass
 
     @abstractmethod
-    def get_estimated_time(self):
-        '''Get an estimate for the amount of time required to complete
+    def get_estimated_time(self) -> float:
+        """Get an estimate for the amount of time required to complete
         this AnalysisTask.
 
         Returns:
             a time estimate in minutes.
-        '''
+        """
         pass
 
     @abstractmethod
-    def get_dependencies(self):
-        '''Get the analysis tasks that must be completed before this 
+    def get_dependencies(self) -> List[str]:
+        """Get the analysis tasks that must be completed before this
         analysis task can proceed.
 
         Returns:
             a list containing the names of the analysis tasks that 
                 this analysis task depends on. If there are no dependencies,
                 an empty list is returned.
-        '''
+        """
         pass
 
     def get_parameters(self):
-        '''Get the parameters for this analysis task.
+        """Get the parameters for this analysis task.
 
         Returns:
             the parameter dictionary
-        '''
+        """
         return self.parameters
 
     def is_error(self):
-        '''Determines if an error has occured while running this analysis
+        """Determines if an error has occurred while running this analysis
         
         Returns:
             True if the analysis is complete and otherwise False.
-        '''
+        """
         return self.dataSet.check_analysis_error(self)
 
     def is_complete(self):
-        '''Determines if this analysis has completed successfully
+        """Determines if this analysis has completed successfully
         
         Returns:
             True if the analysis is complete and otherwise False.
-        '''
+        """
         return self.dataSet.check_analysis_done(self)
 
     def is_running(self):
-        '''Determines if this analysis has started.
+        """Determines if this analysis has started.
         
         Returns:
             True if the analysis is complete and otherwise False.
-        '''
+        """
         return self.dataSet.check_analysis_started(self) and not \
                 self.is_complete()
 
     def is_idle(self):
-        '''Determines if this analysis task is expected to be running,
+        """Determines if this analysis task is expected to be running,
         but has stopped for some reason.
-        '''
+        """
         if not self.is_running():
             return False
 
@@ -174,34 +175,34 @@ class AnalysisTask(ABC):
 
 
     def get_analysis_name(self):
-        '''Get the name for this AnalysisTask.
+        """Get the name for this AnalysisTask.
 
         Returns:
             the name of this AnalysisTask
-        '''
+        """
         return self.analysisName
 
     def is_parallel(self):
-        '''Determine if this analysis task uses multiple cores.'''
+        """Determine if this analysis task uses multiple cores."""
         return False
 
 
 class InternallyParallelAnalysisTask(AnalysisTask):
 
-    '''
+    """
     An abstract class for analysis that can only be run in one part,
     but can internally be sped up using multiple processes. Subclasses
     should implement the analysis to perform in te run_analysis() function.
-    '''
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
         self.coreCount = multiprocessing.cpu_count()
 
     def set_core_count(self, coreCount):
-        '''Set the number of parallel processes this analysis task is 
+        """Set the number of parallel processes this analysis task is
         allowed to use.
-        '''
+        """
         self.coreCount = coreCount
 
     def is_parallel(self):
@@ -209,11 +210,11 @@ class InternallyParallelAnalysisTask(AnalysisTask):
 
 class ParallelAnalysisTask(AnalysisTask):
 
-    '''
+    """
     An abstract class for analysis that can be run in multiple parts 
     independently. Subclasses should implement the analysis to perform in 
     the run_analysis() function
-    '''
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
@@ -222,7 +223,16 @@ class ParallelAnalysisTask(AnalysisTask):
     def fragment_count(self):
         pass
 
-    def run(self, fragmentIndex=None):
+    def run(self, fragmentIndex: int=None) -> None:
+        """Run the specified index of this analysis task.
+
+        If fragment index is not provided. All fragments for this analysis
+        task are run in serial.
+
+        Args:
+            fragmentIndex: the index of the analysis fragment to run or None
+                if all fragments should be run.
+        """
         if fragmentIndex is None:
             for i in range(self.fragment_count()):
                 self.run(i)
@@ -244,14 +254,14 @@ class ParallelAnalysisTask(AnalysisTask):
             
             self.dataSet.close_logger(self, fragmentIndex)
 
-    def _indicate_running(self, fragmentIndex):
-        '''A loop that regularly signals to the dataset that this analysis
+    def _indicate_running(self, fragmentIndex: int) -> None:
+        """A loop that regularly signals to the dataset that this analysis
         task is still running successfully. 
 
         Once this function is called, the dataset will be notified every 
         minute that this analysis is still running until the analysis
         completes.
-        '''
+        """
         if self.is_complete(fragmentIndex) or self.is_error(fragmentIndex):
             return
 

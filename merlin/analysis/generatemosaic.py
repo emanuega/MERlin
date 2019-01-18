@@ -68,11 +68,11 @@ class GenerateMosaic(analysistask.AnalysisTask):
         mosaicDimensions = tuple(self._micron_to_mosaic_pixel(
                 micronExtents[-2:], micronExtents))
 
-        imageDescription = self.dataSet._analysis_tiff_description(
+        imageDescription = self.dataSet.analysis_tiff_description(
                 len(self.dataSet.get_z_positions()),
                 len(self.dataSet.get_data_organization().get_data_channels()))
 
-        with self.dataSet._writer_for_analysis_images(
+        with self.dataSet.writer_for_analysis_images(
                 self, 'mosaic') as outputTif:
             for d in self.dataSet.get_data_organization().get_data_channels():
                 for z in range(len(self.dataSet.get_z_positions())):

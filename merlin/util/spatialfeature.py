@@ -2,6 +2,7 @@ import numpy as np
 import uuid
 import cv2
 from typing import List
+from typing import Tuple
 from shapely import geometry
 
 
@@ -76,7 +77,6 @@ class SpatialFeature(object):
             labelMatrix.copy().astype(np.uint8), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_NONE)
 
-        print(boundaries)
         return [np.array([[x[0][0], x[0][1]] for x in y]) for y in boundaries]
 
     @staticmethod
@@ -100,6 +100,21 @@ class SpatialFeature(object):
     def get_boundaries(self) -> List[List[geometry.Polygon]]:
         return self._boundaryList
 
+    def get_bounding_box(self) -> Tuple[float, float, float, float]:
+        """Get the 2d box that contains all boundaries in all z plans of this
+        feature.
+
+        Returns:
+            a tuple containing (x1, y1, x2, y2) coordinates of the bounding box
+        """
+        boundarySet = []
+        for f in self.get_boundaries():
+            for b in f:
+                boundarySet.append(b)
+
+        multiPolygon = geometry.MultiPolygon(boundarySet)
+        return multiPolygon.bounds
+
     def is_contained_in(self, inFeature) -> bool:
         """Determine if the boundary of this feature is contained in the
         boundary of the specified feature.
@@ -113,3 +128,21 @@ class SpatialFeature(object):
         """
         raise NotImplementedError
 
+
+class SpatialFeatureDB(object):
+
+    """A database for storing spatial features"""
+
+    def __init__(self, dataSet, analysisTask):
+        self._dataSet = dataSet
+        self._analysisTask = analysisTask
+
+    def _get_masterDB(self):
+        return self._dataSet.get_database_engine(self._analysisTask)
+
+    def write_features(self, feature: List[SpatialFeature], fov=None) -> None:
+        pass
+
+
+    def get_features(self, fov=None):
+        pass

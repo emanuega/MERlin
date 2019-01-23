@@ -13,7 +13,7 @@ class SpatialFeature(object):
     """
 
     def __init__(self, boundaryList: List[List[geometry.Polygon]], fov: int,
-                 uniqueID=None) -> None:
+                 zCoordinates: np.ndarray=None, uniqueID=None) -> None:
         """Create a new feature specified by a list of pixels
 
         Args:
@@ -24,6 +24,8 @@ class SpatialFeature(object):
             fov: the index of the field of view that this feature belongs to.
                 The pixel list specifies pixel in the local fov reference
                 frame.
+            zCoordinates: the z position for each of the z indexes. If not
+                specified, each z index is assumed to have unit height.
         """
         self._boundaryList = boundaryList
         self._fov = fov
@@ -33,9 +35,15 @@ class SpatialFeature(object):
         else:
             self._uniqueID = uniqueID
 
+        if zCoordinates is not None:
+            self._zCoordinates = zCoordinates
+        else:
+            self._zCoordinates = np.arange(len(boundaryList))
+
     @staticmethod
     def feature_from_label_matrix(labelMatrix: np.ndarray, fov: int,
-                                  transformationMatrix: np.ndarray=None):
+                                  transformationMatrix: np.ndarray=None,
+                                  zCoordinates: np.ndarray=None):
         """Generate a new feature from the specified label matrix.
 
         Args:
@@ -48,7 +56,8 @@ class SpatialFeature(object):
             transformationMatrix: a 3x3 numpy array specifying the
                 transformation from fov to global coordinates. If None,
                 the feature coordinates are not transformed.
-
+            zCoordinates: the z position for each of the z indexes. If not
+                specified, each z index is assumed to have unit height.
         Returns: the new feature
         """
 
@@ -60,7 +69,7 @@ class SpatialFeature(object):
                 x, transformationMatrix) for x in boundaries]
 
         return SpatialFeature([[geometry.Polygon(x) for x in b if len(x) > 2]
-                               for b in boundaries], fov)
+                               for b in boundaries], fov, zCoordinates)
 
     @staticmethod
     def _extract_boundaries(labelMatrix: np.ndarray) -> List[np.ndarray]:
@@ -114,6 +123,24 @@ class SpatialFeature(object):
 
         multiPolygon = geometry.MultiPolygon(boundarySet)
         return multiPolygon.bounds
+
+    def get_volume(self) -> float:
+        """Get the volume enclosed by this feature.
+
+        Returns:
+            the volume represented in global coordinates. If only one z
+            slice is present for the feature, the z height is taken as 1.
+        """
+        boundaries = self.get_boundaries()
+        totalVolume = 0
+
+        if len(boundaries) > 1:
+            for b, deltaZ in zip(boundaries[:1], np.diff(self._zCoordinates)):
+                totalVolume += deltaZ*np.sum([x.area for x in b])
+        else:
+            totalVolume = np.sum([x.area for x in boundaries[0]])
+
+        return totalVolume
 
     def is_contained_in(self, inFeature) -> bool:
         """Determine if the boundary of this feature is contained in the

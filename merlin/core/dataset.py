@@ -166,10 +166,30 @@ class DataSet(object):
 
     def save_dataframe_to_csv(
             self, dataframe: pandas.DataFrame, resultName: str,
-            analysisTask: TaskOrName=None, **kwargs) -> None:
+            analysisTask: TaskOrName=None, resultIndex: int=None,
+            subdirectory: str=None, **kwargs) -> None:
+        """Save a pandas data frame to a csv file stored in this dataset.
+
+        If a previous pandas data frame has been save with the same resultName,
+        it will be overwritten
+
+        Args:
+            dataframe: the data frame to save
+            resultName: the name of the output file
+            analysisTask: the analysis task that the dataframe should be
+                saved under. If None, the dataframe is saved to the
+                data set root.
+            resultIndex: index of the dataframe to save or None if no index
+                should be specified
+            subdirectory: subdirectory of the analysis task that the dataframe
+                should be saved to or None if the dataframe should be
+                saved to the root directory for the analysis task.
+            **kwargs: arguments to pass on to pandas.to_csv
+        """
         if analysisTask is not None:
             savePath = self._analysis_result_save_path(
-                    resultName, analysisTask.get_analysis_name()) + '.csv'
+                    resultName, analysisTask, resultIndex, subdirectory) \
+                       + '.csv'
         else:
             savePath = os.sep.join([self.analysisPath, resultName]) + '.csv'
 
@@ -178,17 +198,32 @@ class DataSet(object):
 
     def load_dataframe_from_csv(
             self, resultName: str, analysisTask: TaskOrName=None,
-            **kwargs) -> pandas.DataFrame:
+            resultIndex: int=None, subdirectory: str=None,
+            **kwargs) -> Union[pandas.DataFrame, None]:
+        """Load a pandas data frame from a csv file stored in this dataset.
+
+        Args:
+            resultName:
+            analysisTask:
+            resultIndex:
+            subdirectory:
+            **kwargs:
+        Returns:
+            the pandas data frame
+        Raises:
+              FileNotFoundError: if the file does not exist
+        """
         if analysisTask is not None:
             savePath = self._analysis_result_save_path(
-                    resultName, analysisTask.get_analysis_name()) + '.csv'
+                    resultName, analysisTask, resultIndex, subdirectory) \
+                       + '.csv'
         else:
             savePath = os.sep.join([self.analysisPath, resultName]) + '.csv'
 
         with open(savePath, 'r') as f:
             return pandas.read_csv(f, **kwargs)
 
-    def save_analysis_result(
+    def save_numpy_analysis_result(
             self, analysisResult: np.ndarray, resultName: str,
             analysisName: str, resultIndex: int=None,
             subdirectory: str=None) -> None:
@@ -200,7 +235,7 @@ class DataSet(object):
                 resultName, analysisName, resultIndex, subdirectory)
         np.save(savePath, analysisResult)
     
-    def load_analysis_result(
+    def load_numpy_analysis_result(
             self, resultName: str, analysisName: str, resultIndex: int=None,
             subdirectory: str=None) -> np.array:
         # TODO - This should determine the file extension based on the

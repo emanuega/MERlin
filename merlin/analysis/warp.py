@@ -39,7 +39,7 @@ class Warp(analysistask.ParallelAnalysisTask):
         Returns:
             a skimage transformation
         """
-        transformations = self.dataSet.load_analysis_result(
+        transformations = self.dataSet.load_numpy_analysis_result(
                 'offsets', self.get_analysis_name(), resultIndex=fov,
                 subdirectory='transformations')
         return transformations[dataChannel]
@@ -123,7 +123,7 @@ class Warp(analysistask.ParallelAnalysisTask):
         self._save_transformations(transformationList, fov)
 
     def _save_transformations(self, transformationList: List, fov: int) -> None:
-        self.dataSet.save_analysis_result(
+        self.dataSet.save_numpy_analysis_result(
             np.array(transformationList), 'offsets',
             self.get_analysis_name(), resultIndex=fov,
             subdirectory='transformations')

@@ -20,7 +20,7 @@ class Preprocess(analysistask.ParallelAnalysisTask):
     
     def get_pixel_histogram(self, fov=None):
         if fov is not None:
-            return self.dataSet.load_analysis_result(
+            return self.dataSet.load_numpy_analysis_result(
                 'pixel_histogram', self.analysisName, fov, 'histograms')
         
         pixelHistogram = np.zeros(self.get_pixel_histogram(
@@ -31,7 +31,7 @@ class Preprocess(analysistask.ParallelAnalysisTask):
         return pixelHistogram
 
     def _save_pixel_histogram(self, histogram, fov):
-        self.dataSet.save_analysis_result(
+        self.dataSet.save_numpy_analysis_result(
             histogram, 'pixel_histogram', self.analysisName, fov, 'histograms')
 
 

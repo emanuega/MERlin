@@ -64,10 +64,10 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
                                  * np.mean([x[0] for x in r], axis=0)
             barcodeCounts[i, :] = np.mean([x[1] for x in r], axis=0)
 
-        self.dataSet.save_analysis_result(scaleFactors, 'scale_factors',
-                                          self.analysisName)
-        self.dataSet.save_analysis_result(barcodeCounts, 'barcode_counts',
-                                          self.analysisName)
+        self.dataSet.save_numpy_analysis_result(scaleFactors, 'scale_factors',
+                                                self.analysisName)
+        self.dataSet.save_numpy_analysis_result(barcodeCounts, 'barcode_counts',
+                                                self.analysisName)
 
     def _calculate_initial_scale_factors(self) -> np.ndarray:
         preprocessTask = self.dataSet.load_analysis_task(
@@ -90,7 +90,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
             a one-dimensional numpy array where the i'th entry is the 
             scale factor corresponding to the i'th bit.
         """
-        return self.dataSet.load_analysis_result(
+        return self.dataSet.load_numpy_analysis_result(
             'scale_factors', self.analysisName)[-1, :]
 
     def get_scale_factor_history(self) -> np.ndarray:
@@ -101,8 +101,8 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
             scale factor corresponding to the i'th bit in the j'th 
             iteration.
         """
-        return self.dataSet.load_analysis_result('scale_factors',
-                                                 self.analysisName)
+        return self.dataSet.load_numpy_analysis_result('scale_factors',
+                                                       self.analysisName)
 
     def get_barcode_count_history(self) -> np.ndarray:
         """Get the set of barcode counts for each iteration of the
@@ -113,5 +113,5 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
             barcode count corresponding to the i'th barcode in the j'th
             iteration.
         """
-        return self.dataSet.load_analysis_result('barcode_counts',
-                                                 self.analysisName)
+        return self.dataSet.load_numpy_analysis_result('barcode_counts',
+                                                       self.analysisName)

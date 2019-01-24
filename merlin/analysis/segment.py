@@ -10,6 +10,31 @@ from starfish.image._segmentation import watershed
 from merlin.core import analysistask
 
 
+class LegacySegmentCells(analysistask.ParallelAnalysisTask):
+
+    """
+    An analysis task that determines the boundaries of features in
+    the image data in each field of view.
+
+    This task is equivalent to the segmentation from Jeff Moffitt's
+    Matlab code.
+    """
+
+    def fragment_count(self):
+        return len(self.dataSet.get_fovs())
+
+    def get_estimated_memory(self):
+        # TODO - refine estimate
+        return 2048
+
+    def get_estimated_time(self):
+        # TODO - refine estimate
+        return 5
+
+    def get_dependencies(self):
+        return [self.parameters['warp_task'],
+                self.parameters['global_align_task']]
+
 class SegmentCells(analysistask.ParallelAnalysisTask):
 
     """
@@ -97,7 +122,7 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
     def get_cell_boundaries(self):
         boundaryList = []
         for f in self.dataSet.get_fovs():
-            currentBoundaries = self.dataSet.load_analysis_result(
+            currentBoundaries = self.dataSet.load_numpy_analysis_result(
                     'cell_boundaries', self.get_analysis_name(), resultIndex=f)
             boundaryList += [x for x in currentBoundaries]
 
@@ -130,7 +155,7 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
                 [self._transform_contours(x, transformation)
                  for x in cellContours])
 
-        self.dataSet.save_analysis_result(
+        self.dataSet.save_numpy_analysis_result(
                 transformedContours, 'cell_boundaries',
                 self.get_analysis_name(), resultIndex=fragmentIndex)
 
@@ -155,7 +180,7 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
 
     def get_cell_boundaries(self):
         if self.boundaryList is None:
-            self.boundaryList = self.dataSet.load_analysis_result(
+            self.boundaryList = self.dataSet.load_numpy_analysis_result(
                         'cell_boundaries', self.get_analysis_name())
 
         return self.boundaryList
@@ -270,7 +295,7 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
         refinedBoundaries = np.array(
                 [np.array(x.exterior.coords) for x in cleanedCells])
 
-        self.dataSet.save_analysis_result(
+        self.dataSet.save_numpy_analysis_result(
                 refinedBoundaries, 'cell_boundaries',
                 self.get_analysis_name())
 

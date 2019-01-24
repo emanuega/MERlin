@@ -1,6 +1,7 @@
 import numpy as np
 from typing import List
 
+from merlin.core import dataset
 from merlin.core import analysistask
 from merlin.util import decoding
 from merlin.util import barcodedb
@@ -12,7 +13,8 @@ class Decode(analysistask.ParallelAnalysisTask):
     An analysis task that extracts barcodes from images.
     """
 
-    def __init__(self, dataSet, parameters=None, analysisName=None):
+    def __init__(self, dataSet: dataset.DataSet,
+                 parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
         if 'crop_width' not in self.parameters:

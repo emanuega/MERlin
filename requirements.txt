@@ -16,3 +16,4 @@ seaborn>=0.9.0
 pyqt5
 Sphinx
 sphinx-rtd-theme
+pyclustering

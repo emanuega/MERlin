@@ -223,13 +223,29 @@ class DataSet(object):
         with open(savePath, 'r') as f:
             return pandas.read_csv(f, **kwargs)
 
+    def save_json_analysis_result(
+            self, analysisResult: Dict, resultName: str,
+            analysisName: str, resultIndex: int=None,
+            subdirectory: str=None) -> None:
+
+        savePath = self._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory) + '.json'
+        with open(savePath, 'w') as f:
+            json.dump(analysisResult, f)
+
+    def load_json_analysis_result(
+            self, resultName: str, analysisName: str, resultIndex: int=None,
+            subdirectory: str=None) -> Dict:
+
+        savePath = self._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory) + '.json'
+        with open(savePath, 'r') as f:
+            return json.load(f)
+
     def save_numpy_analysis_result(
             self, analysisResult: np.ndarray, resultName: str,
             analysisName: str, resultIndex: int=None,
             subdirectory: str=None) -> None:
-        # TODO - only implemented currently for ndarray
-        if not isinstance(analysisResult, np.ndarray):
-            raise TypeError('analysisResult must be a numpy array')
 
         savePath = self._analysis_result_save_path(
                 resultName, analysisName, resultIndex, subdirectory)
@@ -238,8 +254,7 @@ class DataSet(object):
     def load_numpy_analysis_result(
             self, resultName: str, analysisName: str, resultIndex: int=None,
             subdirectory: str=None) -> np.array:
-        # TODO - This should determine the file extension based on the
-        # files that are present
+
         savePath = self._analysis_result_save_path(
                 resultName, analysisName, resultIndex, subdirectory) + '.npy'
         return np.load(savePath)

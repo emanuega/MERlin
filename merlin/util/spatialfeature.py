@@ -167,6 +167,34 @@ class SpatialFeature(object):
         """
         raise NotImplementedError
 
+    def equals(self, testFeature) -> bool:
+        """Determine if this feature is equivalent to testFeature
+
+        Args:
+            testFeature: the feature to test equivalency
+        Returns:
+            True if this feature and testFeature are equivalent, otherwise
+                false
+        """
+        if self.get_fov() != testFeature.get_fov():
+            return False
+        if self.get_feature_id() != testFeature.get_feature_id():
+            return False
+        if not np.array_equal(self.get_z_coordinates(),
+                              testFeature.get_z_coordinates()):
+            return False
+
+        if len(self.get_boundaries()) != len(testFeature.get_boundaries()):
+            return False
+        for b, bIn in zip(self.get_boundaries(), testFeature.get_boundaries()):
+            if len(b) != len(bIn):
+                return False
+            for x, y in zip(b, bIn):
+                if not x.equals(y):
+                    return False
+
+        return True
+
     def to_json_dict(self) -> Dict:
         return {
             'fov': self._fov,
@@ -232,6 +260,64 @@ class SpatialFeatureDB(object):
         pass
 
 
+class JSONSpatialFeatureDB(SpatialFeatureDB):
+
+    """
+    A database for storing spatial features with json serialization.
+    """
+
+    def __init__(self, dataSet: dataset.DataSet, analysisTask):
+        super().__init__(dataSet, analysisTask)
+
+    def write_features(self, features: List[SpatialFeature], fov=None) -> None:
+        if fov is None:
+            raise NotImplementedError
+
+        try:
+            existingFeatures = [SpatialFeature.from_json_dict(x)
+                                for x in self._dataSet.load_json_analysis_result(
+                    'feature_metadata', self._analysisTask, fov, 'features')]
+
+            existingIDs = set([x.get_feature_id() for x in existingFeatures])
+
+            for f in features:
+                if f.get_feature_id() not in existingIDs:
+                    existingFeatures.append(f)
+
+            featuresAsJSON = [f.to_json_dict() for f in existingFeatures]
+
+        except FileNotFoundError:
+            featuresAsJSON = [f.to_json_dict() for f in features]
+
+        self._dataSet.save_json_analysis_result(
+            featuresAsJSON, 'feature_metadata', self._analysisTask,
+            fov, 'features')
+
+    def get_features(self, fov: int=None) -> List[SpatialFeature]:
+        if fov is None:
+            raise NotImplementedError
+
+        features = [SpatialFeature.from_json_dict(x)
+                    for x in self._dataSet.load_json_analysis_result(
+                'feature_metadata', self._analysisTask, fov, 'features')]
+
+        return features
+
+    def empty_database(self, fov: int=None) -> None:
+        pass
+
+    @staticmethod
+    def _extract_feature_metadata(feature: SpatialFeature) -> Dict:
+        boundingBox = feature.get_bounding_box()
+        return {'fov': feature.get_fov(),
+                'featureID': feature.get_feature_id(),
+                'bounds_x1': boundingBox[0],
+                'bounds_y1': boundingBox[1],
+                'bounds_x2': boundingBox[2],
+                'bounds_y2': boundingBox[3],
+                'volume': feature.get_volume()}
+
+
 class SimpleSpatialFeatureDB(SpatialFeatureDB):
 
     """
@@ -248,18 +334,16 @@ class SimpleSpatialFeatureDB(SpatialFeatureDB):
         if fov is None:
             raise NotImplementedError
 
-        existingFeatures = self._dataSet.load_dataframe_from_csv(
-            'feature_metadata', self._analysisTask, fov, 'features')
-
-        if existingFeatures is not None:
+        try:
+            existingFeatures = self._dataSet.load_dataframe_from_csv(
+                'feature_metadata', self._analysisTask, fov, 'features')
             raise NotImplementedError
-        else:
+        except FileNotFoundError:
             featureMetadata = pandas.DataFrame(
                 [self._extract_feature_metadata(f) for f in features])
             self._dataSet.save_dataframe_to_csv(
                 featureMetadata, 'feature_metadata', self._analysisTask,
                 fov, 'features', index=False)
-
 
     def get_features(self, fov: int=None) -> List[SpatialFeature]:
         pass

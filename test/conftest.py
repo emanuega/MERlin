@@ -112,6 +112,7 @@ def base_files():
     for folder in folderList:
         shutil.rmtree(folder)
 
+
 @pytest.fixture(scope='session')
 def simple_data(base_files):
     os.mkdir(dataDirectory)
@@ -120,6 +121,7 @@ def simple_data(base_files):
     yield testData
 
     shutil.rmtree(dataDirectory)
+
 
 @pytest.fixture(scope='session')
 def simple_merfish_data(base_files):
@@ -147,9 +149,10 @@ def single_task(simple_data):
     yield task
     simple_data.delete_analysis(task)
 
-@pytest.fixture(scope='function', params=[SimpleAnalysisTask, \
-        SimpleParallelAnalysisTask, \
-        SimpleInternallyParallelAnalysisTask])
+
+@pytest.fixture(scope='function', params=[SimpleAnalysisTask,
+                                          SimpleParallelAnalysisTask,
+                                          SimpleInternallyParallelAnalysisTask])
 def simple_task(simple_data, request):
     task = request.param(
             simple_data, parameters={'a': 5, 'b': 'b_string'})

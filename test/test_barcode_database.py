@@ -5,9 +5,11 @@ import pandas
 
 from merlin.util import barcodedb
 
+
 @pytest.fixture(scope='function')
 def barcode_db(single_task, simple_merfish_data):
     yield barcodedb.SQLiteBarcodeDB(simple_merfish_data, single_task)
+
 
 @pytest.fixture(scope='function')
 def barcode_db_with_barcodes(barcode_db):
@@ -22,6 +24,7 @@ def barcode_db_with_barcodes(barcode_db):
 
     barcode_db.empty_database()
     assert len(barcode_db.get_barcodes()) == 0
+
 
 def generate_random_barcode(fov):
     return {'barcode': random.getrandbits(32),  \

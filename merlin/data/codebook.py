@@ -104,7 +104,7 @@ class Codebook(object):
             ignoreBlanks: flag indicating whether barcodes corresponding 
                     to blanks should be included.
         Returns:
-            A list of the barcodes reperesented as lists of bits.
+            A list of the barcodes represented as lists of bits.
         """
         bitNames = self.get_bit_names()
         if ignoreBlanks:

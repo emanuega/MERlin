@@ -38,7 +38,8 @@ class PixelBasedDecoder(object):
 
     def decode_pixels(self, imageData: np.ndarray,
                       scaleFactors: np.ndarray=None,
-                      distanceThreshold: float=0.5176):
+                      distanceThreshold: float=0.5176,
+                      magnitudeThreshold: float=1):
         """Assign barcodes to the pixels in the provided image stock.
 
         Each pixel is assigned to the nearest barcode from the codebook if
@@ -54,10 +55,15 @@ class PixelBasedDecoder(object):
             distanceThreshold: the maximum distance between an assigned pixel
                 and the nearest barcode. Pixels for which the nearest barcode
                 is greater than distanceThreshold are left unassigned.
+            magnitudeThreshold: the minimum pixel magnitude for which a
+                barcode can be assigned that pixel. All pixels that fall
+                below the magnitude threshold are not assigned a barcode
+                in the decoded image.
         Returns:
             Four results are returned as a tuple (decodedImage, pixelMagnitudes,
                 normalizedPixelTraces, distances). decodedImage is an image
-                indicating the barcode index assigned to each pixel.
+                indicating the barcode index assigned to each pixel. Pixels
+                for which a barcode is not assigned have a value of -1.
                 pixelMagnitudes is an image where each pixel is the norm of
                 the pixel trace after scaling by the provided scaleFactors.
                 normalizedPixelTraces is an image stack containing the
@@ -96,6 +102,8 @@ class PixelBasedDecoder(object):
         normalizedPixelTraces = np.reshape(
                 normalizedPixelTraces, filteredImages.shape)
         distances = np.reshape(distances, filteredImages.shape[1:])
+
+        decodedImage[pixelMagnitudes < magnitudeThreshold] = -1
         return decodedImage, pixelMagnitudes, normalizedPixelTraces, distances
 
     # TODO  barcodes here has two different meanings. One of these should be

@@ -15,17 +15,19 @@ class BarcodeDB:
         barcode - the error corrected binary word corresponding to the barcode
         barcode_id - the index of the barcode in the codebook
         fov - the field of view where the barcode was identified
-        magnitude - the sum of the fluorescence intensities in the pixels
-            corresponding to this  barcode
+        mean_intensity - the mean intensity in the pixels corresponding to
+            this  barcode
+        max_intensity - the max intensity in the pixels corresponding to
+            this barcode
         area - the number of pixels covered by the barcode
         mean_distance - the distance between the barcode and the measured
             pixel traces averaged for all pixels corresponding to the barcode
-        min_distance - the distance between the barcode and the measured
-            pixel traces averaged for all pixels corresponding to the barcode
+        min_distance - the minimum distance between the barcode and the measured
+            pixel traces of all pixels corresponding to the barcode
         x,y,z - the average x,y,z position of all pixels covered by the barcode
         weighted_x, weighted_y, weighted_z - the average x,y,z position of
             of all pixels covered by the barcode weighted by the magnitude
-            of eachc pixel
+            of each pixel
         global_x, global_y, global_z - the global x,y,z position of the barcode
         cell_index - the cell that contains this barcode
         intensity_i - the mean intensity across corresponding pixels for

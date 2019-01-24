@@ -106,13 +106,13 @@ class PixelBasedDecoder(object):
         decodedImage[pixelMagnitudes < magnitudeThreshold] = -1
         return decodedImage, pixelMagnitudes, normalizedPixelTraces, distances
 
-    # TODO  barcodes here has two different meanings. One of these should be
+    # TODO barcodes here has two different meanings. One of these should be
     # renamed.
     def extract_barcodes_with_index(
             self, barcodeIndex: int, decodedImage: np.ndarray,
             pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
             distances: np.ndarray, fov: int, zPosition: float,
-            cropWidth: float, globalAligner,
+            cropWidth: int, globalAligner=None,
             segmenter=None) -> pandas.DataFrame:
         """Extract the barcode information from the decoded image for barcodes
         that were decoded to the specified barcode index.
@@ -160,13 +160,16 @@ class PixelBasedDecoder(object):
 
     def _bc_properties_to_dict(self, properties, bcIndex: int, fov: int,
                                zPosition: float, distances: np.ndarray,
-                               pixelTraces: np.ndarray, globalAligner,
+                               pixelTraces: np.ndarray, globalAligner=None,
                                segmenter=None) -> Dict:
         # centroid is reversed since skimage regionprops returns the centroid
         # as (r,c)
         centroid = properties.weighted_centroid[::-1]
-        globalCentroid = globalAligner.fov_coordinates_to_global(
-                fov, centroid)
+        if globalAligner is not None:
+            globalCentroid = globalAligner.fov_coordinates_to_global(
+                    fov, centroid)
+        else:
+            globalCentroid = centroid
         d = [distances[x[0], x[1]] for x in properties.coords]
         outputDict = {'barcode': binary.bit_list_to_int(
                             self._codebook.get_barcode(bcIndex)),

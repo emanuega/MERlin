@@ -1,9 +1,15 @@
+from abc import abstractmethod
 import numpy as np
 import uuid
 import cv2
+import json
 from typing import List
 from typing import Tuple
+from typing import Dict
 from shapely import geometry
+import pandas
+
+from merlin.core import dataset
 
 
 class SpatialFeature(object):
@@ -13,7 +19,7 @@ class SpatialFeature(object):
     """
 
     def __init__(self, boundaryList: List[List[geometry.Polygon]], fov: int,
-                 zCoordinates: np.ndarray=None, uniqueID=None) -> None:
+                 zCoordinates: np.ndarray=None, uniqueID: int=None) -> None:
         """Create a new feature specified by a list of pixels
 
         Args:
@@ -31,7 +37,7 @@ class SpatialFeature(object):
         self._fov = fov
 
         if uniqueID is None:
-            self._uniqueID = uuid.uuid4()
+            self._uniqueID = uuid.uuid4().int
         else:
             self._uniqueID = uniqueID
 
@@ -109,6 +115,12 @@ class SpatialFeature(object):
     def get_boundaries(self) -> List[List[geometry.Polygon]]:
         return self._boundaryList
 
+    def get_feature_id(self) -> int:
+        return self._uniqueID
+
+    def get_z_coordinates(self) -> np.ndarray:
+        return self._zCoordinates
+
     def get_bounding_box(self) -> Tuple[float, float, float, float]:
         """Get the 2d box that contains all boundaries in all z plans of this
         feature.
@@ -155,21 +167,150 @@ class SpatialFeature(object):
         """
         raise NotImplementedError
 
+    def to_json_dict(self) -> Dict:
+        return {
+            'fov': self._fov,
+            'id': self._uniqueID,
+            'z_coordinates': self._zCoordinates.tolist(),
+            'boundaries': [[geometry.mapping(y) for y in x]
+                           for x in self.get_boundaries()]
+        }
+
+    @staticmethod
+    def from_json_dict(jsonIn: Dict):
+        boundaries = [[geometry.shape(y) for y in x]
+                      for x in jsonIn['boundaries']]
+
+        return SpatialFeature(boundaries,
+                              jsonIn['fov'],
+                              np.array(jsonIn['z_coordinates']),
+                              jsonIn['id'])
+
 
 class SpatialFeatureDB(object):
 
-    """A database for storing spatial features"""
+    """A database for storing spatial features."""
 
     def __init__(self, dataSet, analysisTask):
         self._dataSet = dataSet
         self._analysisTask = analysisTask
 
-    def _get_masterDB(self):
-        return self._dataSet.get_database_engine(self._analysisTask)
+    @abstractmethod
+    def write_features(self, features: List[SpatialFeature], fov=None) -> None:
+        """Write the features into this database.
 
-    def write_features(self, feature: List[SpatialFeature], fov=None) -> None:
+        If features already exist in the database with feature IDs equal to
+        those in the provided list, the existing features are overwritten.
+
+        Args:
+            features: a list of features
+            fov: the fov of the features if all feature correspond to the same
+                fov. If the features correspond to different fovs, fov
+                should be None
+        """
+        pass
+
+    @abstractmethod
+    def get_features(self, fov: int=None) -> List[SpatialFeature]:
+        """Read the features in this database
+
+        Args:
+            fov: if not None, only the features associated with the specified
+                fov are returned
+        """
+        pass
+
+    @abstractmethod
+    def empty_database(self, fov: int=None) -> None:
+        """Remove all features from this database.
+
+        Args:
+            fov: index of the field of view. If specified, only features
+                corresponding to the specified fov will be removed.
+                Otherwise all barcodes will be removed.
+        """
         pass
 
 
-    def get_features(self, fov=None):
+class SimpleSpatialFeatureDB(SpatialFeatureDB):
+
+    """
+    A database for storing spatial features by storing the boundaries
+    in serialized numpy arrays and the associated metadata in a serialized
+    pandas data frame.
+    """
+
+    def __init__(self, dataSet: dataset.DataSet, analysisTask):
+        super().__init__(dataSet, analysisTask)
+        raise NotImplementedError
+
+    def write_features(self, features: List[SpatialFeature], fov=None) -> None:
+        if fov is None:
+            raise NotImplementedError
+
+        existingFeatures = self._dataSet.load_dataframe_from_csv(
+            'feature_metadata', self._analysisTask, fov, 'features')
+
+        if existingFeatures is not None:
+            raise NotImplementedError
+        else:
+            featureMetadata = pandas.DataFrame(
+                [self._extract_feature_metadata(f) for f in features])
+            self._dataSet.save_dataframe_to_csv(
+                featureMetadata, 'feature_metadata', self._analysisTask,
+                fov, 'features', index=False)
+
+
+    def get_features(self, fov: int=None) -> List[SpatialFeature]:
+        pass
+
+    def empty_database(self, fov: int=None) -> None:
+        pass
+
+    @staticmethod
+    def _extract_feature_metadata(feature: SpatialFeature) -> Dict:
+        boundingBox = feature.get_bounding_box()
+        return {'fov': feature.get_fov(),
+                'featureID': feature.get_feature_id(),
+                'bounds_x1': boundingBox[0],
+                'bounds_y1': boundingBox[1],
+                'bounds_x2': boundingBox[2],
+                'bounds_y2': boundingBox[3],
+                'volume': feature.get_volume()}
+
+
+class SQLiteSpatialFeatureDB(SpatialFeatureDB):
+
+    """A database for storing spatial features using a SQLite backend."""
+
+    def __init__(self, dataSet: dataset.DataSet, analysisTask):
+        super().__init__(dataSet, analysisTask)
+        raise NotImplementedError
+
+    def _get_masterDB(self):
+        # The master DB stores meta data of all features and where to find
+        # the associated boundary lists.
+        return self._dataSet.get_database_engine(self._analysisTask)
+
+    def _get_fovDB(self, fov):
+        # The fov DB contains a table for each feature associated with that
+        # fov. The table has the x and y coordinates associated with the
+        # boundaries of that feature.
+        return self._dataSet.get_database_engine(self._analysisTask, fov)
+
+    def _add_feature_to_masterDB(self, masterEngine):
+        pass
+
+    def write_features(self, features: List[SpatialFeature], fov=None) -> None:
+        """
+        If features already exist in the database with feature IDs equal to
+        those in the provided list, the existing features are overwritten.
+
+        Args:
+            features:
+            fov:
+
+        Returns:
+
+        """
         pass

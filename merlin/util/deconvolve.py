@@ -46,11 +46,13 @@ def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
         cv2.subtract(J1, J2, Y)
         cv2.addWeighted(J1, 1, Y, l, 0, Y)
         np.clip(Y, 0, None, Y)
-        cv2.GaussianBlur(Y, (windowSize, windowSize), sigmaG, reblurred)
+        cv2.GaussianBlur(Y, (windowSize, windowSize), sigmaG, reblurred,
+                         borderType=cv2.BORDER_REPLICATE)
         np.clip(reblurred, eps, None, reblurred)
         cv2.divide(wI, reblurred, imR)
         imR += eps
-        cv2.GaussianBlur(imR, (windowSize, windowSize), sigmaG, imR)
+        cv2.GaussianBlur(imR, (windowSize, windowSize), sigmaG, imR,
+                         borderType=cv2.BORDER_REPLICATE)
         np.copyto(J2, J1)
         np.multiply(Y, imR, out=J1)
         np.copyto(T2, T1)

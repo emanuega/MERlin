@@ -46,9 +46,10 @@ class DeconvolutionPreprocess(Preprocess):
             self.parameters['decon_sigma'] = 2
         if 'decon_iterations' not in self.parameters:
             self.parameters['decon_iterations'] = 20
-        self.highPassSigma = self.parameters['highpass_sigma']
-        self.deconSigma = self.parameters['decon_sigma']
-        self.deconIterations = self.parameters['decon_iterations']
+
+        self._highPassSigma = self.parameters['highpass_sigma']
+        self._deconSigma = self.parameters['decon_sigma']
+        self._deconIterations = self.parameters['decon_iterations']
 
 
     def fragment_count(self):
@@ -90,6 +91,8 @@ class DeconvolutionPreprocess(Preprocess):
         pixelHistogram = np.zeros(
                 (self.dataSet.get_codebook().get_bit_count(),
                     len(histogramBins)-1))
+        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
+        deconFilterSize = int(2 * np.ceil(2 * self._deconSigma) + 1)
 
         with self.dataSet.writer_for_analysis_images(
                 self, 'processed_image', fragmentIndex) as outputTif:
@@ -99,16 +102,13 @@ class DeconvolutionPreprocess(Preprocess):
                 for i in range(len(self.dataSet.get_z_positions())):
                     inputImage = warpTask.get_aligned_image(
                             fragmentIndex, dataChannel, i)
-                    filteredImage = inputImage.astype(float) \
-                                    - cv2.GaussianBlur(
-                        inputImage, (int(4*np.ceil(self.highPassSigma)+1),
-                                     int(4*np.ceil(self.highPassSigma)+1)),
-                        self.highPassSigma).astype(float)
+                    filteredImage = inputImage.astype(float) - cv2.GaussianBlur(
+                        inputImage, (highPassFilterSize, highPassFilterSize),
+                        self._highPassSigma, borderType=cv2.BORDER_REPLICATE)
                     filteredImage[filteredImage < 0] = 0
                     deconvolvedImage = deconvolve.deconvolve_lucyrichardson(
-                            filteredImage, int(np.ceil(self.deconSigma)*4+1),
-                            self.deconSigma, self.deconIterations)\
-                        .astype(np.uint16)
+                        filteredImage, deconFilterSize, self._deconSigma,
+                        self._deconIterations).astype(np.uint16)
                     
                     outputTif.save(
                             deconvolvedImage, photometric='MINISBLACK',

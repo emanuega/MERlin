@@ -80,6 +80,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
             cumulativeHistogram = np.cumsum(pixelHistograms[i])
             cumulativeHistogram = cumulativeHistogram/cumulativeHistogram[-1]
             # Add two to match matlab code.
+            # TODO: Does +2 make sense?
             initialScaleFactors[i] = \
                 np.argmin(np.abs(cumulativeHistogram-0.9)) + 2
 

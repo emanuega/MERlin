@@ -77,9 +77,11 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         initialScaleFactors = np.zeros(bitCount)
         pixelHistograms = preprocessTask.get_pixel_histogram()
         for i in range(bitCount):
-            cumulativeHistogram = np.cumsum(pixelHistograms[i]) \
-                / np.sum(pixelHistograms[i])
-            initialScaleFactors[i] = np.argmin(np.abs(cumulativeHistogram-0.9))
+            cumulativeHistogram = np.cumsum(pixelHistograms[i])
+            cumulativeHistogram = cumulativeHistogram/cumulativeHistogram[-1]
+            # Add two to match matlab code.
+            initialScaleFactors[i] = \
+                np.argmin(np.abs(cumulativeHistogram-0.9)) + 2
 
         return initialScaleFactors
 

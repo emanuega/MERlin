@@ -4,11 +4,14 @@ Analysis tasks
 warp.FiducialFitWarp
 ---------------------
 
-Description: Aligns image stacks by fitting fiducial spots.
+Description: Aligns image stacks by fitting fiducial spots to Gaussians.
 
 Parameters:
 
 * write\_fiducial\_images -- Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.
+* initial\_sigma -- initial spot Gaussian standard deviation for the spot  fitting algorithm.
+* intensity\_threshold -- minimum spot intensity for spot fitting.
+* significance\_threshold --  minimum fit significance for spot fitting.
 
 warp.FiducialCorrelationWarp
 -----------------------------

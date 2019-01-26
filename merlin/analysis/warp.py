@@ -139,6 +139,13 @@ class FiducialFitWarp(Warp):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        if 'initial_sigma' not in self.parameters:
+            self.parameters['initial_sigma'] = 1.6
+        if 'intensity_threshold' not in self.parameters:
+            self.parameters['intensity_threshold'] = 10
+        if 'significance_threshold' not in self.parameters:
+            self.parameters['significance_threshold'] = 100
+
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
 
@@ -156,11 +163,13 @@ class FiducialFitWarp(Warp):
         localizations = self.load_fiducials(fragmentIndex)
 
         tforms = []
-        referencePoints = self._extract_coordinates(localizations[0])
-        for currentLocalizations in localizations:
+        referencePoints = self._extract_coordinates(
+            localizations[0], self.parameters['significance_threshold'])
+        for i,currentLocalizations in enumerate(localizations):
             movingPoints = self._extract_coordinates(currentLocalizations)
             rc, mc = registration.extract_control_points(
                 referencePoints, movingPoints)
+            print(i)
             tforms.append(registration.estimate_affine_transform(rc, mc))
         
         self._process_transformations(tforms, fragmentIndex)
@@ -236,8 +245,8 @@ class FiducialFitWarp(Warp):
                 corresponds to a data channel.
         """
         fiducials = []
-        for dataChannel in self.dataSet.get_data_organization()\
-                .get_data_channels():
+        for i,dataChannel in enumerate(self.dataSet.get_data_organization()\
+                .get_data_channels()):
             fiducialFrame = self.dataSet.get_data_organization()\
                 .get_fiducial_frame_index(dataChannel)
             fiducialName = self.dataSet.get_data_organization()\
@@ -248,6 +257,8 @@ class FiducialFitWarp(Warp):
             baseName = '_'.join([os.path.split(fiducialName)[1].split('.')[0],
                                  str(dataChannel), str(fov)])
             outputName = os.sep.join([destPath, baseName + '_spots.hdf5'])
+
+            print(str(i) + ' ' + str(outputName))
 
             fiducials.append(
                     saH5Py.SAH5Py(outputName).getLocalizationsInFrame(
@@ -266,9 +277,9 @@ class FiducialFitWarp(Warp):
                                 localizationSet['significance'])
                          if s > significanceThreshold])
 
-    @staticmethod
-    def _generate_default_daostorm_parameters(
-            startFrame: int=-1, endFrame: int=-1) -> saparameters.ParametersDAO:
+    def _generate_default_daostorm_parameters(self, startFrame: int=-1,
+                                              endFrame: int=-1
+                                              ) -> saparameters.ParametersDAO:
         params = saparameters.ParametersDAO()
 
         params.setAttr("max_frame", "int", endFrame)    
@@ -278,13 +289,14 @@ class FiducialFitWarp(Warp):
         params.setAttr("camera_gain", "float", 1)
         params.setAttr("camera_offset", "float", 100)
         params.setAttr("find_max_radius", "int", 5)
-        params.setAttr("foreground_sigma", "float", 2.0)
+        params.setAttr("foreground_sigma", "float",
+                       self.parameters['initial_sigma'])
         params.setAttr("iterations", "int", 1)
-        params.setAttr("model", "string", '2dfixed')
+        params.setAttr("model", "string", '2d')
         params.setAttr("pixel_size", "float", 106)
-        params.setAttr("roi_size", "int", 9)
-        params.setAttr("sigma", "float", 2)
-        params.setAttr("threshold", "float", 6.0)
+        params.setAttr("sigma", "float", self.parameters['initial_sigma'])
+        params.setAttr("threshold", "float",
+                       self.parameters['intensity_threshold'])
 
         params.setAttr("descriptor", "string", "1")
         params.setAttr("radius", "float", 0)

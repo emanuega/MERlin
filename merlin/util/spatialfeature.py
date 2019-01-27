@@ -154,18 +154,33 @@ class SpatialFeature(object):
 
         return totalVolume
 
-    def is_contained_in(self, inFeature) -> bool:
-        """Determine if the boundary of this feature is contained in the
+    def is_contained_within_boundary(self, inFeature) -> bool:
+        """Determine if any part of this feature is contained within the
         boundary of the specified feature.
 
         Args:
-            inFeature: the feature to check for overlap with
+            inFeature: the feature whose boundary should be checked whether
+                it contains this feature
         Returns:
             True if inFeature contains pixels that are within inFeature,
                 otherwise False. This returns false if inFeature only shares
                 a boundary with this feature.
         """
-        raise NotImplementedError
+        if all([b1.disjoint(b2) for b1List, b2List in zip(
+                    self.get_boundaries(), inFeature.get_boundaries())
+                for b1 in b1List for b2 in b2List]):
+            return False
+
+        for b1List, b2List in zip(
+                self.get_boundaries(), inFeature.get_boundaries()):
+            for b1 in b1List:
+                for b2 in b2List:
+                    x, y = b1.exterior.coords.xy
+                    for p in zip(x, y):
+                        if geometry.Point(p).within(b2):
+                            return True
+
+        return False
 
     def equals(self, testFeature) -> bool:
         """Determine if this feature is equivalent to testFeature

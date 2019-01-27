@@ -87,3 +87,27 @@ def test_feature_json_db_read_write_one_fov(single_task, simple_merfish_data):
     assert readFeatures[f2Index].equals(feature2)
 
 
+def test_feature_contained_within_boundary():
+    interiorLabels = np.zeros((1, 8, 8))
+    interiorLabels[0, 2:6, 2:6] = 1
+    interiorFeature = spatialfeature.SpatialFeature.feature_from_label_matrix(
+        interiorLabels, 0)
+
+    exteriorLabels = np.zeros((1, 8, 8))
+    exteriorLabels[0, 1:7, 1:7] = 1
+    exteriorFeature = spatialfeature.SpatialFeature.feature_from_label_matrix(
+        exteriorLabels, 0)
+
+    overlappingLabels = np.zeros((1, 8, 8))
+    overlappingLabels[0, 0:5, 0:5] = 1
+    overlappingFeature = spatialfeature.SpatialFeature.feature_from_label_matrix(
+        overlappingLabels, 0)
+
+    assert interiorFeature.is_contained_within_boundary(exteriorFeature)
+    assert not exteriorFeature.is_contained_within_boundary(interiorFeature)
+
+    assert interiorFeature.is_contained_within_boundary(overlappingFeature)
+    assert overlappingFeature.is_contained_within_boundary(interiorFeature)
+
+    assert exteriorFeature.is_contained_within_boundary(overlappingFeature)
+    assert overlappingFeature.is_contained_within_boundary(exteriorFeature)

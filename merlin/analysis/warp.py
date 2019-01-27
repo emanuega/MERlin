@@ -165,12 +165,11 @@ class FiducialFitWarp(Warp):
         tforms = []
         referencePoints = self._extract_coordinates(
             localizations[0], self.parameters['significance_threshold'])
-        for i,currentLocalizations in enumerate(localizations):
+        for i, currentLocalizations in enumerate(localizations):
             movingPoints = self._extract_coordinates(currentLocalizations)
             rc, mc = registration.extract_control_points(
                 referencePoints, movingPoints)
-            print(i)
-            tforms.append(registration.estimate_affine_transform(rc, mc))
+            tforms.append(registration.estimate_transform_from_points(rc, mc))
         
         self._process_transformations(tforms, fragmentIndex)
 
@@ -245,7 +244,7 @@ class FiducialFitWarp(Warp):
                 corresponds to a data channel.
         """
         fiducials = []
-        for i,dataChannel in enumerate(self.dataSet.get_data_organization()\
+        for i, dataChannel in enumerate(self.dataSet.get_data_organization()\
                 .get_data_channels()):
             fiducialFrame = self.dataSet.get_data_organization()\
                 .get_fiducial_frame_index(dataChannel)
@@ -257,8 +256,6 @@ class FiducialFitWarp(Warp):
             baseName = '_'.join([os.path.split(fiducialName)[1].split('.')[0],
                                  str(dataChannel), str(fov)])
             outputName = os.sep.join([destPath, baseName + '_spots.hdf5'])
-
-            print(str(i) + ' ' + str(outputName))
 
             fiducials.append(
                     saH5Py.SAH5Py(outputName).getLocalizationsInFrame(

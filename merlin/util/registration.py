@@ -13,7 +13,7 @@ def extract_control_points(
     neighbors.fit(referencePoints)
     distances, indexes = neighbors.kneighbors(
         movingPoints, return_distance=True)
-    differences = [[referencePoints[x] - movingPoints[i]
+    differences = [[movingPoints[i] - referencePoints[x]
                     for x in indexes[i]]
                    for i in range(len(movingPoints))]
     counts, xedges, yedges = np.histogram2d(
@@ -21,7 +21,7 @@ def extract_control_points(
         [x[1] for y in differences for x in y],
         bins=edges)
     maxIndex = np.unravel_index(counts.argmax(), counts.shape)
-    offset = (-xedges[maxIndex[0]], -yedges[maxIndex[1]])
+    offset = (xedges[maxIndex[0]], yedges[maxIndex[1]])
 
     distancesShifted, indexesShifted = neighbors.kneighbors(
         movingPoints - np.tile(offset, (movingPoints.shape[0], 1)),
@@ -35,9 +35,10 @@ def extract_control_points(
     return referenceControls, movingControls
 
 
-def estimate_affine_transform(
-        referenceControls: np.ndarray, movingControls: np.ndarray) \
-        -> transform.AffineTransform:
-    tform = transform.AffineTransform()
-    tform.estimate(referenceControls, movingControls)
+def estimate_transform_from_points(
+        referencePoints: np.ndarray, movingPoints: np.ndarray) \
+        -> transform.EuclideanTransform:
+    # TODO when there are too few points, this should return unit transformation
+    tform = transform.SimilarityTransform()
+    tform.estimate(referencePoints, movingPoints)
     return tform

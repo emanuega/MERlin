@@ -144,7 +144,7 @@ class FiducialFitWarp(Warp):
         if 'intensity_threshold' not in self.parameters:
             self.parameters['intensity_threshold'] = 10
         if 'significance_threshold' not in self.parameters:
-            self.parameters['significance_threshold'] = 100
+            self.parameters['significance_threshold'] = 200
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())

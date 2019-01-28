@@ -16,9 +16,9 @@ analysis results created from the deprecated Matlab pipeline.
 
 def read_blist(bFile: BinaryIO) -> pandas.DataFrame:
     entryCount, _, entryFormat = _read_binary_header(bFile)
-    bytesPerEntry = np.sum(
+    bytesPerEntry = int(np.sum(
         [struct.calcsize(typeNames[x['type']]) * np.prod(x['size']) for x in
-         entryFormat])
+         entryFormat]))
     return pandas.DataFrame(
         [_parse_entry_bytes(bFile.read(bytesPerEntry), entryFormat) for i in
          range(entryCount)])

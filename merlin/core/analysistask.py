@@ -289,7 +289,6 @@ class ParallelAnalysisTask(AnalysisTask):
                 logger.info('Completed %s %i'
                             % (self.get_analysis_name(), fragmentIndex))
             except Exception as e:
-                print(e)
                 logger.exception(e)
                 self.dataSet.record_analysis_error(self, fragmentIndex)
                 raise e

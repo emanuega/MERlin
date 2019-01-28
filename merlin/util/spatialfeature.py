@@ -166,7 +166,7 @@ class SpatialFeature(object):
                 otherwise False. This returns false if inFeature only shares
                 a boundary with this feature.
         """
-        if all([b1.disjoint(b2) for b1List, b2List in zip(
+        if all([b1.boundary.disjoint(b2.boundary) for b1List, b2List in zip(
                     self.get_boundaries(), inFeature.get_boundaries())
                 for b1 in b1List for b2 in b2List]):
             return False

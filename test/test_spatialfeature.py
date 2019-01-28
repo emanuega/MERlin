@@ -6,20 +6,15 @@ from shapely import geometry
 from merlin.util import spatialfeature
 
 
-testLabels1 = np.zeros((1, 4, 4))
-testLabels1[0, 1:3, 1:3] = 1
-feature1 = spatialfeature.SpatialFeature.feature_from_label_matrix(
-    testLabels1, 0)
+testCoords1 = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
+feature1 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)]], 0)
 
-testLabels2 = np.zeros((1, 4, 4))
-testLabels2[0, 0:3, 0:3] = 1
-feature2 = spatialfeature.SpatialFeature.feature_from_label_matrix(
-    testLabels2, 0)
+testCoords2 = [(0, 0), (2, 0), (2, 2), (0, 2), (0, 0)]
+feature2 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords2)]], 0)
 
-testLabels3 = np.zeros((2, 4, 4))
-testLabels3[:, 1:3, 1:3] = 1
-feature3 = spatialfeature.SpatialFeature.feature_from_label_matrix(
-    testLabels3, 0, zCoordinates=np.array([0, 0.5]))
+feature3 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)],
+                                          [geometry.Polygon(testCoords1)]],
+                                         0, zCoordinates=np.array([0, 0.5]))
 
 
 def test_feature_from_label_matrix():
@@ -31,8 +26,8 @@ def test_feature_from_label_matrix():
 
     assert len(feature.get_boundaries()[0]) == 1
     assert feature.get_boundaries()[0][0].equals(geometry.Polygon(
-        [[1, 1], [1, 2], [2, 2], [2, 1], [1, 1]]
-    ))
+        list(zip([2.1, 2.1, 2.0, 1.0, 0.9, 0.9, 1.0, 2.0, 2.1],
+                 [2.0, 1.0, 0.9, 0.9, 1.0, 2.0, 2.1, 2.1, 2.0]))))
 
 
 def test_feature_from_label_matrix_transform():
@@ -47,8 +42,8 @@ def test_feature_from_label_matrix_transform():
 
     assert len(feature.get_boundaries()[0]) == 1
     assert feature.get_boundaries()[0][0].equals(geometry.Polygon(
-        [[5, 3.5], [5, 6], [7, 6], [7, 3.5], [5, 3.5]]
-    ))
+        list(zip([7.2, 7.2, 7.0, 5.0, 4.8, 4.8, 5.0, 7.0, 7.2],
+                 [6.0, 3.5, 3.25, 3.25, 3.5, 6.0, 6.25, 6.25, 6.0]))))
 
 
 @pytest.mark.parametrize('feature, volume',

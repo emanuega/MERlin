@@ -2,11 +2,12 @@ from abc import abstractmethod
 import numpy as np
 import uuid
 import cv2
-import json
+from skimage import measure
 from typing import List
 from typing import Tuple
 from typing import Dict
 from shapely import geometry
+from shapely.errors import TopologicalError
 import pandas
 
 from merlin.core import dataset
@@ -19,7 +20,8 @@ class SpatialFeature(object):
     """
 
     def __init__(self, boundaryList: List[List[geometry.Polygon]], fov: int,
-                 zCoordinates: np.ndarray=None, uniqueID: int=None) -> None:
+                 zCoordinates: np.ndarray=None, uniqueID: int=None,
+                 label: int=-1) -> None:
         """Create a new feature specified by a list of pixels
 
         Args:
@@ -49,7 +51,8 @@ class SpatialFeature(object):
     @staticmethod
     def feature_from_label_matrix(labelMatrix: np.ndarray, fov: int,
                                   transformationMatrix: np.ndarray=None,
-                                  zCoordinates: np.ndarray=None):
+                                  zCoordinates: np.ndarray=None,
+                                  label: int=-1):
         """Generate a new feature from the specified label matrix.
 
         Args:
@@ -74,7 +77,8 @@ class SpatialFeature(object):
             boundaries = [SpatialFeature._transform_boundaries(
                 x, transformationMatrix) for x in boundaries]
 
-        return SpatialFeature([[geometry.Polygon(x) for x in b if len(x) > 2]
+        return SpatialFeature([SpatialFeature._remove_interior_boundaries(
+            [geometry.Polygon(x) for x in b if len(x) > 2])
                                for b in boundaries], fov, zCoordinates)
 
     @staticmethod
@@ -88,11 +92,9 @@ class SpatialFeature(object):
         Returns: a list of n x 2 numpy arrays indicating the x, y coordinates
             of the boundaries where n is the number of boundary coordinates
         """
-        _, boundaries, _ = cv2.findContours(
-            labelMatrix.copy().astype(np.uint8), cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_NONE)
-
-        return [np.array([[x[0][0], x[0][1]] for x in y]) for y in boundaries]
+        boundaries = measure.find_contours(np.transpose(labelMatrix), 0.9,
+                                           fully_connected='high')
+        return boundaries
 
     @staticmethod
     def _transform_boundaries(
@@ -108,6 +110,18 @@ class SpatialFeature(object):
             transformedList.append(transformedBoundaries)
 
         return transformedList
+
+    @staticmethod
+    def _remove_interior_boundaries(
+            inPolygons: List[geometry.Polygon]) -> List[geometry.Polygon]:
+        goodPolygons = []
+
+        for p in inPolygons:
+            if not any([pTest.contains(p)
+                        for pTest in inPolygons if p != pTest]):
+                goodPolygons.append(p)
+
+        return goodPolygons
 
     def get_fov(self) -> int:
         return self._fov
@@ -166,7 +180,7 @@ class SpatialFeature(object):
                 otherwise False. This returns false if inFeature only shares
                 a boundary with this feature.
         """
-        if all([b1.boundary.disjoint(b2.boundary) for b1List, b2List in zip(
+        if all([b1.disjoint(b2) for b1List, b2List in zip(
                     self.get_boundaries(), inFeature.get_boundaries())
                 for b1 in b1List for b2 in b2List]):
             return False

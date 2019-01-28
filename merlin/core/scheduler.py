@@ -4,6 +4,7 @@ import networkx
 import time
 from . import analysistask
 
+
 class Scheduler():
 
     def __init__(self, dataSet, executor, parameters, schedulerName=None):
@@ -30,6 +31,8 @@ class Scheduler():
             if newTask.get_analysis_name() in analysisTasks:
                 raise Exception('Analysis tasks must have unique names. ' + \
                         newTask.get_analysis_name() + ' is redundant.')
+            # TODO This should be more careful to not overwrite an existing
+            # analysis task that has already been run.
             newTask.save()
             analysisTasks[newTask.get_analysis_name()] = newTask
         return analysisTasks

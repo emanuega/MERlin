@@ -16,3 +16,8 @@ POSITION_HOME = os.sep.join(
         [PARAMETERS_HOME, 'positions'])
 MICROSCOPE_PARAMETERS_HOME = os.sep.join(
         [PARAMETERS_HOME, 'microscope_parameters'])
+
+
+def version():
+    import pkg_resources
+    return pkg_resources.require("merlin")[0].version

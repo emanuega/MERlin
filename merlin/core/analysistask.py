@@ -4,6 +4,8 @@ import threading
 import multiprocessing
 from typing import List
 
+import merlin
+
 
 class AnalysisAlreadyStartedException(Exception):
     pass
@@ -38,6 +40,9 @@ class AnalysisTask(ABC):
             self.analysisName = type(self).__name__
         else:
             self.analysisName = analysisName
+
+        if 'merlin_version' not in self.parameters:
+            self.parameters['merlin_version'] = merlin.version()
 
         self.parameters['module'] = type(self).__module__
         self.parameters['class'] = type(self).__name__

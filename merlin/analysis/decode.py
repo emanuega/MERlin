@@ -44,7 +44,7 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         return dependencies
 
-    def run_analysis(self, fragmentIndex):
+    def _run_analysis(self, fragmentIndex):
         """This function decodes the barcodes in a fov and saves them to the
         barcode database.
         """

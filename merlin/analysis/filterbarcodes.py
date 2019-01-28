@@ -32,7 +32,7 @@ class FilterBarcodes(analysistask.AnalysisTask):
     def get_dependencies(self):
         return [self.parameters['decode_task']]
 
-    def run_analysis(self):
+    def _run_analysis(self):
         decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])        
 

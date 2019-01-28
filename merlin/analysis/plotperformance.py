@@ -243,7 +243,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         bc = self.filterTask.get_barcode_database().get_barcodes()
         self._plot_barcode_abundances(bc, 'flitered_barcode_abundances')
 
-    def run_analysis(self):
+    def _run_analysis(self):
         self._plot_barcode_intensity_distribution()
         self._plot_barcode_area_distribution()
         self._plot_barcode_distance_distribution()

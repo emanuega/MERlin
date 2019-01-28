@@ -68,7 +68,7 @@ class SimpleGlobalAlignment(GlobalAlignment):
     def get_estimated_time(self):
         return 0
 
-    def run_analysis(self):
+    def _run_analysis(self):
         # This analysis task does not need computation
         pass
 
@@ -163,7 +163,7 @@ class CorrelationGlobalAlignment(GlobalAlignment):
 
         return overlapAreas
 
-    def run_analysis(self):
+    def _run_analysis(self):
         fov1 = self.dataSet.get_fiducial_image(0, 0)
         fov2 = self.dataSet.get_fiducial_image(0, 1)
 

@@ -65,7 +65,7 @@ class AnalysisTask(ABC):
 
             self.dataSet.record_analysis_started(self)
             self._indicate_running()
-            self.run_analysis()
+            self._run_analysis()
             self.dataSet.record_analysis_complete(self)
             logger.info('Completed ' + self.get_analysis_name())
         except Exception as e:
@@ -73,6 +73,13 @@ class AnalysisTask(ABC):
             self.dataSet.record_analysis_error(self)
 
         self.dataSet.close_logger(self)
+
+    def _reset_analysis(self) -> None:
+        """Remove all files created by this analysis task and remove markers
+        indicating that this analysis has been started, or has completed.
+        """
+        # TODO this should reset the analysis status markers
+        pass
 
     def _indicate_running(self) -> None:
         """A loop that regularly signals to the dataset that this analysis
@@ -91,7 +98,7 @@ class AnalysisTask(ABC):
         self.runTimer.start()
 
     @abstractmethod
-    def run_analysis(self) -> None:
+    def _run_analysis(self) -> None:
         """Perform the analysis for this AnalysisTask.
 
         This function should be implemented in all subclasses with the
@@ -245,7 +252,7 @@ class ParallelAnalysisTask(AnalysisTask):
                     raise AnalysisAlreadyStartedException    
                 self.dataSet.record_analysis_started(self, fragmentIndex)
                 self._indicate_running(fragmentIndex)
-                self.run_analysis(fragmentIndex)
+                self._run_analysis(fragmentIndex)
                 self.dataSet.record_analysis_complete(self, fragmentIndex) 
                 logger.info('Completed ' + self.get_analysis_name())
             except Exception as e:
@@ -272,7 +279,7 @@ class ParallelAnalysisTask(AnalysisTask):
         self.runTimer.start()
 
     @abstractmethod
-    def run_analysis(self, fragmentIndex):
+    def _run_analysis(self, fragmentIndex):
         pass
 
     def is_error(self, fragmentIndex=None):

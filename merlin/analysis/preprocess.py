@@ -79,7 +79,7 @@ class DeconvolutionPreprocess(Preprocess):
                 self, 'processed_image', fov, 
                 len(self.dataSet.get_z_positions()), dataChannel, zIndex)
 
-    def run_analysis(self, fragmentIndex):
+    def _run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(
                 self.parameters['warp_task'])
 

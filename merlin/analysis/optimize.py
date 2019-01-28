@@ -35,7 +35,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
     def get_dependencies(self):
         return [self.parameters['preprocess_task']]
 
-    def run_analysis(self):
+    def _run_analysis(self):
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
 

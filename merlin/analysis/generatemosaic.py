@@ -59,7 +59,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
         return cv2.warpAffine(
                 inputImage, transform[:2, :], mosaicDimensions)
 
-    def run_analysis(self):
+    def _run_analysis(self):
         alignTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
         warpTask = self.dataSet.load_analysis_task(

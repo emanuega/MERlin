@@ -10,31 +10,6 @@ from starfish.image._segmentation import watershed
 from merlin.core import analysistask
 
 
-class LegacySegmentCells(analysistask.ParallelAnalysisTask):
-
-    """
-    An analysis task that determines the boundaries of features in
-    the image data in each field of view.
-
-    This task is equivalent to the segmentation from Jeff Moffitt's
-    Matlab code.
-    """
-
-    def fragment_count(self):
-        return len(self.dataSet.get_fovs())
-
-    def get_estimated_memory(self):
-        # TODO - refine estimate
-        return 2048
-
-    def get_estimated_time(self):
-        # TODO - refine estimate
-        return 5
-
-    def get_dependencies(self):
-        return [self.parameters['warp_task'],
-                self.parameters['global_align_task']]
-
 class SegmentCells(analysistask.ParallelAnalysisTask):
 
     """
@@ -128,7 +103,7 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
 
         return boundaryList
 
-    def run_analysis(self, fragmentIndex):
+    def _run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
         globalTask = self.dataSet.load_analysis_task(
@@ -259,7 +234,7 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
         else:
             return None
 
-    def run_analysis(self):
+    def _run_analysis(self):
         segmentTask = self.dataSet.load_analysis_task(
                 self.parameters['segment_task'])
 

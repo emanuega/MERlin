@@ -29,7 +29,7 @@ class ExportBarcodes(analysistask.AnalysisTask):
     def get_dependencies(self):
         return [self.parameters['filter_task']]
 
-    def run_analysis(self):
+    def _run_analysis(self):
         filterTask = self.dataSet.load_analysis_task(
                 self.parameters['filter_task'])        
 

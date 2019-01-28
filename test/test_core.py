@@ -61,3 +61,10 @@ def test_task_reset(simple_task):
         simple_task.run(overwrite=False)
     simple_task.run(overwrite=True)
     assert simple_task.is_complete()
+
+
+def test_task_overwrite(simple_task):
+    simple_task.save()
+    simple_task.parameters['new_parameter'] = 0
+    with pytest.raises(analysistask.AnalysisAlreadyExistsException):
+        simple_task.save()

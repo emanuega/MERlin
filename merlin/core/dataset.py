@@ -297,9 +297,21 @@ class DataSet(object):
     def save_analysis_task(self, analysisTask: analysistask.AnalysisTask):
         saveName = os.sep.join([self.get_task_subdirectory(
             analysisTask), 'task.json'])
-        
-        with open(saveName, 'w') as outFile:
-            json.dump(analysisTask.get_parameters(), outFile, indent=4) 
+
+        try:
+            existingTask = self.load_analysis_task(
+                analysisTask.get_analysis_name())
+
+            if not existingTask.get_parameters() \
+                   == analysisTask.get_parameters():
+                raise analysistask.AnalysisAlreadyExistsException(
+                    ('Analysis task with name %s already exists in this ' +
+                     'data set with different parameters.')
+                    % analysisTask.get_analysis_name())
+
+        except FileNotFoundError:
+            with open(saveName, 'w') as outFile:
+                json.dump(analysisTask.get_parameters(), outFile, indent=4)
 
     def load_analysis_task(self, analysisTaskName: str) \
             -> analysistask.AnalysisTask:

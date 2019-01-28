@@ -11,6 +11,10 @@ class AnalysisAlreadyStartedException(Exception):
     pass
 
 
+class AnalysisAlreadyExistsException(Exception):
+    pass
+
+
 class AnalysisTask(ABC):
 
     """
@@ -48,7 +52,13 @@ class AnalysisTask(ABC):
         self.parameters['class'] = type(self).__name__
 
     def save(self) -> None:
-        """Save a copy of this AnalysisTask into the data set."""
+        """Save a copy of this AnalysisTask into the data set.
+
+        Raises:
+            AnalysisAlreadyExistsException: if an analysis task with the
+                same name as this analysis task already exists in the
+                data set with different parameters.
+        """
         self.dataSet.save_analysis_task(self)
 
     def run(self, overwrite=True) -> None:

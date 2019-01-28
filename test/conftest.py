@@ -25,7 +25,7 @@ class SimpleAnalysisTask(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-    def run_analysis(self):
+    def _run_analysis(self):
         pass
 
     def get_estimated_memory(self):
@@ -42,7 +42,7 @@ class SimpleParallelAnalysisTask(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-    def run_analysis(self, fragmentIndex):
+    def _run_analysis(self, fragmentIndex):
         pass
 
     def get_estimated_memory(self):
@@ -63,7 +63,7 @@ class SimpleInternallyParallelAnalysisTask(
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-    def run_analysis(self):
+    def _run_analysis(self):
         pass
 
     def get_estimated_memory(self):

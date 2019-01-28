@@ -1,12 +1,8 @@
-import os
 import copy
 from abc import ABC, abstractmethod
-import time
 import threading
 import multiprocessing
 from typing import List
-
-import numpy as np
 
 
 class AnalysisAlreadyStartedException(Exception):
@@ -50,18 +46,36 @@ class AnalysisTask(ABC):
         """Save a copy of this AnalysisTask into the data set."""
         self.dataSet.save_analysis_task(self)
 
-    def run(self) -> None:
+    def run(self, overwrite=True) -> None:
         """Run this AnalysisTask.
         
         Upon completion of the analysis, this function informs the DataSet
         that analysis is complete.
+
+        Args:
+            overwrite: flag indicating if previous analysis from this
+                analysis task should be overwritten.
+        Raises:
+            AnalysisAlreadyStartedException: if this analysis task is currently
+                already running or if overwrite is not True and this analysis
+                task has already completed or exited with an error.
         """
         logger = self.dataSet.get_logger(self)
         logger.info('Beginning ' + self.get_analysis_name())
 
         try:
-            if self.is_complete() or self.is_running():
-                raise AnalysisAlreadyStartedException
+            if self.is_running() and not self.is_idle():
+                raise AnalysisAlreadyStartedException(
+                    'Unable to run %s since it is already running'
+                    % self.analysisName)
+
+            if overwrite:
+                self._reset_analysis()
+
+            if self.is_complete() or self.is_error():
+                raise AnalysisAlreadyStartedException(
+                    'Unable to run %s since it has already run'
+                    % self.analysisName)
 
             self.dataSet.record_analysis_started(self)
             self._indicate_running()
@@ -71,15 +85,18 @@ class AnalysisTask(ABC):
         except Exception as e:
             logger.exception(e)
             self.dataSet.record_analysis_error(self)
+            raise e
 
         self.dataSet.close_logger(self)
 
     def _reset_analysis(self) -> None:
         """Remove all files created by this analysis task and remove markers
         indicating that this analysis has been started, or has completed.
+
+        This function should be overridden by subclasses so that they
+        can delete the analysis files.
         """
-        # TODO this should reset the analysis status markers
-        pass
+        self.dataSet.reset_analysis_status(self)
 
     def _indicate_running(self) -> None:
         """A loop that regularly signals to the dataset that this analysis
@@ -173,7 +190,7 @@ class AnalysisTask(ABC):
 
     def is_idle(self):
         """Determines if this analysis task is expected to be running,
-        but has stopped for some reason.
+        but has unexpectedly stopped for more than two minutes.
         """
         if not self.is_running():
             return False
@@ -215,6 +232,7 @@ class InternallyParallelAnalysisTask(AnalysisTask):
     def is_parallel(self):
         return True 
 
+
 class ParallelAnalysisTask(AnalysisTask):
 
     """
@@ -230,7 +248,7 @@ class ParallelAnalysisTask(AnalysisTask):
     def fragment_count(self):
         pass
 
-    def run(self, fragmentIndex: int=None) -> None:
+    def run(self, fragmentIndex: int=None, overwrite=True) -> None:
         """Run the specified index of this analysis task.
 
         If fragment index is not provided. All fragments for this analysis
@@ -242,24 +260,52 @@ class ParallelAnalysisTask(AnalysisTask):
         """
         if fragmentIndex is None:
             for i in range(self.fragment_count()):
-                self.run(i)
+                self.run(i, overwrite)
         else:
             logger = self.dataSet.get_logger(self, fragmentIndex)
-            logger.info('Beginning ' + self.get_analysis_name())
-            try: 
+            logger.info(
+                'Beginning %s %i' % (self.get_analysis_name(), fragmentIndex))
+            try:
+                if self.is_running(fragmentIndex) \
+                        and not self.is_idle(fragmentIndex):
+                    raise AnalysisAlreadyStartedException(
+                        ('Unable to run %s fragment %i since it is already ' +
+                         'running')
+                        % (self.analysisName, fragmentIndex))
+
+                if overwrite:
+                    self._reset_analysis(fragmentIndex)
+
                 if self.is_complete(fragmentIndex) \
-                        or self.is_running(fragmentIndex):
-                    raise AnalysisAlreadyStartedException    
+                        or self.is_error(fragmentIndex):
+                    raise AnalysisAlreadyStartedException(
+                        'Unable to run %s fragment %i since it has already run'
+                        % (self.analysisName, fragmentIndex))
+
                 self.dataSet.record_analysis_started(self, fragmentIndex)
                 self._indicate_running(fragmentIndex)
                 self._run_analysis(fragmentIndex)
                 self.dataSet.record_analysis_complete(self, fragmentIndex) 
-                logger.info('Completed ' + self.get_analysis_name())
+                logger.info('Completed %s %i'
+                            % (self.get_analysis_name(), fragmentIndex))
             except Exception as e:
+                print(e)
                 logger.exception(e)
                 self.dataSet.record_analysis_error(self, fragmentIndex)
+                raise e
             
             self.dataSet.close_logger(self, fragmentIndex)
+
+    def _reset_analysis(self, fragmentIndex: int=None) -> None:
+        """Remove all files created by this analysis task and remove markers
+        indicating that this analysis has been started, or has completed.
+        """
+        if fragmentIndex is None:
+            for i in range(self.fragment_count()):
+                self._reset_analysis(i)
+
+        else:
+            self.dataSet.reset_analysis_status(self, fragmentIndex)
 
     def _indicate_running(self, fragmentIndex: int) -> None:
         """A loop that regularly signals to the dataset that this analysis

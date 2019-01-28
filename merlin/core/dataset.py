@@ -408,6 +408,21 @@ class DataSet(object):
         with open(fileName, 'w') as f:
             f.write('%s' % time.time())
 
+    def _check_analysis_event(
+            self, analysisTask: analysistask.AnalysisTask, eventName: str,
+            fragmentIndex: int=None) -> bool:
+        fileName = self._analysis_status_file(
+            analysisTask, eventName, fragmentIndex)
+        return os.path.exists(fileName)
+
+    def _reset_analysis_event(
+            self, analysisTask: analysistask.AnalysisTask, eventName: str,
+            fragmentIndex: int=None):
+        fileName = self._analysis_status_file(
+            analysisTask, eventName, fragmentIndex)
+        if os.path.exists(fileName):
+            os.remove(fileName)
+
     def is_analysis_idle(self, analysisTask: analysistask.AnalysisTask,
                          fragmentIndex: int=None) -> bool:
         fileName = self._analysis_status_file(
@@ -430,12 +445,15 @@ class DataSet(object):
                              fragmentIndex: int=None) -> bool:
         return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
 
-    def _check_analysis_event(
-            self, analysisTask: analysistask.AnalysisTask, eventName: str,
-            fragmentIndex: int=None) -> bool:
-        fileName = self._analysis_status_file(
-                analysisTask, eventName, fragmentIndex)
-        return os.path.exists(fileName)
+    def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
+                              fragmentIndex: int=None):
+        if analysisTask.is_running() and not analysisTask.is_idle():
+            raise analysistask.AnalysisAlreadyStartedException()
+
+        self._reset_analysis_event(analysisTask, 'start', fragmentIndex)
+        self._reset_analysis_event(analysisTask, 'run', fragmentIndex)
+        self._reset_analysis_event(analysisTask, 'done', fragmentIndex)
+        self._reset_analysis_event(analysisTask, 'error', fragmentIndex)
 
     def get_database_engine(self, analysisTask: analysistask.AnalysisTask=None,
                             index: int=None):

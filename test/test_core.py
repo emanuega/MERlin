@@ -1,6 +1,7 @@
 import pytest
 
 from merlin.core import executor
+from merlin.core import analysistask
 
     
 def test_task_delete(simple_data, simple_task):
@@ -51,3 +52,12 @@ def test_task_run_with_executor(simple_task):
     assert not task1.is_idle()
     assert not task1.is_error()
     assert task1.is_complete()
+
+
+def test_task_reset(simple_task):
+    simple_task.run()
+    assert simple_task.is_complete()
+    with pytest.raises(analysistask.AnalysisAlreadyStartedException):
+        simple_task.run(overwrite=False)
+    simple_task.run(overwrite=True)
+    assert simple_task.is_complete()

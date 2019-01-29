@@ -7,7 +7,8 @@ def test_dataorganization_get_channels(simple_merfish_data):
     assert np.array_equal(
             simple_merfish_data.get_data_organization().get_data_channels(),
             np.arange(18))
-            
+
+
 def test_dataorganization_get_channel_name(simple_merfish_data):
     for i in range(16):
         assert simple_merfish_data.get_data_organization()\
@@ -17,16 +18,30 @@ def test_dataorganization_get_channel_name(simple_merfish_data):
             .get_data_channel_name(16) == 'cellstain'
     assert simple_merfish_data.get_data_organization()\
             .get_data_channel_name(17) == 'nuclearstain'
-    
+
+
+def test_dataorganization_get_channel_index(simple_merfish_data):
+    for i in range(16):
+        assert simple_merfish_data.get_data_organization() \
+            .get_data_channel_index('bit' + str(i+1)) == i
+
+    assert simple_merfish_data.get_data_organization() \
+        .get_data_channel_index('cellstain') == 16
+    assert simple_merfish_data.get_data_organization() \
+               .get_data_channel_index('nuclearstain') == 17
+
+
 def test_dataorganization_get_fovs(simple_merfish_data):
     assert np.array_equal(
             simple_merfish_data.get_data_organization().get_fovs(),
             np.arange(2))
 
+
 def test_dataorganization_get_z_positions(simple_merfish_data):
     assert np.array_equal(
             simple_merfish_data.get_data_organization().get_z_positions(),
             np.array([0]))
+
 
 def test_dataorganization_get_fiducial_information(simple_merfish_data):
     data = simple_merfish_data.get_data_organization()
@@ -41,6 +56,7 @@ def test_dataorganization_get_fiducial_information(simple_merfish_data):
     assert os.path.normpath(data.get_fiducial_filename(2, 1)) \
             == os.path.normpath('test_data/merfish_test/test_1_1.tif')
 
+
 def test_dataorganization_get_image_information(simple_merfish_data):
     data = simple_merfish_data.get_data_organization()
     assert data.get_image_frame_index(0, 0) == 1
@@ -54,6 +70,7 @@ def test_dataorganization_get_image_information(simple_merfish_data):
             == os.path.normpath('test_data/merfish_test/test_1_0.tif')
     assert os.path.normpath(data.get_image_filename(2, 1)) \
             == os.path.normpath('test_data/merfish_test/test_1_1.tif')
+
 
 def test_dataorganization_load_from_dataset(simple_merfish_data):
     originalOrganization = simple_merfish_data.get_data_organization()

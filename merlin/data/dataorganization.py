@@ -75,16 +75,30 @@ class DataOrganization(object):
         return np.array(self.data.index)
 
     def get_data_channel_name(self, dataChannelIndex: int) -> str:
-        """
-        Get the name for the data channel with the specified index.
+        """Get the name for the data channel with the specified index.
 
         Args:
             dataChannelIndex: The index of the data channel
         Returns:
             The name of the specified data channel
         """
-
         return self.data['bitName'][dataChannelIndex]
+
+    def get_data_channel_index(self, dataChannelName: str) -> int:
+        """Get the index for the data channel with the specified name.
+
+        Args:
+            dataChannelName: the name of the data channel. The data channel
+                name is not case sensitive.
+        Returns:
+            the index of the data channel where the data channel name is
+                dataChannelName
+        Raises:
+            # TODO this should raise a meaningful exception if the data channel
+            # is not found
+        """
+        return self.data[self.data['bitName'].str.match(
+            dataChannelName, case=False)].index.tolist()[0]
 
     def get_data_channel_for_bit(self, bitName: str) -> int:
         """Get the data channel associated with the specified bit.

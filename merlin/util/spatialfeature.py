@@ -316,6 +316,7 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
         featureGroup.attrs['fov'] = feature.get_fov()
         featureGroup.attrs['bounding_box'] = \
             np.array(feature.get_bounding_box())
+        featureGroup.attrs['volume'] = feature.get_volume()
         featureGroup['z_coordinates'] = feature.get_z_coordinates()
 
         for i, bSet in enumerate(feature.get_boundaries()):
@@ -380,8 +381,8 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
         featureList = []
         try:
             with self._dataSet.open_hdf5_file('r', 'feature_data',
-                                              self._analysisTask, fov, 'features') \
-                    as f:
+                                              self._analysisTask, fov,
+                                              'features') as f:
                 featureGroup = f.require_group('featuredata')
                 for k in featureGroup.keys():
                     featureList.append(
@@ -391,7 +392,6 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
         return featureList
 
-    @abstractmethod
     def empty_database(self, fov: int=None) -> None:
         if fov is None:
             for f in self._dataSet.get_fovs():
@@ -457,85 +457,3 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
                 'bounds_x2': boundingBox[2],
                 'bounds_y2': boundingBox[3],
                 'volume': feature.get_volume()}
-
-
-class SimpleSpatialFeatureDB(SpatialFeatureDB):
-
-    """
-    A database for storing spatial features by storing the boundaries
-    in serialized numpy arrays and the associated metadata in a serialized
-    pandas data frame.
-    """
-
-    def __init__(self, dataSet: dataset.DataSet, analysisTask):
-        super().__init__(dataSet, analysisTask)
-        raise NotImplementedError
-
-    def write_features(self, features: List[SpatialFeature], fov=None) -> None:
-        if fov is None:
-            raise NotImplementedError
-
-        try:
-            existingFeatures = self._dataSet.load_dataframe_from_csv(
-                'feature_metadata', self._analysisTask, fov, 'features')
-            raise NotImplementedError
-        except FileNotFoundError:
-            featureMetadata = pandas.DataFrame(
-                [self._extract_feature_metadata(f) for f in features])
-            self._dataSet.save_dataframe_to_csv(
-                featureMetadata, 'feature_metadata', self._analysisTask,
-                fov, 'features', index=False)
-
-    def read_features(self, fov: int=None) -> List[SpatialFeature]:
-        pass
-
-    def empty_database(self, fov: int=None) -> None:
-        pass
-
-    @staticmethod
-    def _extract_feature_metadata(feature: SpatialFeature) -> Dict:
-        boundingBox = feature.get_bounding_box()
-        return {'fov': feature.get_fov(),
-                'featureID': feature.get_feature_id(),
-                'bounds_x1': boundingBox[0],
-                'bounds_y1': boundingBox[1],
-                'bounds_x2': boundingBox[2],
-                'bounds_y2': boundingBox[3],
-                'volume': feature.get_volume()}
-
-
-class SQLiteSpatialFeatureDB(SpatialFeatureDB):
-
-    """A database for storing spatial features using a SQLite backend."""
-
-    def __init__(self, dataSet: dataset.DataSet, analysisTask):
-        super().__init__(dataSet, analysisTask)
-        raise NotImplementedError
-
-    def _get_masterDB(self):
-        # The master DB stores meta data of all features and where to find
-        # the associated boundary lists.
-        return self._dataSet.get_database_engine(self._analysisTask)
-
-    def _get_fovDB(self, fov):
-        # The fov DB contains a table for each feature associated with that
-        # fov. The table has the x and y coordinates associated with the
-        # boundaries of that feature.
-        return self._dataSet.get_database_engine(self._analysisTask, fov)
-
-    def _add_feature_to_masterDB(self, masterEngine):
-        pass
-
-    def write_features(self, features: List[SpatialFeature], fov=None) -> None:
-        """
-        If features already exist in the database with feature IDs equal to
-        those in the provided list, the existing features are overwritten.
-
-        Args:
-            features:
-            fov:
-
-        Returns:
-
-        """
-        pass

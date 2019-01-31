@@ -7,8 +7,9 @@ from typing import List
 from typing import Tuple
 from typing import Dict
 from shapely import geometry
-from shapely.errors import TopologicalError
+import h5py
 import pandas
+import merlin
 
 from merlin.core import dataset
 
@@ -257,7 +258,7 @@ class SpatialFeatureDB(object):
         """Write the features into this database.
 
         If features already exist in the database with feature IDs equal to
-        those in the provided list, the existing features are overwritten.
+        those in the provided list, an exception is raised.
 
         Args:
             features: a list of features
@@ -268,7 +269,7 @@ class SpatialFeatureDB(object):
         pass
 
     @abstractmethod
-    def get_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int=None) -> List[SpatialFeature]:
         """Read the features in this database
 
         Args:
@@ -289,6 +290,117 @@ class SpatialFeatureDB(object):
         pass
 
 
+class HDF5SpatialFeatureDB(SpatialFeatureDB):
+
+    """
+    A data store for spatial features that uses a HDF5 file to store the feature
+    information.
+    """
+
+    def __init__(self, dataSet: dataset.DataSet, analysisTask):
+        super().__init__(dataSet, analysisTask)
+
+    @staticmethod
+    def _save_geometry_to_hdf5_group(h5Group: h5py.Group,
+                                     polygon: geometry.Polygon) -> None:
+        geometryDict = geometry.mapping(polygon)
+        h5Group.attrs['type'] = np.string_(geometryDict['type'])
+        h5Group['coordinates'] = np.array(geometryDict['coordinates'])
+
+    @staticmethod
+    def _save_feature_to_hdf5_group(h5Group: h5py.Group,
+                                    feature: SpatialFeature) -> None:
+        featureKey = str(feature.get_feature_id())
+        featureGroup = h5Group.create_group(featureKey)
+        featureGroup.attrs['id'] = np.string_(feature.get_feature_id())
+        featureGroup.attrs['fov'] = feature.get_fov()
+        featureGroup.attrs['bounding_box'] = \
+            np.array(feature.get_bounding_box())
+        featureGroup['z_coordinates'] = feature.get_z_coordinates()
+
+        for i, bSet in enumerate(feature.get_boundaries()):
+            zBoundaryGroup = featureGroup.create_group('zIndex_' + str(i))
+            for j, b in enumerate(bSet):
+                geometryGroup = zBoundaryGroup.create_group('p_' + str(j))
+                HDF5SpatialFeatureDB._save_geometry_to_hdf5_group(
+                    geometryGroup, b)
+
+    @staticmethod
+    def _load_geometry_from_hdf5_group(h5Group: h5py.Group):
+        geometryDict = {'type': h5Group.attrs['type'].decode(),
+                        'coordinates': np.array(h5Group['coordinates'])}
+
+        return geometry.shape(geometryDict)
+
+    @staticmethod
+    def _load_feature_from_hdf5_group(h5Group):
+        zCount = len([x for x in h5Group.keys() if x.startswith('zIndex_')])
+        boundaryList = []
+        for z in range(zCount):
+            zBoundaryList = []
+            zGroup = h5Group['zIndex_' + str(z)]
+            pCount = len([x for x in zGroup.keys() if x[:2] == 'p_'])
+            for p in range(pCount):
+                zBoundaryList.append(
+                    HDF5SpatialFeatureDB._load_geometry_from_hdf5_group(
+                        zGroup['p_' + str(p)]))
+            boundaryList.append(zBoundaryList)
+
+        loadedFeature = SpatialFeature(
+            boundaryList,
+            h5Group.attrs['fov'],
+            np.array(h5Group['z_coordinates']),
+            int(h5Group.attrs['id']))
+
+        return loadedFeature
+
+    def write_features(self, features: List[SpatialFeature], fov=None) -> None:
+        if fov is None:
+            uniqueFOVs = np.unique([f.get_fov() for f in features])
+            for currentFOV in uniqueFOVs:
+                currentFeatures = [f for f in features
+                                   if f.get_fov() == currentFOV]
+                self.write_features(currentFeatures, currentFOV)
+
+        with self._dataSet.open_hdf5_file('a', 'feature_data',
+                                          self._analysisTask, fov, 'features') \
+                as f:
+            featureGroup = f.require_group('featuredata')
+            featureGroup.attrs['version'] = merlin.version()
+            for currentFeature in features:
+                self._save_feature_to_hdf5_group(featureGroup, currentFeature)
+
+    def read_features(self, fov: int=None) -> List[SpatialFeature]:
+        if fov is None:
+            featureList = []
+            for f in self._dataSet.get_fovs():
+                featureList += self.read_features(f)
+            return featureList
+
+        featureList = []
+        try:
+            with self._dataSet.open_hdf5_file('r', 'feature_data',
+                                              self._analysisTask, fov, 'features') \
+                    as f:
+                featureGroup = f.require_group('featuredata')
+                for k in featureGroup.keys():
+                    featureList.append(
+                        self._load_feature_from_hdf5_group(featureGroup[k]))
+        except FileNotFoundError:
+            pass
+
+        return featureList
+
+    @abstractmethod
+    def empty_database(self, fov: int=None) -> None:
+        if fov is None:
+            for f in self._dataSet.get_fovs():
+                self.empty_database(f)
+
+        self._dataSet.delete_hdf5_file('feature_data', self._analysisTask,
+                                       fov, 'features')
+
+
 class JSONSpatialFeatureDB(SpatialFeatureDB):
 
     """
@@ -305,7 +417,7 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
         try:
             existingFeatures = [SpatialFeature.from_json_dict(x)
                                 for x in self._dataSet.load_json_analysis_result(
-                    'feature_metadata', self._analysisTask, fov, 'features')]
+                    'feature_data', self._analysisTask, fov, 'features')]
 
             existingIDs = set([x.get_feature_id() for x in existingFeatures])
 
@@ -319,10 +431,10 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
             featuresAsJSON = [f.to_json_dict() for f in features]
 
         self._dataSet.save_json_analysis_result(
-            featuresAsJSON, 'feature_metadata', self._analysisTask,
+            featuresAsJSON, 'feature_data', self._analysisTask,
             fov, 'features')
 
-    def get_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int=None) -> List[SpatialFeature]:
         if fov is None:
             raise NotImplementedError
 
@@ -374,7 +486,7 @@ class SimpleSpatialFeatureDB(SpatialFeatureDB):
                 featureMetadata, 'feature_metadata', self._analysisTask,
                 fov, 'features', index=False)
 
-    def get_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int=None) -> List[SpatialFeature]:
         pass
 
     def empty_database(self, fov: int=None) -> None:

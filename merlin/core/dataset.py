@@ -15,6 +15,7 @@ from typing import List
 from typing import Tuple
 from typing import Union
 from typing import Dict
+import h5py
 
 from storm_analysis.sa_library import datareader
 import merlin
@@ -156,13 +157,21 @@ class DataSet(object):
             return os.sep.join([destPath, imageBaseName+str(imageIndex)+'.tif'])
 
     def _analysis_result_save_path(
-            self, resultName: str, analysisName: str, resultIndex: int=None,
-            subdirectory: str=None) -> str:
+            self, resultName: str, analysisName: TaskOrName,
+            resultIndex: int=None, subdirectory: str=None,
+            fileExtension: str=None) -> str:
+
         saveName = resultName
         if resultIndex is not None:
             saveName += '_' + str(resultIndex)
-        return os.sep.join([self.get_analysis_subdirectory(
-            analysisName, subdirectory), saveName])
+        if fileExtension is not None:
+            saveName += fileExtension
+
+        if analysisName is None:
+            return os.sep.join([self.analysisPath, saveName])
+        else:
+            return os.sep.join([self.get_analysis_subdirectory(
+                analysisName, subdirectory), saveName])
 
     def save_dataframe_to_csv(
             self, dataframe: pandas.DataFrame, resultName: str,
@@ -186,12 +195,8 @@ class DataSet(object):
                 saved to the root directory for the analysis task.
             **kwargs: arguments to pass on to pandas.to_csv
         """
-        if analysisTask is not None:
-            savePath = self._analysis_result_save_path(
-                    resultName, analysisTask, resultIndex, subdirectory) \
-                       + '.csv'
-        else:
-            savePath = os.sep.join([self.analysisPath, resultName]) + '.csv'
+        savePath = self._analysis_result_save_path(
+                resultName, analysisTask, resultIndex, subdirectory, '.csv')
 
         with open(savePath, 'w') as f:
             dataframe.to_csv(f, **kwargs)
@@ -200,7 +205,7 @@ class DataSet(object):
             self, resultName: str, analysisTask: TaskOrName=None,
             resultIndex: int=None, subdirectory: str=None,
             **kwargs) -> Union[pandas.DataFrame, None]:
-        """Load a pandas data frame from a csv file stored in this dataset.
+        """Load a pandas data frame from a csv file stored in this data set.
 
         Args:
             resultName:
@@ -213,32 +218,82 @@ class DataSet(object):
         Raises:
               FileNotFoundError: if the file does not exist
         """
-        if analysisTask is not None:
-            savePath = self._analysis_result_save_path(
-                    resultName, analysisTask, resultIndex, subdirectory) \
-                       + '.csv'
-        else:
-            savePath = os.sep.join([self.analysisPath, resultName]) + '.csv'
+        savePath = self._analysis_result_save_path(
+                resultName, analysisTask, resultIndex, subdirectory, '.csv') \
 
         with open(savePath, 'r') as f:
             return pandas.read_csv(f, **kwargs)
+
+    def open_hdf5_file(self, mode: str, resultName: str,
+                       analysisTask: TaskOrName=None, resultIndex: int=None,
+                       subdirectory: str=None) -> h5py.File:
+        """Open an hdf5 file stored in this data set.
+
+        Args:
+            mode: the mode for opening the file, either 'r', 'r+', 'w', 'w-',
+                or 'a'.
+            resultName: the name of the output file
+            analysisTask: the analysis task that should be associated with this
+                hdf5 file. If None, the file is assumed to be in the
+                data set root.
+            resultIndex: index of the dataframe to save or None if no index
+                should be specified
+            subdirectory: subdirectory of the analysis task that the dataframe
+                should be saved to or None if the dataframe should be
+                saved to the root directory for the analysis task.
+        Returns:
+            a h5py file object connected to the hdf5 file
+        Raise:
+            FileNotFoundError: if the mode is 'r' and the specified hdf5 file
+                does not exist
+        """
+        hPath = self._analysis_result_save_path(
+                resultName, analysisTask, resultIndex, subdirectory, '.hdf5') \
+
+        if mode=='r' and not os.path.exists(hPath):
+            raise FileNotFoundError(('Unable to open %s for reading since ' +
+                                    'it does not exist.') % hPath)
+
+        return h5py.File(hPath, mode)
+
+    def delete_hdf5_file(self, resultName: str, analysisTask: TaskOrName=None,
+                         resultIndex: int=None, subdirectory: str=None
+                         ) -> None:
+        """Delete an hdf5 file stored in this data set if it exists.
+
+        Args:
+            resultName: the name of the output file
+            analysisTask: the analysis task that should be associated with this
+                hdf5 file. If None, the file is assumed to be in the
+                data set root.
+            resultIndex: index of the dataframe to save or None if no index
+                should be specified
+            subdirectory: subdirectory of the analysis task that the dataframe
+                should be saved to or None if the dataframe should be
+                saved to the root directory for the analysis task.
+        Returns:
+            a h5py file object connected to the hdf5 file
+        """
+        hPath = self._analysis_result_save_path(
+                resultName, analysisTask, resultIndex, subdirectory, '.hdf5') \
+
+        if os.path.exists(hPath):
+            os.remove(hPath)
 
     def save_json_analysis_result(
             self, analysisResult: Dict, resultName: str,
             analysisName: str, resultIndex: int=None,
             subdirectory: str=None) -> None:
-
         savePath = self._analysis_result_save_path(
-            resultName, analysisName, resultIndex, subdirectory) + '.json'
+            resultName, analysisName, resultIndex, subdirectory, '.json')
         with open(savePath, 'w') as f:
             json.dump(analysisResult, f)
 
     def load_json_analysis_result(
             self, resultName: str, analysisName: str, resultIndex: int=None,
             subdirectory: str=None) -> Dict:
-
         savePath = self._analysis_result_save_path(
-            resultName, analysisName, resultIndex, subdirectory) + '.json'
+            resultName, analysisName, resultIndex, subdirectory, '.json')
         with open(savePath, 'r') as f:
             return json.load(f)
 
@@ -256,7 +311,7 @@ class DataSet(object):
             subdirectory: str=None) -> np.array:
 
         savePath = self._analysis_result_save_path(
-                resultName, analysisName, resultIndex, subdirectory) + '.npy'
+                resultName, analysisName, resultIndex, subdirectory, '.npy')
         return np.load(savePath)
 
     def get_analysis_subdirectory(
@@ -623,7 +678,7 @@ class MERFISHDataSet(ImageDataSet):
         """
 
         super().__init__(dataDirectoryName, dataHome, analysisHome,
-                microscopeParametersName)
+                         microscopeParametersName)
 
         # TODO: it is possible to also extract positions from the images. This
         # should be implemented
@@ -651,12 +706,11 @@ class MERFISHDataSet(ImageDataSet):
         Args:
             fov: index of the field of view
         Returns:
-            A tuple specificing the x and y offset of the top right corner 
+            A tuple specifying the x and y offset of the top right corner
             of the specified fov in pixels.
         """
-        #TODO - this should be implemented using the position of the fov. 
+        # TODO - this should be implemented using the position of the fov.
         return self.positions.loc[fov]['X'], self.positions.loc[fov]['Y']
-
 
     def z_index_to_position(self, zIndex: int) -> float:
         """Get the z position associated with the provided z index."""

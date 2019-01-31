@@ -65,11 +65,14 @@ def test_feature_serialization_to_json(feature):
     assert featureIn.equals(feature)
 
 
-def test_feature_json_db_read_write_one_fov(single_task, simple_merfish_data):
-    featureDB = spatialfeature.JSONSpatialFeatureDB(
+def test_feature_hdf5_db_read_write_delete_one_fov(
+        single_task, simple_merfish_data):
+    featureDB = spatialfeature.HDF5SpatialFeatureDB(
         simple_merfish_data, single_task)
     featureDB.write_features([feature1, feature2], fov=0)
-    readFeatures = featureDB.get_features(fov=0)
+    readFeatures = featureDB.read_features(fov=0)
+    featureDB.empty_database(0)
+    readFeatures2 = featureDB.read_features(fov=0)
 
     assert len(readFeatures) == 2
     if readFeatures[0].get_feature_id() == feature1.get_feature_id():
@@ -80,6 +83,40 @@ def test_feature_json_db_read_write_one_fov(single_task, simple_merfish_data):
         f2Index = 0
     assert readFeatures[f1Index].equals(feature1)
     assert readFeatures[f2Index].equals(feature2)
+
+    assert len(readFeatures2) == 0
+
+
+def test_feature_hdf5_db_read_write_delete_multiple_fov(
+        single_task, simple_merfish_data):
+    tempFeature2 = spatialfeature.SpatialFeature(
+        [[geometry.Polygon(testCoords2)]], 1)
+    featureDB = spatialfeature.HDF5SpatialFeatureDB(
+        simple_merfish_data, single_task)
+    featureDB.write_features([feature1, tempFeature2])
+    readFeatures = featureDB.read_features()
+    readFeatures0 = featureDB.read_features(0)
+    readFeatures1 = featureDB.read_features(1)
+    featureDB.empty_database()
+    readFeaturesEmpty = featureDB.read_features()
+
+    assert len(readFeatures0) == 1
+    assert readFeatures0[0].equals(feature1)
+
+    assert len(readFeatures1) == 1
+    assert readFeatures1[0].equals(tempFeature2)
+
+    assert len(readFeatures) == 2
+    if readFeatures[0].get_feature_id() == feature1.get_feature_id():
+        f1Index = 0
+        f2Index = 1
+    else:
+        f1Index = 1
+        f2Index = 0
+    assert readFeatures[f1Index].equals(feature1)
+    assert readFeatures[f2Index].equals(tempFeature2)
+
+    assert len(readFeaturesEmpty) == 0
 
 
 def test_feature_contained_within_boundary():

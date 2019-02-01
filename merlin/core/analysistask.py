@@ -51,15 +51,19 @@ class AnalysisTask(ABC):
         self.parameters['module'] = type(self).__module__
         self.parameters['class'] = type(self).__name__
 
-    def save(self) -> None:
+    def save(self, overwrite=False) -> None:
         """Save a copy of this AnalysisTask into the data set.
 
+        Args:
+            overwrite: flag indicating if an existing analysis task with the
+                same name as this analysis task should be overwritten even
+                if the specified parameters are different.
         Raises:
             AnalysisAlreadyExistsException: if an analysis task with the
                 same name as this analysis task already exists in the
                 data set with different parameters.
         """
-        self.dataSet.save_analysis_task(self)
+        self.dataSet.save_analysis_task(self, overwrite)
 
     def run(self, overwrite=True) -> None:
         """Run this AnalysisTask.
@@ -201,7 +205,7 @@ class AnalysisTask(ABC):
             True if the analysis is complete and otherwise False.
         """
         return self.dataSet.check_analysis_started(self) and not \
-                self.is_complete()
+                self.is_complete() and not self.is_error()
 
     def is_idle(self):
         """Determines if this analysis task is expected to be running,
@@ -374,7 +378,8 @@ class ParallelAnalysisTask(AnalysisTask):
 
         else:
             return self.dataSet.check_analysis_started(self, fragmentIndex) \
-                    and not self.is_complete(fragmentIndex)
+                    and not self.is_complete(fragmentIndex) \
+                    and not self.is_error(fragmentIndex)
 
     def is_idle(self, fragmentIndex=None):
         if not self.is_running(fragmentIndex):

@@ -349,7 +349,8 @@ class DataSet(object):
         return self.get_analysis_subdirectory(
                 analysisTask, subdirectory='log')
         
-    def save_analysis_task(self, analysisTask: analysistask.AnalysisTask):
+    def save_analysis_task(self, analysisTask: analysistask.AnalysisTask,
+                           overwrite: bool=False):
         saveName = os.sep.join([self.get_task_subdirectory(
             analysisTask), 'task.json'])
 
@@ -357,7 +358,7 @@ class DataSet(object):
             existingTask = self.load_analysis_task(
                 analysisTask.get_analysis_name())
 
-            if not existingTask.get_parameters() \
+            if not overwrite and not existingTask.get_parameters() \
                    == analysisTask.get_parameters():
                 raise analysistask.AnalysisAlreadyExistsException(
                     ('Analysis task with name %s already exists in this ' +
@@ -365,8 +366,10 @@ class DataSet(object):
                     % analysisTask.get_analysis_name())
 
         except FileNotFoundError:
-            with open(saveName, 'w') as outFile:
-                json.dump(analysisTask.get_parameters(), outFile, indent=4)
+            pass
+
+        with open(saveName, 'w') as outFile:
+            json.dump(analysisTask.get_parameters(), outFile, indent=4)
 
     def load_analysis_task(self, analysisTaskName: str) \
             -> analysistask.AnalysisTask:
@@ -487,14 +490,20 @@ class DataSet(object):
             fragmentIndex: int=None):
         fileName = self._analysis_status_file(
             analysisTask, eventName, fragmentIndex)
-        if os.path.exists(fileName):
+
+        try:
             os.remove(fileName)
+        except FileNotFoundError:
+            pass
 
     def is_analysis_idle(self, analysisTask: analysistask.AnalysisTask,
                          fragmentIndex: int=None) -> bool:
         fileName = self._analysis_status_file(
                 analysisTask, 'run', fragmentIndex)
-        return time.time() - os.path.getmtime(fileName) > 120
+        try:
+            return time.time() - os.path.getmtime(fileName) > 120
+        except FileNotFoundError:
+            return True
 
     def check_analysis_started(self, analysisTask: analysistask.AnalysisTask,
                                fragmentIndex: int=None) -> bool:

@@ -1,11 +1,10 @@
-import json
 import importlib
 import networkx
 import time
 from . import analysistask
 
 
-class Scheduler():
+class Scheduler:
 
     def __init__(self, dataSet, executor, parameters, schedulerName=None):
         self.dataSet = dataSet
@@ -29,7 +28,7 @@ class Scheduler():
             newTask = analysisClass(
                     self.dataSet, analysisParameters, analysisName)
             if newTask.get_analysis_name() in analysisTasks:
-                raise Exception('Analysis tasks must have unique names. ' + \
+                raise Exception('Analysis tasks must have unique names. ' +
                         newTask.get_analysis_name() + ' is redundant.')
             # TODO This should be more careful to not overwrite an existing
             # analysis task that has already been run.
@@ -78,14 +77,15 @@ class Scheduler():
         return False
 
     def _run_ready_tasks(self):
-        tasksComplete = {k: a for k,a in self.analysisTasks.items() \
-                if a.is_complete()}
+        tasksComplete = {k: a for k,a in self.analysisTasks.items()
+                         if a.is_complete()}
         tasksWaiting = {k: a for k,a in self.analysisTasks.items() \
-                if not a.is_complete() and not a.is_running()}
-        tasksRunning = {k: a for k,a in self.analysisTasks.items() \
-                if a.is_running()}
-        tasksReady = {k: a for k,a in tasksWaiting.items() \
-                if all([a2 in tasksComplete for a2 in self.dependencyGraph[k]])}
+                        if not a.is_complete() and not a.is_started()}
+        tasksRunning = {k: a for k,a in self.analysisTasks.items()
+                        if a.is_running()}
+        tasksReady = {k: a for k, a in tasksWaiting.items()
+                      if all([a2 in tasksComplete
+                              for a2 in self.dependencyGraph[k]])}
 
         parallelTaskRunning = any(
                 [a.is_parallel() for a in tasksRunning.values()])

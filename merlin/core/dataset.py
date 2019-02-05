@@ -509,10 +509,6 @@ class DataSet(object):
                                fragmentIndex: int=None) -> bool:
         return self._check_analysis_event(analysisTask, 'start', fragmentIndex)
 
-    def check_analysis_running(self, analysisTask: analysistask.AnalysisTask,
-                               fragmentIndex: int=None) -> bool:
-        return self._check_analysis_event(analysisTask, 'run', fragmentIndex)
-
     def check_analysis_done(self, analysisTask: analysistask.AnalysisTask,
                             fragmentIndex: int=None) -> bool:
         return self._check_analysis_event(analysisTask, 'done', fragmentIndex)
@@ -523,7 +519,7 @@ class DataSet(object):
 
     def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
                               fragmentIndex: int=None):
-        if analysisTask.is_running() and not analysisTask.is_idle():
+        if analysisTask.is_running():
             raise analysistask.AnalysisAlreadyStartedException()
 
         self._reset_analysis_event(analysisTask, 'start', fragmentIndex)

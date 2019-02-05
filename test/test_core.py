@@ -29,12 +29,12 @@ def test_task_save(simple_data, simple_task):
 def test_task_run(simple_task):
     task1 = simple_task
     assert not task1.is_complete()
+    assert not task1.is_started()
     assert not task1.is_running()
-    assert not task1.is_idle()
     assert not task1.is_error()
     task1.run()
+    assert task1.is_started()
     assert not task1.is_running()
-    assert not task1.is_idle()
     assert not task1.is_error()
     assert task1.is_complete()
 
@@ -43,19 +43,19 @@ def test_task_run(simple_task):
 def test_task_run_with_executor(simple_task):
     task1 = simple_task
     assert not task1.is_complete()
+    assert not task1.is_started()
     assert not task1.is_running()
-    assert not task1.is_idle()
     assert not task1.is_error()
     e = executor.LocalExecutor()
     e.run(task1, join=True)
+    assert task1.is_started()
     assert not task1.is_running()
-    assert not task1.is_idle()
     assert not task1.is_error()
     assert task1.is_complete()
 
 
 def test_task_reset(simple_task):
-    simple_task.run()
+    simple_task.run(overwrite=False)
     assert simple_task.is_complete()
     with pytest.raises(analysistask.AnalysisAlreadyStartedException):
         simple_task.run(overwrite=False)

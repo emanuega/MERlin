@@ -83,7 +83,7 @@ class AnalysisTask(ABC):
         logger.info('Beginning ' + self.get_analysis_name())
 
         try:
-            if self.is_running() and not self.is_idle():
+            if self.is_running():
                 raise AnalysisAlreadyStartedException(
                     'Unable to run %s since it is already running'
                     % self.analysisName)
@@ -101,12 +101,12 @@ class AnalysisTask(ABC):
             self._run_analysis()
             self.dataSet.record_analysis_complete(self)
             logger.info('Completed ' + self.get_analysis_name())
+            self.dataSet.close_logger(self)
         except Exception as e:
             logger.exception(e)
             self.dataSet.record_analysis_error(self)
+            self.dataSet.close_logger(self)
             raise e
-
-        self.dataSet.close_logger(self)
 
     def _reset_analysis(self) -> None:
         """Remove all files created by this analysis task and remove markers
@@ -198,24 +198,24 @@ class AnalysisTask(ABC):
         """
         return self.dataSet.check_analysis_done(self)
 
-    def is_running(self):
+    def is_started(self):
         """Determines if this analysis has started.
         
         Returns:
-            True if the analysis is complete and otherwise False.
+            True if the analysis has begun and otherwise False.
         """
-        return self.dataSet.check_analysis_started(self) and not \
-                self.is_complete() and not self.is_error()
+        return self.dataSet.check_analysis_started(self)
 
-    def is_idle(self):
+    def is_running(self):
         """Determines if this analysis task is expected to be running,
         but has unexpectedly stopped for more than two minutes.
         """
-        if not self.is_running():
+        if not self.is_started():
+            return False
+        if self.is_complete():
             return False
 
-        return self.dataSet.is_analysis_idle(self)
-
+        return not self.dataSet.is_analysis_idle(self)
 
     def get_analysis_name(self):
         """Get the name for this AnalysisTask.
@@ -285,8 +285,7 @@ class ParallelAnalysisTask(AnalysisTask):
             logger.info(
                 'Beginning %s %i' % (self.get_analysis_name(), fragmentIndex))
             try:
-                if self.is_running(fragmentIndex) \
-                        and not self.is_idle(fragmentIndex):
+                if self.is_running(fragmentIndex):
                     raise AnalysisAlreadyStartedException(
                         ('Unable to run %s fragment %i since it is already ' +
                          'running')
@@ -307,12 +306,12 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.record_analysis_complete(self, fragmentIndex) 
                 logger.info('Completed %s %i'
                             % (self.get_analysis_name(), fragmentIndex))
+                self.dataSet.close_logger(self, fragmentIndex)
             except Exception as e:
                 logger.exception(e)
                 self.dataSet.record_analysis_error(self, fragmentIndex)
+                self.dataSet.close_logger(self, fragmentIndex)
                 raise e
-            
-            self.dataSet.close_logger(self, fragmentIndex)
 
     def _reset_analysis(self, fragmentIndex: int=None) -> None:
         """Remove all files created by this analysis task and remove markers
@@ -368,24 +367,24 @@ class ParallelAnalysisTask(AnalysisTask):
         else:
             return self.dataSet.check_analysis_done(self, fragmentIndex)
 
-    def is_running(self, fragmentIndex=None):
+    def is_started(self, fragmentIndex=None):
         if fragmentIndex is None:
             for i in range(self.fragment_count()):
-                if self.is_running(i):
+                if self.is_started(i):
                     return True 
 
             return False
 
         else:
-            return self.dataSet.check_analysis_started(self, fragmentIndex) \
-                    and not self.is_complete(fragmentIndex) \
-                    and not self.is_error(fragmentIndex)
+            return self.dataSet.check_analysis_started(self, fragmentIndex)
 
-    def is_idle(self, fragmentIndex=None):
-        if not self.is_running(fragmentIndex):
+    def is_running(self, fragmentIndex=None):
+        if not self.is_started(fragmentIndex):
+            return False
+        if self.is_complete(fragmentIndex):
             return False
 
-        return self.dataSet.is_analysis_idle(self, fragmentIndex)
+        return not self.dataSet.is_analysis_idle(self, fragmentIndex)
 
     def is_parallel(self):
         return True

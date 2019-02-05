@@ -59,10 +59,16 @@ class LocalExecutor(Executor):
         if isinstance(task, analysistask.ParallelAnalysisTask):
             pool = multiprocessing.Pool(processes=self.coreCount)
             fragmentsToRun = [x for x in range(task.fragment_count())
-                              if (rerunCompleted and not task.is_running(x))
-                              or (not task.is_complete(x)
-                                  and not task.is_running(x))]
-            pool.map_async(task.run, fragmentsToRun, callback=callback)
+                              if not task.is_running(x)
+                              and not (task.is_complete(x)
+                                       and not rerunCompleted)]
+
+            # prevent exceptions from killing a whole process
+            def absorb_exception(e):
+                print(e)
+
+            pool.map_async(task.run, fragmentsToRun, callback=callback,
+                           error_callback=absorb_exception)
 
         elif isinstance(task, analysistask.InternallyParallelAnalysisTask):
             if task.is_running():
@@ -84,3 +90,4 @@ class LocalExecutor(Executor):
                 pool.join()
             if thread:
                 thread.join()
+

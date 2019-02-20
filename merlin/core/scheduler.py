@@ -77,11 +77,11 @@ class Scheduler:
         return False
 
     def _run_ready_tasks(self):
-        tasksComplete = {k: a for k,a in self.analysisTasks.items()
+        tasksComplete = {k: a for k, a in self.analysisTasks.items()
                          if a.is_complete()}
-        tasksWaiting = {k: a for k,a in self.analysisTasks.items() \
+        tasksWaiting = {k: a for k, a in self.analysisTasks.items()
                         if not a.is_complete() and not a.is_started()}
-        tasksRunning = {k: a for k,a in self.analysisTasks.items()
+        tasksRunning = {k: a for k, a in self.analysisTasks.items()
                         if a.is_running()}
         tasksReady = {k: a for k, a in tasksWaiting.items()
                       if all([a2 in tasksComplete

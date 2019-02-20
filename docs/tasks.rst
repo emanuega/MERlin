@@ -67,15 +67,12 @@ Parameters:
 segment.SegmentCells
 ----------------------
 
-Description: Determines cell boundaries using a nuclear stain and a cell stain.
+Description: Determines cell boundaries using a watershed algorithm with the seeds determined from a nuclear stain and the watershed performed on a cell stain.
 
 Parameters:
 
-* nucleus\_threshold -- The relative intensity threshold for seeding the nuclei.
-* cell\_threshold -- The relative intensity threshold for setting boundaries for the watershed.
-* nucleus\_index -- The image index for the nucleus image.
-* cell\_index -- The image index for the cell image.
-* z\_index -- The z index of the nucleus and cell images to use for segmentation.
+* seed\_channel\_name -- The name of the data channel to use to find seeds
+* watershed\_channel\_name -- The name of the data channel to use as the watershed image.W
 
 segment.CleanCellSegmentation
 --------------------------------

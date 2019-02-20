@@ -4,13 +4,16 @@
    contain the root `toctree` directive.
 
 MERlin 
-==================================
+******
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-    modules
-
+    installation
+    usage
+    tasks
+    contributing
+    api
 
 Indices and tables
 ==================

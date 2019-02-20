@@ -58,7 +58,7 @@ After installation, MERlin can be run from the command line with the input param
 
 .. code-block:: none
 
-    merlin -a test_analysis_parameters -m STORM5 -o Culture_16bits.csv -c HAEC1E1 -n 5 testdata
+    merlin -a test_analysis_parameters.json -m STORM5.json -o Culture_16bits.csv -c HAEC1E1.csv -n 5 testdata
 
 Here the MERFISH images contained in the directory `%DATA\_HOME%/testdata/` are processed using the analysis tasks listed in `test\_analysis\_parameters.json` with microscope parameters `STORM5.json`, data organization `Culture\_16bits.csv`, codebook `HAEC1E1` using 5 cores for each process. 
 

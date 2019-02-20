@@ -1,4 +1,3 @@
-starfish
 setuptools>=36.0.0
 python-dotenv>=0.8.2
 pandas>=0.23.4
@@ -17,3 +16,4 @@ pyqt5
 Sphinx
 sphinx-rtd-theme
 pyclustering
+pytest

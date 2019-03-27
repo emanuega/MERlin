@@ -21,7 +21,7 @@ class FilterBarcodes(analysistask.AnalysisTask):
         self.intensityThreshold = self.parameters['intensity_threshold']
 
     def get_barcode_database(self):
-        return barcodedb.SQLiteBarcodeDB(self.dataSet, self)
+        return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
 
     def get_estimated_memory(self):
         return 1000

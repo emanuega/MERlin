@@ -78,7 +78,7 @@ class Decode(analysistask.ParallelAnalysisTask):
                 fragmentIndex, zPositionCount, decodedImages, magnitudeImages)
 
     def get_barcode_database(self) -> barcodedb.BarcodeDB:
-        return barcodedb.SQLiteBarcodeDB(self.dataSet, self)
+        return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
 
     def _save_decoded_images(self, fov: int, zPositionCount: int,
                              decodedImages: List[np.ndarray],

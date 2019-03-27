@@ -27,19 +27,19 @@ def barcode_db_with_barcodes(barcode_db):
 
 
 def generate_random_barcode(fov):
-    randomBarcode = {'barcode': random.getrandbits(32),  \
-        'barcode_id': random.randint(0, 200), \
-        'fov': fov, \
-        'mean_intensity': random.uniform(5, 15), \
-        'max_intensity': random.uniform(5, 15), \
-        'area': random.randint(0, 10), \
-        'mean_distance': random.random(), \
-        'min_distance': random.random(), \
-        'x': random.uniform(0, 2048), \
-        'y': random.uniform(0, 2048), \
-        'z': random.uniform(0, 5), \
-        'global_x': random.uniform(0, 200000), \
-        'global_y': random.uniform(0, 200000), \
+    randomBarcode = {'barcode': random.getrandbits(32),
+        'barcode_id': random.randint(0, 200),
+        'fov': fov,
+        'mean_intensity': random.uniform(5, 15),
+        'max_intensity': random.uniform(5, 15),
+        'area': random.randint(0, 10),
+        'mean_distance': random.random(),
+        'min_distance': random.random(),
+        'x': random.uniform(0, 2048),
+        'y': random.uniform(0, 2048),
+        'z': random.uniform(0, 5),
+        'global_x': random.uniform(0, 200000),
+        'global_y': random.uniform(0, 200000),
         'global_z': random.uniform(0, 5),
         'cell_index': random.randint(0, 5000)}
 
@@ -47,6 +47,7 @@ def generate_random_barcode(fov):
         randomBarcode['intensity_' + str(i)] = random.uniform(5, 15)
 
     return randomBarcode
+
 
 barcode1 = {'barcode': 290,
         'barcode_id': 0,
@@ -80,20 +81,20 @@ barcode1 = {'barcode': 290,
         'intensity_14': 89,
         'intensity_15': 54}
 
-barcode2 = {'barcode': 390,  \
-        'barcode_id': 1, \
-        'fov': 0, \
-        'mean_intensity': 5.2, \
-        'max_intensity': 7.2, \
-        'area': 4, \
-        'mean_distance': 0.2, \
-        'min_distance': 0.07, \
-        'x': 11, \
-        'y': 6, \
-        'z': 12, \
-        'global_x': 81, \
-        'global_y': 28, \
-        'global_z': 15, \
+barcode2 = {'barcode': 390,
+        'barcode_id': 1,
+        'fov': 0,
+        'mean_intensity': 5.2,
+        'max_intensity': 7.2,
+        'area': 4,
+        'mean_distance': 0.2,
+        'min_distance': 0.07,
+        'x': 11,
+        'y': 6,
+        'z': 12,
+        'global_x': 81,
+        'global_y': 28,
+        'global_z': 15,
         'cell_index': 7,
         'intensity_0': 88,
         'intensity_1': 88,
@@ -123,7 +124,6 @@ def test_write_and_read_one_fov(barcode_db):
     assert len(barcode_db.get_barcodes()) == 0
 
 
-
 @pytest.mark.slowtest
 def test_write_and_read_one_fov_many_barcodes(barcode_db):
     assert len(barcode_db.get_barcodes()) == 0
@@ -134,6 +134,7 @@ def test_write_and_read_one_fov_many_barcodes(barcode_db):
     assert np.isclose(barcodesToWrite.values, readBarcodes.values).all()
     barcode_db.empty_database(fov=0)
     assert len(barcode_db.get_barcodes()) == 0
+
 
 def test_multiple_write_one_fov(barcode_db):
     assert len(barcode_db.get_barcodes()) == 0
@@ -155,6 +156,7 @@ def test_multiple_write_one_fov(barcode_db):
     assert np.isclose(readBarcodes.values, combinedBarcodes.values).all()
     barcode_db.empty_database(fov=0)
     assert len(barcode_db.get_barcodes()) == 0
+
 
 def test_write_and_read_multiple_fov(barcode_db):
     assert len(barcode_db.get_barcodes()) == 0
@@ -181,15 +183,15 @@ def test_read_select_columns(barcode_db_with_barcodes):
             barcodesInDB[['mean_intensity', 'x', 'intensity_0']].values, 
             readBarcodes.values).all()
 
-'''
+
 def test_read_filtered_barcodes(barcode_db_with_barcodes):
     barcodesInDB = barcode_db_with_barcodes[1]
     for area in range(0, 11, 2):
         for intensity in np.arange(0, 20, 5.1):
             readBarcodes = barcode_db_with_barcodes[0]\
                     .get_filtered_barcodes(area, intensity)
-            selectBarcodes = barcodesInDB[\
-                    (barcodesInDB['area'] >= area) & \
+            selectBarcodes = barcodesInDB[
+                    (barcodesInDB['area'] >= area) &
                     (barcodesInDB['mean_intensity'] >= intensity)]
             assert len(readBarcodes) == len(selectBarcodes)
             if len(readBarcodes) > 0: 
@@ -198,17 +200,20 @@ def test_read_filtered_barcodes(barcode_db_with_barcodes):
                 selectBarcodes = selectBarcodes.sort_values(
                         by=list(selectBarcodes.columns)[1:], inplace=False)
                 print(str(area) + ' ' + str(intensity))
-                assert np.array_equal(
-                        readBarcodes.values, selectBarcodes.values)
+                assert np.isclose(
+                        readBarcodes.values, selectBarcodes.values).all()
+
 
 def test_get_barcode_intensities_with_area(barcode_db_with_barcodes):
     barcodesInDB = barcode_db_with_barcodes[1]
     for area in range(11):
         readIntensities = barcode_db_with_barcodes[0]\
                 .get_intensities_for_barcodes_with_area(area)
-        selectIntensities = barcodesInDB[barcodesInDB['area'] == area] \
-                ['mean_intensity'].tolist()
-        assert sorted(readIntensities) == sorted(selectIntensities)
+        selectIntensities = barcodesInDB[barcodesInDB['area'] == area]\
+                                        ['mean_intensity'].tolist()
+        assert np.isclose(
+            sorted(readIntensities), sorted(selectIntensities)).all()
+
 
 @pytest.mark.parametrize('test_function, column_name', [
     ('get_barcode_intensities', 'mean_intensity'),
@@ -220,5 +225,4 @@ def test_get_barcode_values(
     barcodesInDB = barcode_db_with_barcodes[1]
     readIntensities = getattr(barcode_db_with_barcodes[0], test_function)()
     selectIntensities = barcodesInDB[column_name].tolist()
-    assert sorted(readIntensities) == sorted(selectIntensities)
-'''
+    assert np.isclose(sorted(readIntensities), sorted(selectIntensities)).all()

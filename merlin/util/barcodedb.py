@@ -3,7 +3,6 @@ from typing import List
 import itertools
 import pandas
 import sqlalchemy
-import numpy as np
 from sqlalchemy import types
 import tables
 
@@ -41,13 +40,6 @@ class BarcodeDB:
         self._analysisTask = analysisTask
 
     def _get_bc_column_types(self):
-        tablesTypeConversion = {
-            types.BigInteger(): tables.UInt64Col(),
-            types.SmallInteger(): tables.UInt16Col(),
-            types.Float(precision=32): tables.Float32Col(),
-            types.Integer(): tables.Int32Col()
-        }
-
         columnInformation = {'barcode': types.BigInteger(),
                              'barcode_id': types.SmallInteger(),
                              'fov': types.SmallInteger(),
@@ -190,10 +182,11 @@ class PyTablesBarcodeDB(BarcodeDB):
             for f in self._dataSet.get_fovs():
                 self.empty_database(f)
 
-        self._dataSet.delete_table('barcode_data', self._analysisTask,
-                                       fov, 'barcodes')
+        self._dataSet.delete_table('barcode_data', self._analysisTask, fov,
+                                   'barcodes')
 
-    def get_barcodes(self, fov=None, columnList=None, chunkSize=None):
+    def get_barcodes(self, fov=None, columnList=None, chunkSize=None)\
+            -> pandas.DataFrame:
 
         if fov is None:
             barcodes = pandas.concat(
@@ -201,8 +194,9 @@ class PyTablesBarcodeDB(BarcodeDB):
                  for x in self._dataSet.get_fovs()])
         else:
             try:
-                with self._dataSet.open_table('r', 'barcode_data',
-                             self._analysisTask, fov, 'barcodes') as tableFile:
+                with self._dataSet.open_table(
+                        'r', 'barcode_data', self._analysisTask,
+                        fov, 'barcodes') as tableFile:
 
                     if '/barcodes' not in tableFile:
                         return pandas.DataFrame()
@@ -221,11 +215,18 @@ class PyTablesBarcodeDB(BarcodeDB):
     def get_filtered_barcodes(
             self, areaThreshold: int, intensityThreshold: float,
             fov: int=None, chunksize: int=None):
-        pass
+        allBarcodes = self.get_barcodes(fov)
+        filteredBarcodes = allBarcodes[
+            (allBarcodes['area'] >= areaThreshold)
+            & (allBarcodes['mean_intensity'] >= intensityThreshold)
+        ]
+
+        return filteredBarcodes
 
     def get_intensities_for_barcodes_with_area(
             self, area: int) -> pandas.Series:
-        pass
+        allBarcodes = self.get_barcodes()
+        return allBarcodes[allBarcodes['area'] == area]['mean_intensity']
 
     def write_barcodes(self, barcodeInformation: pandas.DataFrame,
                        fov: int=None) -> None:
@@ -238,9 +239,8 @@ class PyTablesBarcodeDB(BarcodeDB):
                         barcodeInformation.loc[barcodeInformation['fov'] == f],
                         fov=f)
 
-        with self._dataSet.open_table('a', 'barcode_data',
-                                                self._analysisTask,
-                                                fov, 'barcodes') as tableFile:
+        with self._dataSet.open_table('a', 'barcode_data', self._analysisTask,
+                                      fov, 'barcodes') as tableFile:
 
             if '/barcodes' not in tableFile:
                 tablesTypeConversion = {
@@ -251,7 +251,8 @@ class PyTablesBarcodeDB(BarcodeDB):
                 }
                 tablesType = {k: tablesTypeConversion[type(v)] for k, v in
                               self._get_bc_column_types().items()}
-                barcodeTable = tableFile.create_table('/', 'barcodes', tablesType)
+                barcodeTable = tableFile.create_table(
+                    '/', 'barcodes', tablesType)
 
             else:
                 barcodeTable = tableFile.root.barcodes
@@ -263,15 +264,6 @@ class PyTablesBarcodeDB(BarcodeDB):
                 barcode.append()
 
             barcodeTable.flush()
-
-    def get_barcode_intensities(self) -> pandas.Series:
-        pass
-
-    def get_barcode_areas(self) -> pandas.Series:
-        pass
-
-    def get_barcode_distances(self) -> pandas.Series:
-        pass
 
 
 class SQLiteBarcodeDB(BarcodeDB):
@@ -408,4 +400,3 @@ class SQLiteBarcodeDB(BarcodeDB):
 
         self._get_barcodeDB(fov).execute(
                 'DROP TABLE IF EXISTS barcode_information;')
-

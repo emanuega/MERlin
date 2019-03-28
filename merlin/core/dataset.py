@@ -16,6 +16,7 @@ from typing import Tuple
 from typing import Union
 from typing import Dict
 import h5py
+import tables
 
 from storm_analysis.sa_library import datareader
 import merlin
@@ -224,6 +225,35 @@ class DataSet(object):
         with open(savePath, 'r') as f:
             return pandas.read_csv(f, **kwargs)
 
+    def open_table(self, mode: str, resultName: str, analysisName: str,
+                   resultIndex: int=None, subdirectory: str=None
+                   ) -> tables.file:
+        savePath = self._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory, '.h5')
+        return tables.open_file(savePath, mode=mode)
+
+    def delete_table(self, resultName: str, analysisTask: TaskOrName=None,
+                         resultIndex: int=None, subdirectory: str=None
+                         ) -> None:
+        """Delete an hdf5 file stored in this data set if it exists.
+
+        Args:
+            resultName: the name of the output file
+            analysisTask: the analysis task that should be associated with this
+                hdf5 file. If None, the file is assumed to be in the
+                data set root.
+            resultIndex: index of the dataframe to save or None if no index
+                should be specified
+            subdirectory: subdirectory of the analysis task that the dataframe
+                should be saved to or None if the dataframe should be
+                saved to the root directory for the analysis task.
+        """
+        hPath = self._analysis_result_save_path(
+                resultName, analysisTask, resultIndex, subdirectory, '.h5') \
+
+        if os.path.exists(hPath):
+            os.remove(hPath)
+
     def open_hdf5_file(self, mode: str, resultName: str,
                        analysisTask: TaskOrName=None, resultIndex: int=None,
                        subdirectory: str=None) -> h5py.File:
@@ -271,8 +301,6 @@ class DataSet(object):
             subdirectory: subdirectory of the analysis task that the dataframe
                 should be saved to or None if the dataframe should be
                 saved to the root directory for the analysis task.
-        Returns:
-            a h5py file object connected to the hdf5 file
         """
         hPath = self._analysis_result_save_path(
                 resultName, analysisTask, resultIndex, subdirectory, '.hdf5') \
@@ -359,7 +387,7 @@ class DataSet(object):
                 analysisTask.get_analysis_name())
 
             if not overwrite and not existingTask.get_parameters() \
-                   == analysisTask.get_parameters():
+                    == analysisTask.get_parameters():
                 raise analysistask.AnalysisAlreadyExistsException(
                     ('Analysis task with name %s already exists in this ' +
                      'data set with different parameters.')

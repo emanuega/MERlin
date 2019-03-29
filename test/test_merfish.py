@@ -7,6 +7,7 @@ from merlin.core import executor
 import merlin
 
 
+@pytest.mark.fullrun
 @pytest.mark.slowtest
 def test_merfish_2d_full_local(simple_merfish_data):
     e = executor.LocalExecutor(coreCount=2)

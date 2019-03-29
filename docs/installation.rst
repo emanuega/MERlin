@@ -21,13 +21,13 @@ The contents of an example .env file are below:
 Installing prerequisites
 ==========================
 
-MERlin requires python 3.6 and above. Storm-analysis_ must be installed prior to installing this package. Additionally, the package rtree is not properly installed by pip and should be installed independently. For example, using Anaconda:
+MERlin requires python 3.6 and above. Storm-analysis_ must be installed prior to installing this package. Additionally, the packages rtree and pytables are not properly installed by pip and should be installed independently. For example, using Anaconda:
 
 .. _Storm-analysis: https://github.com/ZhuangLab/storm-analysis
 
 .. code-block:: none
 
-    conda install rtree
+    conda install rtree pytables
 
 Installing MERlin
 ==================

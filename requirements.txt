@@ -17,7 +17,7 @@ Sphinx
 sphinx-rtd-theme
 pyclustering
 pytest
-hdf5>=1.8.15
+h5py>=1.8.15
 numexpr>=2.6.2
 cython>=0.21
 pytables

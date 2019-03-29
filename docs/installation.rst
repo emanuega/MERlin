@@ -4,7 +4,7 @@ Installation
 Specifying paths with a .env file
 ==================================
 
-A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the project root directory:
+A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the MERlin root directory:
 
 * DATA\_HOME - The path of the root directory to the raw data.
 * ANALYSIS\_HOME - The path of the root directory where analysis results should be stored.
@@ -32,7 +32,7 @@ MERlin requires python 3.6 and above. Storm-analysis_ must be installed prior to
 Installing MERlin
 ==================
 
-MERlin can be installed with pip:
+MERlin can be installed with pip from the directory above the MERlin directory:
 
 .. code-block:: none
 

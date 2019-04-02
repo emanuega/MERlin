@@ -52,7 +52,8 @@ Description: Extract barcodes from all field of views.
 Parameters:
 
 * crop\_width -- The number of pixels from each edge of the image to exclude from decoding. 
-* write_decode_images -- Flag indicating if the decoded and intensity images shold be written.
+* write_decode_images -- Flag indicating if the decoded and intensity images should be written.
+# minimum\_area -- The area threshold, below which decoded barcodes are ignored.
 
 filterbarcodes.FilterBarcodes
 ------------------------------

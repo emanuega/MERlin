@@ -21,6 +21,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['crop_width'] = 100
         if 'write_decoded_images' not in self.parameters:
             self.parameters['write_decoded_images'] = True
+        if 'minimum_area' not in self.parameters:
+            self.parameters['minimum_area'] = 0
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.imageDimensions
@@ -111,10 +113,14 @@ class Decode(analysistask.ParallelAnalysisTask):
             segmentTask = self.dataSet.load_analysis_task(
                 self.parameters['segment_task'])
 
+        minimumArea = self.parameters['minimum_area']
+
         for i in range(self.dataSet.get_codebook().get_barcode_count()):
             self.get_barcode_database().write_barcodes(
                     decoder.extract_barcodes_with_index(
                         i, decodedImage, pixelMagnitudes, pixelTraces,
                         distances, fov,
                         self.dataSet.z_index_to_position(zIndex),
-                        self.cropWidth, globalTask, segmentTask), fov=fov)
+                        self.cropWidth, globalTask, segmentTask,
+                        minimumArea
+                    ), fov=fov)

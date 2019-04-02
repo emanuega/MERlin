@@ -113,7 +113,7 @@ class PixelBasedDecoder(object):
             pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
             distances: np.ndarray, fov: int, zPosition: float,
             cropWidth: int, globalAligner=None,
-            segmenter=None) -> pandas.DataFrame:
+            segmenter=None, minimumArea: int=0) -> pandas.DataFrame:
         """Extract the barcode information from the decoded image for barcodes
         that were decoded to the specified barcode index.
 
@@ -136,6 +136,8 @@ class PixelBasedDecoder(object):
                 coordinates to global x,y coordinates
             segmenter: the cell segmenter for assigning a cell for each of the
                 identified barcodes
+            minimumArea: the minimum area of barcodes to identify. Barcodes
+                less than the specified minimum area are ignored.
         Returns:
             a pandas dataframe containing all the barcodes decoded with the
                 specified barcode index
@@ -143,11 +145,13 @@ class PixelBasedDecoder(object):
         properties = measure.regionprops(
                 measure.label(decodedImage == barcodeIndex),
                 intensity_image=pixelMagnitudes)
-        dList = [self._bc_properties_to_dict(p, barcodeIndex, fov, zPosition,
-                                             distances, pixelTraces,
-                                             globalAligner, segmenter)
-                 for p in properties if self._position_within_crop(
-                    p.centroid, cropWidth, decodedImage.shape)]
+        dList = [self._bc_properties_to_dict(
+            p, barcodeIndex, fov, zPosition, distances, pixelTraces,
+            globalAligner, segmenter
+        ) for p in properties
+            if self._position_within_crop(
+                p.centroid, cropWidth, decodedImage.shape)
+            and p.area >= minimumArea]
         barcodeInformation = pandas.DataFrame(dList)
 
         return barcodeInformation

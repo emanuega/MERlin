@@ -22,9 +22,8 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
             self.parameters['fov_per_iteration'] = 10
         if 'estimate_initial_scale_factors_from_cdf' not in self.parameters:
             self.parameters['estimate_initial_scale_factors_from_cdf'] = False
-
-        self.iterationCount = self.parameters['iteration_count']
-        self.fovPerIteration = self.parameters['fov_per_iteration']
+        if 'area_threshold' not in self.parameters:
+            self.parameters['area_threshold'] = 4
 
     def get_estimated_memory(self):
         return 4000*self.coreCount
@@ -38,23 +37,27 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
     def _run_analysis(self):
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
+        iterationCount = self.parameters['iteration_count']
+        fovPerIteration = self.parameters['fov_per_iteration']
 
         codebook = self.dataSet.get_codebook()
         bitCount = codebook.get_bit_count()
         barcodeCount = codebook.get_barcode_count()
         decoder = decoding.PixelBasedDecoder(codebook)
+        decoder.refactorAreaThreshold = self.parameters['area_threshold']
 
-        scaleFactors = np.ones((self.iterationCount, bitCount))
+        scaleFactors = np.ones((iterationCount, bitCount))
         if self.parameters['estimate_initial_scale_factors_from_cdf']:
             scaleFactors[0, :] = self._calculate_initial_scale_factors()
-        barcodeCounts = np.ones((self.iterationCount, barcodeCount))
+
+        barcodeCounts = np.ones((iterationCount, barcodeCount))
         pool = multiprocessing.Pool(processes=self.coreCount)
-        for i in range(1, self.iterationCount):
+        for i in range(1, iterationCount):
             fovIndexes = random.sample(
-                    list(self.dataSet.get_fovs()), self.fovPerIteration)
+                    list(self.dataSet.get_fovs()), fovPerIteration)
             zIndexes = np.random.choice(
                     list(range(len(self.dataSet.get_z_positions()))),
-                    self.fovPerIteration)
+                    fovPerIteration)
             decoder._scaleFactors = scaleFactors[i - 1, :]
             r = pool.starmap(decoder.extract_refactors,
                              ([preprocessTask.get_processed_image_set(

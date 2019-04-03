@@ -36,6 +36,8 @@ class PixelBasedDecoder(object):
         else:
             self._scaleFactors = scaleFactors
 
+        self.refactorAreaThreshold = 4
+
     def decode_pixels(self, imageData: np.ndarray,
                       scaleFactors: np.ndarray=None,
                       distanceThreshold: float=0.5176,
@@ -252,7 +254,6 @@ class PixelBasedDecoder(object):
         Args:
             imageSet: the image stack to decode in order to determine the
                 scale factors
-
         Returns:
             a tupble containing an a array of the scale factors where the i'th
                 entry is the scale factor for bit i and an array indicating
@@ -264,7 +265,8 @@ class PixelBasedDecoder(object):
         barcodesSeen = np.zeros(self._barcodeCount)
         for b in range(self._barcodeCount):
             barcodeRegions = [x for x in measure.regionprops(
-                        measure.label((di == b).astype(np.int))) if x.area >= 4]
+                        measure.label((di == b).astype(np.int)))
+                              if x.area >= self.refactorAreaThreshold]
             barcodesSeen[b] = len(barcodeRegions)
             for br in barcodeRegions:
                 meanPixelTrace = \

@@ -136,7 +136,7 @@ def simple_merfish_data(base_files):
             'merfish_test', 
             dataOrganizationName='test_data_organization.csv',
             codebookName='test_codebook.csv',
-            positionFileName='test_positions')
+            positionFileName='test_positions.csv')
     yield testMERFISHData
 
     shutil.rmtree(merfishDataDirectory)

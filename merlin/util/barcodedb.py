@@ -14,6 +14,7 @@ class BarcodeDB:
 
     For each barcode in the database, the following information is stored:
         barcode - the error corrected binary word corresponding to the barcode
+        assigned_barcode -
         barcode_id - the index of the barcode in the codebook
         fov - the field of view where the barcode was identified
         mean_intensity - the mean intensity in the pixels corresponding to
@@ -209,7 +210,6 @@ class PyTablesBarcodeDB(BarcodeDB):
             except OSError:
                 return pandas.DataFrame()
 
-        print(barcodes)
         return barcodes
 
     def get_filtered_barcodes(

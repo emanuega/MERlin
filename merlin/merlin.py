@@ -29,6 +29,8 @@ def build_parser():
             help='name of the codebook to use')
     parser.add_argument('-m', '--microscope-parameters',
             help='name of the microscope parameters to use')
+    parser.add_argument('-p', '--positions',
+                        help='name of the position file to use')
     parser.add_argument('-n', '--core-count', type=int,
             help='number of cores to use for the analysis')
     parser.add_argument('-t', '--analysis-task', 
@@ -54,7 +56,8 @@ def merlin():
         args.dataset,
         dataOrganizationName=args.data_organization,
         codebookName=args.codebook,
-        microscopeParametersName=args.microscope_parameters
+        microscopeParametersName=args.microscope_parameters,
+        positionFileName=args.positions
     )
 
     parametersHome = m.ANALYSIS_PARAMETERS_HOME

@@ -57,11 +57,15 @@ class LocalExecutor(Executor):
         pool = None
         thread = None
         if isinstance(task, analysistask.ParallelAnalysisTask):
-            pool = multiprocessing.Pool(processes=self.coreCount)
-            fragmentsToRun = [x for x in range(task.fragment_count())
-                              if not task.is_running(x)
-                              and not (task.is_complete(x)
-                                       and not rerunCompleted)]
+            if index is None:
+                pool = multiprocessing.Pool(processes=self.coreCount)
+                fragmentsToRun = [x for x in range(task.fragment_count())
+                                  if not task.is_running(x)
+                                  and not (task.is_complete(x)
+                                           and not rerunCompleted)]
+            else:
+                pool = multiprocessing.Pool(processes=1)
+                fragmentsToRun = [index]
 
             # prevent exceptions from killing a whole process
             def absorb_exception(e):

@@ -38,8 +38,9 @@ class FilterBarcodes(analysistask.AnalysisTask):
 
         barcodeDB = self.get_barcode_database()
         for fov in self.dataSet.get_fovs():
-            for currentBC in decodeTask.get_barcode_database() \
+            currentBC = decodeTask.get_barcode_database() \
                     .get_filtered_barcodes(
-                        self.areaThreshold, self.intensityThreshold, 
-                        fov=fov, chunksize=10000):
-                barcodeDB.write_barcodes(currentBC, fov=fov)
+                        self.areaThreshold,
+                        self.intensityThreshold,
+                        fov=fov)
+            barcodeDB.write_barcodes(currentBC, fov=fov)

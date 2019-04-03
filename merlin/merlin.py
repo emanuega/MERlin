@@ -15,6 +15,10 @@ def build_parser():
     parser.add_argument('--profile', action='store_true', 
             help='enable profiling')
 
+    parser.add_argument('--generate-only', action='store_true',
+                        help='only generate the directory structure and ' +
+                        'do not run any analysis.')
+
     parser.add_argument('dataset', 
             help='directory where the raw data is stored')
     parser.add_argument('-a', '--analysis-parameters', 
@@ -28,7 +32,7 @@ def build_parser():
     parser.add_argument('-n', '--core-count', type=int,
             help='number of cores to use for the analysis')
     parser.add_argument('-t', '--analysis-task', 
-            help='the name of the analysis task to execute. If no ' \
+            help='the name of the analysis task to execute. If no '
                     + 'analysis task is provided, all tasks are executed.')
     parser.add_argument('-i', '--fragment-index', type=int,
             help='the index of the fragment of the analysis task to execute')
@@ -46,25 +50,27 @@ def merlin():
         profiler = cProfile.Profile()
         profiler.enable()
 
-    dataSet = dataset.MERFISHDataSet(args.dataset, 
-            dataOrganizationName=args.data_organization,
-            codebookName=args.codebook,
-            microscopeParametersName=args.microscope_parameters)
+    dataSet = dataset.MERFISHDataSet(
+        args.dataset,
+        dataOrganizationName=args.data_organization,
+        codebookName=args.codebook,
+        microscopeParametersName=args.microscope_parameters
+    )
 
-    
-    parametersHome = m.ANALYSIS_PARAMETERS_HOME
 
-    e = executor.LocalExecutor(coreCount=args.core_count)
-    if args.analysis_parameters:
-        #This is run in all cases that analysis parameters are provided
-        #so that new analysis tasks are generated to match the new parameters
-        with open(os.sep.join(
-                [parametersHome, args.analysis_parameters]), 'r') as f:
-            s = scheduler.Scheduler(dataSet, e, json.load(f))
+    if not args.generate_only:
+        parametersHome = m.ANALYSIS_PARAMETERS_HOME
+        e = executor.LocalExecutor(coreCount=args.core_count)
+        if args.analysis_parameters:
+            #This is run in all cases that analysis parameters are provided
+            #so that new analysis tasks are generated to match the new parameters
+            with open(os.sep.join(
+                    [parametersHome, args.analysis_parameters]), 'r') as f:
+                s = scheduler.Scheduler(dataSet, e, json.load(f))
 
-    if args.analysis_task:
-        e.run(dataSet.load_analysis_task(args.analysis_task), 
-                index=args.fragment_index, join=True)
-    elif args.analysis_parameters:
-        s.start()
+        if args.analysis_task:
+            e.run(dataSet.load_analysis_task(args.analysis_task),
+                    index=args.fragment_index, join=True)
+        elif args.analysis_parameters:
+            s.start()
 

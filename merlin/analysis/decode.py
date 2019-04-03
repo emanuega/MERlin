@@ -13,7 +13,7 @@ class Decode(analysistask.ParallelAnalysisTask):
     An analysis task that extracts barcodes from images.
     """
 
-    def __init__(self, dataSet: dataset.DataSet,
+    def __init__(self, dataSet: dataset.ImageDataSet,
                  parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
@@ -25,7 +25,7 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['minimum_area'] = 0
 
         self.cropWidth = self.parameters['crop_width']
-        self.imageSize = dataSet.imageDimensions
+        self.imageSize = dataSet.get_image_dimensions()
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())

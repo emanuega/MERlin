@@ -797,8 +797,7 @@ class MERFISHDataSet(ImageDataSet):
                 names=['X','Y'])
 
     def _import_positions(self, positionFileName):
-        sourcePath = os.sep.join([merlin.POSITION_HOME, \
-                positionFileName + '.csv'])
+        sourcePath = os.sep.join([merlin.POSITION_HOME, positionFileName])
         destPath = os.sep.join([self.analysisPath, 'positions.csv'])
             
         shutil.copyfile(sourcePath, destPath)    

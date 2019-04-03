@@ -68,8 +68,10 @@ def merlin():
 
     if not args.generate_only:
         if args.analysis_task:
+            print('Running %s' % args.analysis_task)
             e.run(dataSet.load_analysis_task(args.analysis_task),
                     index=args.fragment_index, join=True)
         elif args.analysis_parameters:
+            print('Starting scheduler')
             s.start()
 

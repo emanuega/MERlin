@@ -41,7 +41,8 @@ class PixelBasedDecoder(object):
     def decode_pixels(self, imageData: np.ndarray,
                       scaleFactors: np.ndarray=None,
                       distanceThreshold: float=0.5176,
-                      magnitudeThreshold: float=1):
+                      magnitudeThreshold: float=1,
+                      lowPassSigma: float=1):
         """Assign barcodes to the pixels in the provided image stock.
 
         Each pixel is assigned to the nearest barcode from the codebook if
@@ -61,6 +62,8 @@ class PixelBasedDecoder(object):
                 barcode can be assigned that pixel. All pixels that fall
                 below the magnitude threshold are not assigned a barcode
                 in the decoded image.
+            lowPassSigma: standard deviation for the low pass filter that is
+                applied to the images prior to decoding.
         Returns:
             Four results are returned as a tuple (decodedImage, pixelMagnitudes,
                 normalizedPixelTraces, distances). decodedImage is an image
@@ -77,9 +80,10 @@ class PixelBasedDecoder(object):
             scaleFactors = self._scaleFactors
 
         filteredImages = np.zeros(imageData.shape)
+        filterSize = int(2 * np.ceil(2 * lowPassSigma) + 1)
         for i in range(imageData.shape[0]):
             filteredImages[i, :, :] = cv2.GaussianBlur(
-                imageData[i, :, :], (5, 5), 1)
+                imageData[i, :, :], (filterSize, filterSize), lowPassSigma)
 
         pixelTraces = np.reshape(
                 filteredImages, 

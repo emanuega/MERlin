@@ -44,7 +44,7 @@ Parameters:
 * iteration\_count -- The number of iterations to perform for the optimization.
 * fov\_per\_iteration -- The number of fields of view to decode in each round of optimization.
 * estimate\_initial\_scale\_factors\_from\_cdf -- Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.
-* area\_threshold - The minimum barcode area for barcodes to be used in the calculation of the scale factors.
+* area\_threshold -- The minimum barcode area for barcodes to be used in the calculation of the scale factors.
 
 decode.Decode
 ---------------
@@ -54,8 +54,9 @@ Description: Extract barcodes from all field of views.
 Parameters:
 
 * crop\_width -- The number of pixels from each edge of the image to exclude from decoding. 
-* write_decode_images -- Flag indicating if the decoded and intensity images should be written.
-# minimum\_area -- The area threshold, below which decoded barcodes are ignored.
+* write_decoded\_images -- Flag indicating if the decoded and intensity images should be written.
+* minimum\_area -- The area threshold, below which decoded barcodes are ignored.
+* lowpass\_sigma -- The standard deviation for the low pass filter prior to decoding.
 
 filterbarcodes.FilterBarcodes
 ------------------------------

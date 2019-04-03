@@ -23,6 +23,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['write_decoded_images'] = True
         if 'minimum_area' not in self.parameters:
             self.parameters['minimum_area'] = 0
+        if 'lowpass_sigma' not in self.parameters:
+            self.parameters['lowpass_sigma'] = 1
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.get_image_dimensions()
@@ -55,6 +57,8 @@ class Decode(analysistask.ParallelAnalysisTask):
         optimizeTask = self.dataSet.load_analysis_task(
                 self.parameters['optimize_task'])
 
+        lowPassSigma = self.parameters['lowpass_sigma']
+
         decoder = decoding.PixelBasedDecoder(self.dataSet.get_codebook())
         scaleFactors = optimizeTask.get_scale_factors()
 
@@ -68,7 +72,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             imageSet = imageSet.reshape(
                 (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
-            di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors)
+            di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors,
+                                                   lowPassSigma=lowPassSigma)
             self._extract_and_save_barcodes(
                     decoder, di, pm, npt, d, fragmentIndex, zIndex)
 

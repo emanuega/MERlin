@@ -57,17 +57,16 @@ def merlin():
         microscopeParametersName=args.microscope_parameters
     )
 
+    parametersHome = m.ANALYSIS_PARAMETERS_HOME
+    e = executor.LocalExecutor(coreCount=args.core_count)
+    if args.analysis_parameters:
+        #This is run in all cases that analysis parameters are provided
+        #so that new analysis tasks are generated to match the new parameters
+        with open(os.sep.join(
+                [parametersHome, args.analysis_parameters]), 'r') as f:
+            s = scheduler.Scheduler(dataSet, e, json.load(f))
 
     if not args.generate_only:
-        parametersHome = m.ANALYSIS_PARAMETERS_HOME
-        e = executor.LocalExecutor(coreCount=args.core_count)
-        if args.analysis_parameters:
-            #This is run in all cases that analysis parameters are provided
-            #so that new analysis tasks are generated to match the new parameters
-            with open(os.sep.join(
-                    [parametersHome, args.analysis_parameters]), 'r') as f:
-                s = scheduler.Scheduler(dataSet, e, json.load(f))
-
         if args.analysis_task:
             e.run(dataSet.load_analysis_task(args.analysis_task),
                     index=args.fragment_index, join=True)

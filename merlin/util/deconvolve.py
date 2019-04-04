@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
-from scipy.ndimage import filters
+from scipy import ndimage
 
+from merlin.util import matlab
 
 """
 This module containts utility functions for performing deconvolution on
@@ -38,11 +39,16 @@ def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
     T1 = np.zeros(image.shape, dtype=float)
     T2 = np.zeros(image.shape, dtype=float)
     l = 0
+
+    if windowSize % 2 != 1:
+        gaussianFilter = matlab.matlab_gauss2D(shape=(windowSize, windowSize),
+                                               sigma=sigmaG)
+
     for i in range(iterationCount):
         if i > 1:
             cv2.multiply(T1, T2, tmpMat1)
             cv2.multiply(T2, T2, tmpMat2)
-            l = np.sum(tmpMat1)/(np.sum(tmpMat2) + eps)
+            l = np.sum(tmpMat1) / (np.sum(tmpMat2) + eps)
             l = max(min(l, 1), 0)
         cv2.subtract(J1, J2, Y)
         cv2.addWeighted(J1, 1, Y, l, 0, Y)
@@ -51,7 +57,7 @@ def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
             cv2.GaussianBlur(Y, (windowSize, windowSize), sigmaG, reblurred,
                              borderType=cv2.BORDER_REPLICATE)
         else:
-            filters.gaussian_filter(Y, sigmaG, output=Y, mode='nearest')
+            reblurred = ndimage.convolve(Y, gaussianFilter, mode='constant')
         np.clip(reblurred, eps, None, reblurred)
         cv2.divide(wI, reblurred, imR)
         imR += eps
@@ -59,10 +65,12 @@ def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
             cv2.GaussianBlur(imR, (windowSize, windowSize), sigmaG, imR,
                              borderType=cv2.BORDER_REPLICATE)
         else:
-            filters.gaussian_filter(imR, sigmaG, output=imR, mode='nearest')
-
+            imR = ndimage.convolve(imR, gaussianFilter, mode='constant')
+            imR[imR > 2 ** 16] = 0
         np.copyto(J2, J1)
         np.multiply(Y, imR, out=J1)
         np.copyto(T2, T1)
         np.subtract(J1, Y, out=T1)
     return J1
+
+

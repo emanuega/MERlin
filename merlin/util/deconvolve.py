@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from scipy.ndimage import filters
 
 
 """
@@ -46,13 +47,20 @@ def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
         cv2.subtract(J1, J2, Y)
         cv2.addWeighted(J1, 1, Y, l, 0, Y)
         np.clip(Y, 0, None, Y)
-        cv2.GaussianBlur(Y, (windowSize, windowSize), sigmaG, reblurred,
-                         borderType=cv2.BORDER_REPLICATE)
+        if windowSize % 2 == 1:
+            cv2.GaussianBlur(Y, (windowSize, windowSize), sigmaG, reblurred,
+                             borderType=cv2.BORDER_REPLICATE)
+        else:
+            filters.gaussian_filter(Y, sigmaG, output=Y, mode='nearest')
         np.clip(reblurred, eps, None, reblurred)
         cv2.divide(wI, reblurred, imR)
         imR += eps
-        cv2.GaussianBlur(imR, (windowSize, windowSize), sigmaG, imR,
-                         borderType=cv2.BORDER_REPLICATE)
+        if windowSize % 2 == 1:
+            cv2.GaussianBlur(imR, (windowSize, windowSize), sigmaG, imR,
+                             borderType=cv2.BORDER_REPLICATE)
+        else:
+            filters.gaussian_filter(imR, sigmaG, output=imR, mode='nearest')
+
         np.copyto(J2, J1)
         np.multiply(Y, imR, out=J1)
         np.copyto(T2, T1)

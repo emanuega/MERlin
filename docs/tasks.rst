@@ -32,7 +32,8 @@ Parameters:
 * warp\_task -- The name of the warp task that provides the aligned image stacks.
 * highpass\_pass -- The standard deviation to use for the high pass filter.
 * decon\_sigma -- The standard deviation to use for the Lucy-Richardson deconvolution.
-* docon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image.
+* decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image.
+* decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
 
 optimize.Optimize
 ------------------

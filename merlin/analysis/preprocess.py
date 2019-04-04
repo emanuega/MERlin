@@ -44,6 +44,9 @@ class DeconvolutionPreprocess(Preprocess):
             self.parameters['highpass_sigma'] = 3
         if 'decon_sigma' not in self.parameters:
             self.parameters['decon_sigma'] = 2
+        if 'decon_filter_size' not in self.parameters:
+            self.parameters['decon_filter_size'] = \
+                int(2 * np.ceil(2 * self.parameters['decon_sigma']) + 1)
         if 'decon_iterations' not in self.parameters:
             self.parameters['decon_iterations'] = 20
 
@@ -92,7 +95,7 @@ class DeconvolutionPreprocess(Preprocess):
                 (self.dataSet.get_codebook().get_bit_count(),
                     len(histogramBins)-1))
         highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
-        deconFilterSize = int(2 * np.ceil(2 * self._deconSigma) + 1)
+        deconFilterSize = self.parameters['decon_filter_size']
 
         with self.dataSet.writer_for_analysis_images(
                 self, 'processed_image', fragmentIndex) as outputTif:

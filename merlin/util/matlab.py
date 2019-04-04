@@ -1,5 +1,5 @@
 import numpy as np
-from types import Tuple
+from typing import Tuple
 
 
 """

@@ -54,7 +54,6 @@ class DeconvolutionPreprocess(Preprocess):
         self._deconSigma = self.parameters['decon_sigma']
         self._deconIterations = self.parameters['decon_iterations']
 
-
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
     

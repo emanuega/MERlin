@@ -50,7 +50,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             scaleFactors = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration']).get_scale_factors()
 
-        fovIndex = random.sample(list(self.dataSet.get_fovs()))
+        fovIndex = np.random.choice(list(self.dataSet.get_fovs()))
         zIndex = np.random.choice(
             list(range(len(self.dataSet.get_z_positions()))))
 

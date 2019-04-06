@@ -42,4 +42,5 @@ class ExportBarcodes(analysistask.AnalysisTask):
                     barcodeData['barcode_id'].isin(
                         codebook.get_coding_indexes())]
 
-        self.dataSet.save_dataframe_to_csv(barcodeData, 'barcodes', self)
+        self.dataSet.save_dataframe_to_csv(barcodeData, 'barcodes', self,
+                                           index=False)

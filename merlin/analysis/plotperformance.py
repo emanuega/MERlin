@@ -54,7 +54,7 @@ class PlotPerformance(analysistask.AnalysisTask):
     def _plot_barcode_intensity_distribution(self):
         bcIntensities = self.decodeTask.get_barcode_database() \
                 .get_barcode_intensities()
-        fig = plt.figure(figsize=(4,4))
+        fig = plt.figure(figsize=(4, 4))
         plt.hist(np.log10(bcIntensities), bins=500)
         plt.xlabel('Mean intensity ($log_{10}$)')
         plt.ylabel('Count')
@@ -65,7 +65,7 @@ class PlotPerformance(analysistask.AnalysisTask):
     def _plot_barcode_area_distribution(self):
         bcAreas = self.decodeTask.get_barcode_database() \
                 .get_barcode_areas()
-        fig = plt.figure(figsize=(4,4))
+        fig = plt.figure(figsize=(4, 4))
         plt.hist(bcAreas, bins=np.arange(15))
         plt.xlabel('Barcode area (pixels)')
         plt.ylabel('Count')
@@ -88,12 +88,14 @@ class PlotPerformance(analysistask.AnalysisTask):
     def _plot_barcode_intensity_area_violin(self):
         barcodeDB = self.decodeTask.get_barcode_database()
         intensityData = [np.log10(
-            barcodeDB.get_intensities_for_barcodes_with_area(x)) \
+            barcodeDB.get_intensities_for_barcodes_with_area(x))
                     for x in range(1, 15)]
+        nonzeroIntensities = [x for x in intensityData if len(x) > 0]
+        nonzeroIndexes = [i+1 for i, x in enumerate(intensityData)
+                          if len(x) > 0]
         fig = plt.figure(figsize=(8, 4))
-        # This will cause an error if one of the lists in intensity data
-        # is empty.
-        plt.violinplot(intensityData, showextrema=False, showmedians=True)
+        plt.violinplot(nonzeroIntensities, nonzeroIndexes, showextrema=False,
+                       showmedians=True)
         plt.axvline(x=self.filterTask.parameters['area_threshold']-0.5,
                 color='green', linestyle=':')
         plt.axhline(y=np.log10(

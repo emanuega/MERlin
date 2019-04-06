@@ -50,9 +50,18 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             scaleFactors = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration']).get_scale_factors()
 
+        self.dataSet.save_numpy_analysis_result(
+            scaleFactors, 'previous_scale_factors', self.analysisName,
+            resultIndex=fragmentIndex)
+
         fovIndex = np.random.choice(list(self.dataSet.get_fovs()))
         zIndex = np.random.choice(
             list(range(len(self.dataSet.get_z_positions()))))
+
+        self.dataSet.save_numpy_analysis_result(
+            np.array([fovIndex, zIndex]), 
+                'select_frame', self.analysisName,
+            resultIndex=fragmentIndex)
 
         decoder._scaleFactors = scaleFactors
         refactors, barcodesSeen = decoder.extract_refactors(
@@ -63,9 +72,6 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             resultIndex=fragmentIndex)
         self.dataSet.save_numpy_analysis_result(
             barcodesSeen, 'barcode_counts', self.analysisName,
-            resultIndex=fragmentIndex)
-        self.dataSet.save_numpy_analysis_result(
-            scaleFactors, 'previous_scale_factors', self.analysisName,
             resultIndex=fragmentIndex)
 
     def _calculate_initial_scale_factors(self) -> np.ndarray:
@@ -100,14 +106,19 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             return self.dataSet.load_numpy_analysis_result(
                 'scale_factors', self.analysisName)
         except FileNotFoundError:
-            refactors = [
-                self.dataSet.load_numpy_analysis_result(
-                    'previous_scale_factors', self.analysisName, resultIndex=i)
-                * self.dataSet.load_numpy_analysis_result(
+            refactors = np.array([self.dataSet.load_numpy_analysis_result(
                     'refactors', self.analysisName, resultIndex=i)
-                for i in range(self.parameters['fov_per_iteration'])]
+                for i in range(self.parameters['fov_per_iteration'])])
 
-            scaleFactors = np.mean(refactors, axis=0)
+            # Don't rescale bits that were never seen
+            refactors[refactors==0] = 1
+
+            previousFactors = np.array([self.dataSet.load_numpy_analysis_result(
+                'previous_scale_factors', self.analysisName, resultIndex=i)
+                for i in range(self.parameters['fov_per_iteration'])])
+
+            scaleFactors = np.nanmedian(
+                    np.multiply(refactors, previousFactors), axis=0)
 
             self.dataSet.save_numpy_analysis_result(
                 scaleFactors, 'scale_factors', self.analysisName)
@@ -122,7 +133,14 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             scale factor corresponding to the i'th bit in the j'th
             iteration.
         """
-        return np.array([self.get_scale_factors()])
+        if 'previous_iteration' not in self.parameters:
+            return np.array([self.get_scale_factors()])
+        else:
+            previousHistory = self.dataSet.load_analysis_task(
+                self.parameters['previous_iteration']
+            ).get_scale_factor_history()
+            return np.append(previousHistory, [self.get_scale_factors()],
+                    axis=0)
 
     def get_barcode_count_history(self) -> np.ndarray:
         """Get the set of barcode counts for each iteration of the
@@ -133,9 +151,18 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             barcode count corresponding to the i'th barcode in the j'th
             iteration.
         """
-        countsPerFOV = [self.dataSet.load_numpy_analysis_result(
+        countsMean = np.mean([self.dataSet.load_numpy_analysis_result(
             'barcode_counts', self.analysisName, resultIndex=i)
-            for i in range(self.parameters['fov_per_iteration'])]
+            for i in range(self.parameters['fov_per_iteration'])], axis=0)
+
+        if 'previous_iteration' not in self.parameters:
+            return np.array([countsMean])
+        else:
+            previousHistory = self.dataSet.load_analysis_task(
+                self.parameters['previous_iteration']
+            ).get_barcode_count_history()
+            return np.append(previousHistory, [countsMean],
+                    axis=0)
 
         return np.array([np.mean(countsPerFOV, axis=0)])
 

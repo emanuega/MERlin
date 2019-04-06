@@ -85,19 +85,25 @@ class PixelBasedDecoder(object):
             filteredImages[i, :, :] = cv2.GaussianBlur(
                 imageData[i, :, :], (filterSize, filterSize), lowPassSigma)
 
+
         pixelTraces = np.reshape(
                 filteredImages, 
                 (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
         scaledPixelTraces = np.transpose(
                 np.array([p/s for p, s in zip(pixelTraces, scaleFactors)]))
+
         pixelMagnitudes = np.array(
                 [np.linalg.norm(x) for x in scaledPixelTraces])
         pixelMagnitudes[pixelMagnitudes == 0] = 1
+
         normalizedPixelTraces = scaledPixelTraces/pixelMagnitudes[:, None]
-        neighbors = NearestNeighbors(n_neighbors=1)
+
+        neighbors = NearestNeighbors(n_neighbors=1, algorithm='ball_tree')
         neighbors.fit(self._decodingMatrix)
+
         distances, indexes = neighbors.kneighbors(
                 normalizedPixelTraces, return_distance=True)
+
         decodedImage = np.reshape(
             np.array([i[0] if d[0] <= distanceThreshold else -1
                       for i, d in zip(indexes, distances)]),

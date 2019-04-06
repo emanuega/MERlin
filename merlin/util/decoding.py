@@ -259,7 +259,7 @@ class PixelBasedDecoder(object):
             imageSet: the image stack to decode in order to determine the
                 scale factors
         Returns:
-            a tupble containing an a array of the scale factors where the i'th
+            a tuple containing an a array of the scale factors where the i'th
                 entry is the scale factor for bit i and an array indicating
                 the abundance of each barcode determined during the decoding
         """

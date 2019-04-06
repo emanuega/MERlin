@@ -42,5 +42,5 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
                 .get_filtered_barcodes(
                     areaThreshold,
                     intensityThreshold,
-                    fov=fov)
-        barcodeDB.write_barcodes(currentBC, fov=fov)
+                    fov=fragmentIndex)
+        barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)

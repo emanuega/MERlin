@@ -135,13 +135,14 @@ class Codebook(object):
         return self._data[
                 self._data['name'].str.contains('Blank', case=False)].index
 
-    def get_names(self) -> List[str]:
-        """"Get the names of the genes represented in this codebook
+    def get_gene_names(self) -> List[str]:
+        """"Get the names of the genes represented in this codebook.
 
         Returns:
-            A list of the gene names
+            A list of the gene names. The list does not contain the names of
+            the blanks.
         """
-        return self._data['name'].tolist()
+        return self._data.loc[self.get_coding_indexes()]['name'].tolist()
 
     def get_name_for_barcode_index(self, index: int) -> str:
         """Get the gene name for the barcode with the specified index.

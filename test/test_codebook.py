@@ -47,7 +47,8 @@ def test_codebook_get_barcodes(simple_merfish_data):
 
 
 def test_codebook_get_name(simple_merfish_data):
-    names = simple_merfish_data.get_codebook().get_names()
+    names = simple_merfish_data.get_codebook().get_gene_names()
+    codebook = simple_merfish_data.get_codebook()
     for n in names:
         assert n == codebook.get_name_for_barcode_index(
             codebook.get_barcode_index_for_name(n))

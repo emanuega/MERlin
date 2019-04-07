@@ -42,5 +42,12 @@ def test_codebook_get_barcodes(simple_merfish_data):
     bcSetNoBlanks = simple_merfish_data.get_codebook().get_barcodes(
             ignoreBlanks=True)
     assert len(bcSetNoBlanks) == 70
-    assert all([len(x)==16 for x in bcSetNoBlanks])
-    assert all([np.sum(x)==4 for x in bcSetNoBlanks])
+    assert all([len(x) == 16 for x in bcSetNoBlanks])
+    assert all([np.sum(x) == 4 for x in bcSetNoBlanks])
+
+
+def test_codebook_get_name(simple_merfish_data):
+    names = simple_merfish_data.get_codebook().get_names()
+    for n in names:
+        assert n == codebook.get_name_for_barcode_index(
+            codebook.get_barcode_index_for_name(n))

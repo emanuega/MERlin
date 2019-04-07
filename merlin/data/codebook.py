@@ -3,6 +3,7 @@ import csv
 import numpy as np
 import pandas
 from typing import List
+from typing import Union
 
 import merlin
 
@@ -133,3 +134,32 @@ class Codebook(object):
         """
         return self._data[
                 self._data['name'].str.contains('Blank', case=False)].index
+
+    def get_names(self) -> List[str]:
+        """"Get the names of the genes represented in this codebook
+
+        Returns:
+            A list of the gene names
+        """
+        return self._data['name'].tolist()
+
+    def get_name_for_barcode_index(self, index: int) -> str:
+        """Get the gene name for the barcode with the specified index.
+
+        Returns:
+            The gene name
+        """
+        return self._data.loc[index]['name']
+
+    def get_barcode_index_for_name(self, name: str) -> Union[int, None]:
+        """Get the barcode index for the barcode with the specified name.
+
+        Returns:
+            The barcode index. If name appears more than once, the index of
+            the first appearance is returned. If name is not in this codebook
+            then None is returned.
+        """
+        matches = self._data[self._data['name'].str.match(name)]
+        if len(matches) == 0:
+            return None
+        return matches.index[0]

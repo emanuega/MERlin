@@ -69,7 +69,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         correlation = np.corrcoef(np.log(fpkmCounts + 1), np.log(barcodeCounts + 1))
         plt.title('%s (r=%0.2f)' % (self.parameters['fpkm_file'],
                                     correlation[0, 1]))
-        self.dataSet.save_figure(self, fig, 'barcode_intensity_distribution')
+        self.dataSet.save_figure(self, fig, 'fpkm_correlation')
 
     # TODO - the functions in this class have too much repeated code
     # TODO - for the following 4 plots, I can add a line indicating the

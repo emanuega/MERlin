@@ -50,7 +50,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         return [self.parameters['decode_task'], self.parameters['filter_task']]
 
     def _plot_fpkm_correlation(self):
-        fpkmPath = os.sep.join(merlin.FPKM_HOME, self.parameters['fpkm_path'])
+        fpkmPath = os.sep.join([merlin.FPKM_HOME, self.parameters['fpkm_file']])
         fpkm = pandas.read_csv(fpkmPath, index_col='name')
         barcodes = self.filterTask.get_barcode_database().get_barcodes()
         codebook = self.dataSet.get_codebook()
@@ -70,7 +70,6 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.title('%s (r=%0.2f)' % (self.parameters['fpkm_path'],
                                     correlation[0, 1]))
         self.dataSet.save_figure(self, fig, 'barcode_intensity_distribution')
-
 
     # TODO - the functions in this class have too much repeated code
     # TODO - for the following 4 plots, I can add a line indicating the
@@ -270,6 +269,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         self._plot_barcode_abundances(bc, 'flitered_barcode_abundances')
 
     def _run_analysis(self):
+        if 'fpkm_file' in self.parameters:
+            self._plot_fpkm_correlation()
         self._plot_barcode_intensity_distribution()
         self._plot_barcode_area_distribution()
         self._plot_barcode_distance_distribution()

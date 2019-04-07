@@ -84,8 +84,11 @@ class GenerateMosaic(analysistask.AnalysisTask):
             if isinstance(self.parameters['data_channels'], str):
                 dataChannels = [dataOrganization.get_data_channel_index(
                     self.parameters['data_channels'])]
+            elif isinstance(self.parameters['data_channels'], int):
+                dataChannels = [self.parameters['data_channels']]
             else:
                 dataChannels = [dataOrganization.get_data_channel_index(x)
+                                if isinstance(x, str) else x
                                 for x in self.parameters['data_channels']]
         else:
             dataChannels = dataOrganization.get_data_channels()

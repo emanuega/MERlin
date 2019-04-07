@@ -85,7 +85,7 @@ class DataSet(object):
 
     def get_analysis_image_set(
             self, analysisTask: TaskOrName, imageBaseName: str,
-            imageIndex: int) -> np.ndarray:
+            imageIndex: int=None) -> np.ndarray:
         """Get an analysis image set saved in the analysis for this data set.
 
         Args:

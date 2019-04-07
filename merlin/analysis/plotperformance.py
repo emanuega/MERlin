@@ -111,7 +111,7 @@ class PlotPerformance(analysistask.AnalysisTask):
     def _plot_barcode_intensity_area_violin(self):
         barcodeDB = self.decodeTask.get_barcode_database()
         intensityData = [np.log10(
-            barcodeDB.get_intensities_for_barcodes_with_area(x))
+            barcodeDB.get_intensities_for_barcodes_with_area(x).tolist())
                     for x in range(1, 15)]
         nonzeroIntensities = [x for x in intensityData if len(x) > 0]
         nonzeroIndexes = [i+1 for i, x in enumerate(intensityData)

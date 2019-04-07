@@ -44,7 +44,6 @@ class Warp(analysistask.ParallelAnalysisTask):
                 subdirectory='transformations')
         return transformations[dataChannel]
 
-
     def get_aligned_image_set(self, fov: int) -> np.ndarray:
         """Get the set of transformed images for the specified fov.
 

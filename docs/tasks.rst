@@ -92,4 +92,6 @@ Description: Assembles the images from each field of view into a low resolution 
 Parameters:
 
 * microns\_per\_pixel -- The number of microns to correspond with a pixel in the mosaic.
+* data\_channels -- The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.
+* z\_indexes -- The z index to export. If not provided all z indexes are exported.
 

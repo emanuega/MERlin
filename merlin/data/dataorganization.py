@@ -70,7 +70,7 @@ class DataOrganization(object):
         """Get the data channels for the MERFISH data set.
 
         Returns:
-            A list of the data channels
+            A list of the data channel indexes
         """
         return np.array(self.data.index)
 

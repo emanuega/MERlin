@@ -134,7 +134,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         bcDF = pandas.DataFrame(self.dataSet.get_codebook().get_barcodes())
 
         bc = self.filterTask.get_barcode_database().get_barcodes()
-        bitCount = self.dataSet.get_bit_count()
+        bitCount = self.dataSet.get_codebook().get_bit_count()
         onIntensities = [bc[bc['barcode_id'].isin(bcDF[bcDF[i] == 1].index)]
                          ['intensity_%i' % i].tolist() for i in range(bitCount)]
         offIntensities = [bc[bc['barcode_id'].isin(bcDF[bcDF[i] == 0].index)]

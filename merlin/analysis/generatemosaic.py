@@ -42,7 +42,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
             specified in the provided parameters file or in the data
             organization if no data channels are specified.
         """
-        return self.dataSet.get_analysis_image(self, 'mosaic')
+        return self.dataSet.get_analysis_image_set(self, 'mosaic')
 
     def _micron_to_mosaic_pixel(self, micronCoordinates,
                                 micronExtents) -> Tuple[int, int]:

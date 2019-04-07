@@ -238,21 +238,22 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'optimization_barcode_counts')
 
     def _plot_barcode_abundances(self, barcodes, outputName):
-        uniqueBarcodes = np.unique(barcodes['barcode_id'])
-        bcCounts = [len(barcodes[barcodes['barcode_id']==x]) \
-                for x in uniqueBarcodes]
-
         codebook = self.dataSet.get_codebook()
         blankIDs = codebook.get_blank_indexes()
 
+        uniqueBarcodes, bcCounts = np.unique(barcodes['barcode_id'],
+                                             return_counts=True)
         sortedIndexes = np.argsort(bcCounts)[::-1]
-        fig = plt.figure(figsize=(12,5))
-        barList = plt.bar(np.arange(len(bcCounts)), 
-                height=np.log10([bcCounts[x] for x in sortedIndexes]), 
+
+        fig = plt.figure(figsize=(12, 5))
+        plt.bar(np.arange(len(bcCounts)),
+                height=np.log10([bcCounts[x] for x in sortedIndexes]),
                 width=1, color=(0.2, 0.2, 0.2))
-        for i,x in enumerate(sortedIndexes):
-            if x in blankIDs:
-                barList[i].set_color('r')
+        plt.bar([i for i, x in enumerate(sortedIndexes) if
+                 uniqueBarcodes[x] in blankIDs],
+                height=np.log10([bcCounts[x] for x in sortedIndexes if
+                                 uniqueBarcodes[x] in blankIDs]),
+                width=2, color='r')
         plt.xlabel('Sorted barcode index')
         plt.ylabel('Count (log10)')
         plt.title('Abundances for coding (gray) and blank (red) barcodes')

@@ -16,7 +16,7 @@ POSITION_HOME = os.sep.join(
         [PARAMETERS_HOME, 'positions'])
 MICROSCOPE_PARAMETERS_HOME = os.sep.join(
         [PARAMETERS_HOME, 'microscope_parameters'])
-
+FPKM_HOME = os.sep.join([PARAMETERS_HOME, 'fpkm'])
 
 def version():
     import pkg_resources

@@ -1,6 +1,7 @@
 import os
 from matplotlib import pyplot as plt
 from matplotlib import patches
+import pandas
 import merlin
 plt.style.use(
         os.sep.join([os.path.dirname(merlin.__file__),
@@ -47,6 +48,29 @@ class PlotPerformance(analysistask.AnalysisTask):
 
     def get_dependencies(self):
         return [self.parameters['decode_task'], self.parameters['filter_task']]
+
+    def _plot_fpkm_correlation(self):
+        fpkmPath = os.sep.join(merlin.FPKM_HOME, self.parameters['fpkm_path'])
+        fpkm = pandas.read_csv(fpkmPath, index_col='name')
+        barcodes = self.filterTask.get_barcode_database().get_barcodes()
+        codebook = self.dataSet.get_codebook()
+
+        barcodeIndexes = codebook.get_coding_indexes()
+        barcodeCounts = np.array(
+            [np.sum(barcodes['barcode_id'] == i) for i in barcodeIndexes])
+        fpkmCounts = np.array(
+            [fpkm.loc[codebook.get_name_for_barcode_index(i)]['FPKM'] for
+             i in barcodeIndexes])
+
+        fig = plt.figure(figsize=(4, 4))
+        plt.loglog(fpkmCounts, barcodeCounts, '.', alpha=0.5)
+        plt.xlabel('Detected counts')
+        plt.ylabel('FPKM')
+        correlation = np.corrcoef(np.log(fpkmCounts + 1), np.log(barcodeCounts + 1))
+        plt.title('%s (r=%0.2f)' % (self.parameters['fpkm_path'],
+                                    correlation[0, 1]))
+        self.dataSet.save_figure(self, fig, 'barcode_intensity_distribution')
+
 
     # TODO - the functions in this class have too much repeated code
     # TODO - for the following 4 plots, I can add a line indicating the

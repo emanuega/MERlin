@@ -131,31 +131,30 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_intensity_area_violin')
 
     def _plot_bitwise_intensity_violin(self):
+        bcDF = pandas.DataFrame(self.dataSet.get_codebook().get_barcodes())
+
         bc = self.filterTask.get_barcode_database().get_barcodes()
         bitCount = self.dataSet.get_bit_count()
+        onIntensities = [bc[bc['barcode_id'].isin(bcDF[bcDF[i] == 1].index)]
+                         ['intensity_%i' % i].tolist() for i in range(bitCount)]
+        offIntensities = [bc[bc['barcode_id'].isin(bcDF[bcDF[i] == 0].index)]
+                          ['intensity_%i' % i].tolist() for i in
+                          range(bitCount)]
+        fig = plt.figure(figsize=(bitCount / 2, 5))
+        onViolin = plt.violinplot(onIntensities,
+                                  np.arange(1, bitCount + 1) - 0.25,
+                                  showextrema=False, showmedians=True,
+                                  widths=0.35)
+        offViolin = plt.violinplot(offIntensities,
+                                   np.arange(1, bitCount + 1) + 0.25,
+                                   showextrema=False, showmedians=True,
+                                   widths=0.35)
+        plt.xticks(np.arange(1, bitCount + 1))
+        plt.xlabel('Bit')
+        plt.ylabel('Normalized intensity')
+        plt.title('Bitwise intensity distributions')
+        plt.legend([onViolin['bodies'][0], offViolin['bodies'][0]], ['1', '0'])
 
-        zeroBitSet = [[i for i,x in zip(
-                        bc['intensity_' + str(j)], bc['barcode']) \
-                    if not binary.k_bit_set(x, j)] for j in range(bitCount)]
-        oneBitSet = [[i for i,x in zip(
-                        bc['intensity_' + str(j)], bc['barcode']) \
-                    if binary.k_bit_set(x, j)] for j in range(bitCount)]
-
-        fig = plt.figure(figsize=(15,5))
-        zeroViolin = plt.violinplot(
-                zeroBitSet, np.arange(bitCount)-0.15, widths=0.3, 
-                showmedians=True)
-        zeroPatch = patches.Patch(
-                color=zeroViolin['bodies'][0].get_facecolor()[0], label='0')
-        oneViolin = plt.violinplot(
-                oneBitSet, np.arange(bitCount)+0.15, widths=0.3, 
-                showmedians=True)
-        onePatch = patches.Patch(
-                color=oneViolin['bodies'][0].get_facecolor()[0], label='1')
-        plt.xticks(np.arange(bitCount))
-        plt.xlabel('Bit index')
-        plt.ylabel('Normalized and scaled intensity')
-        plt.title('Bit-wise intensity distributions for filtered barcodes')
         self.dataSet.save_figure(self, fig, 'barcode_bitwise_intensity_violin')
 
     def _plot_blank_distribution(self):
@@ -271,6 +270,7 @@ class PlotPerformance(analysistask.AnalysisTask):
     def _run_analysis(self):
         if 'fpkm_file' in self.parameters:
             self._plot_fpkm_correlation()
+        self._plot_bitwise_intensity_violin()
         self._plot_barcode_intensity_distribution()
         self._plot_barcode_area_distribution()
         self._plot_barcode_distance_distribution()

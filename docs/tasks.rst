@@ -91,7 +91,8 @@ Description: Assembles the images from each field of view into a low resolution 
 
 Parameters:
 
-* microns\_per\_pixel -- The number of microns to correspond with a pixel in the mosaic.
+* microns\_per\_pixel -- The number of microns to correspond with a pixel in the mosaic. If set to "full_resolution", the mosaic is generated with the same resolution as the input images.
 * data\_channels -- The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.
 * z\_indexes -- The z index to export. If not provided all z indexes are exported.
+* fov\_crop\_width -- The number of pixels to remove from each edge of each fov before inserting it into the mosaic.
 

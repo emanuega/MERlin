@@ -23,8 +23,10 @@ class GenerateMosaic(analysistask.AnalysisTask):
         if 'fov_crop_width' not in self.parameters:
             self.parameters['fov_crop_width'] = 0
 
-
-        self.mosaicMicronsPerPixel = self.parameters['microns_per_pixel'] 
+        if self.parameters['microns_per_pixel'] == 'full_resolution':
+            self.mosaicMicronsPerPixel = self.dataSet.get_microns_per_pixel()
+        else:
+            self.mosaicMicronsPerPixel = self.parameters['microns_per_pixel']
 
     def get_estimated_memory(self):
         return 10000

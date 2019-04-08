@@ -498,6 +498,42 @@ class DataSet(object):
                               fragmentIndex: int=None) -> None:
         self._record_analysis_event(analysisTask, 'error', fragmentIndex)
 
+    def get_analysis_start_time(self, analysisTask: analysistask.AnalysisTask,
+                                fragmentIndex: int=None) -> float:
+        """Get the time that this analysis task started
+
+        Returns:
+            The start time for the analysis task execution in seconds since
+            the epoch in UTC.
+        """
+        with open(self._analysis_status_file(analysisTask, 'start', 
+                                             fragmentIndex), 'r') as f:
+            return float(f.read())
+
+    def get_analysis_complete_time(self, 
+                                   analysisTask: analysistask.AnalysisTask,
+                                   fragmentIndex: int=None) -> float:
+        """Get the time that this analysis task completed.
+
+        Returns:
+            The completion time for the analysis task execution in seconds since
+            the epoch in UTC.
+        """
+        with open(self._analysis_status_file(analysisTask, 'done', 
+                                             fragmentIndex), 'r') as f:
+            return float(f.read())
+
+    def get_analysis_elapsed_time(self, analysisTask: analysistask.AnalysisTask,
+                                  fragmentIndex: int=None) -> float:
+        """Get the time that this analysis took to complete.
+
+        Returns:
+            The elapsed time for the analysis task execution in seconds.
+            Returns None if the analysis task has not yet completed.
+        """
+        return self.get_analysis_complete_time(analysisTask, fragmentIndex) -\
+               self.get_analysis_start_time(analysisTask, fragmentIndex)
+
     def _record_analysis_event(
             self, analysisTask: analysistask.AnalysisTask, eventName: str,
             fragmentIndex: int=None) -> None:

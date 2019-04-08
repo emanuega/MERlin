@@ -20,6 +20,9 @@ class GenerateMosaic(analysistask.AnalysisTask):
 
         if 'microns_per_pixel' not in self.parameters:
             self.parameters['microns_per_pixel'] = 3
+        if 'fov_crop_width' not in self.parameters:
+            self.parameters['fov_crop_width'] = 0
+
 
         self.mosaicMicronsPerPixel = self.parameters['microns_per_pixel'] 
 
@@ -101,6 +104,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
         imageDescription = self.dataSet.analysis_tiff_description(
             len(zIndexes), len(dataChannels))
 
+        cropWidth = self.parameters['fov_crop_width']
         with self.dataSet.writer_for_analysis_images(
                 self, 'mosaic') as outputTif:
             for d in dataChannels:
@@ -110,6 +114,12 @@ class GenerateMosaic(analysistask.AnalysisTask):
                                 mosaicDimensions, axis=0), dtype=np.uint16)
                     for f in self.dataSet.get_fovs():
                         inputImage = warpTask.get_aligned_image(f, d, z)
+                        if cropWidth > 0:
+                            inputImage[:cropWidth, :] = 0
+                            inputImage[inputImage.shape[0]-cropWidth:, :] = 0
+                            inputImage[:, :cropWidth] = 0
+                            inputImage[:, inputImage.shape[0]-cropWidth:] = 0
+
                         transformedImage = self._transform_image_to_mosaic(
                             inputImage, f, alignTask, micronExtents,
                             mosaicDimensions)

@@ -1,6 +1,6 @@
 # MERlin
 
-MERlin decodes and visualizes MERFISH datasets.
+MERlin decodes MERFISH datasets.
 
 # Documentation
 

@@ -138,7 +138,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         return scaleFactors
 
     def _get_previous_chromatic_transformations(self)\
-            -> Dict[Dict[transform.SimilarityTransform]]:
+            -> Dict[str, Dict[str, transform.SimilarityTransform]]:
         if 'previous_iteration' not in self.parameters:
             usedColors = self._get_used_colors()
             chromaticTransformations = {c: transform.SimilarityTransform()
@@ -159,7 +159,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         return transform.warp(imageIn, tForm, preserve_range=True)
 
     def get_chromatic_corrections(self) \
-            -> Dict[Dict[transform.SimilarityTransform]]:
+            -> Dict[str, Dict[str, transform.SimilarityTransform]]:
         """Get the estimated chromatic corrections from this optimization
         iteration.
 

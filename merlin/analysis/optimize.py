@@ -151,7 +151,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         return chromaticTransformations
 
     def _warp_image(self, imageIn, index, tset, referenceColor):
-        imageColor = self.dataSet.data.get_data_organization().\
+        imageColor = self.dataSet.get_data_organization().\
                          get_data_channel_color(index)
         if imageColor == referenceColor:
             return imageIn

@@ -93,7 +93,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         sRD = [radial_distance(x, y) for x, y in zip(sBC['x'], sBC['y'])]
         mRD = [radial_distance(x, y) for x, y in zip(mBC['x'], mBC['y'])]
 
-        plt.figure(figsize=(7, 7))
+        fig = plt.figure(figsize=(7, 7))
 
         countsS, binsS = np.histogram(sRD, bins=np.arange(0, 1000, 5))
         radialCountsS = countsS[1:]
@@ -107,6 +107,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.legend(['Single color barcodes', 'Multi color barcodes'])
         plt.xlabel('Radius')
         plt.ylabel('Normalized radial barcode density')
+        self.dataSet.save_figure(self, fig, 'barcode_radial_density')
 
     # TODO - the functions in this class have too much repeated code
     # TODO - for the following 4 plots, I can add a line indicating the
@@ -309,6 +310,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         if 'fpkm_file' in self.parameters:
             self._plot_fpkm_correlation()
         self._plot_bitwise_intensity_violin()
+        self._plot_radial_density()
         self._plot_barcode_intensity_distribution()
         self._plot_barcode_area_distribution()
         self._plot_barcode_distance_distribution()

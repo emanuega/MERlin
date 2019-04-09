@@ -141,8 +141,9 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             -> Dict[str, Dict[str, transform.SimilarityTransform]]:
         if 'previous_iteration' not in self.parameters:
             usedColors = self._get_used_colors()
-            chromaticTransformations = {c: transform.SimilarityTransform()
-                                        for c in usedColors}
+            chromaticTransformations = {u: {v: transform.SimilarityTransform()
+                                            for v in usedColors if v >= u}
+                                        for u in usedColors}
         else:
             previousIteration = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration'])

@@ -100,6 +100,17 @@ class DataOrganization(object):
         return self.data[self.data['bitName'].str.match(
             dataChannelName, case=False)].index.tolist()[0]
 
+
+    def get_data_channel_color(self, dataChannel: int) -> str:
+        """Get the color used for measuring the specified data channel.
+
+        Args:
+            dataChannel: the data channel index
+        Returns:
+            the color for this data channel as a string
+        """
+        return self.data.at[dataChannel, 'color']
+
     def get_data_channel_for_bit(self, bitName: str) -> int:
         """Get the data channel associated with the specified bit.
 

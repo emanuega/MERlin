@@ -71,6 +71,43 @@ class PlotPerformance(analysistask.AnalysisTask):
                                     correlation[0, 1]))
         self.dataSet.save_figure(self, fig, 'fpkm_correlation')
 
+    def _plot_radial_density(self):
+        bitColors = self.dataSet.get_data_organization().data['color']
+        bcSet = self.dataSet.get_codebook().get_barcodes()
+        singleColorBarcodes = [i for i, b in enumerate(bcSet) if
+                               bitColors[np.where(b)[0]].nunique() == 1]
+        multiColorBarcodes = [i for i, b in enumerate(bcSet) if
+                              bitColors[np.where(b)[0]].nunique() > 1]
+
+        barcodes = self.filterTask.get_barcode_database().get_barcodes()
+        sBC = barcodes[barcodes['barcode_id'].isin(singleColorBarcodes)]
+        mBC = barcodes[barcodes['barcode_id'].isin(multiColorBarcodes)]
+
+        imageSize = self.dataSet.get_image_dimensions()
+        width = imageSize[0]
+        height = imageSize[1]
+
+        def radial_distance(x, y):
+            return np.sqrt((x - 0.5 * width) ** 2 + (y - 0.5 * height) ** 2)
+
+        sRD = [radial_distance(x, y) for x, y in zip(sBC['x'], sBC['y'])]
+        mRD = [radial_distance(x, y) for x, y in zip(mBC['x'], mBC['y'])]
+
+        plt.figure(figsize=(7, 7))
+
+        countsS, binsS = np.histogram(sRD, bins=np.arange(0, 1000, 5))
+        radialCountsS = countsS[1:]
+        normS = radialCountsS / np.mean(radialCountsS[:20])
+        plt.plot(binsS[1:-1], normS)
+
+        countsM, binsM = np.histogram(mRD, bins=np.arange(0, 1000, 5))
+        radialCountsM = countsM[1:]
+        normM = radialCountsM / np.mean(radialCountsM[:20])
+        plt.plot(binsM[1:-1], normM)
+        plt.legend(['Single color barcodes', 'Multi color barcodes'])
+        plt.xlabel('Radius')
+        plt.ylabel('Normalized radial barcode density')
+
     # TODO - the functions in this class have too much repeated code
     # TODO - for the following 4 plots, I can add a line indicating the
     # barcode selection thresholds.

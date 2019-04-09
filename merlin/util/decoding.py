@@ -85,7 +85,6 @@ class PixelBasedDecoder(object):
             filteredImages[i, :, :] = cv2.GaussianBlur(
                 imageData[i, :, :], (filterSize, filterSize), lowPassSigma)
 
-
         pixelTraces = np.reshape(
                 filteredImages, 
                 (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
@@ -253,7 +252,8 @@ class PixelBasedDecoder(object):
             return np.array(barcodesWithSingleErrors)
             
     def extract_refactors(
-            self, imageSet: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+            self, decodedImage, pixelMagnitudes, normalizedPixelTraces
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Calculate the scale factors that would result in the mean
         on bit intensity for each bit to be equal to one.
 
@@ -269,18 +269,17 @@ class PixelBasedDecoder(object):
                 entry is the scale factor for bit i and an array indicating
                 the abundance of each barcode determined during the decoding
         """
-        di, pm, npt, d = self.decode_pixels(imageSet)
-
         sumPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
         barcodesSeen = np.zeros(self._barcodeCount)
         for b in range(self._barcodeCount):
             barcodeRegions = [x for x in measure.regionprops(
-                        measure.label((di == b).astype(np.int)))
+                        measure.label((decodedImage == b).astype(np.int)))
                               if x.area >= self.refactorAreaThreshold]
             barcodesSeen[b] = len(barcodeRegions)
             for br in barcodeRegions:
                 meanPixelTrace = \
-                    np.mean([npt[:, y[0], y[1]]*pm[y[0], y[1]]
+                    np.mean([normalizedPixelTraces[:, y[0],
+                             y[1]]*pixelMagnitudes[y[0], y[1]]
                              for y in br.coords], axis=0)
                 normPixelTrace = meanPixelTrace/np.linalg.norm(meanPixelTrace)
                 sumPixelTraces[b, :] += normPixelTrace/barcodesSeen[b]

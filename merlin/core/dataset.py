@@ -10,6 +10,7 @@ import tifffile
 import importlib
 import time
 import logging
+import pickle
 from matplotlib import pyplot as plt
 from typing import List
 from typing import Tuple
@@ -325,6 +326,22 @@ class DataSet(object):
         with open(savePath, 'r') as f:
             return json.load(f)
 
+    def load_pickle_analysis_result(
+            self, resultName: str, analysisName: str, resultIndex: int=None,
+            subdirectory: str=None) -> Dict:
+        savePath = self._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory, '.pkl')
+        with open(savePath, 'rb') as f:
+            return pickle.load(f)
+
+    def save_pickle_analysis_result(
+            self, analysisResult, resultName: str, analysisName: str,
+            resultIndex: int=None, subdirectory: str=None):
+        savePath = self._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory, '.pkl')
+        with open(savePath, 'wb') as f:
+            pickle.dump(analysisResult, f)
+
     def save_numpy_analysis_result(
             self, analysisResult: np.ndarray, resultName: str,
             analysisName: str, resultIndex: int=None,
@@ -637,7 +654,6 @@ class ImageDataSet(DataSet):
             self._import_microscope_parameters(microscopeParametersName)
     
         self._load_microscope_parameters()
-
 
     def get_image_file_names(self):
         return sorted(

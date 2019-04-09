@@ -31,7 +31,7 @@ The columns in the data organization file are:
 Codebook
 ----------
 
-The codebook specifies 
+The codebook specifies . Barcodes corresponding to blanks must have "blank" in their name.
 
 Position list
 --------------

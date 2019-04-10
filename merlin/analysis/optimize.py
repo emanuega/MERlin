@@ -56,9 +56,6 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         zIndex = np.random.choice(
             list(range(len(self.dataSet.get_z_positions()))))
 
-        usedColors = self._get_used_colors()
-        referenceColor = min(usedColors)
-
         scaleFactors = self._get_previous_scale_factors()
         chromaticTransformations = \
             self._get_previous_chromatic_transformations()
@@ -75,8 +72,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
         imageSet = preprocessTask.get_processed_image_set(
             fovIndex, zIndex=zIndex)
-        warpedImages = np.array([self._warp_image(
-            image, i, chromaticTransformations, referenceColor)
+        warpedImages = np.array([self.warp_image(
+            image, i, chromaticTransformations)
             for i, image in enumerate(imageSet)])
 
         decoder = decoding.PixelBasedDecoder(codebook)
@@ -151,9 +148,18 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 previousIteration.get_chromatic_transformations()
         return chromaticTransformations
 
-    def _warp_image(self, imageIn, index, tset, referenceColor):
+    # TODO the next two functions could be in a utility class. Make a
+    #  chromatic aberration utility class
+
+    def get_reference_color(self):
+        return min(self._get_used_colors())
+
+    def warp_image(self, imageIn: np.ndarray, index: int,
+                   tset: Dict[str, Dict[str, transform.SimilarityTransform]]
+                   ) -> np.ndarray:
+        referenceColor = self.get_reference_color()
         imageColor = self.dataSet.get_data_organization().\
-                         get_data_channel_color(index)
+            get_data_channel_color(index)
         if imageColor == referenceColor:
             return imageIn
         tForm = tset[referenceColor][imageColor]
@@ -178,7 +184,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             return self.dataSet.load_pickle_analysis_result(
                 'chromatic_corrections', self.analysisName)
         except FileNotFoundError:
-            # TODO - this is messy. It can be broken into smaller subunits.
+            # TODO - this is messy. It can be broken into smaller subunits and
+            # most parts could be included in a chromatic aberration class
             previousTransformations = \
                 self._get_previous_chromatic_transformations()
             codebook = self.dataSet.get_codebook()
@@ -192,7 +199,6 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             usedColors = self._get_used_colors()
             colorPairDisplacements = {u: {v: [] for v in usedColors if v >= u}
                                       for u in usedColors}
-            referenceColor = min(usedColors)
 
             for fov in uniqueFOVs:
                 fovBarcodes = barcodes[barcodes['fov'] == fov]
@@ -201,9 +207,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 for z in zIndexes:
                     currentBarcodes = fovBarcodes[fovBarcodes['z'] == z]
                     warpedImages = np.array(
-                        [self._warp_image(image[i, z, 0, :, :], i,
-                                          previousTransformations,
-                                          referenceColor)
+                        [self.warp_image(image[i, z, 0, :, :], i,
+                                          previousTransformations)
                          for i, image in enumerate(images)]
                     )
                     for i, cBC in currentBarcodes.iterrows():

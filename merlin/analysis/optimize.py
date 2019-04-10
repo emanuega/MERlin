@@ -192,7 +192,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             dataOrganization = self.dataSet.get_data_organization()
 
             barcodes = self.get_barcode_database().get_barcodes()
-            uniqueFOVs = np.unique(barcodes['fov'])[0]
+            uniqueFOVs = np.unique(barcodes['fov'])
             warpTask = self.dataSet.load_analysis_task(
                 self.parameters['warp_task'])
 

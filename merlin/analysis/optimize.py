@@ -159,7 +159,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         tForm = tset[referenceColor][imageColor]
         return transform.warp(imageIn, tForm, preserve_range=True)
 
-    def get_chromatic_corrections(self) \
+    def get_chromatic_transformations(self) \
             -> Dict[str, Dict[str, transform.SimilarityTransform]]:
         """Get the estimated chromatic corrections from this optimization
         iteration.

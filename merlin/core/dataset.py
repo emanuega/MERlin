@@ -350,7 +350,16 @@ class DataSet(object):
         savePath = self._analysis_result_save_path(
                 resultName, analysisName, resultIndex, subdirectory)
         np.save(savePath, analysisResult)
-    
+
+    def save_numpy_txt_analysis_result(
+            self, analysisResult: np.ndarray, resultName: str,
+            analysisName: str, resultIndex: int=None,
+            subdirectory: str=None) -> None:
+
+        savePath = self._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory)
+        np.savetxt(savePath + '.csv', analysisResult)
+
     def load_numpy_analysis_result(
             self, resultName: str, analysisName: str, resultIndex: int=None,
             subdirectory: str=None) -> np.array:

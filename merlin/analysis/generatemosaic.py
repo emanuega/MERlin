@@ -84,6 +84,10 @@ class GenerateMosaic(analysistask.AnalysisTask):
         mosaicDimensions = tuple(self._micron_to_mosaic_pixel(
                 micronExtents[-2:], micronExtents))
 
+        self.dataSet.save_numpy_txt_analysis_result(
+            self._micron_to_mosaic_transform(micronExtents),
+            'micron_to_mosaic_pixel_transform', self)
+
         dataOrganization = self.dataSet.get_data_organization()
         if 'data_channels' in self.parameters:
             if isinstance(self.parameters['data_channels'], str):

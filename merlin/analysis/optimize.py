@@ -201,39 +201,49 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                                       for u in usedColors}
 
             for fov in uniqueFOVs:
+
                 fovBarcodes = barcodes[barcodes['fov'] == fov]
                 zIndexes = np.unique(fovBarcodes['z'])
-                images = warpTask.get_aligned_image_set(fov=fov)
+                # TODO reading the full z stack is unnecessary 
                 for z in zIndexes:
                     currentBarcodes = fovBarcodes[fovBarcodes['z'] == z]
+                    # TODO this assumes that the first images are the bits
+                    # TODO this can be moved to the run function for the task so not
+                    # as much repeated work is done
                     warpedImages = np.array(
-                        [self.warp_image(image[i, z, 0, :, :], i,
-                                          previousTransformations)
-                         for i, image in enumerate(images)]
+                        [self.warp_image(warpTask.get_aligned_image(fov, i, z), 
+                            i, previousTransformations)
+                         for i in range(codebook.get_bit_count())]
                     )
                     for i, cBC in currentBarcodes.iterrows():
                         onBits = np.where(
                             codebook.get_barcode(cBC['barcode_id']))[0]
-                        refinedPositions = np.array(
-                            [registration.refine_position(
-                                warpedImages[i, :, :], cBC['x'], cBC['y'])
-                                for i in onBits])
-                        for p in itertools.combinations(onBits, 2):
-                            c1 = str(dataOrganization.get_data_channel_color(
-                                onBits[p[0]]))
-                            c2 = str(dataOrganization.get_data_channel_color(
-                                onBits[p[1]]))
 
-                            if c1 < c2:
-                                colorPairDisplacements[c1][c2].append(
-                                    [np.array([cBC['x'], cBC['y']]),
-                                     refinedPositions[p[1]] - refinedPositions[
-                                         p[0]]])
-                            else:
-                                colorPairDisplacements[c2][c1].append(
-                                    [np.array([cBC['x'], cBC['y']]),
-                                     refinedPositions[p[0]] - refinedPositions[
-                                         p[1]]])
+                        # TODO this can be done by crop width when decoding
+                        if cBC['x'] > 10 and cBC['y'] > 10 \
+                                and warpedImages.shape[0]-cBC['x'] > 10 \
+                                and warpedImages.shape[1]-cBC['y'] > 10:
+
+                            refinedPositions = np.array(
+                                [registration.refine_position(
+                                    warpedImages[i, :, :], cBC['x'], cBC['y'])
+                                    for i in onBits])
+                            for p in itertools.combinations(enumerate(onBits), 2):
+                                c1 = str(dataOrganization.get_data_channel_color(
+                                    p[0][1]))
+                                c2 = str(dataOrganization.get_data_channel_color(
+                                    p[1][1]))
+
+                                if c1 < c2:
+                                    colorPairDisplacements[c1][c2].append(
+                                        [np.array([cBC['x'], cBC['y']]),
+                                         refinedPositions[p[1][0]] \
+                                                 - refinedPositions[p[0][0]]])
+                                else:
+                                    colorPairDisplacements[c2][c1].append(
+                                        [np.array([cBC['x'], cBC['y']]),
+                                         refinedPositions[p[0][0]] \
+                                                 - refinedPositions[p[1][0]]])
 
             tForms = {}
             for k, v in colorPairDisplacements.items():

@@ -10,6 +10,7 @@ from merlin.core import analysistask
 from merlin.util import decoding
 from merlin.util import barcodedb
 from merlin.util import registration
+from merlin.util import aberration
 
 
 class OptimizeIteration(analysistask.ParallelAnalysisTask):
@@ -164,6 +165,16 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             return imageIn
         tForm = tset[referenceColor][imageColor]
         return transform.warp(imageIn, tForm, preserve_range=True)
+
+    def get_chromatic_corrector(self) -> aberration.ChromaticCorrector:
+        """Get the chromatic corrector estimated from this optimization
+        iteration
+
+        Returns:
+            The chromatic corrector.
+        """
+        return aberration.RigidChromaticCorrector(
+            self.get_chromatic_transformations(), self.get_reference_color())
 
     def get_chromatic_transformations(self) \
             -> Dict[str, Dict[str, transform.SimilarityTransform]]:

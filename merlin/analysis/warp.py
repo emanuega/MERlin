@@ -1,6 +1,7 @@
 import os
 from typing import List
 from typing import Dict
+from typing import Union
 import numpy as np
 from skimage import transform
 from skimage import feature
@@ -11,6 +12,7 @@ import storm_analysis.sa_library.sa_h5py as saH5Py
 
 from merlin.core import analysistask
 from merlin.util import registration
+from merlin.util import aberration
 
 
 class Warp(analysistask.ParallelAnalysisTask):
@@ -29,21 +31,6 @@ class Warp(analysistask.ParallelAnalysisTask):
         self.writeAlignedFiducialImages = self.parameters[
                 'write_fiducial_images']
 
-    def get_transformation(self, fov: int, dataChannel: int):
-        """Get the transformation that aligns the image from the specified
-        data channel and the specified fov to data channel 0.
-
-        Args:
-            fov: index of the field of view
-            dataChannel: index of the data channel
-        Returns:
-            a skimage transformation
-        """
-        transformations = self.dataSet.load_numpy_analysis_result(
-                'offsets', self.get_analysis_name(), resultIndex=fov,
-                subdirectory='transformations')
-        return transformations[dataChannel]
-
     def get_aligned_image_set(self, fov: int) -> np.ndarray:
         """Get the set of transformed images for the specified fov.
 
@@ -57,19 +44,30 @@ class Warp(analysistask.ParallelAnalysisTask):
                 self, 'aligned_images', fov)
 
     def get_aligned_image(
-            self, fov: int, dataChannel: int, zIndex: int) -> np.ndarray:
+            self, fov: int, dataChannel: int, zIndex: int,
+            chromaticCorrector: aberration.ChromaticCorrector=None
+    ) -> np.ndarray:
         """Get the specified transformed image
 
         Args:
             fov: index of the field of view
             dataChannel: index of the data channel
             zIndex: index of the z position
+            chromaticCorrector: the ChromaticCorrector to use to chromatically
+                correct the images. If not supplied, no correction is
+                performed.
         Returns:
             a 2-dimensional numpy array containing the specified image
         """
-        return self.dataSet.get_analysis_image(
-                self, 'aligned_images', fov, 
-                len(self.dataSet.get_z_positions()), dataChannel, zIndex)
+        inputImage = self.dataSet.get_raw_image(dataChannel, fov, zIndex)
+        transformation = self.get_transformation(fov, dataChannel)
+        if chromaticCorrector is not None:
+            imageColor = self.dataSet.get_data_organization()\
+                            .get_data_channel_color(dataChannel)
+            return transform.warp(chromaticCorrector.transform_image(
+                inputImage, imageColor), transformation)
+        else:
+            return transform.warp(inputImage, transformation)
 
     def _process_transformations(self, transformationList, fov) -> None:
         """
@@ -126,6 +124,30 @@ class Warp(analysistask.ParallelAnalysisTask):
             np.array(transformationList), 'offsets',
             self.get_analysis_name(), resultIndex=fov,
             subdirectory='transformations')
+
+    def get_transformation(self, fov: int, dataChannel: int=None
+                            ) -> Union[transform.EuclideanTransform,
+                                 List[transform.EuclideanTransform]]:
+        """Get the transformations for aligning images for the specified field
+        of view.
+
+        Args:
+            fov: the fov to get the transformations for.
+            dataChannel: the index of the data channel to get the transformation
+                for. If None, then all data channels are returned.
+        Returns:
+            a EuclideanTransform if dataChannel is specified or a list of
+                EuclideanTransforms for all dataChannels if dataChannel is
+                not specified.
+        """
+        transformationMatrices = self.dataSet.load_numpy_analysis_result(
+            'offsets', self, resultIndex=fov, subdirectory='transformations')
+        if dataChannel is not None:
+            return transform.EuclideanTransform(
+                transformationMatrices[dataChannel])
+        else:
+            return [transform.EuclideanTransform(x)
+                    for x in transformationMatrices]
 
 
 class FiducialFitWarp(Warp):

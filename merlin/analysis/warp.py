@@ -65,9 +65,11 @@ class Warp(analysistask.ParallelAnalysisTask):
             imageColor = self.dataSet.get_data_organization()\
                             .get_data_channel_color(dataChannel)
             return transform.warp(chromaticCorrector.transform_image(
-                inputImage, imageColor), transformation)
+                inputImage, imageColor), transformation, preserve_range=True
+                ).astype(inputImage.dtype)
         else:
-            return transform.warp(inputImage, transformation)
+            return transform.warp(inputImage, transformation,
+                    preserve_range=True).astype(inputImage.dtype)
 
     def _process_transformations(self, transformationList, fov) -> None:
         """
@@ -143,11 +145,9 @@ class Warp(analysistask.ParallelAnalysisTask):
         transformationMatrices = self.dataSet.load_numpy_analysis_result(
             'offsets', self, resultIndex=fov, subdirectory='transformations')
         if dataChannel is not None:
-            return transform.EuclideanTransform(
-                transformationMatrices[dataChannel])
+            return transformationMatrices[dataChannel]
         else:
-            return [transform.EuclideanTransform(x)
-                    for x in transformationMatrices]
+            return transformationMatrices
 
 
 class FiducialFitWarp(Warp):

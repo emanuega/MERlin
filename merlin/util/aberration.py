@@ -2,7 +2,7 @@ from typing import Dict
 from skimage import transform
 import numpy as np
 from abc import ABC
-from ABC import abstractmethod
+from abc import abstractmethod
 
 """
 This module contains tools for measuring and correcting chromatic aberrations.

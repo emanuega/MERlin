@@ -668,8 +668,8 @@ class ImageDataSet(DataSet):
         return sorted(
                 [os.sep.join([self.rawDataPath, currentFile])
                     for currentFile in os.listdir(self.rawDataPath)
-                if currentFile.endswith('.dax') \
-                or currentFile.endswith('.tif') \
+                if currentFile.endswith('.dax')
+                or currentFile.endswith('.tif')
                 or currentFile.endswith('.tiff')])
 
     def load_image(self, imagePath, frameIndex):
@@ -721,7 +721,7 @@ class ImageDataSet(DataSet):
             'flip_vertical', False)
         self.transpose = self.microscopeParameters.get('transpose', True)
         self.micronsPerPixel = self.microscopeParameters.get(
-                'microns_per_pixel', 0.106)
+                'microns_per_pixel', 0.108)
         self.imageDimensions = self.microscopeParameters.get(
                 'image_dimensions', [2048, 2048])
 

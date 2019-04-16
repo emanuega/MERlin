@@ -5,6 +5,7 @@ import numpy as np
 
 from merlin.core import analysistask
 from merlin.util import deconvolve
+from merlin.util import aberration
 
 
 class Preprocess(analysistask.ParallelAnalysisTask):
@@ -54,6 +55,9 @@ class DeconvolutionPreprocess(Preprocess):
         self._deconSigma = self.parameters['decon_sigma']
         self._deconIterations = self.parameters['decon_iterations']
 
+        self.warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
     
@@ -66,36 +70,41 @@ class DeconvolutionPreprocess(Preprocess):
     def get_dependencies(self):
         return [self.parameters['warp_task']]
 
-    def get_processed_image_set(self, fov, zIndex=None) -> np.ndarray:
+    def get_processed_image_set(
+            self, fov, zIndex=None,
+            chromaticCorrector: aberration.ChromaticCorrector=None
+    ) -> np.ndarray:
         if zIndex is None:
-            return self.dataSet.get_analysis_image_set(
-                    self, 'processed_image', fov)
+            return np.array([[self.get_processed_image(
+                fov, self.dataSet.get_data_organization()
+                    .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
+                for zIndex in range(len(self.dataSet.get_z_positions()))]
+                for b in self.dataSet.get_codebook().get_bit_names()])
         else:
-            return np.array([self.get_processed_image(fov,
-                self.dataSet.get_data_organization()
-                        .get_data_channel_for_bit(b), zIndex)
+            return np.array([self.get_processed_image(
+                fov, self.dataSet.get_data_organization()
+                    .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
                     for b in self.dataSet.get_codebook().get_bit_names()])
 
-    def get_processed_image(self, fov, dataChannel, zIndex):
-        return self.dataSet.get_analysis_image(
-                self, 'processed_image', fov, 
-                len(self.dataSet.get_z_positions()), dataChannel, zIndex)
+    def get_processed_image(
+            self, fov, dataChannel, zIndex,
+            chromaticCorrector: aberration.ChromaticCorrector=None
+    ) -> np.ndarray:
+        inputImage = self.warpTask.get_aligned_image(fov, dataChannel, zIndex,
+                                                     chromaticCorrector)
+        return self._preprocess_image(inputImage)
 
     def _run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(
                 self.parameters['warp_task'])
 
-        imageDescription = self.dataSet.analysis_tiff_description(
-                len(self.dataSet.get_z_positions()),
-                len(self.dataSet.get_codebook().get_bit_names()))
-
         histogramBins = np.arange(0, np.iinfo(np.uint16).max, 1)
         pixelHistogram = np.zeros(
                 (self.dataSet.get_codebook().get_bit_count(),
                     len(histogramBins)-1))
-        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
-        deconFilterSize = self.parameters['decon_filter_size']
 
+        # this currently only is to calculate the pixel histograms in order
+        # to estimate the initial scale factors. This is likely unnecessary
         with self.dataSet.writer_for_analysis_images(
                 self, 'processed_image', fragmentIndex) as outputTif:
             for bi, b in enumerate(self.dataSet.get_codebook().get_bit_names()):
@@ -104,19 +113,22 @@ class DeconvolutionPreprocess(Preprocess):
                 for i in range(len(self.dataSet.get_z_positions())):
                     inputImage = warpTask.get_aligned_image(
                             fragmentIndex, dataChannel, i)
-                    filteredImage = inputImage.astype(float) - cv2.GaussianBlur(
-                        inputImage, (highPassFilterSize, highPassFilterSize),
-                        self._highPassSigma, borderType=cv2.BORDER_REPLICATE)
-                    filteredImage[filteredImage < 0] = 0
-                    deconvolvedImage = deconvolve.deconvolve_lucyrichardson(
-                        filteredImage, deconFilterSize, self._deconSigma,
-                        self._deconIterations).astype(np.uint16)
-                    
-                    outputTif.save(
-                            deconvolvedImage, photometric='MINISBLACK',
-                            metadata=imageDescription)
+                    deconvolvedImage = self._preprocess_image(inputImage)
 
                     pixelHistogram[bi, :] += np.histogram(
                             deconvolvedImage, bins=histogramBins)[0]
 
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)
+
+    def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
+        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
+        deconFilterSize = self.parameters['decon_filter_size']
+
+        filteredImage = inputImage.astype(float) - cv2.GaussianBlur(
+            inputImage, (highPassFilterSize, highPassFilterSize),
+            self._highPassSigma, borderType=cv2.BORDER_REPLICATE)
+        filteredImage[filteredImage < 0] = 0
+        deconvolvedImage = deconvolve.deconvolve_lucyrichardson(
+            filteredImage, deconFilterSize, self._deconSigma,
+            self._deconIterations).astype(np.uint16)
+        return deconvolvedImage

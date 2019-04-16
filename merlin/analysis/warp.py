@@ -31,17 +31,25 @@ class Warp(analysistask.ParallelAnalysisTask):
         self.writeAlignedFiducialImages = self.parameters[
                 'write_fiducial_images']
 
-    def get_aligned_image_set(self, fov: int) -> np.ndarray:
+    def get_aligned_image_set(
+            self, fov: int,
+            chromaticCorrector: aberration.ChromaticCorrector=None
+    ) -> np.ndarray:
         """Get the set of transformed images for the specified fov.
 
         Args:
             fov: index of the field of view
+            chromaticCorrector: the ChromaticCorrector to use to chromatically
+                correct the images. If not supplied, no correction is
+                performed.
         Returns:
-            a 5-dimensional numpy array containing the aligned images. The
-                images are arranged as [channel, zIndex, 1, x, y]
+            a 4-dimensional numpy array containing the aligned images. The
+                images are arranged as [channel, zIndex, x, y]
         """
-        return self.dataSet.get_analysis_image_set(
-                self, 'aligned_images', fov)
+        dataChannels = self.dataSet.get_data_organization().get_data_channels()
+        zPositions = self.dataSet.get_z_positions()
+        return np.array([[self.get_aligned_image(fov, d, z, chromaticCorrector)
+                          for z in zPositions] for d in dataChannels])
 
     def get_aligned_image(
             self, fov: int, dataChannel: int, zIndex: int,
@@ -69,7 +77,7 @@ class Warp(analysistask.ParallelAnalysisTask):
                 ).astype(inputImage.dtype)
         else:
             return transform.warp(inputImage, transformation,
-                    preserve_range=True).astype(inputImage.dtype)
+                                  preserve_range=True).astype(inputImage.dtype)
 
     def _process_transformations(self, transformationList, fov) -> None:
         """
@@ -85,7 +93,9 @@ class Warp(analysistask.ParallelAnalysisTask):
         """
 
         dataChannels = self.dataSet.get_data_organization().get_data_channels()
+        '''
         zPositions = self.dataSet.get_z_positions()
+
         imageDescription = self.dataSet.analysis_tiff_description(
                 len(zPositions), len(dataChannels))
 
@@ -101,6 +111,7 @@ class Warp(analysistask.ParallelAnalysisTask):
                             transformedImage, 
                             photometric='MINISBLACK',
                             metadata=imageDescription)
+        '''
 
         if self.writeAlignedFiducialImages:
 

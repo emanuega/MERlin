@@ -61,7 +61,7 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         decoder = decoding.PixelBasedDecoder(self.dataSet.get_codebook())
         scaleFactors = optimizeTask.get_scale_factors()
-        chromaticTransformations = optimizeTask.get_chromatic_transformations()
+        chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
         decodedImages = []
         magnitudeImages = []
@@ -69,15 +69,11 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         for zIndex in range(zPositionCount):
             imageSet = preprocessTask.get_processed_image_set(
-                    fragmentIndex, zIndex)
+                    fragmentIndex, zIndex, chromaticCorrector)
             imageSet = imageSet.reshape(
                 (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
-            warpedImages = np.array([optimizeTask.warp_image(
-                image, i, chromaticTransformations)
-                for i, image in enumerate(imageSet)])
-
-            di, pm, npt, d = decoder.decode_pixels(warpedImages, scaleFactors,
+            di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors,
                                                    lowPassSigma=lowPassSigma)
             self._extract_and_save_barcodes(
                     decoder, di, pm, npt, d, fragmentIndex, zIndex)

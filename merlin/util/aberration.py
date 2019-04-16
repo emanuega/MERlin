@@ -60,6 +60,9 @@ class RigidChromaticCorrector(ChromaticCorrector):
         if imageColor not in self.transformations[self.referenceColor]:
             return inputImage
 
+        if imageColor == self.referenceColor:
+            return inputImage
+
         if len(inputImage.shape) == 3:
             return np.array([self.transform_image(x, imageColor)
                              for x in inputImage])
@@ -68,4 +71,3 @@ class RigidChromaticCorrector(ChromaticCorrector):
             inputImage,
             self.transformations[self.referenceColor][imageColor],
             preserve_range=True)
-

@@ -71,11 +71,10 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             np.array([fovIndex, zIndex]), 'select_frame', self.analysisName,
             resultIndex=fragmentIndex)
 
-        imageSet = preprocessTask.get_processed_image_set(
-            fovIndex, zIndex=zIndex)
-        warpedImages = np.array([self.warp_image(
-            image, i, chromaticTransformations)
-            for i, image in enumerate(imageSet)])
+        chromaticCorrector = aberration.RigidChromaticCorrector(
+            chromaticTransformations, self.get_reference_color())
+        warpedImages = preprocessTask.get_processed_image_set(
+            fovIndex, zIndex=zIndex, chromaticCorrector=chromaticCorrector)
 
         decoder = decoding.PixelBasedDecoder(codebook)
         areaThreshold = self.parameters['area_threshold']
@@ -155,17 +154,6 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
     def get_reference_color(self):
         return min(self._get_used_colors())
 
-    def warp_image(self, imageIn: np.ndarray, index: int,
-                   tset: Dict[str, Dict[str, transform.SimilarityTransform]]
-                   ) -> np.ndarray:
-        referenceColor = self.get_reference_color()
-        imageColor = self.dataSet.get_data_organization().\
-            get_data_channel_color(index)
-        if imageColor == referenceColor:
-            return imageIn
-        tForm = tset[referenceColor][imageColor]
-        return transform.warp(imageIn, tForm, preserve_range=True)
-
     def get_chromatic_corrector(self) -> aberration.ChromaticCorrector:
         """Get the chromatic corrector estimated from this optimization
         iteration
@@ -199,6 +187,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             # most parts could be included in a chromatic aberration class
             previousTransformations = \
                 self._get_previous_chromatic_transformations()
+            previousCorrector = aberration.RigidChromaticCorrector(
+                previousTransformations, self.get_reference_color())
             codebook = self.dataSet.get_codebook()
             dataOrganization = self.dataSet.get_data_organization()
 
@@ -219,13 +209,13 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 for z in zIndexes:
                     currentBarcodes = fovBarcodes[fovBarcodes['z'] == z]
                     # TODO this assumes that the first images are the bits
-                    # TODO this can be moved to the run function for the task so not
-                    # as much repeated work is done
-                    warpedImages = np.array(
-                        [self.warp_image(warpTask.get_aligned_image(fov, i, z), 
-                            i, previousTransformations)
-                         for i in range(codebook.get_bit_count())]
-                    )
+                    # TODO this can be moved to the run function for the task
+                    # so not as much repeated work is done when it is called
+                    # from many different tasks in parallel
+                    warpedImages = np.array([warpTask.get_aligned_image(
+                        fov, i, z,  previousCorrector)
+                        for i in range(codebook.get_bit_count())])
+
                     for i, cBC in currentBarcodes.iterrows():
                         onBits = np.where(
                             codebook.get_barcode(cBC['barcode_id']))[0]
@@ -239,22 +229,23 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                                 [registration.refine_position(
                                     warpedImages[i, :, :], cBC['x'], cBC['y'])
                                     for i in onBits])
-                            for p in itertools.combinations(enumerate(onBits), 2):
-                                c1 = str(dataOrganization.get_data_channel_color(
-                                    p[0][1]))
-                                c2 = str(dataOrganization.get_data_channel_color(
-                                    p[1][1]))
+                            for p in itertools.combinations(
+                                    enumerate(onBits), 2):
+                                c1 = dataOrganization.get_data_channel_color(
+                                    p[0][1])
+                                c2 = dataOrganization.get_data_channel_color(
+                                    p[1][1])
 
                                 if c1 < c2:
                                     colorPairDisplacements[c1][c2].append(
                                         [np.array([cBC['x'], cBC['y']]),
-                                         refinedPositions[p[1][0]] \
-                                                 - refinedPositions[p[0][0]]])
+                                         refinedPositions[p[1][0]]
+                                         - refinedPositions[p[0][0]]])
                                 else:
                                     colorPairDisplacements[c2][c1].append(
                                         [np.array([cBC['x'], cBC['y']]),
-                                         refinedPositions[p[0][0]] \
-                                                 - refinedPositions[p[1][0]]])
+                                         refinedPositions[p[0][0]]
+                                         - refinedPositions[p[1][0]]])
 
             tForms = {}
             for k, v in colorPairDisplacements.items():
@@ -294,7 +285,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 for i in range(self.parameters['fov_per_iteration'])])
 
             # Don't rescale bits that were never seen
-            refactors[refactors==0] = 1
+            refactors[refactors == 0] = 1
 
             previousFactors = np.array([self.dataSet.load_numpy_analysis_result(
                 'previous_scale_factors', self.analysisName, resultIndex=i)
@@ -322,8 +313,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             previousHistory = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration']
             ).get_scale_factor_history()
-            return np.append(previousHistory, [self.get_scale_factors()],
-                    axis=0)
+            return np.append(
+                previousHistory, [self.get_scale_factors()], axis=0)
 
     def get_barcode_count_history(self) -> np.ndarray:
         """Get the set of barcode counts for each iteration of the

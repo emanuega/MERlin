@@ -10,6 +10,7 @@ import seaborn
 import numpy as np
 
 from merlin.core import analysistask
+from merlin.analysis import filterbarcodes
 from merlin.util import binary
 
 class PlotPerformance(analysistask.AnalysisTask):
@@ -158,11 +159,13 @@ class PlotPerformance(analysistask.AnalysisTask):
         fig = plt.figure(figsize=(8, 4))
         plt.violinplot(nonzeroIntensities, nonzeroIndexes, showextrema=False,
                        showmedians=True)
-        plt.axvline(x=self.filterTask.parameters['area_threshold']-0.5,
-                color='green', linestyle=':')
-        plt.axhline(y=np.log10(
-            self.filterTask.parameters['intensity_threshold']),
-                color='green', linestyle=':')
+        if not isinstance(
+                self.filterTask, filterbarcodes.AdaptiveFilterBarcodes):
+            plt.axvline(x=self.filterTask.parameters['area_threshold']-0.5,
+                        color='green', linestyle=':')
+            plt.axhline(y=np.log10(
+                self.filterTask.parameters['intensity_threshold']),
+                    color='green', linestyle=':')
         plt.xlabel('Barcode area (pixels)')
         plt.ylabel('Mean intensity ($log_{10}$)')
         plt.title('Intensity distribution by barcode area')

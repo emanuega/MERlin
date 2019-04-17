@@ -186,8 +186,10 @@ class PixelBasedDecoder(object):
         else:
             globalCentroid = centroid
         d = [distances[x[0], x[1]] for x in properties.coords]
-        outputDict = {'barcode': binary.bit_list_to_int(
-                            self._codebook.get_barcode(bcIndex)),
+        # TODO barcode is set to 1 since it is stored as a 64 bit number
+        # which is incompatible with 69 bit barcodes. 'barcode' should 
+        # be removed from the database since it is redundant with 'barcode_id'
+        outputDict = {'barcode': 1,
                       'barcode_id': bcIndex,
                       'fov': fov,
                       'mean_intensity': properties.mean_intensity,

@@ -112,7 +112,7 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
 
             thresholdedBlankFraction = \
                 blankFractionMatrix \
-                > blankFraction/self.parameters['blank_fraction']
+                > blankFraction*self.parameters['blank_fraction']
 
             thresholds = np.array([histBins[np.where(a)[0][-1] + 1]
                                    if True in a else histBins[0]

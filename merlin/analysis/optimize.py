@@ -208,13 +208,13 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 # TODO reading the full z stack is unnecessary 
                 for z in zIndexes:
                     currentBarcodes = fovBarcodes[fovBarcodes['z'] == z]
-                    # TODO this assumes that the first images are the bits
                     # TODO this can be moved to the run function for the task
                     # so not as much repeated work is done when it is called
                     # from many different tasks in parallel
                     warpedImages = np.array([warpTask.get_aligned_image(
-                        fov, i, z,  previousCorrector)
-                        for i in range(codebook.get_bit_count())])
+                        fov, dataOrganization.get_data_channel_for_bit(b),
+                        z,  previousCorrector)
+                        for b in codebook.get_bit_names()])
 
                     for i, cBC in currentBarcodes.iterrows():
                         onBits = np.where(

@@ -166,6 +166,15 @@ class PlotPerformance(analysistask.AnalysisTask):
             plt.axhline(y=np.log10(
                 self.filterTask.parameters['intensity_threshold']),
                     color='green', linestyle=':')
+        else:
+            adaptiveThresholds = [a for a in
+                                  self.filterTask.get_adaptive_thresholds()
+                                  for _ in (0, 1)]
+            adaptiveXCoords = [0.5] + [x for x in np.arange(
+                1.5, len(adaptiveThresholds)/2) for _ in (0, 1)] \
+                + [len(adaptiveThresholds)/2+0.5]
+            plt.plot(adaptiveXCoords, adaptiveThresholds)
+
         plt.xlabel('Barcode area (pixels)')
         plt.ylabel('Mean intensity ($log_{10}$)')
         plt.title('Intensity distribution by barcode area')

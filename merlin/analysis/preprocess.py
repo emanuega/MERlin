@@ -105,18 +105,16 @@ class DeconvolutionPreprocess(Preprocess):
 
         # this currently only is to calculate the pixel histograms in order
         # to estimate the initial scale factors. This is likely unnecessary
-        with self.dataSet.writer_for_analysis_images(
-                self, 'processed_image', fragmentIndex) as outputTif:
-            for bi, b in enumerate(self.dataSet.get_codebook().get_bit_names()):
-                dataChannel = self.dataSet.get_data_organization()\
-                        .get_data_channel_for_bit(b)
-                for i in range(len(self.dataSet.get_z_positions())):
-                    inputImage = warpTask.get_aligned_image(
-                            fragmentIndex, dataChannel, i)
-                    deconvolvedImage = self._preprocess_image(inputImage)
+        for bi, b in enumerate(self.dataSet.get_codebook().get_bit_names()):
+            dataChannel = self.dataSet.get_data_organization()\
+                    .get_data_channel_for_bit(b)
+            for i in range(len(self.dataSet.get_z_positions())):
+                inputImage = warpTask.get_aligned_image(
+                        fragmentIndex, dataChannel, i)
+                deconvolvedImage = self._preprocess_image(inputImage)
 
-                    pixelHistogram[bi, :] += np.histogram(
-                            deconvolvedImage, bins=histogramBins)[0]
+                pixelHistogram[bi, :] += np.histogram(
+                        deconvolvedImage, bins=histogramBins)[0]
 
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)
 

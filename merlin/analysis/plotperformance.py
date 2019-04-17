@@ -66,7 +66,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.loglog(fpkmCounts, barcodeCounts, '.', alpha=0.5)
         plt.ylabel('Detected counts')
         plt.xlabel('FPKM')
-        correlation = np.corrcoef(np.log(fpkmCounts + 1), np.log(barcodeCounts + 1))
+        correlation = np.corrcoef(
+            np.log(fpkmCounts + 1), np.log(barcodeCounts + 1))
         plt.title('%s (r=%0.2f)' % (self.parameters['fpkm_file'],
                                     correlation[0, 1]))
         self.dataSet.save_figure(self, fig, 'fpkm_correlation')

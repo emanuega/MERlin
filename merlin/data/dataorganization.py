@@ -56,6 +56,7 @@ class DataOrganization(object):
             self.data = pandas.read_csv(
                 filePath,
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
+            self.data['bitName'] = self.data['bitName'].str.strip()
             self._dataSet.save_dataframe_to_csv(
                     self.data, 'dataorganization', index=False)
 

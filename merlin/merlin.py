@@ -38,6 +38,10 @@ def build_parser():
                     + 'analysis task is provided, all tasks are executed.')
     parser.add_argument('-i', '--fragment-index', type=int,
             help='the index of the fragment of the analysis task to execute')
+    parser.add_argument('-h', '--data-home',
+                        help='the data home directory')
+    parser.add_argument('-s', '--analysis-home',
+                        help='the analysis home directory')
 
     return parser
 
@@ -57,7 +61,9 @@ def merlin():
         dataOrganizationName=args.data_organization,
         codebookName=args.codebook,
         microscopeParametersName=args.microscope_parameters,
-        positionFileName=args.positions
+        positionFileName=args.positions,
+        dataHome=args.data_home,
+        analysisHome=args.analysis_home
     )
 
     parametersHome = m.ANALYSIS_PARAMETERS_HOME

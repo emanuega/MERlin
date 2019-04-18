@@ -34,21 +34,30 @@ class Codebook(object):
             if not os.path.exists(filePath):
                 filePath = os.sep.join(
                         [merlin.CODEBOOK_HOME, filePath])
-        
-            headerLength = 3
-            barcodeData = pandas.read_csv(
-                filePath, header=headerLength, skipinitialspace=True,
-                usecols=['name', 'id', 'barcode'],
-                converters={'barcode': _parse_barcode_from_string})
-            with open(filePath, 'r') as inFile:
-                csvReader = csv.reader(inFile, delimiter=',')
-                header = [row for i, row in enumerate(csvReader)
-                          if i < headerLength]
 
-            bitNames = [x.strip() for x in header[2][1:]]
+            newVersion = True
+            with open(filePath, 'r') as f:
+                if 'version' in f.readline():
+                    newVersion = False
 
-            self._data = self._generate_codebook_dataframe(
-                    barcodeData, bitNames)
+            if newVersion:
+                self._data = pandas.read_csv(filePath)
+
+            else:
+                headerLength = 3
+                barcodeData = pandas.read_csv(
+                    filePath, header=headerLength, skipinitialspace=True,
+                    usecols=['name', 'id', 'barcode'],
+                    converters={'barcode': _parse_barcode_from_string})
+                with open(filePath, 'r') as inFile:
+                    csvReader = csv.reader(inFile, delimiter=',')
+                    header = [row for i, row in enumerate(csvReader)
+                              if i < headerLength]
+
+                bitNames = [x.strip() for x in header[2][1:]]
+
+                self._data = self._generate_codebook_dataframe(
+                        barcodeData, bitNames)
 
             self._dataSet.save_dataframe_to_csv(
                     self._data, 'codebook', index=False)

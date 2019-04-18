@@ -38,7 +38,7 @@ def build_parser():
                     + 'analysis task is provided, all tasks are executed.')
     parser.add_argument('-i', '--fragment-index', type=int,
             help='the index of the fragment of the analysis task to execute')
-    parser.add_argument('-h', '--data-home',
+    parser.add_argument('-e', '--data-home',
                         help='the data home directory')
     parser.add_argument('-s', '--analysis-home',
                         help='the analysis home directory')

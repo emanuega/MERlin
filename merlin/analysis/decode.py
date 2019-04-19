@@ -67,11 +67,12 @@ class Decode(analysistask.ParallelAnalysisTask):
         chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
         zPositionCount = len(self.dataSet.get_z_positions())
-        bitCount = dataSet.get_codebook().get_bit_count()
+        bitCount = self.dataSet.get_codebook().get_bit_count()
         imageShape = self.dataSet.get_image_dimensions()
         decodedImages = np.zeros((zPositionCount, *imageShape), dtype=np.int16)
         magnitudeImages = np.zeros((zPositionCount, *imageShape),
                                    dtype=np.float32)
+        distances = np.zeros(zPositionCount, *imageShape)
 
         if not decode3d:
             for zIndex in range(zPositionCount):
@@ -87,10 +88,11 @@ class Decode(analysistask.ParallelAnalysisTask):
 
                 decodedImages[zIndex, :, :] = di
                 magnitudeImages[zIndex, :, :] = pm
+                distances[zIndex, :, :] = d
+
         else:
             normalizedPixelTraces = np.zeros(
                 (zPositionCount, bitCount, *imageShape), dtype=np.float32)
-            distances = np.zeros(zPositionCount, *imageShape)
 
             for zIndex in range(zPositionCount):
                 imageSet = preprocessTask.get_processed_image_set(
@@ -120,20 +122,21 @@ class Decode(analysistask.ParallelAnalysisTask):
         return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
 
     def _save_decoded_images(self, fov: int, zPositionCount: int,
-                             decodedImages: List[np.ndarray],
-                             magnitudeImages: List[np.ndarray]) -> None:
+                             decodedImages: np.ndarray,
+                             magnitudeImages: np.ndarray,
+                             distanceImages: np.ndarray) -> None:
             imageDescription = self.dataSet.analysis_tiff_description(
-                zPositionCount, 2)
+                zPositionCount, 3)
             with self.dataSet.writer_for_analysis_images(
                     self, 'decoded', fov) as outputTif:
                 for i in range(zPositionCount):
                     outputTif.save(decodedImages[i].astype(np.float32),
                                    photometric='MINISBLACK',
                                    metadata=imageDescription)
-                    # rescale image so that it can be viewed with the decoded
-                    # image without adjusting contrast
-                    outputTif.save((magnitudeImages[i]/np.max(
-                        magnitudeImages[i])*256).astype(np.float32),
+                    outputTif.save(magnitudeImages[i].astype(np.float32),
+                                   photometric='MINISBLACK',
+                                   metadata=imageDescription)
+                    outputTif.save(distanceImages[i].astype(np.float32),
                                    photometric='MINISBLACK',
                                    metadata=imageDescription)
 

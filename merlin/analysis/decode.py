@@ -25,6 +25,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['minimum_area'] = 0
         if 'lowpass_sigma' not in self.parameters:
             self.parameters['lowpass_sigma'] = 1
+        if 'decode_3d' not in self.parameters:
+            self.parameters['decode_3d'] = False
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.get_image_dimensions()
@@ -56,6 +58,7 @@ class Decode(analysistask.ParallelAnalysisTask):
                 self.parameters['preprocess_task'])
         optimizeTask = self.dataSet.load_analysis_task(
                 self.parameters['optimize_task'])
+        decode3d = self.parameters['decode_3d']
 
         lowPassSigma = self.parameters['lowpass_sigma']
 
@@ -63,23 +66,51 @@ class Decode(analysistask.ParallelAnalysisTask):
         scaleFactors = optimizeTask.get_scale_factors()
         chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
-        decodedImages = []
-        magnitudeImages = []
         zPositionCount = len(self.dataSet.get_z_positions())
+        bitCount = dataSet.get_codebook().get_bit_count()
+        imageShape = self.dataSet.get_image_dimensions()
+        decodedImages = np.zeros((zPositionCount, *imageShape), dtype=np.int16)
+        magnitudeImages = np.zeros((zPositionCount, *imageShape),
+                                   dtype=np.float32)
 
-        for zIndex in range(zPositionCount):
-            imageSet = preprocessTask.get_processed_image_set(
+        if not decode3d:
+            for zIndex in range(zPositionCount):
+                imageSet = preprocessTask.get_processed_image_set(
+                        fragmentIndex, zIndex, chromaticCorrector)
+                imageSet = imageSet.reshape(
+                    (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
+
+                di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors,
+                                                       lowPassSigma=lowPassSigma)
+                self._extract_and_save_barcodes(
+                        decoder, di, pm, npt, d, fragmentIndex, zIndex)
+
+                decodedImages[zIndex, :, :] = di
+                magnitudeImages[zIndex, :, :] = pm
+        else:
+            normalizedPixelTraces = np.zeros(
+                (zPositionCount, bitCount, *imageShape), dtype=np.float32)
+            distances = np.zeros(zPositionCount, *imageShape)
+
+            for zIndex in range(zPositionCount):
+                imageSet = preprocessTask.get_processed_image_set(
                     fragmentIndex, zIndex, chromaticCorrector)
-            imageSet = imageSet.reshape(
-                (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
+                imageSet = imageSet.reshape(
+                    (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
-            di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors,
-                                                   lowPassSigma=lowPassSigma)
+                di, pm, npt, d = decoder.decode_pixels(
+                    imageSet, scaleFactors, lowPassSigma=lowPassSigma)
+
+                normalizedPixelTraces[zIndex, :, :, :] = npt
+                decodedImages[zIndex, :, :] = di
+                magnitudeImages[zIndex, :, :] = pm
+                distances[zIndex, :, :] = distances
+
             self._extract_and_save_barcodes(
-                    decoder, di, pm, npt, d, fragmentIndex, zIndex)
+                decoder, decodedImages, magnitudeImages, normalizedPixelTraces,
+                distances, fragmentIndex)
 
-            decodedImages.append(di)
-            magnitudeImages.append(pm)
+            decodedImages = np.zeros(())
 
         if self.parameters['write_decoded_images']:
             self._save_decoded_images(
@@ -109,7 +140,7 @@ class Decode(analysistask.ParallelAnalysisTask):
     def _extract_and_save_barcodes(
             self, decoder: decoding.PixelBasedDecoder, decodedImage: np.ndarray,
             pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
-            distances: np.ndarray, fov: int, zIndex: int) -> None:
+            distances: np.ndarray, fov: int, zIndex: int=None) -> None:
 
         globalTask = self.dataSet.load_analysis_task(
             self.parameters['global_align_task'])

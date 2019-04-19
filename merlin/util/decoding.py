@@ -217,7 +217,7 @@ class PixelBasedDecoder(object):
                       'global_z': globalCentroid[0],
                       'cell_index': -1}
 
-        if len(pixelTraces.shape) == 2:
+        if len(pixelTraces.shape) == 3:
             for i in range(len(pixelTraces)):
                 outputDict['intensity_' + str(i)] = \
                     np.mean([pixelTraces[i, x[0], x[1]]

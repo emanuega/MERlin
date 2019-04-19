@@ -181,7 +181,7 @@ class PixelBasedDecoder(object):
         # as (r,c)
         inputCentroid = properties.weighted_centroid
         if len(inputCentroid) == 2:
-            centroid = [zIndex, inputCentroid[2], inputCentroid[1]]
+            centroid = [zIndex, inputCentroid[1], inputCentroid[0]]
         else:
             centroid = [inputCentroid[0], inputCentroid[2], inputCentroid[1]]
 

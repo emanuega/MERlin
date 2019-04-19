@@ -192,9 +192,9 @@ class PixelBasedDecoder(object):
             globalCentroid = centroid
 
         if len(distances.shape) == 2:
-            d = [distances[x[1], x[0]] for x in properties.coords]
+            d = [distances[x[0], x[1]] for x in properties.coords]
         else:
-            d = [distances[x[0], x[1], x[0]] for x in properties.coords]
+            d = [distances[x[0], x[1], x[2]] for x in properties.coords]
 
         # TODO barcode is set to 1 since it is stored as a 64 bit number
         # which is incompatible with 69 bit barcodes. 'barcode' should 
@@ -220,12 +220,12 @@ class PixelBasedDecoder(object):
         if len(pixelTraces.shape) == 2:
             for i in range(len(pixelTraces)):
                 outputDict['intensity_' + str(i)] = \
-                    np.mean([pixelTraces[i, x[1], x[0]]
+                    np.mean([pixelTraces[i, x[0], x[1]]
                             for x in properties.coords])
         else:
             for i in range(len(pixelTraces[0])):
                 outputDict['intensity_' + str(i)] = \
-                    np.mean([pixelTraces[x[0], i, x[2], x[1]]
+                    np.mean([pixelTraces[x[0], i, x[1], x[2]]
                              for x in properties.coords])
 
         if segmenter is not None:

@@ -264,8 +264,15 @@ class DataOrganization(object):
         for dataChannel in self.get_data_channels():
             for fov in self.get_fovs():
                 channelInfo = self.data.loc[dataChannel]
-                imagePath = self._get_image_path(
-                    channelInfo['imageType'], fov, channelInfo['imagingRound'])
+                try:
+                    imagePath = self._get_image_path(
+                        channelInfo['imageType'], fov,
+                        channelInfo['imagingRound'])
+                except IndexError:
+                    raise FileNotFoundError(
+                        'Unable to find image path for %s, fov=%i, round=%i' %
+                        (channelInfo['imageType'], fov,
+                         channelInfo['imagingRound']))
 
                 if not os.path.exists(imagePath):
                     print('{0}'.format(dataChannel))

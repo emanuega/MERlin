@@ -122,9 +122,9 @@ class PixelBasedDecoder(object):
     def extract_barcodes_with_index(
             self, barcodeIndex: int, decodedImage: np.ndarray,
             pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
-            distances: np.ndarray, fov: int, zPosition: float,
-            cropWidth: int, globalAligner=None,
-            segmenter=None, minimumArea: int=0) -> pandas.DataFrame:
+            distances: np.ndarray, fov: int, cropWidth: int, zIndex: int=None,
+            globalAligner=None, segmenter=None, minimumArea: int=0
+    ) -> pandas.DataFrame:
         """Extract the barcode information from the decoded image for barcodes
         that were decoded to the specified barcode index.
 
@@ -140,9 +140,9 @@ class PixelBasedDecoder(object):
             distances: an image indicating the distance between the normalized
                 pixel trace and the assigned barcode for each pixel
             fov: the index of the field of view
-            zPosition: the z position
             cropWidth: the number of pixels around the edge of each image within
                 which barcodes are excluded from the output list.
+            zIndex: the index of the z position
             globalAligner: the aligner used for converted to local x,y
                 coordinates to global x,y coordinates
             segmenter: the cell segmenter for assigning a cell for each of the
@@ -157,7 +157,7 @@ class PixelBasedDecoder(object):
                 measure.label(decodedImage == barcodeIndex),
                 intensity_image=pixelMagnitudes)
         dList = [self._bc_properties_to_dict(
-            p, barcodeIndex, fov, zPosition, distances, pixelTraces,
+            p, barcodeIndex, fov, distances, pixelTraces, zIndex,
             globalAligner, segmenter
         ) for p in properties
             if self._position_within_crop(

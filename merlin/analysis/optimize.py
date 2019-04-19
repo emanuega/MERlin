@@ -89,8 +89,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             self.get_barcode_database().write_barcodes(
                     decoder.extract_barcodes_with_index(
                         i, di, pm, npt, d, fovIndex,
-                        self.dataSet.z_index_to_position(zIndex),
-                        10, minimumArea=areaThreshold
+                        10, zIndex, minimumArea=areaThreshold
                     ), fov=fragmentIndex)
 
         self.dataSet.save_numpy_analysis_result(
@@ -204,17 +203,16 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             for fov in uniqueFOVs:
 
                 fovBarcodes = barcodes[barcodes['fov'] == fov]
-                zPositions = np.unique(fovBarcodes['z'])
+                zIndexes = np.unique(fovBarcodes['z'])
                 # TODO reading the full z stack is unnecessary 
-                for z in zPositions:
+                for z in zIndexes:
                     currentBarcodes = fovBarcodes[fovBarcodes['z'] == z]
                     # TODO this can be moved to the run function for the task
                     # so not as much repeated work is done when it is called
                     # from many different tasks in parallel
-                    zIndex = self.dataSet.z_position_to_index(z)
                     warpedImages = np.array([warpTask.get_aligned_image(
                         fov, dataOrganization.get_data_channel_for_bit(b),
-                        zIndex,  previousCorrector)
+                        int(z),  previousCorrector)
                         for b in codebook.get_bit_names()])
 
                     for i, cBC in currentBarcodes.iterrows():

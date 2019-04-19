@@ -191,7 +191,7 @@ class PixelBasedDecoder(object):
         else:
             globalCentroid = centroid
 
-        if len(ds.shape) == 2:
+        if len(distances.shape) == 2:
             d = [distances[x[1], x[0]] for x in properties.coords]
         else:
             d = [distances[x[0], x[1], x[0]] for x in properties.coords]

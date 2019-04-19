@@ -174,21 +174,33 @@ class PixelBasedDecoder(object):
                 and cropWidth < position[1] < imageSize[1] - cropWidth
 
     def _bc_properties_to_dict(self, properties, bcIndex: int, fov: int,
-                               zPosition: float, distances: np.ndarray,
-                               pixelTraces: np.ndarray, globalAligner=None,
+                               distances: np.ndarray, pixelTraces: np.ndarray,
+                               zIndex: int=None, globalAligner=None,
                                segmenter=None) -> Dict:
         # centroid is reversed since skimage regionprops returns the centroid
         # as (r,c)
-        centroid = properties.weighted_centroid[::-1]
+        inputCentroid = properties.weighted_centroid
+        if len(inputCentroid) == 2:
+            centroid = [zIndex, inputCentroid[2], inputCentroid[1]]
+        else:
+            centroid = [inputCentroid[0], inputCentroid[2], inputCentroid[1]]
+
         if globalAligner is not None:
             globalCentroid = globalAligner.fov_coordinates_to_global(
                     fov, centroid)
         else:
             globalCentroid = centroid
-        d = [distances[x[0], x[1]] for x in properties.coords]
+
+        if len(ds.shape) == 2:
+            d = [distances[x[1], x[0]] for x in properties.coords]
+        else:
+            d = [distances[x[0], x[1], x[0]] for x in properties.coords]
+
         # TODO barcode is set to 1 since it is stored as a 64 bit number
         # which is incompatible with 69 bit barcodes. 'barcode' should 
         # be removed from the database since it is redundant with 'barcode_id'
+        # since barcode bit sequence can be retrieved from the codebook
+        # with barcode_id
         outputDict = {'barcode': 1,
                       'barcode_id': bcIndex,
                       'fov': fov,
@@ -197,18 +209,23 @@ class PixelBasedDecoder(object):
                       'area': properties.area,
                       'mean_distance': np.mean(d),
                       'min_distance': np.min(d),
-                      'x': centroid[0],
-                      'y': centroid[1],
-                      'z': zPosition,
-                      'global_x': globalCentroid[0],
-                      'global_y': globalCentroid[1],
-                      'global_z': zPosition,
+                      'x': centroid[1],
+                      'y': centroid[2],
+                      'z': centroid[0],
+                      'global_x': globalCentroid[1],
+                      'global_y': globalCentroid[2],
+                      'global_z': globalCentroid[0],
                       'cell_index': -1}
 
         for i in range(len(pixelTraces)):
-            outputDict['intensity_' + str(i)] = \
-                np.mean([pixelTraces[i, x[0], x[1]]
-                        for x in properties.coords])
+            if len(pixelTraces.shape) == 2:
+                outputDict['intensity_' + str(i)] = \
+                    np.mean([pixelTraces[i, x[1], x[0]]
+                            for x in properties.coords])
+            else:
+                outputDict['intensity_' + str(i)] = \
+                    np.mean([pixelTraces[i, x[0], x[2], x[0]]
+                             for x in properties.coords])
 
         if segmenter is not None:
             outputDict['cell_index'] = segmenter \

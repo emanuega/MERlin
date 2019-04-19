@@ -23,9 +23,10 @@ class GlobalAlignment(analysistask.AnalysisTask):
         Args:
             fov: the fov where the coordinates are measured
             fovCoordinates: a tuple containing the x and y coordinates
-                (in pixels) in the specified fov.
+                or z, x, and y coordinates (in pixels) in the specified fov.
         Returns:
-            A tuple containing the global x and y coordinates (in microns)
+            A tuple containing the global x and y coordinates or
+            z, x, and y coordinates (in microns)
         """
         pass
 
@@ -78,8 +79,17 @@ class SimpleGlobalAlignment(GlobalAlignment):
     def fov_coordinates_to_global(self, fov, fovCoordinates):
         fovStart = self.dataSet.get_fov_offset(fov)
         micronsPerPixel = self.dataSet.get_microns_per_pixel()
-        return (fovStart[0] + fovCoordinates[0]*micronsPerPixel,
-                fovStart[1] + fovCoordinates[1]*micronsPerPixel)
+        if len(fovCoordinates) == 2:
+            return (fovStart[0] + fovCoordinates[0]*micronsPerPixel,
+                    fovStart[1] + fovCoordinates[1]*micronsPerPixel)
+        elif len(fovCoordinates) == 3:
+            zPositions = self.dataSet.get_z_positions()
+            return (np.interp(fovCoordinates[0], np.arange(len(zPositions)),
+                              zPositions),
+                    fovStart[0] + fovCoordinates[1]*micronsPerPixel,
+                    fovStart[1] + fovCoordinates[2]*micronsPerPixel)
+
+
       
     def fov_to_global_transform(self, fov):
         micronsPerPixel = self.dataSet.get_microns_per_pixel()

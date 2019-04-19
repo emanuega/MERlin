@@ -217,14 +217,15 @@ class PixelBasedDecoder(object):
                       'global_z': globalCentroid[0],
                       'cell_index': -1}
 
-        for i in range(len(pixelTraces)):
-            if len(pixelTraces.shape) == 2:
+        if len(pixelTraces.shape) == 2:
+            for i in range(len(pixelTraces)):
                 outputDict['intensity_' + str(i)] = \
                     np.mean([pixelTraces[i, x[1], x[0]]
                             for x in properties.coords])
-            else:
+        else:
+            for i in range(len(pixelTraces[0])):
                 outputDict['intensity_' + str(i)] = \
-                    np.mean([pixelTraces[i, x[0], x[2], x[0]]
+                    np.mean([pixelTraces[x[0], i, x[2], x[1]]
                              for x in properties.coords])
 
         if segmenter is not None:

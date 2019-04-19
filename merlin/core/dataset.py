@@ -811,6 +811,20 @@ class MERFISHDataSet(ImageDataSet):
 
         return self.get_z_positions()[zIndex]
 
+    def position_to_z_index(self, zPosition: float) -> int:
+        """Get the z index associated with the specified z position
+        
+        Raises:
+             Exception: If the provided z position is not specified in this
+                dataset
+        """
+
+        zIndex = np.where(self.get_z_positions() == zPosition)[0]
+        if len(zIndex) == 0:
+            raise Exception('Requested z=%0.2f position not found.' % zPosition)
+
+        return zIndex[0]
+
     def get_z_positions(self) -> List[float]:
         """Get the z positions present in this dataset.
 

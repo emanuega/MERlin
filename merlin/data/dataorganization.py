@@ -163,7 +163,7 @@ class DataOrganization(object):
                 channelInfo['imageType'], fov, channelInfo['imagingRound'])
         return imagePath
 
-    def get_image_frame_index(self, dataChannel: int, zPosition: int) -> int:
+    def get_image_frame_index(self, dataChannel: int, zPosition: float) -> int:
         """Get the index of the frame containing the image
         for the specified data channel and z position.
 
@@ -178,7 +178,9 @@ class DataOrganization(object):
         if isinstance(channelZ, np.ndarray):
             zIndex = np.where(channelZ == zPosition)[0]
             if len(zIndex) == 0:
-                frameIndex = 0
+                raise Exception('Requested z position not found. Position ' +
+                                'z=%0.2f not found for channel %i'
+                                % (zPosition, dataChannel))
             else:
                 frameIndex = zIndex[0]
         else:

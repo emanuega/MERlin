@@ -67,7 +67,8 @@ class Warp(analysistask.ParallelAnalysisTask):
         Returns:
             a 2-dimensional numpy array containing the specified image
         """
-        inputImage = self.dataSet.get_raw_image(dataChannel, fov, zIndex)
+        inputImage = self.dataSet.get_raw_image(
+            dataChannel, fov, self.dataSet.z_index_to_position(zIndex))
         transformation = self.get_transformation(fov, dataChannel)
         if chromaticCorrector is not None:
             imageColor = self.dataSet.get_data_organization()\

@@ -41,8 +41,7 @@ class BarcodeDB:
         self._analysisTask = analysisTask
 
     def _get_bc_column_types(self):
-        columnInformation = {'barcode': types.BigInteger(),
-                             'barcode_id': types.SmallInteger(),
+        columnInformation = {'barcode_id': types.SmallInteger(),
                              'fov': types.SmallInteger(),
                              'mean_intensity': types.Float(precision=32),
                              'max_intensity': types.Float(precision=32),

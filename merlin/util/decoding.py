@@ -196,13 +196,7 @@ class PixelBasedDecoder(object):
         else:
             d = [distances[x[0], x[1], x[2]] for x in properties.coords]
 
-        # TODO barcode is set to 1 since it is stored as a 64 bit number
-        # which is incompatible with 69 bit barcodes. 'barcode' should 
-        # be removed from the database since it is redundant with 'barcode_id'
-        # since barcode bit sequence can be retrieved from the codebook
-        # with barcode_id
-        outputDict = {'barcode': 1,
-                      'barcode_id': bcIndex,
+        outputDict = {'barcode_id': bcIndex,
                       'fov': fov,
                       'mean_intensity': properties.mean_intensity,
                       'max_intensity': properties.max_intensity,

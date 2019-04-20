@@ -47,9 +47,9 @@ class Warp(analysistask.ParallelAnalysisTask):
                 images are arranged as [channel, zIndex, x, y]
         """
         dataChannels = self.dataSet.get_data_organization().get_data_channels()
-        zPositions = self.dataSet.get_z_positions()
+        zIndexes = range(len(self.dataSet.get_z_positions()))
         return np.array([[self.get_aligned_image(fov, d, z, chromaticCorrector)
-                          for z in zPositions] for d in dataChannels])
+                          for z in zIndexes] for d in dataChannels])
 
     def get_aligned_image(
             self, fov: int, dataChannel: int, zIndex: int,

@@ -72,7 +72,7 @@ class Decode(analysistask.ParallelAnalysisTask):
         decodedImages = np.zeros((zPositionCount, *imageShape), dtype=np.int16)
         magnitudeImages = np.zeros((zPositionCount, *imageShape),
                                    dtype=np.float32)
-        distances = np.zeros(zPositionCount, *imageShape)
+        distances = np.zeros((zPositionCount, *imageShape), dtype=np.float32)
 
         if not decode3d:
             for zIndex in range(zPositionCount):

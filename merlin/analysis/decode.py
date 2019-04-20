@@ -116,7 +116,8 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         if self.parameters['write_decoded_images']:
             self._save_decoded_images(
-                fragmentIndex, zPositionCount, decodedImages, magnitudeImages)
+                fragmentIndex, zPositionCount, decodedImages, magnitudeImages,
+                distances)
 
     def get_barcode_database(self) -> barcodedb.BarcodeDB:
         return barcodedb.PyTablesBarcodeDB(self.dataSet, self)

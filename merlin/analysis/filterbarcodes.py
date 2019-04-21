@@ -128,7 +128,7 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
             if barcodeIn['area'] >= len(thresholds) - 1:
                 return True
             return np.log10(barcodeIn['mean_intensity']) > thresholds[
-                int(barcodeIn['area']) + 1]
+                int(barcodeIn['area']) - 1]
 
         filteredBarcodes = fovBarcodes.loc[
             [barcode_passes_threshold(b) for i, b in fovBarcodes.iterrows()]]

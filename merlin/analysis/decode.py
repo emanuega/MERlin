@@ -106,7 +106,7 @@ class Decode(analysistask.ParallelAnalysisTask):
                 normalizedPixelTraces[zIndex, :, :, :] = npt
                 decodedImages[zIndex, :, :] = di
                 magnitudeImages[zIndex, :, :] = pm
-                distances[zIndex, :, :] = distances
+                distances[zIndex, :, :] = d
 
             self._extract_and_save_barcodes(
                 decoder, decodedImages, magnitudeImages, normalizedPixelTraces,

@@ -112,8 +112,6 @@ class Decode(analysistask.ParallelAnalysisTask):
                 decoder, decodedImages, magnitudeImages, normalizedPixelTraces,
                 distances, fragmentIndex)
 
-            decodedImages = np.zeros(())
-
         if self.parameters['write_decoded_images']:
             self._save_decoded_images(
                 fragmentIndex, zPositionCount, decodedImages, magnitudeImages,

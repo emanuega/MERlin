@@ -226,6 +226,21 @@ class DataSet(object):
         with open(savePath, 'r') as f:
             return pandas.read_csv(f, **kwargs)
 
+    def open_pandas_hdfstore(self, mode: str, resultName: str,
+                             analysisName: str, resultIndex: int=None,
+                             subdirectory: str=None) -> pandas.HDFStore:
+        savePath = self._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory, '.h5')
+        return pandas.HDFStore(savePath, mode=mode)
+
+    def delete_pandas_hdfstore(
+            self, resultName: str, analysisTask: TaskOrName=None,
+            resultIndex: int=None, subdirectory: str=None) -> None:
+        hPath = self._analysis_result_save_path(
+            resultName, analysisTask, resultIndex, subdirectory, '.h5')
+        if os.path.exists(hPath):
+            os.remove(hPath)
+
     def open_table(self, mode: str, resultName: str, analysisName: str,
                    resultIndex: int=None, subdirectory: str=None
                    ) -> tables.file:
@@ -250,7 +265,7 @@ class DataSet(object):
                 saved to the root directory for the analysis task.
         """
         hPath = self._analysis_result_save_path(
-                resultName, analysisTask, resultIndex, subdirectory, '.h5') \
+                resultName, analysisTask, resultIndex, subdirectory, '.h5')
 
         if os.path.exists(hPath):
             os.remove(hPath)

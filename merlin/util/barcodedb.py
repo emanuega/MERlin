@@ -4,7 +4,9 @@ import itertools
 import pandas
 import sqlalchemy
 from sqlalchemy import types
-import tables
+import numpy as np
+
+from merlin.core import dataset
 
 
 class BarcodeDB:
@@ -174,7 +176,7 @@ class BarcodeDB:
 
 class PyTablesBarcodeDB(BarcodeDB):
 
-    def __init__(self, dataSet, analysisTask):
+    def __init__(self, dataSet: dataset.DataSet, analysisTask):
         super().__init__(dataSet, analysisTask)
 
     def empty_database(self, fov: int=None) -> None:
@@ -182,8 +184,8 @@ class PyTablesBarcodeDB(BarcodeDB):
             for f in self._dataSet.get_fovs():
                 self.empty_database(f)
 
-        self._dataSet.delete_table('barcode_data', self._analysisTask, fov,
-                                   'barcodes')
+        self._dataSet.delete_pandas_hdfstore(
+            'barcode_data', self._analysisTask, fov, 'barcodes')
 
     def get_barcodes(self, fov=None, columnList=None, chunkSize=None)\
             -> pandas.DataFrame:
@@ -194,14 +196,13 @@ class PyTablesBarcodeDB(BarcodeDB):
                  for x in self._dataSet.get_fovs()])
         else:
             try:
-                with self._dataSet.open_table(
+                with self._dataSet.open_pandas_hdfstore(
                         'r', 'barcode_data', self._analysisTask,
-                        fov, 'barcodes') as tableFile:
+                        fov, 'barcodes') as pandasHDF:
 
-                    if '/barcodes' not in tableFile:
+                    if 'barcodes' not in pandasHDF:
                         return pandas.DataFrame()
-                    barcodes = pandas.DataFrame.from_records(
-                        tableFile.root.barcodes[:])
+                    barcodes = pandasHDF['barcodes']
 
                     if columnList is not None:
                         barcodes = barcodes[columnList]
@@ -238,31 +239,19 @@ class PyTablesBarcodeDB(BarcodeDB):
                         barcodeInformation.loc[barcodeInformation['fov'] == f],
                         fov=f)
 
-        with self._dataSet.open_table('a', 'barcode_data', self._analysisTask,
-                                      fov, 'barcodes') as tableFile:
-
-            if '/barcodes' not in tableFile:
-                tablesTypeConversion = {
-                    type(types.BigInteger()): tables.UInt64Col(),
-                    type(types.SmallInteger()): tables.UInt16Col(),
-                    type(types.Float(precision=32)): tables.Float32Col(),
-                    type(types.Integer()): tables.Int32Col()
-                }
-                tablesType = {k: tablesTypeConversion[type(v)] for k, v in
-                              self._get_bc_column_types().items()}
-                barcodeTable = tableFile.create_table(
-                    '/', 'barcodes', tablesType)
-
-            else:
-                barcodeTable = tableFile.root.barcodes
-
-            barcode = barcodeTable.row
-            for i, currentBarcode in barcodeInformation.iterrows():
-                for k, x in currentBarcode.iteritems():
-                    barcode[k] = x
-                barcode.append()
-
-            barcodeTable.flush()
+        with self._dataSet.open_pandas_hdfstore(
+                'a', 'barcode_data', self._analysisTask, fov, 'barcodes'
+        ) as pandasHDF:
+            tablesTypeConversion = {
+                type(types.BigInteger()): np.uint64,
+                type(types.SmallInteger()): np.uint16,
+                type(types.Float(precision=32)): np.float32,
+                type(types.Integer()): np.int32
+            }
+            tablesType = {k: tablesTypeConversion[type(v)] for k, v in
+                          self._get_bc_column_types().items()}
+            pandasHDF.append('barcodes', barcodeInformation.astype(tablesType),
+                             format='table')
 
 
 class SQLiteBarcodeDB(BarcodeDB):

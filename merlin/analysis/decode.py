@@ -1,4 +1,5 @@
 import numpy as np
+import pandas
 from typing import List
 
 from merlin.core import dataset
@@ -154,10 +155,10 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         minimumArea = self.parameters['minimum_area']
 
-        for i in range(self.dataSet.get_codebook().get_barcode_count()):
-            self.get_barcode_database().write_barcodes(
-                    decoder.extract_barcodes_with_index(
-                        i, decodedImage, pixelMagnitudes, pixelTraces,
-                        distances, fov, self.cropWidth,
-                        zIndex, globalTask, segmentTask, minimumArea
-                    ), fov=fov)
+        self.get_barcode_database().write_barcodes(
+            pandas.concat([decoder.extract_barcodes_with_index(
+                i, decodedImage, pixelMagnitudes, pixelTraces, distances, fov,
+                self.cropWidth, zIndex, globalTask, segmentTask, minimumArea)
+                for i in range(
+                    self.dataSet.get_codebook().get_barcode_count())]),
+            fov=fov)

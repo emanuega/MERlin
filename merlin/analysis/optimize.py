@@ -5,6 +5,7 @@ import itertools
 from skimage import transform
 from typing import Dict
 from typing import List
+import pandas
 
 from merlin.core import analysistask
 from merlin.util import decoding
@@ -83,14 +84,14 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
         refactors, barcodesSeen = decoder.extract_refactors(di, pm, npt)
 
-        for i in range(codebook.get_barcode_count()):
-            # TODO this saves the barcodes under fragment instead of fov
-            # the barcodedb should be made more general
-            self.get_barcode_database().write_barcodes(
-                    decoder.extract_barcodes_with_index(
-                        i, di, pm, npt, d, fovIndex,
-                        10, zIndex, minimumArea=areaThreshold
-                    ), fov=fragmentIndex)
+        # TODO this saves the barcodes under fragment instead of fov
+        # the barcodedb should be made more general
+        self.get_barcode_database().write_barcodes(
+                pandas.concat([decoder.extract_barcodes_with_index(
+                    i, di, pm, npt, d, fovIndex,
+                    10, zIndex, minimumArea=areaThreshold
+                ) for i in range(codebook.get_barcode_count())]),
+            fov=fragmentIndex)
 
         self.dataSet.save_numpy_analysis_result(
             refactors, 'refactors', self.analysisName,

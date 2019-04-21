@@ -161,6 +161,5 @@ class Decode(analysistask.ParallelAnalysisTask):
                     decoder.extract_barcodes_with_index(
                         i, decodedImage, pixelMagnitudes, pixelTraces,
                         distances, fov, self.cropWidth,
-                        self.dataSet.z_index_to_position(zIndex),
-                        globalTask, segmentTask, minimumArea
+                        zIndex, globalTask, segmentTask, minimumArea
                     ), fov=fov)

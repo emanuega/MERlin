@@ -127,7 +127,7 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
             fragmentIndex)
 
         filteredBarcodes = pandas.concat(
-            [allBarcodes[(fovBarcodes['area'] == a) &
+            [fovBarcodes[(fovBarcodes['area'] == a) &
                          (np.log10(fovBarcodes['mean_intensity']) > thresholds[
                              a - 1])]
              for a in np.unique(fovBarcodes['area'])])

@@ -56,7 +56,7 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
         super().__init__(dataSet, parameters, analysisName)
 
         if 'blank_fraction' not in self.parameters:
-            self.parameters['blank_fraction'] = 0.01
+            self.parameters['blank_fraction'] = 0.1
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())

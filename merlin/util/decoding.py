@@ -170,8 +170,12 @@ class PixelBasedDecoder(object):
     @staticmethod
     def _position_within_crop(position: np.ndarray, cropWidth: float,
                               imageSize: Tuple[int]) -> bool:
-        return cropWidth < position[0] < imageSize[0] - cropWidth \
-                and cropWidth < position[1] < imageSize[1] - cropWidth
+        if len(centroid) == 2:
+            return cropWidth < position[0] < imageSize[0] - cropWidth \
+                    and cropWidth < position[1] < imageSize[1] - cropWidth
+        else:
+            return cropWidth < position[1] < imageSize[0] - cropWidth \
+                   and cropWidth < position[2] < imageSize[1] - cropWidth
 
     def _bc_properties_to_dict(self, properties, bcIndex: int, fov: int,
                                distances: np.ndarray, pixelTraces: np.ndarray,

@@ -174,8 +174,8 @@ class PixelBasedDecoder(object):
             return cropWidth < position[0] < imageSize[0] - cropWidth \
                     and cropWidth < position[1] < imageSize[1] - cropWidth
         else:
-            return cropWidth < position[1] < imageSize[0] - cropWidth \
-                   and cropWidth < position[2] < imageSize[1] - cropWidth
+            return cropWidth < position[1] < imageSize[1] - cropWidth \
+                   and cropWidth < position[2] < imageSize[2] - cropWidth
 
     def _bc_properties_to_dict(self, properties, bcIndex: int, fov: int,
                                distances: np.ndarray, pixelTraces: np.ndarray,

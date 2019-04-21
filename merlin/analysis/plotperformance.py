@@ -178,6 +178,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.xlabel('Barcode area (pixels)')
         plt.ylabel('Mean intensity ($log_{10}$)')
         plt.title('Intensity distribution by barcode area')
+        plt.xlim([0, 15])
         plt.tight_layout(pad=0.2)
         self.dataSet.save_figure(self, fig, 'barcode_intensity_area_violin')
 

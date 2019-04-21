@@ -1,4 +1,5 @@
 import numpy as np
+import pandas
 from merlin.core import analysistask
 from merlin.util import barcodedb
 
@@ -100,12 +101,13 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
 
             nonzeroBlankCounts = np.array([np.histogram(np.log10(
                 blankBarcodes[blankBarcodes['area'] == a]['mean_intensity']),
-                                                        bins=histBins)[0] for a
-                                           in np.arange(1, 15)])
+                                                        bins=histBins)[0]
+                       for a in np.arange(1, np.max(allBarcodes['area'])+1)])
 
             nonzeroCounts = np.array([np.histogram(np.log10(
                 allBarcodes[allBarcodes['area'] == a]['mean_intensity']),
-                bins=histBins)[0] for a in np.arange(1, 15)])
+                bins=histBins)[0] for a
+                in np.arange(1, np.max(allBarcodes['area'])+1)])
 
             blankFractionMatrix = nonzeroBlankCounts / nonzeroCounts
             blankFractionMatrix[np.isnan(blankFractionMatrix)] = 0
@@ -124,14 +126,11 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
         fovBarcodes = decodeTask.get_barcode_database().get_barcodes(
             fragmentIndex)
 
-        def barcode_passes_threshold(barcodeIn):
-            if barcodeIn['area'] >= len(thresholds) - 1:
-                return True
-            return np.log10(barcodeIn['mean_intensity']) > thresholds[
-                int(barcodeIn['area']) - 1]
-
-        filteredBarcodes = fovBarcodes.loc[
-            [barcode_passes_threshold(b) for i, b in fovBarcodes.iterrows()]]
+        filteredBarcodes = pandas.concat(
+            [allBarcodes[(fovBarcodes['area'] == a) &
+                         (np.log10(fovBarcodes['mean_intensity']) > thresholds[
+                             a - 1])]
+             for a in np.unique(fovBarcodes['area'])])
 
         self.get_barcode_database().write_barcodes(
             filteredBarcodes, fov=fragmentIndex)

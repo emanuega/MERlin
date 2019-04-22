@@ -22,6 +22,8 @@ class GenerateMosaic(analysistask.AnalysisTask):
             self.parameters['microns_per_pixel'] = 3
         if 'fov_crop_width' not in self.parameters:
             self.parameters['fov_crop_width'] = 0
+        if 'separate_files' not in self.parameters:
+            self.parameters['separate_files'] = False
 
         if self.parameters['microns_per_pixel'] == 'full_resolution':
             self.mosaicMicronsPerPixel = self.dataSet.get_microns_per_pixel()
@@ -113,36 +115,70 @@ class GenerateMosaic(analysistask.AnalysisTask):
         else:
             zIndexes = range(len(self.dataSet.get_z_positions()))
 
-        imageDescription = self.dataSet.analysis_tiff_description(
-            len(zIndexes), len(dataChannels))
-
         cropWidth = self.parameters['fov_crop_width']
-        with self.dataSet.writer_for_analysis_images(
-                self, 'mosaic') as outputTif:
+        # TODO there is too much redundancy in the two conditions
+        if not self.parameters['separate_files']:
+            imageDescription = self.dataSet.analysis_tiff_description(
+                len(zIndexes), len(dataChannels))
+            with self.dataSet.writer_for_analysis_images(
+                    self, 'mosaic') as outputTif:
+                for d in dataChannels:
+                    for z in zIndexes:
+                        mosaic = np.zeros(
+                                np.flip(
+                                    mosaicDimensions, axis=0), dtype=np.uint16)
+                        for f in self.dataSet.get_fovs():
+                            inputImage = warpTask.get_aligned_image(
+                                f, d, z, chromaticCorrector)
+                            if cropWidth > 0:
+                                inputImage[:cropWidth, :] = 0
+                                inputImage[inputImage.shape[0]-cropWidth:, :] = 0
+                                inputImage[:, :cropWidth] = 0
+                                inputImage[:, inputImage.shape[0]-cropWidth:] = 0
+
+                            transformedImage = self._transform_image_to_mosaic(
+                                inputImage, f, alignTask, micronExtents,
+                                mosaicDimensions)
+
+                            divisionMask = np.bitwise_and(
+                                    transformedImage > 0, mosaic > 0)
+                            cv2.add(mosaic, transformedImage, dst=mosaic,
+                                    mask=np.array(
+                                        transformedImage > 0).astype(np.uint8))
+                            dividedMosaic = cv2.divide(mosaic, 2)
+                            mosaic[divisionMask] = dividedMosaic[divisionMask]
+                        outputTif.save(mosaic, photometric='MINISBLACK',
+                                       metadata=imageDescription)
+        else:
+            imageDescription = self.dataSet.analysis_tiff_description(1, 1)
             for d in dataChannels:
                 for z in zIndexes:
-                    mosaic = np.zeros(
-                            np.flip(
-                                mosaicDimensions, axis=0), dtype=np.uint16)
-                    for f in self.dataSet.get_fovs():
-                        inputImage = warpTask.get_aligned_image(
-                            f, d, z, chromaticCorrector)
-                        if cropWidth > 0:
-                            inputImage[:cropWidth, :] = 0
-                            inputImage[inputImage.shape[0]-cropWidth:, :] = 0
-                            inputImage[:, :cropWidth] = 0
-                            inputImage[:, inputImage.shape[0]-cropWidth:] = 0
+                    with self.dataSet.writer_for_analysis_images(
+                        self, 'mosaic_%s_%i'
+                              % (dataOrganization.get_dataChannel_name(d), z)) \
+                            as outputTif:
+                        mosaic = np.zeros(
+                                np.flip(
+                                    mosaicDimensions, axis=0), dtype=np.uint16)
+                        for f in self.dataSet.get_fovs():
+                            inputImage = warpTask.get_aligned_image(
+                                f, d, z, chromaticCorrector)
+                            if cropWidth > 0:
+                                inputImage[:cropWidth, :] = 0
+                                inputImage[inputImage.shape[0]-cropWidth:, :] = 0
+                                inputImage[:, :cropWidth] = 0
+                                inputImage[:, inputImage.shape[0]-cropWidth:] = 0
 
-                        transformedImage = self._transform_image_to_mosaic(
-                            inputImage, f, alignTask, micronExtents,
-                            mosaicDimensions)
+                            transformedImage = self._transform_image_to_mosaic(
+                                inputImage, f, alignTask, micronExtents,
+                                mosaicDimensions)
 
-                        divisionMask = np.bitwise_and(
-                                transformedImage > 0, mosaic > 0)
-                        cv2.add(mosaic, transformedImage, dst=mosaic,
-                                mask=np.array(
-                                    transformedImage > 0).astype(np.uint8))
-                        dividedMosaic = cv2.divide(mosaic, 2)
-                        mosaic[divisionMask] = dividedMosaic[divisionMask]
-                    outputTif.save(mosaic, photometric='MINISBLACK',
-                                   metadata=imageDescription)
+                            divisionMask = np.bitwise_and(
+                                    transformedImage > 0, mosaic > 0)
+                            cv2.add(mosaic, transformedImage, dst=mosaic,
+                                    mask=np.array(
+                                        transformedImage > 0).astype(np.uint8))
+                            dividedMosaic = cv2.divide(mosaic, 2)
+                            mosaic[divisionMask] = dividedMosaic[divisionMask]
+                        outputTif.save(mosaic, photometric='MINISBLACK',
+                                       metadata=imageDescription)

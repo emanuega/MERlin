@@ -24,6 +24,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['write_decoded_images'] = True
         if 'minimum_area' not in self.parameters:
             self.parameters['minimum_area'] = 0
+        if 'distance_threshold' not in self.parameters:
+            self.parameters['distance_threshold'] = 0.5167
         if 'lowpass_sigma' not in self.parameters:
             self.parameters['lowpass_sigma'] = 1
         if 'decode_3d' not in self.parameters:
@@ -82,8 +84,9 @@ class Decode(analysistask.ParallelAnalysisTask):
                 imageSet = imageSet.reshape(
                     (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
-                di, pm, npt, d = decoder.decode_pixels(imageSet, scaleFactors,
-                                                       lowPassSigma=lowPassSigma)
+                di, pm, npt, d = decoder.decode_pixels(
+                    imageSet, scaleFactors, lowPassSigma=lowPassSigma,
+                    distanceThreshold=self.parameters['distance_threshold'])
                 self._extract_and_save_barcodes(
                         decoder, di, pm, npt, d, fragmentIndex, zIndex)
 
@@ -102,7 +105,8 @@ class Decode(analysistask.ParallelAnalysisTask):
                     (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
                 di, pm, npt, d = decoder.decode_pixels(
-                    imageSet, scaleFactors, lowPassSigma=lowPassSigma)
+                    imageSet, scaleFactors, lowPassSigma=lowPassSigma,
+                    distanceThreshold=self.parameters['distance_threshold'])
 
                 normalizedPixelTraces[zIndex, :, :, :] = npt
                 decodedImages[zIndex, :, :] = di

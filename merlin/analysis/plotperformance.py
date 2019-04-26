@@ -149,7 +149,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_distance_distribution')
 
     def _plot_barcode_intensity_area_violin(self):
-        barcodeDB = self.decodeTask.get_barcode_database()
+        barcodeDB = self.decodeTask.get_barcode_database(
+            columnList=['mean_intensity', 'area'])
         intensityData = [np.log10(
             barcodeDB.get_intensities_for_barcodes_with_area(x).tolist())
                     for x in range(1, 15)]

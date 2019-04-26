@@ -87,7 +87,8 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
             thresholds = self.get_adaptive_thresholds()
 
         except IOError:
-            allBarcodes = decodeTask.get_barcode_database().get_barcodes()
+            allBarcodes = decodeTask.get_barcode_database().get_barcodes(
+                columnList=['barcode_id', 'mean_intensity', 'area'])
             blankBarcodes = allBarcodes[allBarcodes['barcode_id'].isin(
                 codebook.get_blank_indexes())]
             blankFraction = len(codebook.get_blank_indexes()) / (

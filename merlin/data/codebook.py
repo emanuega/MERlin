@@ -169,7 +169,7 @@ class Codebook(object):
             the first appearance is returned. If name is not in this codebook
             then None is returned.
         """
-        matches = self._data[self._data['name'].str.match(name)]
+        matches = self._data[self._data['name'].str.match('^' + name + '$')]
         if len(matches) == 0:
             return None
         return matches.index[0]

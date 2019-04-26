@@ -227,7 +227,7 @@ class PyTablesBarcodeDB(BarcodeDB):
 
     def get_intensities_for_barcodes_with_area(
             self, area: int) -> pandas.Series:
-        allBarcodes = self.get_barcodes()
+        allBarcodes = self.get_barcodes(columnList=['area', 'mean_intensity'])
         return allBarcodes[allBarcodes['area'] == area]['mean_intensity']
 
     def write_barcodes(self, barcodeInformation: pandas.DataFrame,

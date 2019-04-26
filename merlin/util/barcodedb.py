@@ -202,10 +202,12 @@ class PyTablesBarcodeDB(BarcodeDB):
 
                     if 'barcodes' not in pandasHDF:
                         return pandas.DataFrame()
-                    barcodes = pandasHDF['barcodes']
 
-                    if columnList is not None:
-                        barcodes = barcodes[columnList]
+                    if columnList is None:
+                        barcodes = pandasHDF['barcodes']
+                    else:
+                        barcodes = pandas.read_hdf(pandasHDF, key='barcodes',
+                                                   columns=columnList)
 
             except OSError:
                 return pandas.DataFrame()

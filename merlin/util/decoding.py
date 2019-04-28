@@ -25,7 +25,7 @@ def normalize(x):
 class PixelBasedDecoder(object):
 
     def __init__(self, codebook: mcodebook.Codebook,
-                 scaleFactors: np.ndarray=None):
+                 scaleFactors: np.ndarray=None, backgrounds: np.ndarray=None):
         self._codebook = codebook
         self._decodingMatrix = self._calculate_normalized_barcodes()
         self._barcodeCount = self._decodingMatrix.shape[0]
@@ -34,12 +34,18 @@ class PixelBasedDecoder(object):
         if scaleFactors is None:
             self._scaleFactors = np.ones(self._decodingMatrix.shape[1])
         else:
-            self._scaleFactors = scaleFactors
+            self._scaleFactors = scaleFactors.copy()
+
+        if backgrounds is None:
+            self._backgrounds = np.zeros(self._decodingMatrix.shape[1])
+        else:
+            self._backgrounds = backgrounds.copy()
 
         self.refactorAreaThreshold = 4
 
     def decode_pixels(self, imageData: np.ndarray,
                       scaleFactors: np.ndarray=None,
+                      backgrounds: np.ndarray=None,
                       distanceThreshold: float=0.5176,
                       magnitudeThreshold: float=1,
                       lowPassSigma: float=1):
@@ -55,6 +61,9 @@ class PixelBasedDecoder(object):
                 corresponding image.
             scaleFactors: factors to rescale each bit prior to normalization.
                 The length of scaleFactors must be equal to the number of bits.
+            backgrounds: background to subtract from each bit prior to applying
+                the scale factors and prior to normalization. The length of
+                backgrounds must be equal to the number of bits.
             distanceThreshold: the maximum distance between an assigned pixel
                 and the nearest barcode. Pixels for which the nearest barcode
                 is greater than distanceThreshold are left unassigned.
@@ -78,6 +87,8 @@ class PixelBasedDecoder(object):
         """
         if scaleFactors is None:
             scaleFactors = self._scaleFactors
+        if backgrounds is None:
+            backgrounds = self._backgrounds
 
         filteredImages = np.zeros(imageData.shape, dtype=np.float32)
         filterSize = int(2 * np.ceil(2 * lowPassSigma) + 1)
@@ -89,7 +100,8 @@ class PixelBasedDecoder(object):
                 filteredImages, 
                 (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
         scaledPixelTraces = np.transpose(
-                np.array([p/s for p, s in zip(pixelTraces, scaleFactors)]))
+                np.array([(p-b)/s for p, s, b in zip(pixelTraces, scaleFactors,
+                                                   backgrounds)]))
 
         pixelMagnitudes = np.array(
             [np.linalg.norm(x) for x in scaledPixelTraces], dtype=np.float32)
@@ -115,6 +127,7 @@ class PixelBasedDecoder(object):
         distances = np.reshape(distances, filteredImages.shape[1:])
 
         decodedImage[pixelMagnitudes < magnitudeThreshold] = -1
+
         return decodedImage, pixelMagnitudes, normalizedPixelTraces, distances
 
     # TODO barcodes here has two different meanings. One of these should be
@@ -268,12 +281,14 @@ class PixelBasedDecoder(object):
                     [x/m for x, m in zip(barcodeSet, bcMagnitudes)])
                 barcodesWithSingleErrors.append(weightedBC)
             return np.array(barcodesWithSingleErrors)
-            
-    def extract_refactors(
+
+    def extract_refactors_legacy(
             self, decodedImage, pixelMagnitudes, normalizedPixelTraces
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Calculate the scale factors that would result in the mean
-        on bit intensity for each bit to be equal to one.
+        on bit intensity for each bit to be equal to one?
+
+        This code follows the legacy matlab decoder.
 
         If the scale factors for this decoder are not set to 1, then the
         calculated scale factors are dependent on the input scale factors
@@ -307,3 +322,54 @@ class PixelBasedDecoder(object):
         refactors = onBitIntensity/np.mean(onBitIntensity)
 
         return refactors, barcodesSeen
+
+    def extract_refactors(
+            self, decodedImage, pixelMagnitudes, normalizedPixelTraces
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Calculate the scale factors that would result in the mean
+        on bit intensity for each bit to be equal to one and the mean off
+        bit intensity for each bit to be equal to zero.
+
+        If the scale factors for this decoder are not set to 1, then the
+        calculated scale factors are dependent on the input scale factors
+        used for the decoding.
+
+        Args:
+            imageSet: the image stack to decode in order to determine the
+                scale factors
+        Returns:
+            a tuple containing an a array of the scale factors, an array
+                of the backgrounds, and an array of the abundance of each
+                barcode determined during the decoding. For the scale factors
+                and the backgroundns, the i'th entry is the scale factor
+                for bit i.
+        """
+        sumPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
+        barcodesSeen = np.zeros(self._barcodeCount)
+        for b in range(self._barcodeCount):
+            barcodeRegions = [x for x in measure.regionprops(
+                measure.label((decodedImage == b).astype(np.int)))
+                              if x.area >= 5]
+            barcodesSeen[b] = len(barcodeRegions)
+            for br in barcodeRegions:
+                meanPixelTrace = np.mean(
+                    [normalizedPixelTraces[:, y[0], y[1]]
+                     * pixelMagnitudes[y[0], y[1]] for y in br.coords],
+                    axis=0)
+                sumPixelTraces[b, :] += meanPixelTrace
+
+        offPixelTraces = sumPixelTraces.copy()
+        offPixelTraces[self._decodingMatrix > 0] = np.nan
+        offBitIntensity = np.nansum(offPixelTraces, axis=0) / np.sum(
+            (self._decodingMatrix == 0) * barcodesSeen[:, np.newaxis], axis=0)
+
+        backgroundRefactors = offBitIntensity
+
+        onPixelTraces = sumPixelTraces.copy()
+        onPixelTraces[self._decodingMatrix == 0] = np.nan
+        onBitIntensity = np.nansum(onPixelTraces, axis=0) / np.sum(
+            (self._decodingMatrix > 0) * barcodesSeen[:, np.newaxis], axis=0)
+
+        scaleRefactors = onBitIntensity - backgroundRefactors
+
+        return scaleRefactors, backgroundRefactors, barcodesSeen

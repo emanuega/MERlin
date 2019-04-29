@@ -286,7 +286,7 @@ class PixelBasedDecoder(object):
             self, decodedImage, pixelMagnitudes, normalizedPixelTraces
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Calculate the scale factors that would result in the mean
-        on bit intensity for each bit to be equal to one?
+        on bit intensity for each bit to be equal.
 
         This code follows the legacy matlab decoder.
 
@@ -344,32 +344,46 @@ class PixelBasedDecoder(object):
                 and the backgroundns, the i'th entry is the scale factor
                 for bit i.
         """
-        sumPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
+        sumMinPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
         barcodesSeen = np.zeros(self._barcodeCount)
+        # TODO the results for this first iteration can be cached
         for b in range(self._barcodeCount):
             barcodeRegions = [x for x in measure.regionprops(
                 measure.label((decodedImage == b).astype(np.int)))
                               if x.area >= 5]
             barcodesSeen[b] = len(barcodeRegions)
             for br in barcodeRegions:
+                minPixelTrace = \
+                    np.min([normalizedPixelTraces[:, y[0],
+                            y[1]] * pixelMagnitudes[y[0], y[1]]
+                            for y in br.coords], axis=0)
+                sumMinPixelTraces[b, :] += minPixelTrace
+
+        offPixelTraces = sumMinPixelTraces.copy()
+        offPixelTraces[self._decodingMatrix > 0] = np.nan
+        offBitIntensity = np.nansum(offPixelTraces, axis=0) / np.sum(
+            (self._decodingMatrix == 0) * barcodesSeen[:, np.newaxis], axis=0)
+        backgroundRefactors = offBitIntensity
+
+        sumMeanNormPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
+
+        for b in range(self._barcodeCount):
+            barcodeRegions = [x for x in measure.regionprops(
+                measure.label((decodedImage == b).astype(np.int)))
+                              if x.area >= 5]
+            for br in barcodeRegions:
                 meanPixelTrace = np.mean(
                     [normalizedPixelTraces[:, y[0], y[1]]
                      * pixelMagnitudes[y[0], y[1]] for y in br.coords],
                     axis=0)
-                sumPixelTraces[b, :] += meanPixelTrace
+                sumMeanNormPixelTraces[b, :] += meanPixelTrace/ \
+                    np.linalg.norm(meanPixelTrace)
 
-        offPixelTraces = sumPixelTraces.copy()
-        offPixelTraces[self._decodingMatrix > 0] = np.nan
-        offBitIntensity = np.nansum(offPixelTraces, axis=0) / np.sum(
-            (self._decodingMatrix == 0) * barcodesSeen[:, np.newaxis], axis=0)
-
-        backgroundRefactors = offBitIntensity
-
-        onPixelTraces = sumPixelTraces.copy()
+        onPixelTraces = sumMeanNormPixelTraces.copy()
         onPixelTraces[self._decodingMatrix == 0] = np.nan
         onBitIntensity = np.nansum(onPixelTraces, axis=0) / np.sum(
             (self._decodingMatrix > 0) * barcodesSeen[:, np.newaxis], axis=0)
 
-        scaleRefactors = onBitIntensity - backgroundRefactors
+        scaleRefactors = onBitIntensity
 
         return scaleRefactors, backgroundRefactors, barcodesSeen

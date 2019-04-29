@@ -338,7 +338,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 'previous_scale_factors', self.analysisName, resultIndex=i)
                 for i in range(self.parameters['fov_per_iteration'])])
 
-            backgrounds = np.nanmedian(np.sum(
+            backgrounds = np.nanmedian(np.add(
                 previousBackgrounds, np.multiply(refactors, previousFactors)),
                 axis=0)
 

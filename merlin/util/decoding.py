@@ -375,7 +375,7 @@ class PixelBasedDecoder(object):
                 meanPixelTrace = np.mean(
                     [normalizedPixelTraces[:, y[0], y[1]]
                      * pixelMagnitudes[y[0], y[1]] for y in br.coords],
-                    axis=0)
+                    axis=0) - backgroundRefactors
                 sumMeanNormPixelTraces[b, :] += meanPixelTrace/ \
                     np.linalg.norm(meanPixelTrace)
 

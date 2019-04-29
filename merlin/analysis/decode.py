@@ -67,6 +67,7 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         decoder = decoding.PixelBasedDecoder(self.dataSet.get_codebook())
         scaleFactors = optimizeTask.get_scale_factors()
+        backgrounds = optimizeTask.get_backgrounds()
         chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
         zPositionCount = len(self.dataSet.get_z_positions())
@@ -85,7 +86,8 @@ class Decode(analysistask.ParallelAnalysisTask):
                     (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
                 di, pm, npt, d = decoder.decode_pixels(
-                    imageSet, scaleFactors, lowPassSigma=lowPassSigma,
+                    imageSet, scaleFactors, backgrounds,
+                    lowPassSigma=lowPassSigma,
                     distanceThreshold=self.parameters['distance_threshold'])
                 self._extract_and_save_barcodes(
                         decoder, di, pm, npt, d, fragmentIndex, zIndex)
@@ -105,7 +107,8 @@ class Decode(analysistask.ParallelAnalysisTask):
                     (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
                 di, pm, npt, d = decoder.decode_pixels(
-                    imageSet, scaleFactors, lowPassSigma=lowPassSigma,
+                    imageSet, scaleFactors, backgrounds,
+                    lowPassSigma=lowPassSigma,
                     distanceThreshold=self.parameters['distance_threshold'])
 
                 normalizedPixelTraces[zIndex, :, :, :] = npt

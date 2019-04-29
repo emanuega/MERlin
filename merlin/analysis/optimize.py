@@ -59,11 +59,15 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             list(range(len(self.dataSet.get_z_positions()))))
 
         scaleFactors = self._get_previous_scale_factors()
+        backgrounds = self._get_previous_backgrounds()
         chromaticTransformations = \
             self._get_previous_chromatic_transformations()
 
         self.dataSet.save_numpy_analysis_result(
             scaleFactors, 'previous_scale_factors', self.analysisName,
+            resultIndex=fragmentIndex)
+        self.dataSet.save_numpy_analysis_result(
+            backgrounds, 'previous_backgrounds', self.analysisName,
             resultIndex=fragmentIndex)
         self.dataSet.save_pickle_analysis_result(
             chromaticTransformations, 'previous_chromatic_corrections',
@@ -80,21 +84,25 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         decoder = decoding.PixelBasedDecoder(codebook)
         areaThreshold = self.parameters['area_threshold']
         decoder.refactorAreaThreshold = areaThreshold
-        di, pm, npt, d = decoder.decode_pixels(warpedImages, scaleFactors)
+        di, pm, npt, d = decoder.decode_pixels(warpedImages, scaleFactors,
+                                               backgrounds)
 
-        refactors, barcodesSeen = decoder.extract_refactors(di, pm, npt)
+        refactors, backgrounds, barcodesSeen = \
+            decoder.extract_refactors(di, pm, npt)
 
         # TODO this saves the barcodes under fragment instead of fov
         # the barcodedb should be made more general
         self.get_barcode_database().write_barcodes(
-                pandas.concat([decoder.extract_barcodes_with_index(
-                    i, di, pm, npt, d, fovIndex,
-                    10, zIndex, minimumArea=areaThreshold
-                ) for i in range(codebook.get_barcode_count())]),
+            pandas.concat([decoder.extract_barcodes_with_index(
+                i, di, pm, npt, d, fovIndex,
+                10, zIndex, minimumArea=areaThreshold)
+                for i in range(codebook.get_barcode_count())]),
             fov=fragmentIndex)
-
         self.dataSet.save_numpy_analysis_result(
-            refactors, 'refactors', self.analysisName,
+            refactors, 'scale_refactors', self.analysisName,
+            resultIndex=fragmentIndex)
+        self.dataSet.save_numpy_analysis_result(
+            backgrounds, 'background_refactors', self.analysisName,
             resultIndex=fragmentIndex)
         self.dataSet.save_numpy_analysis_result(
             barcodesSeen, 'barcode_counts', self.analysisName,
@@ -133,6 +141,16 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             scaleFactors = previousIteration.get_scale_factors()
 
         return scaleFactors
+
+    def _get_previous_backgrounds(self) -> np.ndarray:
+        if 'previous_iteration' not in self.parameters:
+            backgrounds = np.zeros(self.dataSet.get_codebook().get_bit_count())
+        else:
+            previousIteration = self.dataSet.load_analysis_task(
+                self.parameters['previous_iteration'])
+            backgrounds = previousIteration.get_backgrounds()
+
+        return backgrounds
 
     def _get_previous_chromatic_transformations(self)\
             -> Dict[str, Dict[str, transform.SimilarityTransform]]:
@@ -281,7 +299,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 'scale_factors', self.analysisName)
         except FileNotFoundError:
             refactors = np.array([self.dataSet.load_numpy_analysis_result(
-                    'refactors', self.analysisName, resultIndex=i)
+                    'scale_refactors', self.analysisName, resultIndex=i)
                 for i in range(self.parameters['fov_per_iteration'])])
 
             # Don't rescale bits that were never seen
@@ -298,6 +316,36 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 scaleFactors, 'scale_factors', self.analysisName)
 
             return scaleFactors
+
+    def get_backgrounds(self) -> np.ndarray:
+        if not self.is_complete():
+            raise Exception('Analysis is still running. Unable to get ' +
+                            'backgrounds.')
+        try:
+            return self.dataSet.load_numpy_analysis_result(
+                'backgrounds', self.analysisName)
+        except FileNotFoundError:
+            refactors = np.array([self.dataSet.load_numpy_analysis_result(
+                    'background_refactors', self.analysisName, resultIndex=i)
+                for i in range(self.parameters['fov_per_iteration'])])
+
+            previousBackgrounds = np.array(
+                [self.dataSet.load_numpy_analysis_result(
+                    'previous_backgrounds', self.analysisName, resultIndex=i)
+                    for i in range(self.parameters['fov_per_iteration'])])
+
+            previousFactors = np.array([self.dataSet.load_numpy_analysis_result(
+                'previous_scale_factors', self.analysisName, resultIndex=i)
+                for i in range(self.parameters['fov_per_iteration'])])
+
+            backgrounds = np.nanmedian(np.sum(
+                previousBackgrounds, np.multiply(refactors, previousFactors)),
+                axis=0)
+
+            self.dataSet.save_numpy_analysis_result(
+                backgrounds, 'backgrounds', self.analysisName)
+
+            return backgrounds
 
     def get_scale_factor_history(self) -> np.ndarray:
         """Get the scale factors cached for each iteration of the optimization.

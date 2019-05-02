@@ -28,6 +28,10 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             self.parameters['fov_per_iteration'] = 50
         if 'area_threshold' not in self.parameters:
             self.parameters['area_threshold'] = 5
+        if 'optimize_background' not in self.parameters:
+            self.parameters['optimize_background'] = False
+        if 'optimize_chromatic_correction' not in self.parameters:
+            self.parameters['optimize_chromatic_correction'] = False
 
     def get_estimated_memory(self):
         return 4000
@@ -88,7 +92,9 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                                                backgrounds)
 
         refactors, backgrounds, barcodesSeen = \
-            decoder.extract_refactors(di, pm, npt)
+            decoder.extract_refactors(
+                di, pm, npt, extractBackgrounds=self.parameters[
+                    'optimize_background'])
 
         # TODO this saves the barcodes under fragment instead of fov
         # the barcodedb should be made more general
@@ -156,15 +162,12 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             -> Dict[str, Dict[str, transform.SimilarityTransform]]:
         if 'previous_iteration' not in self.parameters:
             usedColors = self._get_used_colors()
-            chromaticTransformations = {u: {v: transform.SimilarityTransform()
-                                            for v in usedColors if v >= u}
-                                        for u in usedColors}
+            return {u: {v: transform.SimilarityTransform()
+                        for v in usedColors if v >= u} for u in usedColors}
         else:
             previousIteration = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration'])
-            chromaticTransformations = \
-                previousIteration.get_chromatic_transformations()
-        return chromaticTransformations
+            return previousIteration._get_chromatic_transformations()
 
     # TODO the next two functions could be in a utility class. Make a
     #  chromatic aberration utility class
@@ -180,9 +183,9 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             The chromatic corrector.
         """
         return aberration.RigidChromaticCorrector(
-            self.get_chromatic_transformations(), self.get_reference_color())
+            self._get_chromatic_transformations(), self.get_reference_color())
 
-    def get_chromatic_transformations(self) \
+    def _get_chromatic_transformations(self) \
             -> Dict[str, Dict[str, transform.SimilarityTransform]]:
         """Get the estimated chromatic corrections from this optimization
         iteration.
@@ -196,6 +199,11 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         if not self.is_complete():
             raise Exception('Analysis is still running. Unable to get scale '
                             + 'factors.')
+
+        if not self.parameters['optimize_chromatic_correction']:
+            usedColors = self._get_used_colors()
+            return {u: {v: transform.SimilarityTransform()
+                        for v in usedColors if v >= u} for u in usedColors}
 
         try:
             return self.dataSet.load_pickle_analysis_result(
@@ -223,7 +231,6 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
                 fovBarcodes = barcodes[barcodes['fov'] == fov]
                 zIndexes = np.unique(fovBarcodes['z'])
-                # TODO reading the full z stack is unnecessary 
                 for z in zIndexes:
                     currentBarcodes = fovBarcodes[fovBarcodes['z'] == z]
                     # TODO this can be moved to the run function for the task

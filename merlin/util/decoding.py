@@ -282,9 +282,10 @@ class PixelBasedDecoder(object):
                 barcodesWithSingleErrors.append(weightedBC)
             return np.array(barcodesWithSingleErrors)
 
-    def extract_refactors_legacy(
-            self, decodedImage, pixelMagnitudes, normalizedPixelTraces
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def extract_refactors(
+            self, decodedImage, pixelMagnitudes, normalizedPixelTraces,
+            extractBackgrounds = False
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Calculate the scale factors that would result in the mean
         on bit intensity for each bit to be equal.
 
@@ -298,10 +299,20 @@ class PixelBasedDecoder(object):
             imageSet: the image stack to decode in order to determine the
                 scale factors
         Returns:
-            a tuple containing an a array of the scale factors where the i'th
-                entry is the scale factor for bit i and an array indicating
-                the abundance of each barcode determined during the decoding
+             a tuple containing an array of the scale factors, an array
+                of the backgrounds, and an array of the abundance of each
+                barcode determined during the decoding. For the scale factors
+                and the backgrounds, the i'th entry is the scale factor
+                for bit i. If extractBackgrounds is false, the returned
+                background array is all zeros.
         """
+
+        if extractBackgrounds:
+            backgroundRefactors = self._extract_backgrounds(
+                decodedImage, pixelMagnitudes, normalizedPixelTraces)
+        else:
+            backgroundRefactors = np.zeros(self._bitCount)
+
         sumPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
         barcodesSeen = np.zeros(self._barcodeCount)
         for b in range(self._barcodeCount):
@@ -313,7 +324,7 @@ class PixelBasedDecoder(object):
                 meanPixelTrace = \
                     np.mean([normalizedPixelTraces[:, y[0],
                              y[1]]*pixelMagnitudes[y[0], y[1]]
-                             for y in br.coords], axis=0)
+                             for y in br.coords], axis=0) - backgroundRefactors
                 normPixelTrace = meanPixelTrace/np.linalg.norm(meanPixelTrace)
                 sumPixelTraces[b, :] += normPixelTrace/barcodesSeen[b]
 
@@ -321,32 +332,25 @@ class PixelBasedDecoder(object):
         onBitIntensity = np.nanmean(sumPixelTraces, axis=0)
         refactors = onBitIntensity/np.mean(onBitIntensity)
 
-        return refactors, barcodesSeen
+        return refactors, backgroundRefactors, barcodesSeen
 
-    def extract_refactors(
+    def _extract_backgrounds(
             self, decodedImage, pixelMagnitudes, normalizedPixelTraces
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Calculate the scale factors that would result in the mean
-        on bit intensity for each bit to be equal to one and the mean off
+    ) -> np.ndarray:
+        """Calculate the backgrounds to be subtracted for the the mean off
         bit intensity for each bit to be equal to zero.
-
-        If the scale factors for this decoder are not set to 1, then the
-        calculated scale factors are dependent on the input scale factors
-        used for the decoding.
 
         Args:
             imageSet: the image stack to decode in order to determine the
                 scale factors
         Returns:
-            a tuple containing an a array of the scale factors, an array
-                of the backgrounds, and an array of the abundance of each
-                barcode determined during the decoding. For the scale factors
-                and the backgroundns, the i'th entry is the scale factor
+            an array of the backgrounds where the i'th entry is the scale factor
                 for bit i.
         """
         sumMinPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
         barcodesSeen = np.zeros(self._barcodeCount)
-        # TODO the results for this first iteration can be cached
+        # TODO this core functionality is very similar to that above. They
+        # can be abstracted
         for b in range(self._barcodeCount):
             barcodeRegions = [x for x in measure.regionprops(
                 measure.label((decodedImage == b).astype(np.int)))
@@ -365,25 +369,4 @@ class PixelBasedDecoder(object):
             (self._decodingMatrix == 0) * barcodesSeen[:, np.newaxis], axis=0)
         backgroundRefactors = offBitIntensity
 
-        sumMeanNormPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
-
-        for b in range(self._barcodeCount):
-            barcodeRegions = [x for x in measure.regionprops(
-                measure.label((decodedImage == b).astype(np.int)))
-                              if x.area >= 5]
-            for br in barcodeRegions:
-                meanPixelTrace = np.mean(
-                    [normalizedPixelTraces[:, y[0], y[1]]
-                     * pixelMagnitudes[y[0], y[1]] for y in br.coords],
-                    axis=0) - backgroundRefactors
-                sumMeanNormPixelTraces[b, :] += meanPixelTrace/ \
-                    np.linalg.norm(meanPixelTrace)
-
-        onPixelTraces = sumMeanNormPixelTraces.copy()
-        onPixelTraces[self._decodingMatrix == 0] = np.nan
-        onBitIntensity = np.nansum(onPixelTraces, axis=0) / np.sum(
-            (self._decodingMatrix > 0) * barcodesSeen[:, np.newaxis], axis=0)
-
-        scaleRefactors = onBitIntensity
-
-        return scaleRefactors, backgroundRefactors, barcodesSeen
+        return backgroundRefactors

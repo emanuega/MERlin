@@ -32,6 +32,20 @@ class ChromaticCorrector(ABC):
         pass
 
 
+class IdentityChromaticCorrector(ChromaticCorrector):
+
+    """
+    A class for correcting chromatic aberration that performs no transformation.
+    """
+
+    def __init__(self):
+        pass
+
+    def transform_image(self, inputImage: np.ndarray, imageColor: str
+                        ) -> np.ndarray:
+        return inputImage
+
+
 class RigidChromaticCorrector(ChromaticCorrector):
 
     """

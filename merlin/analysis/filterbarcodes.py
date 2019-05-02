@@ -18,6 +18,8 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
             self.parameters['area_threshold'] = 3
         if 'intensity_threshold' not in self.parameters:
             self.parameters['intensity_threshold'] = 200
+        if 'distance_threshold' not in self.parameters:
+            self.parameters['distance_threshold'] = 1e6
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -39,9 +41,11 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
                 self.parameters['decode_task'])
         areaThreshold = self.parameters['area_threshold']
         intensityThreshold = self.parameters['intensity_threshold']
+        distanceThreshold = self.parameters['distance_threshold']
         barcodeDB = self.get_barcode_database()
         currentBC = decodeTask.get_barcode_database() \
             .get_filtered_barcodes(areaThreshold, intensityThreshold,
+                                   distanceThreshold=distanceThreshold,
                                    fov=fragmentIndex)
         barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
 

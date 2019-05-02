@@ -97,7 +97,7 @@ class BarcodeDB:
     @abstractmethod
     def get_filtered_barcodes(
             self, areaThreshold: int, intensityThreshold: float,
-            fov: int=None, chunksize: int=None):
+            distanceThreshold: float=None, fov: int=None, chunksize: int=None):
         """Get barcodes from this barcode database that pass the area and
         intensity thresholds.
 
@@ -106,6 +106,8 @@ class BarcodeDB:
                 have an area equal to the specified threshold are included
                 in the output.
             intensityThreshold: the minimum value for mean_intenity for
+                the select barcodes
+            distanceThreshold: the maximum value for min_distance for
                 the select barcodes
             fov: index of the field view. If None, barcodes for all fovs
                 are returned.
@@ -216,12 +218,17 @@ class PyTablesBarcodeDB(BarcodeDB):
 
     def get_filtered_barcodes(
             self, areaThreshold: int, intensityThreshold: float,
-            fov: int=None, chunksize: int=None):
+            distanceThreshold: float=None, fov: int=None, chunksize: int=None):
         allBarcodes = self.get_barcodes(fov)
-        filteredBarcodes = allBarcodes[
-            (allBarcodes['area'] >= areaThreshold)
-            & (allBarcodes['mean_intensity'] >= intensityThreshold)
-        ]
+        if distanceThreshold is None:
+            filteredBarcodes = allBarcodes[
+                (allBarcodes['area'] >= areaThreshold)
+                & (allBarcodes['mean_intensity'] >= intensityThreshold)]
+        else:
+            filteredBarcodes = allBarcodes[
+                (allBarcodes['area'] >= areaThreshold)
+                & (allBarcodes['mean_intensity'] >= intensityThreshold)
+                & (allBarcodes['min_distance'] >= distanceThreshold)]
 
         return filteredBarcodes
 

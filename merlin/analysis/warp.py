@@ -306,7 +306,7 @@ class FiducialFitWarp(Warp):
                          in zip(localizationSet['x'], localizationSet['y'],
                                 localizationSet['significance'],
                                 localizationSet['xsigma'])
-                         if s > significanceThreshold] and sigma <= maxSigma)
+                         if s > significanceThreshold and sigma <= maxSigma])
 
     def _generate_default_daostorm_parameters(self, startFrame: int=-1,
                                               endFrame: int=-1

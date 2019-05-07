@@ -301,11 +301,12 @@ class FiducialFitWarp(Warp):
     @staticmethod
     def _extract_coordinates(
             localizationSet: Dict,
-            significanceThreshold: float=50) -> np.ndarray:
-        return np.array([[x, y] for x, y, s
+            significanceThreshold: float=50, maxSigma=2) -> np.ndarray:
+        return np.array([[x, y] for x, y, s, sigma
                          in zip(localizationSet['x'], localizationSet['y'],
-                                localizationSet['significance'])
-                         if s > significanceThreshold])
+                                localizationSet['significance'],
+                                localizationSet['xsigma'])
+                         if s > significanceThreshold] and sigma <= maxSigma)
 
     def _generate_default_daostorm_parameters(self, startFrame: int=-1,
                                               endFrame: int=-1

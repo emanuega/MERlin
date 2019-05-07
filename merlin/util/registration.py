@@ -24,7 +24,7 @@ def extract_control_points(
     if len(referencePoints) < 10 or len(movingPoints) < 10:
         return np.zeros((0, 2)), np.zeros((0, 2))
 
-    edges = np.arange(-30, 30, gridSpacing)
+    edges = np.arange(-200, 200, gridSpacing)
 
     neighbors = NearestNeighbors(n_neighbors=10)
     neighbors.fit(referencePoints)

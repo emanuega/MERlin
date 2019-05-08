@@ -228,7 +228,7 @@ class PyTablesBarcodeDB(BarcodeDB):
             filteredBarcodes = allBarcodes[
                 (allBarcodes['area'] >= areaThreshold)
                 & (allBarcodes['mean_intensity'] >= intensityThreshold)
-                & (allBarcodes['min_distance'] >= distanceThreshold)]
+                & (allBarcodes['min_distance'] <= distanceThreshold)]
 
         return filteredBarcodes
 

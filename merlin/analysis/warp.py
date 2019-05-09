@@ -5,6 +5,7 @@ from typing import Union
 import numpy as np
 from skimage import transform
 from skimage import feature
+import cv2
 
 import storm_analysis.sa_library.parameters as saparameters
 import storm_analysis.daostorm_3d.mufit_analysis as mfit
@@ -350,6 +351,9 @@ class FiducialCorrelationWarp(Warp):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        if 'highpass_sigma' not in self.parameters:
+            self.parameters['highpass_sigma'] = 3
+
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
 
@@ -362,13 +366,24 @@ class FiducialCorrelationWarp(Warp):
     def get_dependencies(self):
         return []
 
+    def _filter(self, inputImage: np.ndarray) -> np.ndarray:
+        highPassSigma = self.parameters['highpass_sigma']
+        highPassFilterSize = int(2 * np.ceil(2 * highPassSigma) + 1)
+
+        return inputImage.astype(float) - cv2.GaussianBlur(
+            inputImage, (highPassFilterSize, highPassFilterSize),
+            highPassSigma, borderType=cv2.BORDER_REPLICATE)
+
     def _run_analysis(self, fragmentIndex: int):
         # TODO - this can be more efficient since some images should
         # use the same alignment if they are from the same imaging round
-        fixedImage = self.dataSet.get_fiducial_image(0, fragmentIndex)
+        fixedImage = self._filter(
+            self.dataSet.get_fiducial_image(0, fragmentIndex))
         offsets = [feature.register_translation(
-            fixedImage, self.dataSet.get_fiducial_image(x, fragmentIndex), 100)[0]
-               for x in self.dataSet.get_data_organization().get_data_channels()]
+            fixedImage,
+            self._filter(self.dataSet.get_fiducial_image(x, fragmentIndex)),
+            100)[0] for x in
+                   self.dataSet.get_data_organization().get_data_channels()]
         transformations = [transform.SimilarityTransform(
             translation=[-x[1], -x[0]]) for x in offsets]
         self._process_transformations(transformations, fragmentIndex)

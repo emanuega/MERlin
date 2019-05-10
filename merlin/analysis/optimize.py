@@ -208,7 +208,9 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         try:
             return self.dataSet.load_pickle_analysis_result(
                 'chromatic_corrections', self.analysisName)
-        except FileNotFoundError:
+        # OSError and ValueError are raised if the previous file is not
+        # completely written
+        except (FileNotFoundError, OSError, ValueError):
             # TODO - this is messy. It can be broken into smaller subunits and
             # most parts could be included in a chromatic aberration class
             previousTransformations = \
@@ -304,7 +306,9 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         try:
             return self.dataSet.load_numpy_analysis_result(
                 'scale_factors', self.analysisName)
-        except FileNotFoundError:
+        # OSError and ValueError are raised if the previous file is not
+        # completely written
+        except (FileNotFoundError, OSError, ValueError):
             refactors = np.array([self.dataSet.load_numpy_analysis_result(
                     'scale_refactors', self.analysisName, resultIndex=i)
                 for i in range(self.parameters['fov_per_iteration'])])
@@ -328,10 +332,13 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         if not self.is_complete():
             raise Exception('Analysis is still running. Unable to get ' +
                             'backgrounds.')
+
         try:
             return self.dataSet.load_numpy_analysis_result(
                 'backgrounds', self.analysisName)
-        except FileNotFoundError:
+        # OSError and ValueError are raised if the previous file is not
+        # completely written
+        except (FileNotFoundError, OSError, ValueError):
             refactors = np.array([self.dataSet.load_numpy_analysis_result(
                     'background_refactors', self.analysisName, resultIndex=i)
                 for i in range(self.parameters['fov_per_iteration'])])

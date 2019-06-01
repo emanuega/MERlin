@@ -117,7 +117,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
                 for d in dataChannels:
                     for z in zIndexes:
                         mosaic = self._prepare_mosaic_slice(
-                            z, d, micronExtents, alignTask)
+                            z, d, micronExtents, alignTask, maximumProjection)
                         outputTif.save(mosaic, photometric='MINISBLACK',
                                        metadata=imageDescription)
         else:

@@ -80,18 +80,7 @@ class GenerateMosaic(analysistask.AnalysisTask):
     def _run_analysis(self):
         alignTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
-        warpTask = self.dataSet.load_analysis_task(
-                self.parameters['warp_task'])
-
-        chromaticCorrector = None
-        if 'optimize_task' in self.parameters:
-            chromaticCorrector = self.dataSet.load_analysis_task(
-                self.parameters['optimize_task']).get_chromatic_corrector()
-
         micronExtents = alignTask.get_global_extent()
-        mosaicDimensions = tuple(self._micron_to_mosaic_pixel(
-                micronExtents[-2:], micronExtents))
-
         self.dataSet.save_numpy_txt_analysis_result(
             self._micron_to_mosaic_transform(micronExtents),
             'micron_to_mosaic_pixel_transform', self)
@@ -110,13 +99,16 @@ class GenerateMosaic(analysistask.AnalysisTask):
         else:
             dataChannels = dataOrganization.get_data_channels()
 
+        maximumProjection = False
         if 'z_index' in self.parameters:
-            zIndexes = [self.parameters['z_index']]
+            if self.parameters['z_index'] != 'maximum_projection':
+                zIndexes = [self.parameters['z_index']]
+            else:
+                maximumProjection = True
+                zIndexes = [0]
         else:
             zIndexes = range(len(self.dataSet.get_z_positions()))
 
-        cropWidth = self.parameters['fov_crop_width']
-        # TODO there is too much redundancy in the two conditions
         if not self.parameters['separate_files']:
             imageDescription = self.dataSet.analysis_tiff_description(
                 len(zIndexes), len(dataChannels))
@@ -124,29 +116,8 @@ class GenerateMosaic(analysistask.AnalysisTask):
                     self, 'mosaic') as outputTif:
                 for d in dataChannels:
                     for z in zIndexes:
-                        mosaic = np.zeros(
-                                np.flip(
-                                    mosaicDimensions, axis=0), dtype=np.uint16)
-                        for f in self.dataSet.get_fovs():
-                            inputImage = warpTask.get_aligned_image(
-                                f, d, z, chromaticCorrector)
-                            if cropWidth > 0:
-                                inputImage[:cropWidth, :] = 0
-                                inputImage[inputImage.shape[0]-cropWidth:, :] = 0
-                                inputImage[:, :cropWidth] = 0
-                                inputImage[:, inputImage.shape[0]-cropWidth:] = 0
-
-                            transformedImage = self._transform_image_to_mosaic(
-                                inputImage, f, alignTask, micronExtents,
-                                mosaicDimensions)
-
-                            divisionMask = np.bitwise_and(
-                                    transformedImage > 0, mosaic > 0)
-                            cv2.add(mosaic, transformedImage, dst=mosaic,
-                                    mask=np.array(
-                                        transformedImage > 0).astype(np.uint8))
-                            dividedMosaic = cv2.divide(mosaic, 2)
-                            mosaic[divisionMask] = dividedMosaic[divisionMask]
+                        mosaic = self._prepare_mosaic_slice(
+                            z, d, micronExtents, alignTask)
                         outputTif.save(mosaic, photometric='MINISBLACK',
                                        metadata=imageDescription)
         else:
@@ -157,28 +128,53 @@ class GenerateMosaic(analysistask.AnalysisTask):
                         self, 'mosaic_%s_%i'
                               % (dataOrganization.get_data_channel_name(d), z))\
                             as outputTif:
-                        mosaic = np.zeros(
-                                np.flip(
-                                    mosaicDimensions, axis=0), dtype=np.uint16)
-                        for f in self.dataSet.get_fovs():
-                            inputImage = warpTask.get_aligned_image(
-                                f, d, z, chromaticCorrector)
-                            if cropWidth > 0:
-                                inputImage[:cropWidth, :] = 0
-                                inputImage[inputImage.shape[0]-cropWidth:, :] = 0
-                                inputImage[:, :cropWidth] = 0
-                                inputImage[:, inputImage.shape[0]-cropWidth:] = 0
-
-                            transformedImage = self._transform_image_to_mosaic(
-                                inputImage, f, alignTask, micronExtents,
-                                mosaicDimensions)
-
-                            divisionMask = np.bitwise_and(
-                                    transformedImage > 0, mosaic > 0)
-                            cv2.add(mosaic, transformedImage, dst=mosaic,
-                                    mask=np.array(
-                                        transformedImage > 0).astype(np.uint8))
-                            dividedMosaic = cv2.divide(mosaic, 2)
-                            mosaic[divisionMask] = dividedMosaic[divisionMask]
+                        mosaic = self._prepare_mosaic_slice(
+                            z, d, micronExtents, alignTask, maximumProjection)
                         outputTif.save(mosaic, photometric='MINISBLACK',
                                        metadata=imageDescription)
+
+    def _prepare_mosaic_slice(self, zIndex, dataChannel, micronExtents,
+                              alignTask, maximumProjection):
+        warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+
+        chromaticCorrector = None
+        if 'optimize_task' in self.parameters:
+            chromaticCorrector = self.dataSet.load_analysis_task(
+                self.parameters['optimize_task']).get_chromatic_corrector()
+
+        cropWidth = self.parameters['fov_crop_width']
+        mosaicDimensions = tuple(self._micron_to_mosaic_pixel(
+                micronExtents[-2:], micronExtents))
+
+        mosaic = np.zeros(np.flip(mosaicDimensions, axis=0), dtype=np.uint16)
+
+        for f in self.dataSet.get_fovs():
+            if maximumProjection:
+                inputImage = np.max([warpTask.get_aligned_image(
+                    f, dataChannel, z, chromaticCorrector)
+                    for z in range(len(self.dataSet.get_z_positions()))],
+                    axis=0)
+            else:
+                inputImage = warpTask.get_aligned_image(
+                    f, dataChannel, zIndex, chromaticCorrector)
+
+            if cropWidth > 0:
+                inputImage[:cropWidth, :] = 0
+                inputImage[inputImage.shape[0] - cropWidth:, :] = 0
+                inputImage[:, :cropWidth] = 0
+                inputImage[:, inputImage.shape[0] - cropWidth:] = 0
+
+            transformedImage = self._transform_image_to_mosaic(
+                inputImage, f, alignTask, micronExtents,
+                mosaicDimensions)
+
+            divisionMask = np.bitwise_and(
+                transformedImage > 0, mosaic > 0)
+            cv2.add(mosaic, transformedImage, dst=mosaic,
+                    mask=np.array(
+                        transformedImage > 0).astype(np.uint8))
+            dividedMosaic = cv2.divide(mosaic, 2)
+            mosaic[divisionMask] = dividedMosaic[divisionMask]
+
+        return mosaic

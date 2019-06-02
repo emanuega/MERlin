@@ -78,8 +78,9 @@ class SpatialFeature(object):
             boundaries = [SpatialFeature._transform_boundaries(
                 x, transformationMatrix) for x in boundaries]
 
-        return SpatialFeature([SpatialFeature._remove_interior_boundaries(
-            [geometry.Polygon(x) for x in b if len(x) > 2])
+        return SpatialFeature([SpatialFeature._remove_invalid_boundaries(
+            SpatialFeature._remove_interior_boundaries(
+                [geometry.Polygon(x) for x in b if len(x) > 2]))
                                for b in boundaries], fov, zCoordinates)
 
     @staticmethod
@@ -123,6 +124,11 @@ class SpatialFeature(object):
                 goodPolygons.append(p)
 
         return goodPolygons
+
+    @staticmethod
+    def _remove_invalid_boundaries(
+            inPolygons: List[geometry.Polygon]) -> List[geometry.Polygon]:
+        return [p for p in inPolygons if p.is_valid]
 
     def get_fov(self) -> int:
         return self._fov
@@ -168,6 +174,17 @@ class SpatialFeature(object):
             totalVolume = np.sum([x.area for x in boundaries[0]])
 
         return totalVolume
+
+    def intersection(self, intersectFeature) -> float:
+
+        intersectArea = 0
+        for p1Set, p2Set in zip(self.get_boundaries(),
+                          intersectFeature.get_boundaries()):
+            for p1 in p1Set:
+                for p2 in p2Set:
+                    intersectArea += p1.intersection(p2).area
+
+        return intersectArea
 
     def is_contained_within_boundary(self, inFeature) -> bool:
         """Determine if any part of this feature is contained within the
@@ -373,9 +390,8 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
     def read_features(self, fov: int=None) -> List[SpatialFeature]:
         if fov is None:
-            featureList = []
-            for f in self._dataSet.get_fovs():
-                featureList += self.read_features(f)
+            featureList = [f for x in self._dataSet.get_fovs()
+                           for f in self.read_features(x)]
             return featureList
 
         featureList = []

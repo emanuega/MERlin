@@ -1,20 +1,23 @@
 import cv2
 import numpy as np
-from scipy.ndimage import morphology
+from skimage import measure
+from skimage import segmentation
 import networkx
 import rtree
 from shapely import geometry
 from shapely.ops import unary_union
-from starfish.image._segmentation import watershed
+from typing import List
 
 from merlin.core import analysistask
+from merlin.util import spatialfeature
+from merlin.util import watershed
 
 
-class SegmentCells(analysistask.ParallelAnalysisTask):
+class WatershedSegment(analysistask.ParallelAnalysisTask):
 
     """
     An analysis task that determines the boundaries of features in the
-    image data in each field of view. 
+    image data in each field of view using a watershed algorithm.
     
     Since each field of view is analyzed individually, the segmentations
     should be cleaned in order to merge cells that cross the field of 
@@ -24,22 +27,10 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        if 'nucleus_threshold' not in self.parameters:
-            self.parameters['nucleus_threshold'] = 0.41
-        if 'cell_threshold' not in self.parameters:
-            self.parameters['cell_threshold'] = 0.08
-        if 'nucleus_index' not in self.parameters:
-            self.parameters['nucleus_index'] = 17
-        if 'cell_index' not in self.parameters:
-            self.parameters['cell_index'] = 16
-        if 'z_index' not in self.parameters:
-            self.parameters['z_index'] = 0
-
-        self.nucleusThreshold = self.parameters['nucleus_threshold']
-        self.cellThreshold = self.parameters['cell_threshold']
-        self.nucleusIndex = self.parameters['nucleus_index']
-        self.cellIndex = self.parameters['cell_index']
-        self.zIndex = self.parameters['z_index']
+        if 'seed_channel_name' not in self.parameters:
+            self.parameters['seed_channel_name'] = 'DAPI'
+        if 'watershed_channel_name' not in self.parameters:
+            self.parameters['watershed_channel_name'] = 'polyT'
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -56,83 +47,50 @@ class SegmentCells(analysistask.ParallelAnalysisTask):
         return [self.parameters['warp_task'],
                 self.parameters['global_align_task']]
 
-    @staticmethod
-    def _label_to_regions(inputImage: np.ndarray) -> np.ndarray:
-        uniqueLabels = sorted(np.unique(inputImage))[1:]
-
-        def extract_contours(labelImage: np.ndarray, label: int) -> np.ndarray:
-            filledImage = morphology.binary_fill_holes(
-                    labelImage==label)
-            im2, contours, hierarchy = cv2.findContours(
-                    filledImage.astype(np.uint8),
-                    cv2.RETR_EXTERNAL, 
-                    cv2.CHAIN_APPROX_TC89_KCOS)
-            return contours
-
-        return np.array(
-                [np.array([x[0] for x in extract_contours(inputImage, i)[0]])
-                 for i in uniqueLabels])
-
-    @staticmethod
-    def _transform_contours(
-            contours: np.ndarray, transform: np.ndarray) -> np.ndarray:
-        """Transforms the coordinates in the contours based on the
-        provided transformation.
-
-        Args:
-            contours: a n x 2 numpy array specifying the coordinates of the n
-                points in the contour
-            transform: a 3 x 3 numpy array specifying the transformation
-                matrix
-        Returns:
-            a n x 2 numpy array containing the transformed coordinates
-        """
-        reshapedContours = np.reshape(
-            contours, (1, contours.shape[0], 2)).astype(np.float)
-        transformedContours = cv2.transform(
-                reshapedContours, transform)[0, :, :2]
-
-        return transformedContours
-
-    def get_cell_boundaries(self):
-        boundaryList = []
-        for f in self.dataSet.get_fovs():
-            currentBoundaries = self.dataSet.load_numpy_analysis_result(
-                    'cell_boundaries', self.get_analysis_name(), resultIndex=f)
-            boundaryList += [x for x in currentBoundaries]
-
-        return boundaryList
+    def get_cell_boundaries(self) -> List[spatialfeature.SpatialFeature]:
+        featureDB = spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+        return featureDB.read_features()
 
     def _run_analysis(self, fragmentIndex):
-        warpTask = self.dataSet.load_analysis_task(
-            self.parameters['warp_task'])
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
 
-        # TODO - extend to 3D
-        # TODO - this does not do well with image boundaries. Cell
-        # boundaries are not traced past the edge of the field of
-        # view
-        nucleusImage = cv2.GaussianBlur(warpTask.get_aligned_image(
-                fragmentIndex, self.nucleusIndex, self.zIndex),
-                (int(35), int(35)), 8)
-        cellImage = cv2.GaussianBlur(warpTask.get_aligned_image(
-                fragmentIndex, self.cellIndex, self.zIndex),
-                (int(35), int(35)), 8)
+        seedIndex = self.dataSet.get_data_organization().get_data_channel_index(
+            self.parameters['seed_channel_name'])
+        seedImages = self._read_and_filter_image_stack(fragmentIndex,
+                                                       seedIndex, 5)
 
-        w = watershed._WatershedSegmenter(nucleusImage, cellImage)
-        labels = w.segment(
-                self.nucleusThreshold, self.cellThreshold, [10, 100000])
+        watershedIndex = self.dataSet.get_data_organization() \
+            .get_data_channel_index(self.parameters['watershed_channel_name'])
+        watershedImages = self._read_and_filter_image_stack(fragmentIndex,
+                                                            watershedIndex, 5)
+        seeds = watershed.separate_merged_seeds(
+            watershed.extract_seeds(seedImages))
+        normalizedWatershed, watershedMask = watershed.prepare_watershed_images(
+            watershedImages)
 
-        cellContours = self._label_to_regions(labels)
-        transformation = globalTask.fov_to_global_transform(fragmentIndex)
-        transformedContours = np.array(
-                [self._transform_contours(x, transformation)
-                 for x in cellContours])
+        seeds[np.invert(watershedMask)] = 0
+        watershedOutput = segmentation.watershed(
+            normalizedWatershed, measure.label(seeds), mask=watershedMask,
+            connectivity=np.ones((3, 3, 3)), watershed_line=True)
 
-        self.dataSet.save_numpy_analysis_result(
-                transformedContours, 'cell_boundaries',
-                self.get_analysis_name(), resultIndex=fragmentIndex)
+        featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
+            (watershedOutput == i), fragmentIndex,
+            globalTask.fov_to_global_transform(fragmentIndex))
+            for i in np.unique(watershedOutput) if i != 0]
+
+        featureDB = spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+        featureDB.write_features(featureList, fragmentIndex)
+
+    def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
+                                     filterSigma: float) -> np.ndarray:
+        filterSize = int(2*np.ceil(2*filterSigma)+1)
+        warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+        return np.array([cv2.GaussianBlur(
+            warpTask.get_aligned_image(fov, channelIndex, z),
+            (filterSize, filterSize), filterSigma)
+            for z in range(len(self.dataSet.get_z_positions()))])
 
 
 class CleanCellSegmentation(analysistask.AnalysisTask):

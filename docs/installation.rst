@@ -31,6 +31,11 @@ Storm-analysis_ must be installed prior to installing this package. Additionally
 .. code-block:: none
     conda install rtree pytables
 
+On Harvard research computing, matplotlib raises an error saying that 'CXXABI_1.3.9' is not found. This can be corrected by:
+
+.. code-block:: none
+    module load gcc/8.2.0-fasrc01
+    
 Installing MERlin
 ==================
 

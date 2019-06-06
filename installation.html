@@ -160,17 +160,38 @@
 <h2>Set up a virtual environment<a class="headerlink" href="#set-up-a-virtual-environment" title="Permalink to this headline">¶</a></h2>
 <p>To ensure that Merlin and its dependencies don’t interfere with other packages that are installed, we recommend that you install MERlin in a new virtual environment. MERlin requires python 3.6 or above.</p>
 <p>An anaconda virtual environment can be created using the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda create -n merlin_env python=3.6
+</pre></div>
+</div>
 <p>and the new environment can be activated using the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda activate merlin_env
+</pre></div>
+</div>
 <p>or</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>source activate merlin_env
+</pre></div>
+</div>
 </div>
 <div class="section" id="installing-prerequisites">
 <h2>Installing prerequisites<a class="headerlink" href="#installing-prerequisites" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://github.com/ZhuangLab/storm-analysis">Storm-analysis</a> must be installed prior to installing this package. Additionally, the packages rtree and pytables are not properly installed by pip and should be installed independently. For example, using Anaconda:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda install rtree pytables
+</pre></div>
+</div>
 <p>On Harvard research computing, matplotlib raises an error saying that ‘CXXABI_1.3.9’ is not found. This can be corrected by:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module load gcc/8.2.0-fasrc01
+</pre></div>
+</div>
 </div>
 <div class="section" id="installing-merlin">
 <h2>Installing MERlin<a class="headerlink" href="#installing-merlin" title="Permalink to this headline">¶</a></h2>
 <p>MERlin can be installed by cloning the repository and installing with pip:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/emanuega/MERlin
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install -e MERlin
+</pre></div>
+</div>
 </div>
 <div class="section" id="specifying-paths-with-a-env-file">
 <h2>Specifying paths with a .env file<a class="headerlink" href="#specifying-paths-with-a-env-file" title="Permalink to this headline">¶</a></h2>

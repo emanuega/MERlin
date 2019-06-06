@@ -163,10 +163,13 @@
 <h1>Analysis tasks<a class="headerlink" href="#analysis-tasks" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="warp-fiducialfitwarp">
 <h2>warp.FiducialFitWarp<a class="headerlink" href="#warp-fiducialfitwarp" title="Permalink to this headline">¶</a></h2>
-<p>Description: Aligns image stacks by fitting fiducial spots.</p>
+<p>Description: Aligns image stacks by fitting fiducial spots to Gaussians.</p>
 <p>Parameters:</p>
 <ul class="simple">
 <li>write_fiducial_images – Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.</li>
+<li>initial_sigma – initial spot Gaussian standard deviation for the spot  fitting algorithm.</li>
+<li>intensity_threshold – minimum spot intensity for spot fitting.</li>
+<li>significance_threshold –  minimum fit significance for spot fitting.</li>
 </ul>
 </div>
 <div class="section" id="warp-fiducialcorrelationwarp">
@@ -185,6 +188,8 @@
 <li>warp_task – The name of the warp task that provides the aligned image stacks.</li>
 <li>highpass_pass – The standard deviation to use for the high pass filter.</li>
 <li>decon_sigma – The standard deviation to use for the Lucy-Richardson deconvolution.</li>
+<li>decon_iterations – The number of Lucy-Richardson deconvolution iterations to perform on each image.</li>
+<li>decon_filter_size – The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.</li>
 </ul>
 </div>
 <div class="section" id="optimize-optimize">
@@ -194,6 +199,8 @@
 <ul class="simple">
 <li>iteration_count – The number of iterations to perform for the optimization.</li>
 <li>fov_per_iteration – The number of fields of view to decode in each round of optimization.</li>
+<li>estimate_initial_scale_factors_from_cdf – Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.</li>
+<li>area_threshold – The minimum barcode area for barcodes to be used in the calculation of the scale factors.</li>
 </ul>
 </div>
 <div class="section" id="decode-decode">
@@ -202,6 +209,9 @@
 <p>Parameters:</p>
 <ul class="simple">
 <li>crop_width – The number of pixels from each edge of the image to exclude from decoding.</li>
+<li>write_decoded_images – Flag indicating if the decoded and intensity images should be written.</li>
+<li>minimum_area – The area threshold, below which decoded barcodes are ignored.</li>
+<li>lowpass_sigma – The standard deviation for the low pass filter prior to decoding.</li>
 </ul>
 </div>
 <div class="section" id="filterbarcodes-filterbarcodes">
@@ -215,14 +225,11 @@
 </div>
 <div class="section" id="segment-segmentcells">
 <h2>segment.SegmentCells<a class="headerlink" href="#segment-segmentcells" title="Permalink to this headline">¶</a></h2>
-<p>Description: Determines cell boundaries using a nuclear stain and a cell stain.</p>
+<p>Description: Determines cell boundaries using a watershed algorithm with the seeds determined from a nuclear stain and the watershed performed on a cell stain.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>nucleus_threshold – The relative intensity threshold for seeding the nuclei.</li>
-<li>cell_threshold – The relative intensity threshold for setting boundaries for the watershed.</li>
-<li>nucleus_index – The image index for the nucleus image.</li>
-<li>cell_index – The image index for the cell image.</li>
-<li>z_index – The z index of the nucleus and cell images to use for segmentation.</li>
+<li>seed_channel_name – The name of the data channel to use to find seeds</li>
+<li>watershed_channel_name – The name of the data channel to use as the watershed image.W</li>
 </ul>
 </div>
 <div class="section" id="segment-cleancellsegmentation">
@@ -234,7 +241,10 @@
 <p>Description: Assembles the images from each field of view into a low resolution mosaic.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>microns_per_pixel – The number of microns to correspond with a pixel in the mosaic.</li>
+<li>microns_per_pixel – The number of microns to correspond with a pixel in the mosaic. If set to “full_resolution”, the mosaic is generated with the same resolution as the input images.</li>
+<li>data_channels – The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.</li>
+<li>z_indexes – The z index to export. If not provided all z indexes are exported.</li>
+<li>fov_crop_width – The number of pixels to remove from each edge of each fov before inserting it into the mosaic.</li>
 </ul>
 </div>
 </div>

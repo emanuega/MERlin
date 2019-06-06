@@ -80,9 +80,10 @@
             
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#specifying-paths-with-a-env-file">Specifying paths with a .env file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#set-up-a-virtual-environment">Set up a virtual environment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installing-prerequisites">Installing prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installing-merlin">Installing MERlin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#specifying-paths-with-a-env-file">Specifying paths with a .env file</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -155,9 +156,25 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="set-up-a-virtual-environment">
+<h2>Set up a virtual environment<a class="headerlink" href="#set-up-a-virtual-environment" title="Permalink to this headline">¶</a></h2>
+<p>To ensure that Merlin and its dependencies don’t interfere with other packages that are installed, we recommend that you install MERlin in a new virtual environment. MERlin requires python 3.6 or above.</p>
+<p>An anaconda virtual environment can be created using the command:</p>
+<p>and the new environment can be activated using the command:</p>
+<p>or</p>
+</div>
+<div class="section" id="installing-prerequisites">
+<h2>Installing prerequisites<a class="headerlink" href="#installing-prerequisites" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://github.com/ZhuangLab/storm-analysis">Storm-analysis</a> must be installed prior to installing this package. Additionally, the packages rtree and pytables are not properly installed by pip and should be installed independently. For example, using Anaconda:</p>
+<p>On Harvard research computing, matplotlib raises an error saying that ‘CXXABI_1.3.9’ is not found. This can be corrected by:</p>
+</div>
+<div class="section" id="installing-merlin">
+<h2>Installing MERlin<a class="headerlink" href="#installing-merlin" title="Permalink to this headline">¶</a></h2>
+<p>MERlin can be installed by cloning the repository and installing with pip:</p>
+</div>
 <div class="section" id="specifying-paths-with-a-env-file">
 <h2>Specifying paths with a .env file<a class="headerlink" href="#specifying-paths-with-a-env-file" title="Permalink to this headline">¶</a></h2>
-<p>A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the project root directory:</p>
+<p>A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the MERlin root directory:</p>
 <ul class="simple">
 <li>DATA_HOME - The path of the root directory to the raw data.</li>
 <li>ANALYSIS_HOME - The path of the root directory where analysis results should be stored.</li>
@@ -167,20 +184,6 @@
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>DATA_HOME=D:/data
 ANALYSIS_HOME=D:/analysis
 PARAMETERS_HOME=D:/merfish-parameters
-</pre></div>
-</div>
-</div>
-<div class="section" id="installing-prerequisites">
-<h2>Installing prerequisites<a class="headerlink" href="#installing-prerequisites" title="Permalink to this headline">¶</a></h2>
-<p>MERlin requires python 3.6 and above. <a class="reference external" href="https://github.com/ZhuangLab/storm-analysis">Storm-analysis</a> must be installed prior to installing this package. Additionally, the package rtree is not properly installed by pip and should be installed independently. For example, using Anaconda:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda install rtree
-</pre></div>
-</div>
-</div>
-<div class="section" id="installing-merlin">
-<h2>Installing MERlin<a class="headerlink" href="#installing-merlin" title="Permalink to this headline">¶</a></h2>
-<p>MERlin can be installed with pip:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install --process-dependency-links -e MERlin
 </pre></div>
 </div>
 </div>

@@ -4,11 +4,14 @@ Analysis tasks
 warp.FiducialFitWarp
 ---------------------
 
-Description: Aligns image stacks by fitting fiducial spots.
+Description: Aligns image stacks by fitting fiducial spots to Gaussians.
 
 Parameters:
 
 * write\_fiducial\_images -- Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.
+* initial\_sigma -- initial spot Gaussian standard deviation for the spot  fitting algorithm.
+* intensity\_threshold -- minimum spot intensity for spot fitting.
+* significance\_threshold --  minimum fit significance for spot fitting.
 
 warp.FiducialCorrelationWarp
 -----------------------------
@@ -29,6 +32,8 @@ Parameters:
 * warp\_task -- The name of the warp task that provides the aligned image stacks.
 * highpass\_pass -- The standard deviation to use for the high pass filter.
 * decon\_sigma -- The standard deviation to use for the Lucy-Richardson deconvolution.
+* decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image.
+* decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
 
 optimize.Optimize
 ------------------
@@ -39,6 +44,8 @@ Parameters:
 
 * iteration\_count -- The number of iterations to perform for the optimization.
 * fov\_per\_iteration -- The number of fields of view to decode in each round of optimization.
+* estimate\_initial\_scale\_factors\_from\_cdf -- Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.
+* area\_threshold -- The minimum barcode area for barcodes to be used in the calculation of the scale factors.
 
 decode.Decode
 ---------------
@@ -48,6 +55,9 @@ Description: Extract barcodes from all field of views.
 Parameters:
 
 * crop\_width -- The number of pixels from each edge of the image to exclude from decoding. 
+* write_decoded\_images -- Flag indicating if the decoded and intensity images should be written.
+* minimum\_area -- The area threshold, below which decoded barcodes are ignored.
+* lowpass\_sigma -- The standard deviation for the low pass filter prior to decoding.
 
 filterbarcodes.FilterBarcodes
 ------------------------------
@@ -62,15 +72,12 @@ Parameters:
 segment.SegmentCells
 ----------------------
 
-Description: Determines cell boundaries using a nuclear stain and a cell stain.
+Description: Determines cell boundaries using a watershed algorithm with the seeds determined from a nuclear stain and the watershed performed on a cell stain.
 
 Parameters:
 
-* nucleus\_threshold -- The relative intensity threshold for seeding the nuclei.
-* cell\_threshold -- The relative intensity threshold for setting boundaries for the watershed.
-* nucleus\_index -- The image index for the nucleus image.
-* cell\_index -- The image index for the cell image.
-* z\_index -- The z index of the nucleus and cell images to use for segmentation.
+* seed\_channel\_name -- The name of the data channel to use to find seeds
+* watershed\_channel\_name -- The name of the data channel to use as the watershed image.W
 
 segment.CleanCellSegmentation
 --------------------------------
@@ -84,5 +91,8 @@ Description: Assembles the images from each field of view into a low resolution 
 
 Parameters:
 
-* microns\_per\_pixel -- The number of microns to correspond with a pixel in the mosaic.
+* microns\_per\_pixel -- The number of microns to correspond with a pixel in the mosaic. If set to "full_resolution", the mosaic is generated with the same resolution as the input images.
+* data\_channels -- The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.
+* z\_indexes -- The z index to export. If not provided all z indexes are exported.
+* fov\_crop\_width -- The number of pixels to remove from each edge of each fov before inserting it into the mosaic.
 

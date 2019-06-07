@@ -52,19 +52,19 @@ class GenerateMosaic(analysistask.AnalysisTask):
         return self.dataSet.get_analysis_image_set(self, 'mosaic')
 
     def _micron_to_mosaic_pixel(self, micronCoordinates,
-                                micronExtents) -> Tuple[int, ...]:
+                                micronExtents) -> np.ndarray:
         """Calculates the mosaic coordinates in pixels from the specified
         global coordinates.
         """
-        return tuple([int((c-e)/self.mosaicMicronsPerPixel)
-                      for c, e in zip(micronCoordinates, micronExtents[:2])])
+        return np.matmul(self._micron_to_mosaic_transform(micronExtents),
+                         np.append(micronCoordinates, 1)).astype(np.int32)[:2]
 
     def _micron_to_mosaic_transform(self, micronExtents: ExtentTuple) \
             -> np.ndarray:
         s = 1/self.mosaicMicronsPerPixel
         return np.float32(
                 [[s*1, 0, -s*micronExtents[0]],
-                 [0, s*1, -s*micronExtents[0]],
+                 [0, s*1, -s*micronExtents[1]],
                  [0, 0, 1]])
 
     def _transform_image_to_mosaic(

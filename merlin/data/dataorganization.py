@@ -146,7 +146,7 @@ class DataOrganization(object):
         Returns:
             The index of the fiducial frame in the corresponding image file
         """
-        return self.data.loc[dataChannel, 'fiducialFrame']
+        return self.data.iloc[dataChannel]['fiducialFrame']
 
     def get_image_filename(self, dataChannel: int, fov: int) -> str:
         """Get the path for the image file that contains the
@@ -158,7 +158,7 @@ class DataOrganization(object):
         Returns:
             The full path to the image file containing the fiducials
         """
-        channelInfo = self.data.loc[dataChannel]
+        channelInfo = self.data.iloc[dataChannel]
         imagePath = self._get_image_path(
                 channelInfo['imageType'], fov, channelInfo['imagingRound'])
         return imagePath
@@ -173,7 +173,7 @@ class DataOrganization(object):
         Returns:
             The index of the frame in the corresponding image file
         """
-        channelInfo = self.data.loc[dataChannel]
+        channelInfo = self.data.iloc[dataChannel]
         channelZ = channelInfo['zPos']
         if isinstance(channelZ, np.ndarray):
             zIndex = np.where(channelZ == zPosition)[0]
@@ -263,7 +263,7 @@ class DataOrganization(object):
         expectedImageSize = None
         for dataChannel in self.get_data_channels():
             for fov in self.get_fovs():
-                channelInfo = self.data.loc[dataChannel]
+                channelInfo = self.data.iloc[dataChannel]
                 try:
                     imagePath = self._get_image_path(
                         channelInfo['imageType'], fov,

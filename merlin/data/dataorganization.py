@@ -83,7 +83,7 @@ class DataOrganization(object):
         Returns:
             The name of the specified data channel
         """
-        return self.data['bitName'][dataChannelIndex]
+        return self.data.iloc[dataChannelIndex]['bitName']
 
     def get_data_channel_index(self, dataChannelName: str) -> int:
         """Get the index for the data channel with the specified name.
@@ -107,7 +107,7 @@ class DataOrganization(object):
         Args:
             dataChannel: the data channel index
         Returns:
-            the color for this data channel as a string
+            the color for this data channel as a stringourc 
         """
         return str(self.data.at[dataChannel, 'color'])
 

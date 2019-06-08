@@ -1,4 +1,5 @@
 import pytest
+import os
 
 from merlin.core import executor
 from merlin.core import analysistask
@@ -37,6 +38,20 @@ def test_task_run(simple_task):
     assert not task1.is_running()
     assert not task1.is_error()
     assert task1.is_complete()
+
+
+def test_save_environment(simple_task):
+    task1 = simple_task
+    task1.run()
+    environment = dict(os.environ)
+    if isinstance(simple_task, analysistask.ParallelAnalysisTask):
+        taskEnvironment = simple_task.dataSet.get_analysis_environment(
+            simple_task, 0)
+    else:
+        taskEnvironment = simple_task.dataSet.get_analysis_environment(
+            simple_task)
+
+    assert environment == taskEnvironment
 
 
 @pytest.mark.slowtest

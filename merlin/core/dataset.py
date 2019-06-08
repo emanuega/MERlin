@@ -523,9 +523,41 @@ class DataSet(object):
         return os.sep.join([self.get_task_subdirectory(analysisTask),
                 fileName])
 
+    def get_analysis_environment(self, analysisTask: analysistask.AnalysisTask,
+                                fragmentIndex: int=None) -> None:
+        """Get the environment variables for the system used to run the
+        specified analysis task.
+
+        Args:
+            analysisTask: The completed analysis task to get the environment
+                variables for.
+            fragmentIndex: The fragment index of the analysis task to
+                get the environment variables for.
+
+        Returns: A dictionary of the environment variables. If the job has not
+            yet run, then None is returned.
+        """
+        if not self.check_analysis_done(analysisTask, fragmentIndex):
+            return None
+
+        fileName = self._analysis_status_file(
+            analysisTask, 'environment', fragmentIndex)
+        with open(fileName, 'r') as inFile:
+            envDict = json.load(inFile)
+        return envDict
+
+    def _record_analysis_environment(
+            self, analysisTask: analysistask.AnalysisTask,
+            fragmentIndex: int=None) -> None:
+        fileName = self._analysis_status_file(
+            analysisTask, 'environment', fragmentIndex)
+        with open(fileName, 'w') as outFile:
+            json.dump(dict(os.environ), outFile, indent=4)
+
     def record_analysis_started(self, analysisTask: analysistask.AnalysisTask,
                                 fragmentIndex: int=None) -> None:
         self._record_analysis_event(analysisTask, 'start', fragmentIndex)
+        self._record_analysis_environment(analysisTask, fragmentIndex)
 
     def record_analysis_running(self, analysisTask: analysistask.AnalysisTask,
                                 fragmentIndex: int=None) -> None:

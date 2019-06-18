@@ -11,6 +11,7 @@ import importlib
 import time
 import logging
 import pickle
+import datetime
 from matplotlib import pyplot as plt
 from typing import List
 from typing import Tuple
@@ -51,6 +52,10 @@ class DataSet(object):
         if analysisHome is None:
             analysisHome = merlin.ANALYSIS_HOME
 
+        self.dataSetName = dataDirectoryName
+        self.dataHome = dataHome
+        self.analysisHome = analysisHome
+
         self.rawDataPath = os.sep.join([dataHome, dataDirectoryName])
         if not os.path.isdir(self.rawDataPath):
             raise FileNotFoundError(
@@ -62,8 +67,26 @@ class DataSet(object):
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
         os.makedirs(self.logPath, exist_ok=True)
 
-        self.figurePath = os.sep.join([self.analysisPath, 'figures'])
-        os.makedirs(self.figurePath, exist_ok=True)
+    def save_workflow(self, workflowString: str) -> str:
+        """ Save a snakemake workflow for analysis of this dataset.
+
+        Args:
+            workflowString: a string containing the snakemake workflow
+                to save
+
+        Returns: the path to the saved workflow
+        """
+        snakemakePath = os.sep.join([self.analysisPath, 'snakemake'])
+        os.makedirs(snakemakePath, exist_ok=True)
+
+        workflowPath = os.sep.join(
+            [snakemakePath, datetime.datetime.now().strftime('%y%m%d_%H%M%S')])\
+            + '.Snakefile'
+        with open(workflowPath, 'w') as outFile:
+            outFile.write(workflowString)
+
+        return workflowPath
+
 
     def save_figure(self, analysisTask: TaskOrName, figure: plt.Figure,
                     figureName: str) -> None:
@@ -649,6 +672,10 @@ class DataSet(object):
     def check_analysis_done(self, analysisTask: analysistask.AnalysisTask,
                             fragmentIndex: int=None) -> bool:
         return self._check_analysis_event(analysisTask, 'done', fragmentIndex)
+
+    def analysis_done_filename(self, analysisTask: analysistask.AnalysisTask,
+                               fragmentIndex: int=None) -> str:
+        return self._analysis_status_file(analysisTask, 'done', fragmentIndex)
 
     def check_analysis_error(self, analysisTask: analysistask.AnalysisTask,
                              fragmentIndex: int=None) -> bool:

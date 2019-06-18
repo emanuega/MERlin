@@ -4,6 +4,7 @@ import shutil
 import glob
 from merlin.core import analysistask
 from merlin.core import dataset
+from merlin.analysis import testtask
 import merlin
 
 merlin.DATA_HOME = os.sep.join(['.', 'test_data'])
@@ -20,60 +21,6 @@ merlin.MICROSCOPE_PARAMETERS_HOME = os.sep.join(
 dataDirectory = os.sep.join([merlin.DATA_HOME, 'test'])
 merfishDataDirectory = os.sep.join([merlin.DATA_HOME, 'merfish_test'])
 
-class SimpleAnalysisTask(analysistask.AnalysisTask):
-
-    def __init__(self, dataSet, parameters=None, analysisName=None):
-        super().__init__(dataSet, parameters, analysisName)
-
-    def _run_analysis(self):
-        pass
-
-    def get_estimated_memory(self):
-        return 100
-
-    def get_estimated_time(self):
-        return 1
-
-    def get_dependencies(self):
-        return []
-
-class SimpleParallelAnalysisTask(analysistask.ParallelAnalysisTask):
-
-    def __init__(self, dataSet, parameters=None, analysisName=None):
-        super().__init__(dataSet, parameters, analysisName)
-
-    def _run_analysis(self, fragmentIndex):
-        pass
-
-    def get_estimated_memory(self):
-        return 100
-
-    def get_estimated_time(self):
-        return 1
-
-    def get_dependencies(self):
-        return []
-
-    def fragment_count(self):
-        return 5
-
-class SimpleInternallyParallelAnalysisTask(
-        analysistask.InternallyParallelAnalysisTask):
-
-    def __init__(self, dataSet, parameters=None, analysisName=None):
-        super().__init__(dataSet, parameters, analysisName)
-
-    def _run_analysis(self):
-        pass
-
-    def get_estimated_memory(self):
-        return 100
-
-    def get_estimated_time(self):
-        return 1
-
-    def get_dependencies(self):
-        return []
 
 @pytest.fixture(scope='session')
 def base_files():
@@ -144,20 +91,30 @@ def simple_merfish_data(base_files):
 
 @pytest.fixture(scope='function')
 def single_task(simple_data):
-    task = SimpleAnalysisTask(
+    task = testtask.SimpleAnalysisTask(
             simple_data, parameters={'a': 5, 'b': 'b_string'})
     yield task
     simple_data.delete_analysis(task)
 
 
-@pytest.fixture(scope='function', params=[SimpleAnalysisTask,
-                                          SimpleParallelAnalysisTask,
-                                          SimpleInternallyParallelAnalysisTask])
+@pytest.fixture(scope='function', params=[
+    testtask.SimpleAnalysisTask, testtask.SimpleParallelAnalysisTask,
+    testtask.SimpleInternallyParallelAnalysisTask])
 def simple_task(simple_data, request):
     task = request.param(
             simple_data, parameters={'a': 5, 'b': 'b_string'})
     yield task
     simple_data.delete_analysis(task)
+
+
+@pytest.fixture(scope='function', params=[
+    testtask.SimpleAnalysisTask, testtask.SimpleParallelAnalysisTask,
+    testtask.SimpleInternallyParallelAnalysisTask])
+def simple_merfish_task(simple_merfish_data, request):
+    task = request.param(
+        simple_merfish_data, parameters={'a': 5, 'b': 'b_string'})
+    yield task
+    simple_merfish_data.delete_analysis(task)
 
 
 

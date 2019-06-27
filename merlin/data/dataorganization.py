@@ -85,6 +85,16 @@ class DataOrganization(object):
         """
         return self.data.iloc[dataChannelIndex]['bitName']
 
+    def get_data_channel_gene(self, dataChannelIndex: int) -> str:
+        """Get the name for the data channel with the specified index.
+
+        Args:
+            dataChannelIndex: The index of the data channel
+        Returns:
+            The gene name of the specified data channel, relevant for non-multiplex measurements
+        """
+        return self.data.iloc[dataChannelIndex]['geneName']
+
     def get_data_channel_index(self, dataChannelName: str) -> int:
         """Get the index for the data channel with the specified name.
 
@@ -120,6 +130,17 @@ class DataOrganization(object):
             The index of the associated data channel
         """
         return self.data[self.data['bitName'] == bitName].index.item()
+
+
+    def get_data_channel_for_gene(self, geneName: str) -> int:
+        """Get the data channel associated with the specified bit.
+
+        Args:
+            bitName: the name of the bit to search for
+        Returns:
+            The index of the associated data channel
+        """
+        return self.data[self.data['geneName'] == geneName].index.item()
 
     def get_fiducial_filename(self, dataChannel: int, fov: int) -> str:
         """Get the path for the image file that contains the fiducial
@@ -204,6 +225,20 @@ class DataOrganization(object):
 
     def get_fovs(self) -> np.ndarray:
         return np.unique(self.fileMap['fov'])
+
+    def get_sequential_rounds(self):
+        """ Get the rounds that are not present in your codebook
+
+        Returns:
+            A list of the rounds not present in the codebook along with the name associated with them
+        """
+        codebook = merlin.data.codebook.Codebook(self._dataSet)
+        multiplexBits = codebook.get_bit_names()
+        allBits = self.get_data_channel_name(self.get_data_channels()).values.tolist()
+        sequentialBits = [x for x in allBits if x not in multiplexBits]
+        sequentialChannels = [self.get_data_channel_index(x) for x in sequentialBits]
+        sequentialGeneNames = [self.get_data_channel_gene(x) for x in sequentialChannels]
+        return [sequentialChannels,sequentialGeneNames]
 
     def _get_image_path(
             self, imageType: str, fov: int, imagingRound: int) -> str:

@@ -281,7 +281,14 @@ class DataOrganization(object):
                          'Expected at {2}')
                         .format(dataChannel, fov, imagePath))
 
-                imageSize = self._dataSet.image_stack_size(imagePath)
+                try:
+                    imageSize = self._dataSet.image_stack_size(imagePath)
+                except Exception:
+                    raise InputDataError(
+                        ('Unable to determine image stack size for fov {0} from' 
+                         ' data channel {1} at {2}')
+                        .format(dataChannel, fov, imagePath))
+
                 frames = channelInfo['frame']
 
                 # this assumes fiducials are stored in the same image file

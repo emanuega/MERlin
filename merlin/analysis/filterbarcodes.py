@@ -1,5 +1,5 @@
 import numpy as np
-import pandas
+from scipy import optimize
 from merlin.core import analysistask
 from merlin.util import barcodedb
 
@@ -50,18 +50,19 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
         barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
 
 
-class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
+class AdaptiveFilterBarcodes(analysistask.AnalysisTask):
 
     """
     An analysis task that filters barcodes based on a mean intensity threshold
-    for each area based on the abundance of blank barcodes.
+    for each area based on the abundance of blank barcodes. The threshold
+    is selected to achieve a specified misidentification rate.
     """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        if 'blank_fraction' not in self.parameters:
-            self.parameters['blank_fraction'] = 0.1
+        if 'misidentification_rate' not in self.parameters:
+            self.parameters['misidentification_rate'] = 0.05
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -82,60 +83,80 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
         return self.dataSet.load_numpy_analysis_result('adaptive_thresholds',
                                                        self)
 
-    def _run_analysis(self, fragmentIndex):
+    @staticmethod
+    def _extract_barcodes_with_threshold(blankThreshold, barcodeSet,
+                                         blankFractionHistogram, histogramBins):
+        selectData = barcodeSet[
+            ['mean_intensity', 'min_distance', 'area']].values
+        selectData[:, 0] = np.log10(selectData[:, 0])
+
+        selectData[selectData[:, 2] >= 34, 2] = 33
+
+        barcodeBins = np.array(
+            (np.digitize(selectData[:, 0], histogramBins[0], right=True),
+             np.digitize(selectData[:, 1], histogramBins[1], right=True),
+             np.digitize(selectData[:, 2], histogramBins[2]))) - 1
+        raveledIndexes = np.ravel_multi_index(barcodeBins[:, :],
+                                              blankFractionHistogram.shape)
+
+        thresholdedBlankFraction = blankFractionHistogram < blankThreshold
+        return barcodeSet[np.take(thresholdedBlankFraction, raveledIndexes)]
+
+    def _calculate_error_rate(self, barcodeSet):
+        codebook = self.dataSet.get_codebook()
+        blankFraction = len(
+            codebook.get_blank_indexes()) / codebook.get_barcode_count()
+        return np.sum(barcodeSet['barcode_id'].isin(
+            codebook.get_blank_indexes())) / (len(barcodeSet) * blankFraction)
+
+    def _run_analysis(self):
         decodeTask = self.dataSet.load_analysis_task(
             self.parameters['decode_task'])
         codebook = self.dataSet.get_codebook()
 
-        try:
-            thresholds = self.get_adaptive_thresholds()
+        allBarcodes = decodeTask.get_barcode_database().get_barcodes(
+            columnList=['barcode_id', 'mean_intensity', 'min_distance', 'area'])
+        allBarcodes = allBarcodes[(allBarcodes['area'] >= 2)
+                                  & (allBarcodes['min_distance'] < 0.61)]
 
-        except IOError:
-            allBarcodes = decodeTask.get_barcode_database().get_barcodes(
-                columnList=['barcode_id', 'mean_intensity', 'area'])
-            blankBarcodes = allBarcodes[allBarcodes['barcode_id'].isin(
-                codebook.get_blank_indexes())]
-            blankFraction = len(codebook.get_blank_indexes()) / (
-                    len(codebook.get_blank_indexes())
-                    + len(codebook.get_coding_indexes()))
+        blankBarcodes = allBarcodes[allBarcodes['barcode_id'].isin(
+            codebook.get_blank_indexes())]
+        maxIntensity = np.max(np.log10(allBarcodes['mean_intensity']))
+        maxDistance = np.max(allBarcodes['min_distance'])
 
-            maxIntensity = np.log10(np.max(allBarcodes['mean_intensity']))
-            minIntensity = np.log10(np.min(allBarcodes['mean_intensity']))
-            intensityStep = (maxIntensity-minIntensity)/20
-            histBins = np.arange(minIntensity, maxIntensity, intensityStep)
+        blankData = blankBarcodes[
+            ['mean_intensity', 'min_distance', 'area']].values
+        blankData[:, 0] = np.log10(blankData[:, 0])
+        intensityBins = np.arange(0, 1.021 * maxIntensity, maxIntensity / 50)
+        distanceBins = np.arange(0, maxDistance+0.02, 0.01)
+        blankHistogram = np.histogramdd(
+            blankData, bins=(intensityBins, distanceBins, np.arange(35)))
 
-            nonzeroBlankCounts = np.array([np.histogram(np.log10(
-                blankBarcodes[blankBarcodes['area'] == a]['mean_intensity']),
-                                                        bins=histBins)[0]
-                       for a in np.arange(1, np.max(allBarcodes['area'])+1)])
+        allData = allBarcodes[['mean_intensity', 'min_distance', 'area']].values
+        allData[:, 0] = np.log10(allData[:, 0])
+        allHistogram = np.histogramdd(
+            allData, bins=(intensityBins, distanceBins, np.arange(35)))
 
-            nonzeroCounts = np.array([np.histogram(np.log10(
-                allBarcodes[allBarcodes['area'] == a]['mean_intensity']),
-                bins=histBins)[0] for a
-                in np.arange(1, np.max(allBarcodes['area'])+1)])
+        blankFraction = blankHistogram[0] / allHistogram[0]
+        blankFraction[allHistogram[0] == 0] = 0
+        blankFraction = blankFraction / (len(codebook.get_blank_indexes()) / (
+                    len(codebook.get_blank_indexes()) + len(
+                codebook.get_coding_indexes())))
 
-            blankFractionMatrix = nonzeroBlankCounts / nonzeroCounts
-            blankFractionMatrix[np.isnan(blankFractionMatrix)] = 0
+        def misidentification_rate_error_for_threshold(x, targetError):
+            result = self._calculate_error_rate(
+                self._extract_barcodes_with_threshold(
+                    x, allBarcodes, blankFraction, allHistogram[1])) \
+                     - targetError
+            return result
 
-            thresholdedBlankFraction = \
-                blankFractionMatrix \
-                > blankFraction*self.parameters['blank_fraction']
+        threshold = optimize.newton(misidentification_rate_error_for_threshold,
+                                    0.2, args=[0.05], tol=0.001, x1=0.3)
 
-            thresholds = np.array([histBins[np.where(a)[0][-1] + 1]
-                                   if True in a else histBins[0]
-                                   for a in thresholdedBlankFraction])
-
-            self.dataSet.save_numpy_analysis_result(
-                thresholds, 'adaptive_thresholds', self)
-
-        fovBarcodes = decodeTask.get_barcode_database().get_barcodes(
-            fragmentIndex)
-
-        filteredBarcodes = pandas.concat(
-            [fovBarcodes[(fovBarcodes['area'] == a) &
-                         (np.log10(fovBarcodes['mean_intensity']) > thresholds[
-                             a - 1])]
-             for a in np.unique(fovBarcodes['area'])])
-
-        self.get_barcode_database().write_barcodes(
-            filteredBarcodes, fov=fragmentIndex)
+        bcDatabase = self.get_barcode_database()
+        for f in self.dataSet.get_fovs():
+            currentBarcodes = decodeTask.get_barcode_database().get_barcodes(f)
+            currentBarcodes = currentBarcodes[(currentBarcodes['area'] >= 2) & (
+                        currentBarcodes['min_distance'] < 0.61)]
+            bcDatabase.write_barcodes(self._extract_barcodes_with_threshold(
+                    threshold, currentBarcodes), fov=f)

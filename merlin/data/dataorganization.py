@@ -1,6 +1,7 @@
 import os
 import re
 from typing import List
+from typing import Tuple
 import pandas
 import numpy as np
 
@@ -56,7 +57,7 @@ class DataOrganization(object):
             self.data = pandas.read_csv(
                 filePath,
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
-            self.data['bitName'] = self.data['bitName'].str.strip()
+            self.data['readoutName'] = self.data['readoutName'].str.strip()
             self._dataSet.save_dataframe_to_csv(
                     self.data, 'dataorganization', index=False)
 
@@ -75,7 +76,7 @@ class DataOrganization(object):
         """
         return np.array(self.data.index)
 
-    def get_data_channel_name(self, dataChannelIndex: int) -> str:
+    def get_data_channel_readout_name(self, dataChannelIndex: int) -> str:
         """Get the name for the data channel with the specified index.
 
         Args:
@@ -83,7 +84,18 @@ class DataOrganization(object):
         Returns:
             The name of the specified data channel
         """
-        return self.data.iloc[dataChannelIndex]['bitName']
+        return self.data.iloc[dataChannelIndex]['readoutName']
+
+    def get_data_channel_name(self, dataChannelIndex: int) -> str:
+        """Get the name for the data channel with the specified index.
+
+        Args:
+            dataChannelIndex: The index of the data channel
+        Returns:
+            The name of the specified data channel, 
+            primarily relevant for non-multiplex measurements
+        """
+        return self.data.iloc[dataChannelIndex]['channelName']
 
     def get_data_channel_index(self, dataChannelName: str) -> int:
         """Get the index for the data channel with the specified name.
@@ -98,7 +110,7 @@ class DataOrganization(object):
             # TODO this should raise a meaningful exception if the data channel
             # is not found
         """
-        return self.data[self.data['bitName'].str.match(
+        return self.data[self.data['readoutName'].str.match(
             dataChannelName, case=False)].index.tolist()[0]
 
     def get_data_channel_color(self, dataChannel: int) -> str:
@@ -119,7 +131,17 @@ class DataOrganization(object):
         Returns:
             The index of the associated data channel
         """
-        return self.data[self.data['bitName'] == bitName].index.item()
+        return self.data[self.data['readoutName'] == bitName].index.item()
+
+    def get_data_channel_with_name(self, channelName: str) -> int:
+        """Get the data channel associated with a gene name.
+
+        Args:
+            channelName: the name of the gene to search for
+        Returns:
+            The index of the associated data channel
+        """
+        return self.data[self.data['channelName'] == channelName].index.item()
 
     def get_fiducial_filename(self, dataChannel: int, fov: int) -> str:
         """Get the path for the image file that contains the fiducial
@@ -205,6 +227,23 @@ class DataOrganization(object):
     def get_fovs(self) -> np.ndarray:
         return np.unique(self.fileMap['fov'])
 
+    def get_sequential_rounds(self) -> Tuple[List[int], List[str]]:
+        """ Get the rounds that are not present in your codebook
+
+        Returns:
+            A tuple of two lists, the first list contains the channel number
+            for all the rounds not contained in the codebook, the second list
+            contains the name associated with that channel in the data
+            organization file.
+        """
+        multiplexBits = self._dataSet.get_codebook().get_bit_names()
+        sequentialChannels = [i for i in self.get_data_channels()
+                              if self.get_data_channel_readout_name(i)
+                              not in multiplexBits]
+        sequentialGeneNames = [self.get_data_channel_name(x) for
+                               x in sequentialChannels]
+        return sequentialChannels, sequentialGeneNames
+
     def _get_image_path(
             self, imageType: str, fov: int, imagingRound: int) -> str:
         selection = self.fileMap[(self.fileMap['imageType'] == imageType) &
@@ -221,9 +260,12 @@ class DataOrganization(object):
         try:
             self.fileMap = self._dataSet.load_dataframe_from_csv('filemap')
 
-        except FileNotFoundError:
-            uniqueTypes, uniqueIndexes = np.unique(
-                self.data['imageType'], return_index=True)
+        except FileNotFoundError:          
+            uniqueEntries = self.data.drop_duplicates(
+                subset=['imageType','imageRegExp'],keep='first')
+
+            uniqueTypes = uniqueEntries['imageType']
+            uniqueIndexes = uniqueEntries.index.values.tolist()
 
             fileNames = self._dataSet.get_image_file_names()
             fileData = []

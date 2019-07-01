@@ -256,9 +256,13 @@ class DataOrganization(object):
         try:
             self.fileMap = self._dataSet.load_dataframe_from_csv('filemap')
 
-        except FileNotFoundError:
-            uniqueTypes, uniqueIndexes = np.unique(
-                self.data['imageType'], return_index=True)
+        except FileNotFoundError:          
+            uniqueEntries = self.data.drop_duplicates(
+                subset=['imageType','imageRegExp'],keep='first')
+
+            uniqueTypes = uniqueEntries['imageType']
+            uniqueIndexes = uniqueEntries.index.values.tolist()
+
 
             fileNames = self._dataSet.get_image_file_names()
             fileData = []

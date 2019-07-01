@@ -124,10 +124,13 @@ class SumSignal(analysistask.ParallelAnalysisTask):
             if self.highpass:
                 img = filter.high_pass_filter(
                     img, self.parameters['highpass_sigma'])
-            signals.append(self._extract_signal(cells, img, zIndex)[:, [0]])
+            signals.append(self._extract_signal(cells, img, zIndex).iloc[:, [0]])
+        
+        #adding num of pixels
+        signals.append(self._extract_signal(cells, img, zIndex).iloc[:, [1]])
 
         compiledSignal = pandas.concat(signals, 1)
-        compiledSignal.columns = channels
+        compiledSignal.columns = channels+['Pixels']
 
         return compiledSignal
 
@@ -159,6 +162,10 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         normSignal = fovSignal.iloc[:, :-1].div(fovSignal.loc[:, 'Pixels'], 0)
 
         normSignal.columns = geneNames
+        normSignal.reset_index(inplace=True)
+        columns = normSignal.columns.values.tolist()
+        columns[0] = 'cell ID'
+        normSignal.columns = columns
 
         self.dataSet.save_dataframe_to_csv(
                 normSignal, 'sequential_signal', self.get_analysis_name(),

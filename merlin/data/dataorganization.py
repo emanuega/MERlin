@@ -1,6 +1,7 @@
 import os
 import re
 from typing import List
+from typing import Tuple
 import pandas
 import numpy as np
 
@@ -56,7 +57,7 @@ class DataOrganization(object):
             self.data = pandas.read_csv(
                 filePath,
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
-            self.data['bitName'] = self.data['bitName'].str.strip()
+            self.data['readoutName'] = self.data['readoutName'].str.strip()
             self._dataSet.save_dataframe_to_csv(
                     self.data, 'dataorganization', index=False)
 
@@ -75,7 +76,7 @@ class DataOrganization(object):
         """
         return np.array(self.data.index)
 
-    def get_data_channel_name(self, dataChannelIndex: int) -> str:
+    def get_data_channel_readout_name(self, dataChannelIndex: int) -> str:
         """Get the name for the data channel with the specified index.
 
         Args:
@@ -83,17 +84,18 @@ class DataOrganization(object):
         Returns:
             The name of the specified data channel
         """
-        return self.data.iloc[dataChannelIndex]['bitName']
+        return self.data.iloc[dataChannelIndex]['readoutName']
 
-    def get_data_channel_gene(self, dataChannelIndex: int) -> str:
+    def get_data_channel_name(self, dataChannelIndex: int) -> str:
         """Get the name for the data channel with the specified index.
 
         Args:
             dataChannelIndex: The index of the data channel
         Returns:
-            The gene name of the specified data channel, relevant for non-multiplex measurements
+            The name of the specified data channel, 
+            primarily relevant for non-multiplex measurements
         """
-        return self.data.iloc[dataChannelIndex]['geneName']
+        return self.data.iloc[dataChannelIndex]['channelName']
 
     def get_data_channel_index(self, dataChannelName: str) -> int:
         """Get the index for the data channel with the specified name.
@@ -108,7 +110,7 @@ class DataOrganization(object):
             # TODO this should raise a meaningful exception if the data channel
             # is not found
         """
-        return self.data[self.data['bitName'].str.match(
+        return self.data[self.data['readoutName'].str.match(
             dataChannelName, case=False)].index.tolist()[0]
 
     def get_data_channel_color(self, dataChannel: int) -> str:
@@ -129,14 +131,14 @@ class DataOrganization(object):
         Returns:
             The index of the associated data channel
         """
-        return self.data[self.data['bitName'] == bitName].index.item()
+        return self.data[self.data['readoutName'] == bitName].index.item()
 
 
-    def get_data_channel_for_gene(self, geneName: str) -> int:
-        """Get the data channel associated with the specified bit.
+    def get_data_channel_with_gene(self, geneName: str) -> int:
+        """Get the data channel associated with a gene name.
 
         Args:
-            bitName: the name of the bit to search for
+            geneName: the name of the gene to search for
         Returns:
             The index of the associated data channel
         """
@@ -226,18 +228,24 @@ class DataOrganization(object):
     def get_fovs(self) -> np.ndarray:
         return np.unique(self.fileMap['fov'])
 
-    def get_sequential_rounds(self):
+    def get_sequential_rounds(self) -> Tuple[List,List]:
         """ Get the rounds that are not present in your codebook
 
         Returns:
-            A list of the rounds not present in the codebook along with the name associated with them
+            A tuple of two lists, the first list contains the channel number
+            for all the rounds not contained in the codebook, the second list
+            contains the name assiciated with that channel in the data
+            organization file.
         """
         codebook = merlin.data.codebook.Codebook(self._dataSet)
         multiplexBits = codebook.get_bit_names()
-        allBits = self.get_data_channel_name(self.get_data_channels()).values.tolist()
+        allBits = self.get_data_channel_readout_name(
+                        self.get_data_channels()).values.tolist()
         sequentialBits = [x for x in allBits if x not in multiplexBits]
-        sequentialChannels = [self.get_data_channel_index(x) for x in sequentialBits]
-        sequentialGeneNames = [self.get_data_channel_gene(x) for x in sequentialChannels]
+        sequentialChannels = [self.get_data_channel_index(x) for 
+                              x in sequentialBits]
+        sequentialGeneNames = [self.get_data_channel_name(x) for 
+                               x in sequentialChannels]
         return [sequentialChannels,sequentialGeneNames]
 
     def _get_image_path(

@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import numpy as np
 from typing import Tuple
+from typing import List
 
 from merlin.core import analysistask
 
@@ -29,6 +30,24 @@ class GlobalAlignment(analysistask.AnalysisTask):
             z, x, and y coordinates (in microns)
         """
         pass
+
+    @abstractmethod
+    def global_coordinates_to_fov(
+            self, fov: int, globalCoordinates: List[Tuple[float, float]]) \
+            -> List[Tuple[float, float]]:
+        """Calculates the fov pixel coordinates for a list of global coordinates
+        in the specified field of view.
+
+        Args:
+            fov: the fov where the coordinates are measured
+            globalCoordinates: a list of tuples containing 
+                the x and y coordinates (in pixels) in the specified fov.
+        Returns:
+            A list of tuples containing the global x and y coordinates
+            (in microns)
+        """
+        pass
+
 
     @abstractmethod
     def fov_to_global_transform(self, fov: int) -> np.ndarray:
@@ -89,6 +108,16 @@ class SimpleGlobalAlignment(GlobalAlignment):
                     fovStart[0] + fovCoordinates[1]*micronsPerPixel,
                     fovStart[1] + fovCoordinates[2]*micronsPerPixel)
 
+    def global_coordinates_to_fov(self,fov,globalCoordinates):
+
+        tform = np.linalg.inv(self.fov_to_global_transform(fov))
+        pixels = [self._global_coordinate_to_fov(tform,x) 
+                  for x in globalCoordinates]
+        return pixels
+
+    def _global_coordinate_to_fov(self, tform, globalCoordinates):
+        coords = np.array([globalCoordinates[0],globalCoordinates[1],1])
+        return np.matmul(tform,coords).astype(int)[:2]
 
       
     def fov_to_global_transform(self, fov):

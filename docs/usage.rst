@@ -14,7 +14,8 @@ The data organization file specifies which the images correspond to each readout
 
 The columns in the data organization file are:
 
-- bitName - The name of the readout.
+- channelName - The name of the data channel. For genes measured sequential, this can be set as the gene name.
+- readoutName - The name of the readout sequence used to measure this channel.
 - imageType - The base name for the image file that contains the images for this readout, for example, ``Conventional_750_650_561_488_405``
 - imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are ``imageType``, ``fov``, and ``imagingRound``, for example: ``(?P<imageType>[\w|-]+)_(?P<fov>[0-9]+)_(?P<imagingRound>[0-9]+)``. Here, ``imageType`` specifies the string indicated in the ``imageType`` column for the corresponding row, ``imagingRound`` specifies the designated ``imagingRound`` for the corresponding row, and ``fov`` is filled with all field of view indexes in the data set. 
 - bitNumber - The bit number corresponding to this readout.

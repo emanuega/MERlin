@@ -96,3 +96,18 @@ Parameters:
 * z\_indexes -- The z index to export. If not provided all z indexes are exported.
 * fov\_crop\_width -- The number of pixels to remove from each edge of each fov before inserting it into the mosaic.
 
+sequential.SumSignal
+-------------------------------
+
+Description: Calculates the total intensity within segementation boundaries.
+
+Parameters:
+
+* z\_index -- the z index of the image stack to use for the summation
+* apply_highpass -- flag indicating if a highpass filter should be applied to the image prior to summing.
+* highpass\_sigma -- the standard deviation to use for the high pass filter
+
+sequential.ExportSumSignals
+----------------------------------
+
+Description: Export the sum signals calculated by a SumSignal task to a csv file.

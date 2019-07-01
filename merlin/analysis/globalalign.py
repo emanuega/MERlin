@@ -47,7 +47,8 @@ class GlobalAlignment(analysistask.AnalysisTask):
             (in microns)
         """
         pass
-
+        # TODO this can be updated to take either a list or a single coordinate
+        # and to convert z position
 
     @abstractmethod
     def fov_to_global_transform(self, fov: int) -> np.ndarray:
@@ -108,18 +109,15 @@ class SimpleGlobalAlignment(GlobalAlignment):
                     fovStart[0] + fovCoordinates[1]*micronsPerPixel,
                     fovStart[1] + fovCoordinates[2]*micronsPerPixel)
 
-    def global_coordinates_to_fov(self,fov,globalCoordinates):
-
+    def global_coordinates_to_fov(self, fov, globalCoordinates):
         tform = np.linalg.inv(self.fov_to_global_transform(fov))
-        pixels = [self._global_coordinate_to_fov(tform,x) 
-                  for x in globalCoordinates]
+
+        def convert_coordinate(coordinateIn):
+            coords = np.array([coordinateIn[0], coordinateIn[1], 1])
+            return np.matmul(tform, coords).astype(int)[:2]
+        pixels = [convert_coordinate(x) for x in globalCoordinates]
         return pixels
 
-    def _global_coordinate_to_fov(self, tform, globalCoordinates):
-        coords = np.array([globalCoordinates[0],globalCoordinates[1],1])
-        return np.matmul(tform,coords).astype(int)[:2]
-
-      
     def fov_to_global_transform(self, fov):
         micronsPerPixel = self.dataSet.get_microns_per_pixel()
         globalStart = self.fov_coordinates_to_global(fov, (0, 0))

@@ -3,6 +3,7 @@ import numpy as np
 
 from merlin.data import dataorganization
 
+
 def test_dataorganization_get_channels(simple_merfish_data):
     assert np.array_equal(
             simple_merfish_data.get_data_organization().get_data_channels(),
@@ -99,3 +100,11 @@ def test_dataorganization_load_from_dataset(simple_merfish_data):
             assert originalOrganization.get_image_frame_index(channel, z) \
                     == loadedOrganization.get_image_frame_index(channel, z)
 
+
+def test_dataorganization_get_sequential_rounds(simple_merfish_data):
+    dataOrganization = simple_merfish_data.get_data_organization()
+    sequentialRounds, sequentialChannels = \
+        dataOrganization.get_sequential_rounds()
+
+    assert sequentialRounds == [16, 17]
+    assert sequentialChannels == ['cellstain', 'nuclearstain']

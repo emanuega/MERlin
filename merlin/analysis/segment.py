@@ -92,6 +92,9 @@ class WatershedSegment(analysistask.ParallelAnalysisTask):
             (filterSize, filterSize), filterSigma)
             for z in range(len(self.dataSet.get_z_positions()))])
 
+    def get_feature_database(self):
+        return(spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self))
+
 
 class CleanCellSegmentation(analysistask.AnalysisTask):
 

@@ -129,6 +129,8 @@
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
+          <li><a href="../../merlin.html">merlin</a> &raquo;</li>
+        
       <li>merlin.util.barcodedb</li>
     
     
@@ -145,116 +147,280 @@
            <div itemprop="articleBody">
             
   <h1>Source code for merlin.util.barcodedb</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 <span class="kn">import</span> <span class="nn">sqlalchemy</span>
 <span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="k">import</span> <span class="n">types</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<div class="viewcode-block" id="BarcodeDB"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB">[docs]</a><span class="k">class</span> <span class="nc">BarcodeDB</span><span class="p">():</span>
+<span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">dataset</span>
 
-    <span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="BarcodeDB"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB">[docs]</a><span class="k">class</span> <span class="nc">BarcodeDB</span><span class="p">:</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An abstract class for storing and retrieving barcode information.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+
+<span class="sd">    For each barcode in the database, the following information is stored:</span>
+<span class="sd">        barcode - the error corrected binary word corresponding to the barcode</span>
+<span class="sd">        assigned_barcode -</span>
+<span class="sd">        barcode_id - the index of the barcode in the codebook</span>
+<span class="sd">        fov - the field of view where the barcode was identified</span>
+<span class="sd">        mean_intensity - the mean intensity in the pixels corresponding to</span>
+<span class="sd">            this  barcode</span>
+<span class="sd">        max_intensity - the max intensity in the pixels corresponding to</span>
+<span class="sd">            this barcode</span>
+<span class="sd">        area - the number of pixels covered by the barcode</span>
+<span class="sd">        mean_distance - the distance between the barcode and the measured</span>
+<span class="sd">            pixel traces averaged for all pixels corresponding to the barcode</span>
+<span class="sd">        min_distance - the minimum distance between the barcode and the measured</span>
+<span class="sd">            pixel traces of all pixels corresponding to the barcode</span>
+<span class="sd">        x,y,z - the average x,y,z position of all pixels covered by the barcode</span>
+<span class="sd">        weighted_x, weighted_y, weighted_z - the average x,y,z position of</span>
+<span class="sd">            of all pixels covered by the barcode weighted by the magnitude</span>
+<span class="sd">            of each pixel</span>
+<span class="sd">        global_x, global_y, global_z - the global x,y,z position of the barcode</span>
+<span class="sd">        cell_index - the cell that contains this barcode</span>
+<span class="sd">        intensity_i - the mean intensity across corresponding pixels for</span>
+<span class="sd">            bit i where i is an integer from 0 to the number of bits-1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span> <span class="o">=</span> <span class="n">dataSet</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_analysisTask</span> <span class="o">=</span> <span class="n">analysisTask</span>
 
     <span class="k">def</span> <span class="nf">_get_bc_column_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        barcode - the error corrected binary word corresponding to the barcode</span>
-<span class="sd">        barcode_id - the index of the barcode in the codebook</span>
-<span class="sd">        fov - the field of view where the barcode was identified</span>
-<span class="sd">        magnitude - the sum of the fluorescence intensities in the pixels </span>
-<span class="sd">            corresponding to this  barcode</span>
-<span class="sd">        area - the number of pixels covered by the barcode</span>
-<span class="sd">        mean_distance - the distance between the barcode and the measured</span>
-<span class="sd">            pixel traces averaged for all pixels corresponding to the barcode</span>
-<span class="sd">        min_distance - the distance between the barcode and the measured</span>
-<span class="sd">            pixel traces averaged for all pixels corresponding to the barcode</span>
-<span class="sd">        x,y,z - the average x,y,z position of all pixels covered by the barcode</span>
-<span class="sd">        weighted_x, weighted_y, weighted_z - the average x,y,z position of </span>
-<span class="sd">            of all pixels covered by the barcode weighted by the magnitude</span>
-<span class="sd">            of eachc pixel</span>
-<span class="sd">        global_x, global_y, global_z - the global x,y,z position of the barcode </span>
-<span class="sd">        cell_index - the cell that contains this barcode</span>
-<span class="sd">        intensity_i - the mean intensity across corresponding pixels for</span>
-<span class="sd">            bit i where i is an integer from 0 to the number of bits-1. </span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">columnInformation</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;barcode&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">BigInteger</span><span class="p">(),</span> \
-                            <span class="s1">&#39;barcode_id&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">SmallInteger</span><span class="p">(),</span> \
-                            <span class="s1">&#39;fov&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">SmallInteger</span><span class="p">(),</span> \
-                            <span class="s1">&#39;mean_intensity&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;max_intensity&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;area&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">SmallInteger</span><span class="p">(),</span> \
-                            <span class="s1">&#39;mean_distance&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;min_distance&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;global_x&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;global_y&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;global_z&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> \
-                            <span class="s1">&#39;cell_index&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Integer</span><span class="p">()}</span>
+        <span class="n">columnInformation</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">SmallInteger</span><span class="p">(),</span>
+                             <span class="s1">&#39;fov&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">SmallInteger</span><span class="p">(),</span>
+                             <span class="s1">&#39;mean_intensity&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;max_intensity&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;area&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">SmallInteger</span><span class="p">(),</span>
+                             <span class="s1">&#39;mean_distance&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;min_distance&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;global_x&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;global_y&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;global_z&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+                             <span class="s1">&#39;cell_index&#39;</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">Integer</span><span class="p">()}</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()):</span>
             <span class="n">columnInformation</span><span class="p">[</span><span class="s1">&#39;intensity_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">columnInformation</span>
 
 <div class="viewcode-block" id="BarcodeDB.empty_database"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.empty_database">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">empty_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">empty_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Remove all barcodes from this database.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fov: index of the field of view. If specified, only barcodes</span>
+<span class="sd">                corresponding to the specified fov will be removed. Otherwise,</span>
+<span class="sd">                all barcodes will be removed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
 
 <div class="viewcode-block" id="BarcodeDB.get_barcodes"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_barcodes">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">get_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columnList</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columnList</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get barcodes stored in this database.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fov: index of the field view. If None, barcodes for all fovs</span>
+<span class="sd">                are returned.</span>
+<span class="sd">            columnList: list of columns to extract. If not specified, all</span>
+<span class="sd">                columns are returned.</span>
+<span class="sd">            chunksize: the size of chunks to iterate. If not specified, a</span>
+<span class="sd">                pandas dataframe is returned otherwise an iterator over the</span>
+<span class="sd">                barcodes is returned.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            if chunksize is not set, a pandas dataframe containing all the</span>
+<span class="sd">                requested barcodes is returned. Otherwise an iterator is</span>
+<span class="sd">                returned that iterates over the requested barcodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
 
 <div class="viewcode-block" id="BarcodeDB.get_filtered_barcodes"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_filtered_barcodes">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">get_filtered_barcodes</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">areaThreshold</span><span class="p">,</span> <span class="n">intensityThreshold</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">areaThreshold</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">intensityThreshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">distanceThreshold</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get barcodes from this barcode database that pass the area and</span>
+<span class="sd">        intensity thresholds.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            areaThreshold: the minimum area threshold. Barcodes that</span>
+<span class="sd">                have an area equal to the specified threshold are included</span>
+<span class="sd">                in the output.</span>
+<span class="sd">            intensityThreshold: the minimum value for mean_intenity for</span>
+<span class="sd">                the select barcodes</span>
+<span class="sd">            distanceThreshold: the maximum value for min_distance for</span>
+<span class="sd">                the select barcodes</span>
+<span class="sd">            fov: index of the field view. If None, barcodes for all fovs</span>
+<span class="sd">                are returned.</span>
+<span class="sd">            chunksize: the size of chunks to iterate. If not specified, a</span>
+<span class="sd">                pandas dataframe is returned otherwise an iterator over the</span>
+<span class="sd">                barcodes is returned.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            if chunksize is not set, a pandas dataframe containing all the</span>
+<span class="sd">                requested barcodes is returned. Otherwise an iterator is</span>
+<span class="sd">                returned that iterates over the requested barcodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
 
 <div class="viewcode-block" id="BarcodeDB.get_intensities_for_barcodes_with_area"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_intensities_for_barcodes_with_area">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">get_intensities_for_barcodes_with_area</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Gets the barcode intensities for barcodes that have the specified</span>
+    <span class="k">def</span> <span class="nf">get_intensities_for_barcodes_with_area</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">area</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Gets the barcode intensities for barcodes that have the specified</span>
 <span class="sd">        area.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
 
 <div class="viewcode-block" id="BarcodeDB.write_barcodes"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.write_barcodes">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">write_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">barcodeInformation</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Writes the barcodes specified in barcodeInformation into the </span>
-<span class="sd">        barcode database. If all the barcodes correspond to the same fov,</span>
-<span class="sd">        then fov can be specified to improve performance.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">write_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">barcodeInformation</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                       <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Writes the specified barcodes into the barcode database.</span>
+
+<span class="sd">        If all the barcodes correspond to the same fov, then fov can be</span>
+<span class="sd">        specified to improve performance. This function does not verify that</span>
+<span class="sd">        fov is specified incorrectly. If fov is specified but the provided</span>
+<span class="sd">        barcodes are not all from the same fov, the barcode database may become</span>
+<span class="sd">        corrupted.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            barcodeInformation: barcodes to write to the database. The</span>
+<span class="sd">                dataframe must have the columns specified for a barcode</span>
+<span class="sd">                database.</span>
+<span class="sd">            fov: the fov of the barcodes if they all correspond to the same</span>
+<span class="sd">                fov. If barcodeInformation contains barcodes from different</span>
+<span class="sd">                fovs, then fov should be set to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
 
-<div class="viewcode-block" id="BarcodeDB.get_barcode_intensities"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_barcode_intensities">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_intensities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BarcodeDB.get_barcode_intensities"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_barcode_intensities">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_intensities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get mean intensities for all barcodes in this database.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            series containing mean intensity for all barcodes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span>
                 <span class="n">columnList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">])[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="BarcodeDB.get_barcode_areas"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_barcode_areas">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_areas</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BarcodeDB.get_barcode_areas"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_barcode_areas">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_areas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get areas for all barcodes in this database.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            series containing areas for all barcodes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">columnList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">])[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="BarcodeDB.get_barcode_distances"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_barcode_distances">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_distances</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BarcodeDB.get_barcode_distances"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.BarcodeDB.get_barcode_distances">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_distances</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get distances for all barcodes in this database</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            series containing distances for all barcodes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">columnList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mean_distance&#39;</span><span class="p">])[</span><span class="s1">&#39;mean_distance&#39;</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="PyTablesBarcodeDB"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.PyTablesBarcodeDB">[docs]</a><span class="k">class</span> <span class="nc">PyTablesBarcodeDB</span><span class="p">(</span><span class="n">BarcodeDB</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">DataSet</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PyTablesBarcodeDB.empty_database"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.PyTablesBarcodeDB.empty_database">[docs]</a>    <span class="k">def</span> <span class="nf">empty_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">empty_database</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">delete_pandas_hdfstore</span><span class="p">(</span>
+            <span class="s1">&#39;barcode_data&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysisTask</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="s1">&#39;barcodes&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTablesBarcodeDB.get_barcodes"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.PyTablesBarcodeDB.get_barcodes">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columnList</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunkSize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>\
+            <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">fov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">barcodes</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">columnList</span><span class="o">=</span><span class="n">columnList</span><span class="p">)</span>
+                 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">open_pandas_hdfstore</span><span class="p">(</span>
+                        <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;barcode_data&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysisTask</span><span class="p">,</span>
+                        <span class="n">fov</span><span class="p">,</span> <span class="s1">&#39;barcodes&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pandasHDF</span><span class="p">:</span>
+
+                    <span class="k">if</span> <span class="s1">&#39;barcodes&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pandasHDF</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+                    <span class="k">if</span> <span class="n">columnList</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">barcodes</span> <span class="o">=</span> <span class="n">pandasHDF</span><span class="p">[</span><span class="s1">&#39;barcodes&#39;</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">barcodes</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_hdf</span><span class="p">(</span><span class="n">pandasHDF</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;barcodes&#39;</span><span class="p">,</span>
+                                                   <span class="n">columns</span><span class="o">=</span><span class="n">columnList</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">barcodes</span></div>
+
+<div class="viewcode-block" id="PyTablesBarcodeDB.get_filtered_barcodes"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.PyTablesBarcodeDB.get_filtered_barcodes">[docs]</a>    <span class="k">def</span> <span class="nf">get_filtered_barcodes</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">areaThreshold</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">intensityThreshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">distanceThreshold</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">allBarcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distanceThreshold</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filteredBarcodes</span> <span class="o">=</span> <span class="n">allBarcodes</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">areaThreshold</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">intensityThreshold</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filteredBarcodes</span> <span class="o">=</span> <span class="n">allBarcodes</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">areaThreshold</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">intensityThreshold</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;min_distance&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">distanceThreshold</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">filteredBarcodes</span></div>
+
+<div class="viewcode-block" id="PyTablesBarcodeDB.get_intensities_for_barcodes_with_area"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.PyTablesBarcodeDB.get_intensities_for_barcodes_with_area">[docs]</a>    <span class="k">def</span> <span class="nf">get_intensities_for_barcodes_with_area</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">area</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="n">allBarcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">columnList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">,</span> <span class="s1">&#39;mean_intensity&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">allBarcodes</span><span class="p">[</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">area</span><span class="p">][</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="PyTablesBarcodeDB.write_barcodes"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.PyTablesBarcodeDB.write_barcodes">[docs]</a>    <span class="k">def</span> <span class="nf">write_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">barcodeInformation</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                       <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">barcodeInformation</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">fov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">barcodeInformation</span><span class="o">.</span><span class="n">fov</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span>
+                        <span class="n">barcodeInformation</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">barcodeInformation</span><span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">f</span><span class="p">],</span>
+                        <span class="n">fov</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">open_pandas_hdfstore</span><span class="p">(</span>
+                <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;barcode_data&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysisTask</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="s1">&#39;barcodes&#39;</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">pandasHDF</span><span class="p">:</span>
+            <span class="n">tablesTypeConversion</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">BigInteger</span><span class="p">()):</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">SmallInteger</span><span class="p">()):</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">32</span><span class="p">)):</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">Integer</span><span class="p">()):</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span>
+            <span class="p">}</span>
+            <span class="n">tablesType</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">tablesTypeConversion</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">_get_bc_column_types</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">pandasHDF</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;barcodes&#39;</span><span class="p">,</span> <span class="n">barcodeInformation</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">tablesType</span><span class="p">),</span>
+                             <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;table&#39;</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="SQLiteBarcodeDB"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.SQLiteBarcodeDB">[docs]</a><span class="k">class</span> <span class="nc">SQLiteBarcodeDB</span><span class="p">(</span><span class="n">BarcodeDB</span><span class="p">):</span>
     
-    <span class="sd">&#39;&#39;&#39;A class for storing and retrieving barcode information using a</span>
+    <span class="sd">&quot;&quot;&quot;A class for storing and retrieving barcode information using a</span>
 <span class="sd">    SQLite back end. </span>
 <span class="sd">    </span>
 <span class="sd">    This barcode database stores the barcodes corresponding to each FOV</span>
 <span class="sd">    into its own SQLite file so that multiple FOVS can be processed </span>
 <span class="sd">    in parallel efficiently.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1">#TODO - the functions in this class can be consolidated</span>
-    <span class="c1">#TODO - the read functions take a lot of memory, much more than the final</span>
-    <span class="c1">#dataframe. This can be reduced by reading in smaller batches.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">)</span>
@@ -266,7 +432,8 @@
     <span class="k">def</span> <span class="nf">_initialize_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>    
 
-    <span class="k">def</span> <span class="nf">_aggregate_barcodes_from_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">barcodeIterator</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_aggregate_barcodes_from_iterator</span><span class="p">(</span><span class="n">barcodeIterator</span><span class="p">):</span>
         <span class="n">barcodeDF</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([])</span>
         <span class="k">for</span> <span class="n">currentBarcodes</span> <span class="ow">in</span> <span class="n">barcodeIterator</span><span class="p">:</span>
             <span class="n">barcodeDF</span> <span class="o">=</span> <span class="n">barcodeDF</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">currentBarcodes</span><span class="p">)</span>
@@ -279,23 +446,24 @@
         
         <span class="k">if</span> <span class="n">fov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
-                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">columnList</span><span class="o">=</span><span class="n">columnList</span><span class="p">,</span> 
-                        <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span> \
-                                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()))</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">columnList</span><span class="o">=</span><span class="n">columnList</span><span class="p">,</span>
+                                       <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span>
+                     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">dbEngine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_barcodeDB</span><span class="p">(</span><span class="n">fov</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">dbEngine</span><span class="o">.</span><span class="n">dialect</span><span class="o">.</span><span class="n">has_table</span><span class="p">(</span><span class="n">dbEngine</span><span class="p">,</span> <span class="s1">&#39;barcode_information&#39;</span><span class="p">):</span>
                 <span class="k">return</span> <span class="p">[]</span>
 
-            <span class="c1">#In order to prevent memory spikes that happen when pandas</span>
-            <span class="c1">#reads the whole database in at once, here it is read in </span>
-            <span class="c1">#in smaller increments and aggregated.</span>
+            <span class="c1"># In order to prevent large memory spikes that happen when pandas</span>
+            <span class="c1"># reads the whole database in at once, here it is read in</span>
+            <span class="c1"># in smaller increments and aggregated.</span>
             <span class="k">if</span> <span class="n">columnList</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_sql_table</span><span class="p">(</span>
-                        <span class="s1">&#39;barcode_information&#39;</span><span class="p">,</span> <span class="n">dbEngine</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span>
+                    <span class="s1">&#39;barcode_information&#39;</span><span class="p">,</span> <span class="n">dbEngine</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_sql_table</span><span class="p">(</span><span class="s1">&#39;barcode_information&#39;</span><span class="p">,</span> 
-                        <span class="n">dbEngine</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columnList</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span>
+                <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_sql_table</span><span class="p">(</span>
+                    <span class="s1">&#39;barcode_information&#39;</span><span class="p">,</span> <span class="n">dbEngine</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columnList</span><span class="p">,</span>
+                    <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">returnIterator</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">barcodeIterator</span>
@@ -308,8 +476,8 @@
         <span class="n">chunksize</span> <span class="o">=</span> <span class="n">chunksize</span> <span class="ow">or</span> <span class="mi">100000</span>
 
         <span class="n">queryString</span> <span class="o">=</span> <span class="s1">&#39;select * from barcode_information &#39;</span> \
-                <span class="o">+</span> <span class="s1">&#39;where area&gt;=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">areaThreshold</span><span class="p">)</span> \
-                <span class="o">+</span> <span class="s1">&#39; and mean_intensity&gt;=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">intensityThreshold</span><span class="p">)</span>
+                      <span class="o">+</span> <span class="s1">&#39;where area&gt;=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">areaThreshold</span><span class="p">)</span> \
+                      <span class="o">+</span> <span class="s1">&#39; and mean_intensity&gt;=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">intensityThreshold</span><span class="p">)</span>
         <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iterator_for_query</span><span class="p">(</span><span class="n">queryString</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">chunksize</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">returnIterator</span><span class="p">:</span>
@@ -322,7 +490,7 @@
                 <span class="o">+</span> <span class="s1">&#39;barcode_information where area=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">area</span><span class="p">)</span>
         <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iterator_for_query</span><span class="p">(</span><span class="n">queryString</span><span class="p">)</span>
         <span class="n">barcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_barcodes_from_iterator</span><span class="p">(</span><span class="n">barcodeIterator</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">barcodes</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">barcodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">barcodes</span><span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span></div>
@@ -330,16 +498,17 @@
     <span class="k">def</span> <span class="nf">_iterator_for_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryString</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="mi">100000</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">fov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
-                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iterator_for_query</span><span class="p">(</span><span class="n">queryString</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> 
-                        <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">))</span> \
-                                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iterator_for_query</span><span class="p">(</span><span class="n">queryString</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+                                              <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">dbEngine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_barcodeDB</span><span class="p">(</span><span class="n">fov</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">dbEngine</span><span class="o">.</span><span class="n">dialect</span><span class="o">.</span><span class="n">has_table</span><span class="p">(</span><span class="n">dbEngine</span><span class="p">,</span> <span class="s1">&#39;barcode_information&#39;</span><span class="p">):</span>
                 <span class="k">return</span> <span class="p">[]</span>
 
             <span class="n">barcodeIterator</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_sql_query</span><span class="p">(</span><span class="n">queryString</span><span class="p">,</span>
-                    <span class="n">dbEngine</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span>
+                                                    <span class="n">dbEngine</span><span class="p">,</span>
+                                                    <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">barcodeIterator</span>
 
@@ -350,8 +519,7 @@
         <span class="k">if</span> <span class="n">fov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">barcodeInformation</span><span class="o">.</span><span class="n">fov</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span>
-                        <span class="n">barcodeInformation</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">barcodeInformation</span><span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">]</span> \
-                                <span class="o">==</span> <span class="n">f</span><span class="p">],</span>
+                        <span class="n">barcodeInformation</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">barcodeInformation</span><span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">f</span><span class="p">],</span>
                         <span class="n">fov</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
 
         <span class="n">columnInformation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_bc_column_types</span><span class="p">()</span>
@@ -369,7 +537,7 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">written</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">exc</span><span class="o">.</span><span class="n">OperationalError</span><span class="p">(</span><span class="s1">&#39;Failed to write barcodes&#39;</span><span class="p">,</span>
-                    <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+                                                  <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLiteBarcodeDB.empty_database"><a class="viewcode-back" href="../../merlin.util.html#merlin.util.barcodedb.SQLiteBarcodeDB.empty_database">[docs]</a>    <span class="k">def</span> <span class="nf">empty_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">fov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -378,7 +546,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_get_barcodeDB</span><span class="p">(</span><span class="n">fov</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
                 <span class="s1">&#39;DROP TABLE IF EXISTS barcode_information;&#39;</span><span class="p">)</span></div></div>
-
 </pre></div>
 
            </div>

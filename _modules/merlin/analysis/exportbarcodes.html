@@ -129,6 +129,8 @@
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
+          <li><a href="../../merlin.html">merlin</a> &raquo;</li>
+        
       <li>merlin.analysis.exportbarcodes</li>
     
     
@@ -147,18 +149,25 @@
   <h1>Source code for merlin.analysis.exportbarcodes</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
 
+
 <div class="viewcode-block" id="ExportBarcodes"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.exportbarcodes.ExportBarcodes">[docs]</a><span class="k">class</span> <span class="nc">ExportBarcodes</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">):</span>
 
-    <span class="sd">&#39;&#39;&#39;An analysis task that filters barcodes based on area and mean </span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An analysis task that filters barcodes based on area and mean </span>
 <span class="sd">    intensity.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;columns&#39;</span><span class="p">,</span> 
-                <span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">,</span> <span class="s1">&#39;global_x&#39;</span><span class="p">,</span> <span class="s1">&#39;global_y&#39;</span><span class="p">,</span> <span class="s1">&#39;cell_index&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">excludeBlanks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;exclude_blanks&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;columns&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">,</span> <span class="s1">&#39;global_x&#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;global_y&#39;</span><span class="p">,</span> <span class="s1">&#39;cell_index&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;exclude_blanks&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;exclude_blanks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">excludeBlanks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;exclude_blanks&#39;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="ExportBarcodes.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.exportbarcodes.ExportBarcodes.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="mi">5000</span></div>
@@ -169,20 +178,21 @@
 <div class="viewcode-block" id="ExportBarcodes.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.exportbarcodes.ExportBarcodes.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;filter_task&#39;</span><span class="p">]]</span></div>
 
-<div class="viewcode-block" id="ExportBarcodes.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.exportbarcodes.ExportBarcodes.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filterTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">filterTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;filter_task&#39;</span><span class="p">])</span>        
 
-        <span class="n">barcodeData</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filterTask</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span> \
-                <span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">columnList</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">barcodeData</span> <span class="o">=</span> <span class="n">filterTask</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span> \
+                <span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">columnList</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">excludeBlanks</span><span class="p">:</span>
             <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
-            <span class="n">codingIDs</span> <span class="o">=</span> <span class="n">codebook</span><span class="p">[</span><span class="o">~</span><span class="n">codebook</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s1">&#39;Blank&#39;</span><span class="p">)]</span>
-            <span class="n">barcodeData</span> <span class="o">=</span> <span class="n">barcodeData</span><span class="p">[</span>\
-                    <span class="n">barcodeData</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">codingIDs</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+            <span class="n">barcodeData</span> <span class="o">=</span> <span class="n">barcodeData</span><span class="p">[</span>
+                    <span class="n">barcodeData</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+                        <span class="n">codebook</span><span class="o">.</span><span class="n">get_coding_indexes</span><span class="p">())]</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_dataframe_to_csv</span><span class="p">(</span><span class="n">barcodeData</span><span class="p">,</span> <span class="s1">&#39;barcodes&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_dataframe_to_csv</span><span class="p">(</span><span class="n">barcodeData</span><span class="p">,</span> <span class="s1">&#39;barcodes&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
+                                           <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 </pre></div>
 
            </div>

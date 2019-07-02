@@ -129,6 +129,8 @@
         
           <li><a href="../../../index.html">Module code</a> &raquo;</li>
         
+          <li><a href="../../../merlin.html">merlin</a> &raquo;</li>
+        
       <li>merlin.view.widgets.regionview</li>
     
     
@@ -171,14 +173,19 @@
         <span class="n">vSynchronize</span> <span class="o">=</span> <span class="n">ImageViewSynchronizer</span><span class="p">()</span>
         <span class="n">imageData</span> <span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">,</span> <span class="n">dc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">)</span> \
-                    <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()]</span>
+                    <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span>\
+                        <span class="o">.</span><span class="n">get_data_channels</span><span class="p">()]</span>
         <span class="n">imageCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">imageData</span><span class="p">)</span>
+
+        <span class="n">zPosition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">]</span>
         <span class="n">barcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">barcodeDB</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">)</span>
+        <span class="n">selectBarcodes</span> <span class="o">=</span> <span class="n">barcodes</span><span class="p">[</span><span class="n">barcodes</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">zPosition</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span> <span class="o">=</span> <span class="p">[</span><span class="n">RegionImageViewWidget</span><span class="p">(</span><span class="n">imageData</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-            <span class="n">vSynchronize</span><span class="p">,</span> <span class="n">bitIndex</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">barcodes</span><span class="o">=</span><span class="n">barcodes</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channel_name</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> \
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">imageCount</span><span class="p">)]</span>
+            <span class="n">vSynchronize</span><span class="p">,</span> <span class="n">bitIndex</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">barcodes</span><span class="o">=</span><span class="n">selectBarcodes</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span>\
+                    <span class="o">.</span><span class="n">get_data_channel_name</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">imageCount</span><span class="p">)]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_layout</span><span class="p">()</span>
 
@@ -210,8 +217,9 @@
         <span class="n">imageIndex</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">rowCount</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">columnCount</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-                <span class="n">imageLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span><span class="p">[</span><span class="n">imageIndex</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
-                <span class="n">imageIndex</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">imageIndex</span> <span class="o">&lt;</span> <span class="n">imageCount</span><span class="p">:</span>
+                    <span class="n">imageLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span><span class="p">[</span><span class="n">imageIndex</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+                    <span class="n">imageIndex</span> <span class="o">+=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="RegionViewWidget.fov_scroll_update"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionViewWidget.fov_scroll_update">[docs]</a>    <span class="k">def</span> <span class="nf">fov_scroll_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_fov</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fovScrollBar</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
@@ -220,12 +228,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set_z_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zScrollBar</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
 
     <span class="k">def</span> <span class="nf">_update_fov_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">zPosition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">]</span>
         <span class="n">imageData</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">,</span> <span class="n">dc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">)</span> \
-                    <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()]</span>
+                    <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span>\
+                        <span class="o">.</span><span class="n">get_data_channels</span><span class="p">()]</span>
         <span class="n">barcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">barcodeDB</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">)</span>
+        <span class="n">selectBarcodes</span> <span class="o">=</span> <span class="n">barcodes</span><span class="p">[</span><span class="n">barcodes</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">zPosition</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">iView</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageViews</span><span class="p">):</span>
-            <span class="n">iView</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">imageData</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">barcodes</span><span class="p">)</span>
+            <span class="n">iView</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">imageData</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">selectBarcodes</span><span class="p">)</span>
 
 <div class="viewcode-block" id="RegionViewWidget.set_fov"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionViewWidget.set_fov">[docs]</a>    <span class="k">def</span> <span class="nf">set_fov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">fov</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">fov</span><span class="p">:</span>
@@ -271,7 +283,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
 
-
 <div class="viewcode-block" id="RegionImageViewWidget.scale_image"><a class="viewcode-back" href="../../../merlin.view.widgets.html#merlin.view.widgets.regionview.RegionImageViewWidget.scale_image">[docs]</a>    <span class="k">def</span> <span class="nf">scale_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">):</span>
         <span class="n">imageMax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">inputImage</span><span class="p">)</span>
         <span class="n">imageMin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">inputImage</span><span class="p">)</span>
@@ -289,7 +300,6 @@
 
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">painter</span> <span class="o">=</span> <span class="n">QPainter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
 
         <span class="n">transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_synchronizer</span><span class="o">.</span><span class="n">get_transform</span><span class="p">()</span>
         <span class="n">inverseTransform</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">inverted</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>

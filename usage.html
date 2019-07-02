@@ -173,7 +173,8 @@
 <p>The data organization file specifies which the images correspond to each readout. The data organization file is a csv file. The first row is a header with column names and each following row designates one readout. The information provided for each readout indicates where to find the corresponding images in the raw image data and how to find the corresponding fiducial image to align the images between rounds.</p>
 <p>The columns in the data organization file are:</p>
 <ul class="simple">
-<li>bitName - The name of the readout.</li>
+<li>channelName - The name of the data channel. For genes measured sequential, this can be set as the gene name.</li>
+<li>readoutName - The name of the readout sequence used to measure this channel.</li>
 <li>imageType - The base name for the image file that contains the images for this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></li>
 <li>imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are <code class="docutils literal notranslate"><span class="pre">imageType</span></code>, <code class="docutils literal notranslate"><span class="pre">fov</span></code>, and <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code>, for example: <code class="docutils literal notranslate"><span class="pre">(?P&lt;imageType&gt;[\w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">imageType</span></code> specifies the string indicated in the <code class="docutils literal notranslate"><span class="pre">imageType</span></code> column for the corresponding row, <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> specifies the designated <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> for the corresponding row, and <code class="docutils literal notranslate"><span class="pre">fov</span></code> is filled with all field of view indexes in the data set.</li>
 <li>bitNumber - The bit number corresponding to this readout.</li>
@@ -270,17 +271,7 @@
 
     
     
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'./',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>

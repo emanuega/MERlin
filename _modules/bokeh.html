@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>bokeh &mdash; MERlin  documentation</title>
+  <title>bokeh module &mdash; MERlin  documentation</title>
   
 
   
@@ -127,14 +127,14 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-          <li><a href="index.html">Module code</a> &raquo;</li>
-        
-      <li>bokeh</li>
+      <li>bokeh module</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
+            <a href="../_sources/_modules/bokeh.rst.txt" rel="nofollow"> View page source</a>
+          
         
       </li>
     
@@ -146,77 +146,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>Source code for bokeh</h1><div class="highlight"><pre>
-<span></span><span class="c1">#-----------------------------------------------------------------------------</span>
-<span class="c1"># Copyright (c) 2012 - 2017, Anaconda, Inc. All rights reserved.</span>
-<span class="c1">#</span>
-<span class="c1"># Powered by the Bokeh Development Team.</span>
-<span class="c1">#</span>
-<span class="c1"># The full license is in the file LICENSE.txt, distributed with this software.</span>
-<span class="c1">#-----------------------------------------------------------------------------</span>
-<span class="sd">&#39;&#39;&#39; Bokeh is a Python interactive visualization library that targets modern</span>
-<span class="sd">web browsers for presentation.</span>
+  <div class="section" id="bokeh-module">
+<h1>bokeh module<a class="headerlink" href="#bokeh-module" title="Permalink to this headline">¶</a></h1>
+</div>
 
-<span class="sd">Its goal is to provide elegant, concise construction of versatile graphics,</span>
-<span class="sd">and also deliver this capability with high-performance interactivity over large</span>
-<span class="sd">or streaming datasets. Bokeh can help anyone who would like to quickly and</span>
-<span class="sd">easily create interactive plots, dashboards, and data applications.</span>
-
-<span class="sd">For full documentation, please visit: https://bokeh.pydata.org</span>
-
-<span class="sd">&#39;&#39;&#39;</span>
-
-<span class="c1">#-----------------------------------------------------------------------------</span>
-<span class="c1"># Boilerplate</span>
-<span class="c1">#-----------------------------------------------------------------------------</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">unicode_literals</span>
-
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-
-<span class="c1">#-----------------------------------------------------------------------------</span>
-<span class="c1"># General API</span>
-<span class="c1">#-----------------------------------------------------------------------------</span>
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s1">&#39;__version__&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;license&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;sampledata&#39;</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># configure Bokeh version</span>
-<span class="kn">from</span> <span class="nn">.util.version</span> <span class="k">import</span> <span class="n">__version__</span><span class="p">;</span> <span class="n">__version__</span>
-
-<div class="viewcode-block" id="license"><a class="viewcode-back" href="#bokeh.license">[docs]</a><span class="k">def</span> <span class="nf">license</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39; Print the Bokeh license to the console.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        None</span>
-
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">join</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">__path__</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;LICENSE.txt&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">lic</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">lic</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></div>
-
-<span class="c1"># expose sample data module</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">sampledata</span><span class="p">;</span> <span class="n">sampledata</span>
-
-<span class="c1">#-----------------------------------------------------------------------------</span>
-<span class="c1"># Code</span>
-<span class="c1">#-----------------------------------------------------------------------------</span>
-
-<span class="c1"># configure Bokeh logger</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">logconfig</span>
-<span class="k">del</span> <span class="n">logconfig</span>
-
-<span class="c1"># Configure warnings to always show, despite Python&#39;s active efforts to hide them from users.</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">.util.warnings</span> <span class="k">import</span> <span class="n">BokehDeprecationWarning</span><span class="p">,</span> <span class="n">BokehUserWarning</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;always&#39;</span><span class="p">,</span> <span class="n">BokehDeprecationWarning</span><span class="p">)</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;always&#39;</span><span class="p">,</span> <span class="n">BokehUserWarning</span><span class="p">)</span>
-<span class="k">del</span> <span class="n">BokehDeprecationWarning</span><span class="p">,</span> <span class="n">BokehUserWarning</span>
-<span class="k">del</span> <span class="n">warnings</span>
-</pre></div>
 
            </div>
            
@@ -249,17 +182,7 @@
 
     
     
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'../',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script type="text/javascript" src="../_static/jquery.js"></script>
         <script type="text/javascript" src="../_static/underscore.js"></script>
         <script type="text/javascript" src="../_static/doctools.js"></script>

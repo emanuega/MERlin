@@ -129,6 +129,8 @@
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
+          <li><a href="../../merlin.html">merlin</a> &raquo;</li>
+        
       <li>merlin.analysis.optimize</li>
     
     
@@ -146,40 +148,426 @@
             
   <h1>Source code for merlin.analysis.optimize</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">random</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
-
-<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">morphology</span>
-<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">feature</span>
-
-<span class="kn">from</span> <span class="nn">sklearn</span> <span class="k">import</span> <span class="n">preprocessing</span>
-<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">transform</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
 
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">decoding</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">barcodedb</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">registration</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">aberration</span>
 
 
-<div class="viewcode-block" id="Optimize"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize">[docs]</a><span class="k">class</span> <span class="nc">Optimize</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">InternallyParallelAnalysisTask</span><span class="p">):</span>
+<div class="viewcode-block" id="OptimizeIteration"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration">[docs]</a><span class="k">class</span> <span class="nc">OptimizeIteration</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
 
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    An analysis task for optimizing the parameters used for assigning barcodes</span>
-<span class="sd">    to the image data.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An analysis task for performing a single iteration of scale factor</span>
+<span class="sd">    optimization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">iterationCount</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;iteration_count&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fovPerIteration</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="s1">&#39;fov_per_iteration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+        <span class="k">if</span> <span class="s1">&#39;area_threshold&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;area_threshold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">if</span> <span class="s1">&#39;optimize_background&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;optimize_background&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;optimize_chromatic_correction&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;optimize_chromatic_correction&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">bitCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_bit_names</span><span class="p">())</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">barcodeCount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">codebook</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<div class="viewcode-block" id="OptimizeIteration.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">4000</span></div>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">decoding</span><span class="o">.</span><span class="n">PixelBasedDecoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">codebook</span><span class="p">)</span>
+<div class="viewcode-block" id="OptimizeIteration.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">60</span></div>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+<div class="viewcode-block" id="OptimizeIteration.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="s1">&#39;previous_iteration&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">dependencies</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;previous_iteration&#39;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">dependencies</span></div>
+
+<div class="viewcode-block" id="OptimizeIteration.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="OptimizeIteration.get_barcode_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_barcode_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_database</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">BarcodeDB</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">PyTablesBarcodeDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
+        <span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">])</span>
+
+        <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+
+        <span class="n">fovIndex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()))</span>
+        <span class="n">zIndex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()))))</span>
+
+        <span class="n">scaleFactors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_previous_scale_factors</span><span class="p">()</span>
+        <span class="n">backgrounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_previous_backgrounds</span><span class="p">()</span>
+        <span class="n">chromaticTransformations</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_previous_chromatic_transformations</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">scaleFactors</span><span class="p">,</span> <span class="s1">&#39;previous_scale_factors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">backgrounds</span><span class="p">,</span> <span class="s1">&#39;previous_backgrounds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_pickle_analysis_result</span><span class="p">(</span>
+            <span class="n">chromaticTransformations</span><span class="p">,</span> <span class="s1">&#39;previous_chromatic_corrections&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fovIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">]),</span> <span class="s1">&#39;select_frame&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+
+        <span class="n">chromaticCorrector</span> <span class="o">=</span> <span class="n">aberration</span><span class="o">.</span><span class="n">RigidChromaticCorrector</span><span class="p">(</span>
+            <span class="n">chromaticTransformations</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference_color</span><span class="p">())</span>
+        <span class="n">warpedImages</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span>
+            <span class="n">fovIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="o">=</span><span class="n">zIndex</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="o">=</span><span class="n">chromaticCorrector</span><span class="p">)</span>
+
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">decoding</span><span class="o">.</span><span class="n">PixelBasedDecoder</span><span class="p">(</span><span class="n">codebook</span><span class="p">)</span>
+        <span class="n">areaThreshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;area_threshold&#39;</span><span class="p">]</span>
+        <span class="n">decoder</span><span class="o">.</span><span class="n">refactorAreaThreshold</span> <span class="o">=</span> <span class="n">areaThreshold</span>
+        <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode_pixels</span><span class="p">(</span><span class="n">warpedImages</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">,</span>
+                                               <span class="n">backgrounds</span><span class="p">)</span>
+
+        <span class="n">refactors</span><span class="p">,</span> <span class="n">backgrounds</span><span class="p">,</span> <span class="n">barcodesSeen</span> <span class="o">=</span> \
+            <span class="n">decoder</span><span class="o">.</span><span class="n">extract_refactors</span><span class="p">(</span>
+                <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">extractBackgrounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span>
+                    <span class="s1">&#39;optimize_background&#39;</span><span class="p">])</span>
+
+        <span class="c1"># TODO this saves the barcodes under fragment instead of fov</span>
+        <span class="c1"># the barcodedb should be made more general</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span>
+            <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">decoder</span><span class="o">.</span><span class="n">extract_barcodes_with_index</span><span class="p">(</span>
+                <span class="n">i</span><span class="p">,</span> <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">fovIndex</span><span class="p">,</span>
+                <span class="mi">10</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">minimumArea</span><span class="o">=</span><span class="n">areaThreshold</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_barcode_count</span><span class="p">())]),</span>
+            <span class="n">fov</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">refactors</span><span class="p">,</span> <span class="s1">&#39;scale_refactors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">backgrounds</span><span class="p">,</span> <span class="s1">&#39;background_refactors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">barcodesSeen</span><span class="p">,</span> <span class="s1">&#39;barcode_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_used_colors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">dataOrganization</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span>
+        <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_color</span><span class="p">(</span>
+            <span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_index</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">codebook</span><span class="o">.</span><span class="n">get_bit_names</span><span class="p">()})</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_initial_scale_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">])</span>
+
+        <span class="n">bitCount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()</span>
+        <span class="n">initialScaleFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bitCount</span><span class="p">)</span>
+        <span class="n">pixelHistograms</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_pixel_histogram</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bitCount</span><span class="p">):</span>
+            <span class="n">cumulativeHistogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">pixelHistograms</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">cumulativeHistogram</span> <span class="o">=</span> <span class="n">cumulativeHistogram</span><span class="o">/</span><span class="n">cumulativeHistogram</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># Add two to match matlab code.</span>
+            <span class="c1"># TODO: Does +2 make sense? Used to be consistent with Matlab code</span>
+            <span class="n">initialScaleFactors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cumulativeHistogram</span><span class="o">-</span><span class="mf">0.9</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">initialScaleFactors</span>
+
+    <span class="k">def</span> <span class="nf">_get_previous_scale_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;previous_iteration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">scaleFactors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_initial_scale_factors</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">previousIteration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;previous_iteration&#39;</span><span class="p">])</span>
+            <span class="n">scaleFactors</span> <span class="o">=</span> <span class="n">previousIteration</span><span class="o">.</span><span class="n">get_scale_factors</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">scaleFactors</span>
+
+    <span class="k">def</span> <span class="nf">_get_previous_backgrounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;previous_iteration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">backgrounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">previousIteration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;previous_iteration&#39;</span><span class="p">])</span>
+            <span class="n">backgrounds</span> <span class="o">=</span> <span class="n">previousIteration</span><span class="o">.</span><span class="n">get_backgrounds</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">backgrounds</span>
+
+    <span class="k">def</span> <span class="nf">_get_previous_chromatic_transformations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>\
+            <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">transform</span><span class="o">.</span><span class="n">SimilarityTransform</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="s1">&#39;previous_iteration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">usedColors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_used_colors</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">u</span><span class="p">:</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">transform</span><span class="o">.</span><span class="n">SimilarityTransform</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">usedColors</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="n">u</span><span class="p">}</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">usedColors</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">previousIteration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;previous_iteration&#39;</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">previousIteration</span><span class="o">.</span><span class="n">_get_chromatic_transformations</span><span class="p">()</span>
+
+    <span class="c1"># TODO the next two functions could be in a utility class. Make a</span>
+    <span class="c1">#  chromatic aberration utility class</span>
+
+<div class="viewcode-block" id="OptimizeIteration.get_reference_color"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_reference_color">[docs]</a>    <span class="k">def</span> <span class="nf">get_reference_color</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_used_colors</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="OptimizeIteration.get_chromatic_corrector"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_chromatic_corrector">[docs]</a>    <span class="k">def</span> <span class="nf">get_chromatic_corrector</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">aberration</span><span class="o">.</span><span class="n">ChromaticCorrector</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the chromatic corrector estimated from this optimization</span>
+<span class="sd">        iteration</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The chromatic corrector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">aberration</span><span class="o">.</span><span class="n">RigidChromaticCorrector</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_chromatic_transformations</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference_color</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_chromatic_transformations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">transform</span><span class="o">.</span><span class="n">SimilarityTransform</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Get the estimated chromatic corrections from this optimization</span>
+<span class="sd">        iteration.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a dictionary of dictionary of transformations for transforming</span>
+<span class="sd">            the farther red colors to the most blue color. The transformation</span>
+<span class="sd">            for transforming the farther red color, e.g. &#39;750&#39;, to the</span>
+<span class="sd">            farther blue color, e.g. &#39;560&#39;, is found at result[&#39;560&#39;][&#39;750&#39;]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Analysis is still running. Unable to get scale &#39;</span>
+                            <span class="o">+</span> <span class="s1">&#39;factors.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;optimize_chromatic_correction&#39;</span><span class="p">]:</span>
+            <span class="n">usedColors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_used_colors</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">u</span><span class="p">:</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">transform</span><span class="o">.</span><span class="n">SimilarityTransform</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">usedColors</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="n">u</span><span class="p">}</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">usedColors</span><span class="p">}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_pickle_analysis_result</span><span class="p">(</span>
+                <span class="s1">&#39;chromatic_corrections&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
+        <span class="c1"># OSError and ValueError are raised if the previous file is not</span>
+        <span class="c1"># completely written</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="c1"># TODO - this is messy. It can be broken into smaller subunits and</span>
+            <span class="c1"># most parts could be included in a chromatic aberration class</span>
+            <span class="n">previousTransformations</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_previous_chromatic_transformations</span><span class="p">()</span>
+            <span class="n">previousCorrector</span> <span class="o">=</span> <span class="n">aberration</span><span class="o">.</span><span class="n">RigidChromaticCorrector</span><span class="p">(</span>
+                <span class="n">previousTransformations</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference_color</span><span class="p">())</span>
+            <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+            <span class="n">dataOrganization</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span>
+
+            <span class="n">barcodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">()</span>
+            <span class="n">uniqueFOVs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">barcodes</span><span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">])</span>
+            <span class="n">warpTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">])</span>
+
+            <span class="n">usedColors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_used_colors</span><span class="p">()</span>
+            <span class="n">colorPairDisplacements</span> <span class="o">=</span> <span class="p">{</span><span class="n">u</span><span class="p">:</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">usedColors</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="n">u</span><span class="p">}</span>
+                                      <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">usedColors</span><span class="p">}</span>
+
+            <span class="k">for</span> <span class="n">fov</span> <span class="ow">in</span> <span class="n">uniqueFOVs</span><span class="p">:</span>
+
+                <span class="n">fovBarcodes</span> <span class="o">=</span> <span class="n">barcodes</span><span class="p">[</span><span class="n">barcodes</span><span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">fov</span><span class="p">]</span>
+                <span class="n">zIndexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">fovBarcodes</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">zIndexes</span><span class="p">:</span>
+                    <span class="n">currentBarcodes</span> <span class="o">=</span> <span class="n">fovBarcodes</span><span class="p">[</span><span class="n">fovBarcodes</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">z</span><span class="p">]</span>
+                    <span class="c1"># TODO this can be moved to the run function for the task</span>
+                    <span class="c1"># so not as much repeated work is done when it is called</span>
+                    <span class="c1"># from many different tasks in parallel</span>
+                    <span class="n">warpedImages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
+                        <span class="n">fov</span><span class="p">,</span> <span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_for_bit</span><span class="p">(</span><span class="n">b</span><span class="p">),</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">z</span><span class="p">),</span>  <span class="n">previousCorrector</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">codebook</span><span class="o">.</span><span class="n">get_bit_names</span><span class="p">()])</span>
+
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cBC</span> <span class="ow">in</span> <span class="n">currentBarcodes</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                        <span class="n">onBits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                            <span class="n">codebook</span><span class="o">.</span><span class="n">get_barcode</span><span class="p">(</span><span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+
+                        <span class="c1"># TODO this can be done by crop width when decoding</span>
+                        <span class="k">if</span> <span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10</span> <span class="ow">and</span> <span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10</span> \
+                                <span class="ow">and</span> <span class="n">warpedImages</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10</span> \
+                                <span class="ow">and</span> <span class="n">warpedImages</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+
+                            <span class="n">refinedPositions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                                <span class="p">[</span><span class="n">registration</span><span class="o">.</span><span class="n">refine_position</span><span class="p">(</span>
+                                    <span class="n">warpedImages</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">])</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">onBits</span><span class="p">])</span>
+                            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span>
+                                    <span class="nb">enumerate</span><span class="p">(</span><span class="n">onBits</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+                                <span class="n">c1</span> <span class="o">=</span> <span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_color</span><span class="p">(</span>
+                                    <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                                <span class="n">c2</span> <span class="o">=</span> <span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_color</span><span class="p">(</span>
+                                    <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+                                <span class="k">if</span> <span class="n">c1</span> <span class="o">&lt;</span> <span class="n">c2</span><span class="p">:</span>
+                                    <span class="n">colorPairDisplacements</span><span class="p">[</span><span class="n">c1</span><span class="p">][</span><span class="n">c2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]]),</span>
+                                         <span class="n">refinedPositions</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+                                         <span class="o">-</span> <span class="n">refinedPositions</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]])</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">colorPairDisplacements</span><span class="p">[</span><span class="n">c2</span><span class="p">][</span><span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">cBC</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]]),</span>
+                                         <span class="n">refinedPositions</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+                                         <span class="o">-</span> <span class="n">refinedPositions</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]]])</span>
+
+            <span class="n">tForms</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">colorPairDisplacements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">tForms</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">tForm</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">SimilarityTransform</span><span class="p">()</span>
+                    <span class="n">goodIndexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="k">if</span>
+                                   <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+                                       <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))]</span>
+                    <span class="n">tForm</span><span class="o">.</span><span class="n">estimate</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">v2</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">goodIndexes</span><span class="p">]),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">v2</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">v2</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">goodIndexes</span><span class="p">]))</span>
+                    <span class="n">tForms</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">k2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tForm</span> <span class="o">+</span> <span class="n">previousTransformations</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">k2</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_pickle_analysis_result</span><span class="p">(</span>
+                <span class="n">tForms</span><span class="p">,</span> <span class="s1">&#39;chromatic_corrections&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">tForms</span>
+
+<div class="viewcode-block" id="OptimizeIteration.get_scale_factors"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_scale_factors">[docs]</a>    <span class="k">def</span> <span class="nf">get_scale_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the final, optimized scale factors.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a one-dimensional numpy array where the i&#39;th entry is the</span>
+<span class="sd">            scale factor corresponding to the i&#39;th bit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Analysis is still running. Unable to get scale &#39;</span>
+                            <span class="o">+</span> <span class="s1">&#39;factors.&#39;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+                <span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
+        <span class="c1"># OSError and ValueError are raised if the previous file is not</span>
+        <span class="c1"># completely written</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">refactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+                    <span class="s1">&#39;scale_refactors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">])])</span>
+
+            <span class="c1"># Don&#39;t rescale bits that were never seen</span>
+            <span class="n">refactors</span><span class="p">[</span><span class="n">refactors</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="n">previousFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+                <span class="s1">&#39;previous_scale_factors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">])])</span>
+
+            <span class="n">scaleFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">refactors</span><span class="p">,</span> <span class="n">previousFactors</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+                <span class="n">scaleFactors</span><span class="p">,</span> <span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">scaleFactors</span></div>
+
+<div class="viewcode-block" id="OptimizeIteration.get_backgrounds"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_backgrounds">[docs]</a>    <span class="k">def</span> <span class="nf">get_backgrounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Analysis is still running. Unable to get &#39;</span> <span class="o">+</span>
+                            <span class="s1">&#39;backgrounds.&#39;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+                <span class="s1">&#39;backgrounds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
+        <span class="c1"># OSError and ValueError are raised if the previous file is not</span>
+        <span class="c1"># completely written</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">refactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+                    <span class="s1">&#39;background_refactors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">])])</span>
+
+            <span class="n">previousBackgrounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+                    <span class="s1">&#39;previous_backgrounds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">])])</span>
+
+            <span class="n">previousFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+                <span class="s1">&#39;previous_scale_factors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">])])</span>
+
+            <span class="n">backgrounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                <span class="n">previousBackgrounds</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">refactors</span><span class="p">,</span> <span class="n">previousFactors</span><span class="p">)),</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+                <span class="n">backgrounds</span><span class="p">,</span> <span class="s1">&#39;backgrounds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">backgrounds</span></div>
+
+<div class="viewcode-block" id="OptimizeIteration.get_scale_factor_history"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_scale_factor_history">[docs]</a>    <span class="k">def</span> <span class="nf">get_scale_factor_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the scale factors cached for each iteration of the optimization.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a two-dimensional numpy array where the i,j&#39;th entry is the</span>
+<span class="sd">            scale factor corresponding to the i&#39;th bit in the j&#39;th</span>
+<span class="sd">            iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;previous_iteration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">get_scale_factors</span><span class="p">()])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">previousHistory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;previous_iteration&#39;</span><span class="p">]</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">get_scale_factor_history</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">previousHistory</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_scale_factors</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="OptimizeIteration.get_barcode_count_history"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_barcode_count_history">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_count_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the set of barcode counts for each iteration of the</span>
+<span class="sd">        optimization.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a two-dimensional numpy array where the i,j&#39;th entry is the</span>
+<span class="sd">            barcode count corresponding to the i&#39;th barcode in the j&#39;th</span>
+<span class="sd">            iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">countsMean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+            <span class="s1">&#39;barcode_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">])],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;previous_iteration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">countsMean</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">previousHistory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;previous_iteration&#39;</span><span class="p">]</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">get_barcode_count_history</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">previousHistory</span><span class="p">,</span> <span class="p">[</span><span class="n">countsMean</span><span class="p">],</span>
+                    <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Optimize"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize">[docs]</a><span class="k">class</span> <span class="nc">Optimize</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">InternallyParallelAnalysisTask</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An analysis task for optimizing the parameters used for assigning barcodes</span>
+<span class="sd">    to the image data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;iteration_count&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;iteration_count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="k">if</span> <span class="s1">&#39;fov_per_iteration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="k">if</span> <span class="s1">&#39;estimate_initial_scale_factors_from_cdf&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;estimate_initial_scale_factors_from_cdf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;area_threshold&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;area_threshold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
 
 <div class="viewcode-block" id="Optimize.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="mi">4000</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">coreCount</span></div>
@@ -190,61 +578,93 @@
 <div class="viewcode-block" id="Optimize.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">]]</span></div>
 
-<div class="viewcode-block" id="Optimize.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">initialScaleFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bitCount</span><span class="p">)</span>
-        <span class="n">scaleFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">iterationCount</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bitCount</span><span class="p">))</span>
-        <span class="n">barcodeCounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">iterationCount</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">barcodeCount</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">])</span>
+        <span class="n">iterationCount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;iteration_count&#39;</span><span class="p">]</span>
+        <span class="n">fovPerIteration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">]</span>
+
+        <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+        <span class="n">bitCount</span> <span class="o">=</span> <span class="n">codebook</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()</span>
+        <span class="n">barcodeCount</span> <span class="o">=</span> <span class="n">codebook</span><span class="o">.</span><span class="n">get_barcode_count</span><span class="p">()</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">decoding</span><span class="o">.</span><span class="n">PixelBasedDecoder</span><span class="p">(</span><span class="n">codebook</span><span class="p">)</span>
+        <span class="n">decoder</span><span class="o">.</span><span class="n">refactorAreaThreshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;area_threshold&#39;</span><span class="p">]</span>
+
+        <span class="n">scaleFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">iterationCount</span><span class="p">,</span> <span class="n">bitCount</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;estimate_initial_scale_factors_from_cdf&#39;</span><span class="p">]:</span>
+            <span class="n">scaleFactors</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_initial_scale_factors</span><span class="p">()</span>
+
+        <span class="n">barcodeCounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">iterationCount</span><span class="p">,</span> <span class="n">barcodeCount</span><span class="p">))</span>
         <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coreCount</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">iterationCount</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">iterationCount</span><span class="p">):</span>
             <span class="n">fovIndexes</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-                    <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fovPerIteration</span><span class="p">)</span>
+                    <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()),</span> <span class="n">fovPerIteration</span><span class="p">)</span>
             <span class="n">zIndexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
                     <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()))),</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">fovPerIteration</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="o">.</span><span class="n">scaleFactors</span> <span class="o">=</span> <span class="n">scaleFactors</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="o">.</span><span class="n">extract_refactors</span><span class="p">,</span> 
-                    <span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">zIndex</span><span class="o">=</span><span class="n">z</span><span class="p">)]</span>
-                        <span class="k">for</span> <span class="n">f</span><span class="p">,</span><span class="n">z</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fovIndexes</span><span class="p">,</span> <span class="n">zIndexes</span><span class="p">)))</span> 
-            <span class="n">scaleFactors</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">scaleFactors</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>\
-                    <span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">barcodeCounts</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">fovPerIteration</span><span class="p">)</span>
+            <span class="n">decoder</span><span class="o">.</span><span class="n">_scaleFactors</span> <span class="o">=</span> <span class="n">scaleFactors</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="n">decoder</span><span class="o">.</span><span class="n">extract_refactors</span><span class="p">,</span>
+                             <span class="p">([</span><span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span>
+                                 <span class="n">f</span><span class="p">,</span> <span class="n">zIndex</span><span class="o">=</span><span class="n">z</span><span class="p">)]</span>
+                                 <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fovIndexes</span><span class="p">,</span> <span class="n">zIndexes</span><span class="p">)))</span>
+            <span class="n">scaleFactors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">scaleFactors</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> \
+                                 <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">barcodeCounts</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_analysis_result</span><span class="p">(</span><span class="n">scaleFactors</span><span class="p">,</span> <span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_analysis_result</span><span class="p">(</span><span class="n">barcodeCounts</span><span class="p">,</span> <span class="s1">&#39;barcode_counts&#39;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span><span class="n">scaleFactors</span><span class="p">,</span> <span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span><span class="n">barcodeCounts</span><span class="p">,</span> <span class="s1">&#39;barcode_counts&#39;</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Optimize.get_scale_factors"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_scale_factors">[docs]</a>    <span class="k">def</span> <span class="nf">get_scale_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Get the final, optimized scale factors.</span>
+    <span class="k">def</span> <span class="nf">_calculate_initial_scale_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">])</span>
+
+        <span class="n">bitCount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()</span>
+        <span class="n">initialScaleFactors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bitCount</span><span class="p">)</span>
+        <span class="n">pixelHistograms</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_pixel_histogram</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bitCount</span><span class="p">):</span>
+            <span class="n">cumulativeHistogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">pixelHistograms</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">cumulativeHistogram</span> <span class="o">=</span> <span class="n">cumulativeHistogram</span><span class="o">/</span><span class="n">cumulativeHistogram</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># Add two to match matlab code.</span>
+            <span class="c1"># TODO: Does +2 make sense?</span>
+            <span class="n">initialScaleFactors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cumulativeHistogram</span><span class="o">-</span><span class="mf">0.9</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">initialScaleFactors</span>
+
+<div class="viewcode-block" id="Optimize.get_scale_factors"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_scale_factors">[docs]</a>    <span class="k">def</span> <span class="nf">get_scale_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the final, optimized scale factors.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            a one-dimensional numpy array where the i&#39;th entry is the </span>
 <span class="sd">            scale factor corresponding to the i&#39;th bit.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_result</span><span class="p">(</span><span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span></div>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+            <span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span></div>
 
-<div class="viewcode-block" id="Optimize.get_scale_factor_history"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_scale_factor_history">[docs]</a>    <span class="k">def</span> <span class="nf">get_scale_factor_history</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Get the scale factors cached for each iteration of the optimization.</span>
+<div class="viewcode-block" id="Optimize.get_scale_factor_history"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_scale_factor_history">[docs]</a>    <span class="k">def</span> <span class="nf">get_scale_factor_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the scale factors cached for each iteration of the optimization.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            a two-dimensional numpy array where the i,j&#39;th entry is the </span>
 <span class="sd">            scale factor corresponding to the i&#39;th bit in the j&#39;th </span>
 <span class="sd">            iteration.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_result</span><span class="p">(</span><span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span></div>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span><span class="s1">&#39;scale_factors&#39;</span><span class="p">,</span>
+                                                       <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Optimize.get_barcode_count_history"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_barcode_count_history">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_count_history</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Get the set of barcode counts for each iteration of the </span>
+<div class="viewcode-block" id="Optimize.get_barcode_count_history"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.Optimize.get_barcode_count_history">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_count_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the set of barcode counts for each iteration of the</span>
 <span class="sd">        optimization.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_result</span><span class="p">(</span><span class="s1">&#39;barcode_counts&#39;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span></div></div>
 
-
-
-                    
+<span class="sd">        Returns:</span>
+<span class="sd">            a two-dimensional numpy array where the i,j&#39;th entry is the</span>
+<span class="sd">            barcode count corresponding to the i&#39;th barcode in the j&#39;th</span>
+<span class="sd">            iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span><span class="s1">&#39;barcode_counts&#39;</span><span class="p">,</span>
+                                                       <span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">)</span></div></div>
 </pre></div>
 
            </div>

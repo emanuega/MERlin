@@ -91,6 +91,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#segment-segmentcells">segment.SegmentCells</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#segment-cleancellsegmentation">segment.CleanCellSegmentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generatemosaic-generatemosaic">generatemosaic.GenerateMosaic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sequential-sumsignal">sequential.SumSignal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sequential-exportsumsignals">sequential.ExportSumSignals</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to MERlin</a></li>
@@ -247,6 +249,20 @@
 <li>fov_crop_width – The number of pixels to remove from each edge of each fov before inserting it into the mosaic.</li>
 </ul>
 </div>
+<div class="section" id="sequential-sumsignal">
+<h2>sequential.SumSignal<a class="headerlink" href="#sequential-sumsignal" title="Permalink to this headline">¶</a></h2>
+<p>Description: Calculates the total intensity within segementation boundaries.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li>z_index – the z index of the image stack to use for the summation</li>
+<li>apply_highpass – flag indicating if a highpass filter should be applied to the image prior to summing.</li>
+<li>highpass_sigma – the standard deviation to use for the high pass filter</li>
+</ul>
+</div>
+<div class="section" id="sequential-exportsumsignals">
+<h2>sequential.ExportSumSignals<a class="headerlink" href="#sequential-exportsumsignals" title="Permalink to this headline">¶</a></h2>
+<p>Description: Export the sum signals calculated by a SumSignal task to a csv file.</p>
+</div>
 </div>
 
 
@@ -290,17 +306,7 @@
 
     
     
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'./',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>

@@ -129,6 +129,8 @@
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
+          <li><a href="../../merlin.html">merlin</a> &raquo;</li>
+        
       <li>merlin.core.scheduler</li>
     
     
@@ -145,13 +147,13 @@
            <div itemprop="articleBody">
             
   <h1>Source code for merlin.core.scheduler</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">importlib</span>
+<span></span><span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">import</span> <span class="nn">networkx</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">analysistask</span>
 
-<div class="viewcode-block" id="Scheduler"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.scheduler.Scheduler">[docs]</a><span class="k">class</span> <span class="nc">Scheduler</span><span class="p">():</span>
+
+<div class="viewcode-block" id="Scheduler"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.scheduler.Scheduler">[docs]</a><span class="k">class</span> <span class="nc">Scheduler</span><span class="p">:</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">schedulerName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span> <span class="o">=</span> <span class="n">dataSet</span>
@@ -175,8 +177,10 @@
             <span class="n">newTask</span> <span class="o">=</span> <span class="n">analysisClass</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">analysisParameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">newTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">()</span> <span class="ow">in</span> <span class="n">analysisTasks</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Analysis tasks must have unique names. &#39;</span> <span class="o">+</span> \
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Analysis tasks must have unique names. &#39;</span> <span class="o">+</span>
                         <span class="n">newTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39; is redundant.&#39;</span><span class="p">)</span>
+            <span class="c1"># TODO This should be more careful to not overwrite an existing</span>
+            <span class="c1"># analysis task that has already been run.</span>
             <span class="n">newTask</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
             <span class="n">analysisTasks</span><span class="p">[</span><span class="n">newTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">newTask</span>
         <span class="k">return</span> <span class="n">analysisTasks</span>
@@ -222,14 +226,15 @@
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">_run_ready_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">tasksComplete</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisTasks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> \
-                <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_complete</span><span class="p">()}</span>
-        <span class="n">tasksWaiting</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisTasks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> \
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">is_complete</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">is_running</span><span class="p">()}</span>
-        <span class="n">tasksRunning</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisTasks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> \
-                <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_running</span><span class="p">()}</span>
-        <span class="n">tasksReady</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">a</span> <span class="ow">in</span> <span class="n">tasksWaiting</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> \
-                <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="n">a2</span> <span class="ow">in</span> <span class="n">tasksComplete</span> <span class="k">for</span> <span class="n">a2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencyGraph</span><span class="p">[</span><span class="n">k</span><span class="p">]])}</span>
+        <span class="n">tasksComplete</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisTasks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                         <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_complete</span><span class="p">()}</span>
+        <span class="n">tasksWaiting</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisTasks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">is_complete</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">is_started</span><span class="p">()}</span>
+        <span class="n">tasksRunning</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysisTasks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_running</span><span class="p">()}</span>
+        <span class="n">tasksReady</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tasksWaiting</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                      <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="n">a2</span> <span class="ow">in</span> <span class="n">tasksComplete</span>
+                              <span class="k">for</span> <span class="n">a2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencyGraph</span><span class="p">[</span><span class="n">k</span><span class="p">]])}</span>
 
         <span class="n">parallelTaskRunning</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">is_parallel</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tasksRunning</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>

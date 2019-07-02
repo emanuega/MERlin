@@ -129,6 +129,8 @@
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
+          <li><a href="../../merlin.html">merlin</a> &raquo;</li>
+        
       <li>merlin.analysis.generatemosaic</li>
     
     
@@ -147,19 +149,35 @@
   <h1>Source code for merlin.analysis.generatemosaic</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span>
 
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
 
+
+<span class="n">ExtentTuple</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
+
 <div class="viewcode-block" id="GenerateMosaic"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.generatemosaic.GenerateMosaic">[docs]</a><span class="k">class</span> <span class="nc">GenerateMosaic</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">):</span>
 
-    <span class="sd">&#39;&#39;&#39;An analysis task that generates mosaic images by compiling different</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An analysis task that generates mosaic images by compiling different</span>
 <span class="sd">    field of views.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">mosaicMicronsPerPixel</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;microns_per_pixel&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="s1">&#39;microns_per_pixel&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;microns_per_pixel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="k">if</span> <span class="s1">&#39;fov_crop_width&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_crop_width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="s1">&#39;separate_files&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;separate_files&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;microns_per_pixel&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;full_resolution&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mosaicMicronsPerPixel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_microns_per_pixel</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mosaicMicronsPerPixel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;microns_per_pixel&#39;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="GenerateMosaic.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.generatemosaic.GenerateMosaic.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="mi">10000</span></div>
@@ -168,71 +186,147 @@
         <span class="k">return</span> <span class="mi">30</span></div>
     
 <div class="viewcode-block" id="GenerateMosaic.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.generatemosaic.GenerateMosaic.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">],</span> \
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">],</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">]]</span></div>
 
-    <span class="k">def</span> <span class="nf">_micron_to_mosaic_pixel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">micronCoordinates</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Calculates the mosaic coordinates in pixels from the specified</span>
+<div class="viewcode-block" id="GenerateMosaic.get_mosaic"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.generatemosaic.GenerateMosaic.get_mosaic">[docs]</a>    <span class="k">def</span> <span class="nf">get_mosaic</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the mosaic generated by this analysis task.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a 5-dimensional array containing the mosaic. The images are arranged</span>
+<span class="sd">            as [channel, zIndex, 1, x, y]. The order of the channels is as</span>
+<span class="sd">            specified in the provided parameters file or in the data</span>
+<span class="sd">            organization if no data channels are specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_analysis_image_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mosaic&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_micron_to_mosaic_pixel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">micronCoordinates</span><span class="p">,</span>
+                                <span class="n">micronExtents</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the mosaic coordinates in pixels from the specified</span>
 <span class="sd">        global coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_micron_to_mosaic_transform</span><span class="p">(</span><span class="n">micronExtents</span><span class="p">),</span>
+                         <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">micronCoordinates</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)[:</span><span class="mi">2</span><span class="p">]</span>
 
-<span class="sd">        Prior to calling this function, self.micronExtents must be set.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">((</span><span class="n">c</span><span class="o">-</span><span class="n">e</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">mosaicMicronsPerPixel</span><span class="p">)</span> \
-                <span class="k">for</span> <span class="n">c</span><span class="p">,</span><span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">micronCoordinates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">micronExtents</span><span class="p">[:</span><span class="mi">2</span><span class="p">])])</span>
-
-    <span class="k">def</span> <span class="nf">_micron_to_mosaic_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_micron_to_mosaic_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">micronExtents</span><span class="p">:</span> <span class="n">ExtentTuple</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">s</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">mosaicMicronsPerPixel</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span>
-                <span class="p">[[</span><span class="n">s</span><span class="o">*</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">micronExtents</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> \
-                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="o">*</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">micronExtents</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> \
-                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+                <span class="p">[[</span><span class="n">s</span><span class="o">*</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span><span class="o">*</span><span class="n">micronExtents</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="o">*</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span><span class="o">*</span><span class="n">micronExtents</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
 
-    <span class="k">def</span> <span class="nf">_transform_image_to_mosaic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">,</span> <span class="n">fov</span><span class="p">):</span>
-        <span class="n">imageOffset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_micron_to_mosaic_pixel</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">alignTask</span><span class="o">.</span><span class="n">fov_coordinates_to_global</span><span class="p">(</span><span class="n">fov</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)))</span>
-
+    <span class="k">def</span> <span class="nf">_transform_image_to_mosaic</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alignTask</span><span class="p">,</span>
+            <span class="n">micronExtents</span><span class="p">:</span> <span class="n">ExtentTuple</span><span class="p">,</span> <span class="n">mosaicDimensions</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span>\
+            <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">transform</span> <span class="o">=</span> \
-                <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_micron_to_mosaic_transform</span><span class="p">(),</span> 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">alignTask</span><span class="o">.</span><span class="n">fov_to_global_transform</span><span class="p">(</span><span class="n">fov</span><span class="p">))</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_micron_to_mosaic_transform</span><span class="p">(</span><span class="n">micronExtents</span><span class="p">),</span>
+                          <span class="n">alignTask</span><span class="o">.</span><span class="n">fov_to_global_transform</span><span class="p">(</span><span class="n">fov</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">warpAffine</span><span class="p">(</span>
-                <span class="n">inputImage</span><span class="p">,</span> <span class="n">transform</span><span class="p">[:</span><span class="mi">2</span><span class="p">,:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">mosaicDimensions</span><span class="p">)</span>
+                <span class="n">inputImage</span><span class="p">,</span> <span class="n">transform</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:],</span> <span class="n">mosaicDimensions</span><span class="p">)</span>
 
-<div class="viewcode-block" id="GenerateMosaic.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.generatemosaic.GenerateMosaic.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alignTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">alignTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">warpTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">micronExtents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alignTask</span><span class="o">.</span><span class="n">get_global_extent</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mosaicDimensions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_micron_to_mosaic_pixel</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">micronExtents</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]))</span>
+        <span class="n">micronExtents</span> <span class="o">=</span> <span class="n">alignTask</span><span class="o">.</span><span class="n">get_global_extent</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_txt_analysis_result</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_micron_to_mosaic_transform</span><span class="p">(</span><span class="n">micronExtents</span><span class="p">),</span>
+            <span class="s1">&#39;micron_to_mosaic_pixel_transform&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-        <span class="n">imageDescription</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">_analysis_tiff_description</span><span class="p">(</span>
-                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()),</span>
-                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()))</span>
+        <span class="n">dataOrganization</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;data_channels&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;data_channels&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">dataChannels</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_index</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;data_channels&#39;</span><span class="p">])]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;data_channels&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">dataChannels</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;data_channels&#39;</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dataChannels</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_index</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+                                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;data_channels&#39;</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dataChannels</span> <span class="o">=</span> <span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">()</span>
 
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">_writer_for_analysis_images</span><span class="p">(</span>
-                <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mosaic&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outputTif</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_channels</span><span class="p">():</span>
-                <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">())):</span>
-                    <span class="n">mosaic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-                            <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">mosaicDimensions</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">():</span>
-                        <span class="n">inputImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-                        <span class="n">transformedImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_image_to_mosaic</span><span class="p">(</span>
-                                <span class="n">inputImage</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">maximumProjection</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;z_index&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;z_index&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;maximum_projection&#39;</span><span class="p">:</span>
+                <span class="n">zIndexes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;z_index&#39;</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">maximumProjection</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">zIndexes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">zIndexes</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()))</span>
 
-                        <span class="n">divisionMask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bitwise_and</span><span class="p">(</span>
-                                <span class="n">transformedImage</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="n">mosaic</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
-                        <span class="n">cv2</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">mosaic</span><span class="p">,</span> <span class="n">transformedImage</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="n">mosaic</span><span class="p">,</span>
-                                <span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-                                    <span class="n">transformedImage</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
-                        <span class="n">dividedMosaic</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">mosaic</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-                        <span class="n">mosaic</span><span class="p">[</span><span class="n">divisionMask</span><span class="p">]</span> <span class="o">=</span> <span class="n">dividedMosaic</span><span class="p">[</span><span class="n">divisionMask</span><span class="p">]</span>
-                    <span class="n">outputTif</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">mosaic</span><span class="p">,</span> <span class="n">photometric</span><span class="o">=</span><span class="s1">&#39;MINISBLACK&#39;</span><span class="p">,</span>
-                            <span class="n">metadata</span><span class="o">=</span><span class="n">imageDescription</span><span class="p">)</span></div></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;separate_files&#39;</span><span class="p">]:</span>
+            <span class="n">imageDescription</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">analysis_tiff_description</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">zIndexes</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataChannels</span><span class="p">))</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">writer_for_analysis_images</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mosaic&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outputTif</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dataChannels</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">zIndexes</span><span class="p">:</span>
+                        <span class="n">mosaic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_mosaic_slice</span><span class="p">(</span>
+                            <span class="n">z</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">micronExtents</span><span class="p">,</span> <span class="n">alignTask</span><span class="p">,</span> <span class="n">maximumProjection</span><span class="p">)</span>
+                        <span class="n">outputTif</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">mosaic</span><span class="p">,</span> <span class="n">photometric</span><span class="o">=</span><span class="s1">&#39;MINISBLACK&#39;</span><span class="p">,</span>
+                                       <span class="n">metadata</span><span class="o">=</span><span class="n">imageDescription</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">imageDescription</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">analysis_tiff_description</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dataChannels</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">zIndexes</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">writer_for_analysis_images</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mosaic_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%i</span><span class="s1">&#39;</span>
+                              <span class="o">%</span> <span class="p">(</span><span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_data_channel_name</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">z</span><span class="p">))</span>\
+                            <span class="k">as</span> <span class="n">outputTif</span><span class="p">:</span>
+                        <span class="n">mosaic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_mosaic_slice</span><span class="p">(</span>
+                            <span class="n">z</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">micronExtents</span><span class="p">,</span> <span class="n">alignTask</span><span class="p">,</span> <span class="n">maximumProjection</span><span class="p">)</span>
+                        <span class="n">outputTif</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">mosaic</span><span class="p">,</span> <span class="n">photometric</span><span class="o">=</span><span class="s1">&#39;MINISBLACK&#39;</span><span class="p">,</span>
+                                       <span class="n">metadata</span><span class="o">=</span><span class="n">imageDescription</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_prepare_mosaic_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">dataChannel</span><span class="p">,</span> <span class="n">micronExtents</span><span class="p">,</span>
+                              <span class="n">alignTask</span><span class="p">,</span> <span class="n">maximumProjection</span><span class="p">):</span>
+        <span class="n">warpTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">])</span>
 
+        <span class="n">chromaticCorrector</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;optimize_task&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">chromaticCorrector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;optimize_task&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">get_chromatic_corrector</span><span class="p">()</span>
+
+        <span class="n">cropWidth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_crop_width&#39;</span><span class="p">]</span>
+        <span class="n">mosaicDimensions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_micron_to_mosaic_pixel</span><span class="p">(</span>
+                <span class="n">micronExtents</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:],</span> <span class="n">micronExtents</span><span class="p">))</span>
+
+        <span class="n">mosaic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">mosaicDimensions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">maximumProjection</span><span class="p">:</span>
+                <span class="n">inputImage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
+                    <span class="n">f</span><span class="p">,</span> <span class="n">dataChannel</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()))],</span>
+                    <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inputImage</span> <span class="o">=</span> <span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
+                    <span class="n">f</span><span class="p">,</span> <span class="n">dataChannel</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">cropWidth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">inputImage</span><span class="p">[:</span><span class="n">cropWidth</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">inputImage</span><span class="p">[</span><span class="n">inputImage</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">cropWidth</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">inputImage</span><span class="p">[:,</span> <span class="p">:</span><span class="n">cropWidth</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">inputImage</span><span class="p">[:,</span> <span class="n">inputImage</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">cropWidth</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">transformedImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_image_to_mosaic</span><span class="p">(</span>
+                <span class="n">inputImage</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">alignTask</span><span class="p">,</span> <span class="n">micronExtents</span><span class="p">,</span>
+                <span class="n">mosaicDimensions</span><span class="p">)</span>
+
+            <span class="n">divisionMask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bitwise_and</span><span class="p">(</span>
+                <span class="n">transformedImage</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">mosaic</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">mosaic</span><span class="p">,</span> <span class="n">transformedImage</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="n">mosaic</span><span class="p">,</span>
+                    <span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                        <span class="n">transformedImage</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">dividedMosaic</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">mosaic</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">mosaic</span><span class="p">[</span><span class="n">divisionMask</span><span class="p">]</span> <span class="o">=</span> <span class="n">dividedMosaic</span><span class="p">[</span><span class="n">divisionMask</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">mosaic</span></div>
 </pre></div>
 
            </div>

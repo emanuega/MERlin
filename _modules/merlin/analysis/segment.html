@@ -129,6 +129,8 @@
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
+          <li><a href="../../merlin.html">merlin</a> &raquo;</li>
+        
       <li>merlin.analysis.segment</li>
     
     
@@ -147,124 +149,100 @@
   <h1>Source code for merlin.analysis.segment</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">cv2</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="k">import</span> <span class="n">morphology</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">measure</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">segmentation</span>
 <span class="kn">import</span> <span class="nn">networkx</span>
 <span class="kn">import</span> <span class="nn">rtree</span>
 <span class="kn">from</span> <span class="nn">shapely</span> <span class="k">import</span> <span class="n">geometry</span>
 <span class="kn">from</span> <span class="nn">shapely.ops</span> <span class="k">import</span> <span class="n">unary_union</span>
-<span class="kn">from</span> <span class="nn">starfish.image._segmentation</span> <span class="k">import</span> <span class="n">watershed</span>
-<span class="kn">from</span> <span class="nn">starfish</span> <span class="k">import</span> <span class="n">stats</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
 
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">spatialfeature</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">watershed</span>
 
-<div class="viewcode-block" id="SegmentCells"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.SegmentCells">[docs]</a><span class="k">class</span> <span class="nc">SegmentCells</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
 
-    <span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="WatershedSegment"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment">[docs]</a><span class="k">class</span> <span class="nc">WatershedSegment</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An analysis task that determines the boundaries of features in the</span>
-<span class="sd">    image data in each field of view. </span>
+<span class="sd">    image data in each field of view using a watershed algorithm.</span>
 <span class="sd">    </span>
 <span class="sd">    Since each field of view is analyzed individually, the segmentations</span>
 <span class="sd">    should be cleaned in order to merge cells that cross the field of </span>
 <span class="sd">    view boundary.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">nucleusThreshold</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nucleus_threshold&#39;</span><span class="p">,</span> <span class="mf">0.41</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cellThreshold</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;cell_thershold&#39;</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nucleusIndex</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nucleus_index&#39;</span><span class="p">,</span> <span class="mi">17</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cellIndex</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;cell_index&#39;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;z_index&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;seed_channel_name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;seed_channel_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;DAPI&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;watershed_channel_name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;watershed_channel_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;polyT&#39;</span>
 
-<div class="viewcode-block" id="SegmentCells.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.SegmentCells.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WatershedSegment.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="SegmentCells.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.SegmentCells.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1">#TODO - refine estimate</span>
+<div class="viewcode-block" id="WatershedSegment.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO - refine estimate</span>
         <span class="k">return</span> <span class="mi">2048</span></div>
 
-<div class="viewcode-block" id="SegmentCells.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.SegmentCells.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1">#TODO - refine estimate</span>
+<div class="viewcode-block" id="WatershedSegment.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO - refine estimate</span>
         <span class="k">return</span> <span class="mi">5</span></div>
 
-<div class="viewcode-block" id="SegmentCells.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.SegmentCells.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">],</span> \
+<div class="viewcode-block" id="WatershedSegment.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">],</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">]]</span></div>
 
+<div class="viewcode-block" id="WatershedSegment.get_cell_boundaries"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment.get_cell_boundaries">[docs]</a>    <span class="k">def</span> <span class="nf">get_cell_boundaries</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">spatialfeature</span><span class="o">.</span><span class="n">SpatialFeature</span><span class="p">]:</span>
+        <span class="n">featureDB</span> <span class="o">=</span> <span class="n">spatialfeature</span><span class="o">.</span><span class="n">HDF5SpatialFeatureDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">featureDB</span><span class="o">.</span><span class="n">read_features</span><span class="p">()</span></div>
 
-    <span class="k">def</span> <span class="nf">_label_to_regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">):</span>
-        <span class="n">uniqueLabels</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">inputImage</span><span class="p">))[</span><span class="mi">1</span><span class="p">:]</span>
-
-        <span class="k">def</span> <span class="nf">extract_contours</span><span class="p">(</span><span class="n">labelImage</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
-            <span class="n">filledImage</span> <span class="o">=</span> <span class="n">morphology</span><span class="o">.</span><span class="n">binary_fill_holes</span><span class="p">(</span>
-                    <span class="n">labelImage</span><span class="o">==</span><span class="n">label</span><span class="p">)</span>
-            <span class="n">im2</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">hierarchy</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findContours</span><span class="p">(</span>
-                    <span class="n">filledImage</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
-                    <span class="n">cv2</span><span class="o">.</span><span class="n">RETR_EXTERNAL</span><span class="p">,</span> 
-                    <span class="n">cv2</span><span class="o">.</span><span class="n">CHAIN_APPROX_TC89_KCOS</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">contours</span>
-
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">extract_contours</span><span class="p">(</span><span class="n">inputImage</span><span class="p">,</span> <span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span> \
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">uniqueLabels</span><span class="p">])</span>
-
-    <span class="k">def</span> <span class="nf">_transform_contours</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">transform</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Transforms the coordinates in the contours based on the </span>
-<span class="sd">        provided transformation.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            contours - a n x 2 numpy array specifying the coordinates of the n</span>
-<span class="sd">                points in the contour</span>
-<span class="sd">            transform - a 3 x 3 numpy array specifying the transformation </span>
-<span class="sd">                matrix</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">reshapedContours</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">contours</span><span class="p">,</span> 
-                <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">contours</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
-        <span class="n">transformedContours</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
-                <span class="n">reshapedContours</span><span class="p">,</span> <span class="n">transform</span><span class="p">)[</span><span class="mi">0</span><span class="p">,:,:</span><span class="mi">2</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">transformedContours</span>
-
-<div class="viewcode-block" id="SegmentCells.get_cell_boundaries"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.SegmentCells.get_cell_boundaries">[docs]</a>    <span class="k">def</span> <span class="nf">get_cell_boundaries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">boundaryList</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">():</span>
-            <span class="n">currentBoundaries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_result</span><span class="p">(</span>
-                    <span class="s1">&#39;cell_boundaries&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">(),</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
-            <span class="n">boundaryList</span> <span class="o">+=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">currentBoundaries</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">boundaryList</span></div>
-
-<div class="viewcode-block" id="SegmentCells.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.SegmentCells.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
-        <span class="n">warpTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
         <span class="n">globalTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">])</span>
 
-        <span class="c1">#TODO - extend to 3D</span>
-        <span class="c1">#TODO - this does not do well with image boundaries. Cell </span>
-        <span class="c1">#boundaries are not traced past the edge of the field of </span>
-        <span class="c1">#view </span>
-        <span class="n">nucleusImage</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">GaussianBlur</span><span class="p">(</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
-                <span class="n">fragmentIndex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nucleusIndex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">),</span>
-                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mi">35</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="mi">35</span><span class="p">)),</span> <span class="mi">8</span><span class="p">)</span>
-        <span class="n">cellImage</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">GaussianBlur</span><span class="p">(</span><span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span>
-                <span class="n">fragmentIndex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cellIndex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zIndex</span><span class="p">),</span>
-                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mi">35</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="mi">35</span><span class="p">)),</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="n">seedIndex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span><span class="o">.</span><span class="n">get_data_channel_index</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;seed_channel_name&#39;</span><span class="p">])</span>
+        <span class="n">seedImages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_and_filter_image_stack</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">,</span>
+                                                       <span class="n">seedIndex</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 
-        <span class="n">w</span> <span class="o">=</span> <span class="n">watershed</span><span class="o">.</span><span class="n">_WatershedSegmenter</span><span class="p">(</span><span class="n">nucleusImage</span><span class="p">,</span> <span class="n">cellImage</span><span class="p">)</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">segment</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">nucleusThreshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cellThreshold</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100000</span><span class="p">])</span>
+        <span class="n">watershedIndex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span> \
+            <span class="o">.</span><span class="n">get_data_channel_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;watershed_channel_name&#39;</span><span class="p">])</span>
+        <span class="n">watershedImages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_and_filter_image_stack</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">,</span>
+                                                            <span class="n">watershedIndex</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">watershed</span><span class="o">.</span><span class="n">separate_merged_seeds</span><span class="p">(</span>
+            <span class="n">watershed</span><span class="o">.</span><span class="n">extract_seeds</span><span class="p">(</span><span class="n">seedImages</span><span class="p">))</span>
+        <span class="n">normalizedWatershed</span><span class="p">,</span> <span class="n">watershedMask</span> <span class="o">=</span> <span class="n">watershed</span><span class="o">.</span><span class="n">prepare_watershed_images</span><span class="p">(</span>
+            <span class="n">watershedImages</span><span class="p">)</span>
 
-        <span class="n">cellContours</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_label_to_regions</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
-        <span class="n">transformation</span> <span class="o">=</span> <span class="n">globalTask</span><span class="o">.</span><span class="n">fov_to_global_transform</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
-        <span class="n">transformedContours</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform_contours</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">transformation</span><span class="p">)</span> \
-                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cellContours</span><span class="p">])</span>
+        <span class="n">seeds</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">watershedMask</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">watershedOutput</span> <span class="o">=</span> <span class="n">segmentation</span><span class="o">.</span><span class="n">watershed</span><span class="p">(</span>
+            <span class="n">normalizedWatershed</span><span class="p">,</span> <span class="n">measure</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">seeds</span><span class="p">),</span> <span class="n">mask</span><span class="o">=</span><span class="n">watershedMask</span><span class="p">,</span>
+            <span class="n">connectivity</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="n">watershed_line</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_analysis_result</span><span class="p">(</span>
-                <span class="n">transformedContours</span><span class="p">,</span> <span class="s1">&#39;cell_boundaries&#39;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">(),</span> <span class="n">resultIndex</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span></div></div>
+        <span class="n">featureList</span> <span class="o">=</span> <span class="p">[</span><span class="n">spatialfeature</span><span class="o">.</span><span class="n">SpatialFeature</span><span class="o">.</span><span class="n">feature_from_label_matrix</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">watershedOutput</span> <span class="o">==</span> <span class="n">i</span><span class="p">),</span> <span class="n">fragmentIndex</span><span class="p">,</span>
+            <span class="n">globalTask</span><span class="o">.</span><span class="n">fov_to_global_transform</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">watershedOutput</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">featureDB</span> <span class="o">=</span> <span class="n">spatialfeature</span><span class="o">.</span><span class="n">HDF5SpatialFeatureDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">featureDB</span><span class="o">.</span><span class="n">write_features</span><span class="p">(</span><span class="n">featureList</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_read_and_filter_image_stack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">channelIndex</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                                     <span class="n">filterSigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">filterSize</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">filterSigma</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">warpTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;warp_task&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cv2</span><span class="o">.</span><span class="n">GaussianBlur</span><span class="p">(</span>
+            <span class="n">warpTask</span><span class="o">.</span><span class="n">get_aligned_image</span><span class="p">(</span><span class="n">fov</span><span class="p">,</span> <span class="n">channelIndex</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">filterSize</span><span class="p">,</span> <span class="n">filterSize</span><span class="p">),</span> <span class="n">filterSigma</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()))])</span>
+
+<div class="viewcode-block" id="WatershedSegment.get_feature_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment.get_feature_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_feature_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">spatialfeature</span><span class="o">.</span><span class="n">HDF5SpatialFeatureDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div></div>
 
 
 <div class="viewcode-block" id="CleanCellSegmentation"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.CleanCellSegmentation">[docs]</a><span class="k">class</span> <span class="nc">CleanCellSegmentation</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">):</span>
@@ -287,7 +265,7 @@
 
 <div class="viewcode-block" id="CleanCellSegmentation.get_cell_boundaries"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.CleanCellSegmentation.get_cell_boundaries">[docs]</a>    <span class="k">def</span> <span class="nf">get_cell_boundaries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaryList</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">boundaryList</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_result</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boundaryList</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
                         <span class="s1">&#39;cell_boundaries&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaryList</span></div>
@@ -345,20 +323,20 @@
         <span class="k">return</span> <span class="n">intersectionGraph</span>
 
     <span class="k">def</span> <span class="nf">_subtract_region</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region1</span><span class="p">,</span> <span class="n">region2</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Substracts region 2 from region 1 and returns the modified </span>
+        <span class="sd">&quot;&quot;&quot;Substracts region 2 from region 1 and returns the modified</span>
 <span class="sd">        region 1.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">region1</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">region2</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">region2</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_clean_polygon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputPolygon</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Cleans the polygon if polygon manipulations resulted in</span>
+        <span class="sd">&quot;&quot;&quot;Cleans the polygon if polygon manipulations resulted in</span>
 <span class="sd">        a multipolygon or an empty shape. </span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The cleaned polygon. If the multipolygon is passed, this will </span>
 <span class="sd">            return the largest polygon within the multipolygon. If a </span>
 <span class="sd">            non-polygon shape is passed, this function will return None.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">inputPolygon</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s1">&#39;Polygon&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">inputPolygon</span>
         <span class="k">elif</span> <span class="n">inputPolygon</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s1">&#39;MultiPolygon&#39;</span><span class="p">:</span>
@@ -366,12 +344,12 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="CleanCellSegmentation.run_analysis"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.CleanCellSegmentation.run_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">segmentTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">])</span>
 
-        <span class="c1">#The boundaries are filtered to avoid empty boundaries and to </span>
-        <span class="c1">#prevent intersection in the boundary path.</span>
+        <span class="c1"># The boundaries are filtered to avoid empty boundaries and to</span>
+        <span class="c1"># prevent intersection in the boundary path.</span>
         <span class="n">rawBoundaries</span> <span class="o">=</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> \
                 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">segmentTask</span><span class="o">.</span><span class="n">get_cell_boundaries</span><span class="p">()]</span>
         <span class="n">rawBoundaries</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rawBoundaries</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">area</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
@@ -402,9 +380,9 @@
         <span class="n">refinedBoundaries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cleanedCells</span><span class="p">])</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_analysis_result</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
                 <span class="n">refinedBoundaries</span><span class="p">,</span> <span class="s1">&#39;cell_boundaries&#39;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">())</span></div></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">())</span></div>
 
 
 

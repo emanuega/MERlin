@@ -26,7 +26,7 @@ class SpatialFeature(object):
         """Create a new feature specified by a list of pixels
 
         Args:
-            boundaryList: a least of boundaries that define this feature.
+            boundaryList: a list of boundaries that define this feature.
                 The first index of the list corresponds with the z index.
                 The second index corresponds with the index of the shape since
                 some regions might split in some z indexes.
@@ -407,6 +407,7 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
             pass
 
         return featureList
+
 
     def empty_database(self, fov: int=None) -> None:
         if fov is None:

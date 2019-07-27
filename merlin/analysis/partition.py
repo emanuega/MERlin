@@ -53,12 +53,14 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
         assignmentTask = self.dataSet.load_analysis_task(
             self.parameters['assignment_task'])
 
+        codebook = self.dataSet.get_codebook()
+
         bcDB = filterTask.get_barcode_database()
-        sDB = assignmentTask.get_feature_database()
         currentFOVBarcodes = bcDB.get_barcodes(fragmentIndex)
-        currentCells = sDB.read_features(fragmentIndex)
         currentFOVBarcodes = currentFOVBarcodes.reset_index().copy(deep=True)
-        codebook = self.dataset.get_codebook()
+
+        sDB = assignmentTask.get_feature_database()
+        currentCells = sDB.read_features(fragmentIndex)
 
         countsDF = pandas.DataFrame(
             data=np.zeros((len(currentCells),

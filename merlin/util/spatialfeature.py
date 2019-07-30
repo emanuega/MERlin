@@ -21,8 +21,8 @@ class SpatialFeature(object):
     """
 
     def __init__(self, boundaryList: List[List[geometry.Polygon]], fov: int,
-                 zCoordinates: np.ndarray=None, uniqueID: int=None,
-                 label: int=-1) -> None:
+                 zCoordinates: np.ndarray = None, uniqueID: int = None,
+                 label: int = -1) -> None:
         """Create a new feature specified by a list of pixels
 
         Args:
@@ -54,9 +54,9 @@ class SpatialFeature(object):
 
     @staticmethod
     def feature_from_label_matrix(labelMatrix: np.ndarray, fov: int,
-                                  transformationMatrix: np.ndarray=None,
-                                  zCoordinates: np.ndarray=None,
-                                  label: int=-1):
+                                  transformationMatrix: np.ndarray = None,
+                                  zCoordinates: np.ndarray = None,
+                                  label: int = -1):
         """Generate a new feature from the specified label matrix.
 
         Args:
@@ -182,7 +182,7 @@ class SpatialFeature(object):
 
         intersectArea = 0
         for p1Set, p2Set in zip(self.get_boundaries(),
-                          intersectFeature.get_boundaries()):
+                                intersectFeature.get_boundaries()):
             for p1 in p1Set:
                 for p2 in p2Set:
                     intersectArea += p1.intersection(p2).area
@@ -331,7 +331,7 @@ class SpatialFeatureDB(object):
         pass
 
     @abstractmethod
-    def read_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int = None) -> List[SpatialFeature]:
         """Read the features in this database
 
         Args:
@@ -341,7 +341,7 @@ class SpatialFeatureDB(object):
         pass
 
     @abstractmethod
-    def empty_database(self, fov: int=None) -> None:
+    def empty_database(self, fov: int = None) -> None:
         """Remove all features from this database.
 
         Args:
@@ -433,7 +433,7 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
             for currentFeature in features:
                 self._save_feature_to_hdf5_group(featureGroup, currentFeature)
 
-    def read_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int = None) -> List[SpatialFeature]:
         if fov is None:
             featureList = [f for x in self._dataSet.get_fovs()
                            for f in self.read_features(x)]
@@ -453,8 +453,7 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
         return featureList
 
-
-    def empty_database(self, fov: int=None) -> None:
+    def empty_database(self, fov: int = None) -> None:
         if fov is None:
             for f in self._dataSet.get_fovs():
                 self.empty_database(f)
@@ -478,7 +477,8 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
 
         try:
             existingFeatures = [SpatialFeature.from_json_dict(x)
-                                for x in self._dataSet.load_json_analysis_result(
+                                for x
+                                in self._dataSet.load_json_analysis_result(
                     'feature_data', self._analysisTask, fov, 'features')]
 
             existingIDs = set([x.get_feature_id() for x in existingFeatures])
@@ -496,7 +496,7 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
             featuresAsJSON, 'feature_data', self._analysisTask,
             fov, 'features')
 
-    def read_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int = None) -> List[SpatialFeature]:
         if fov is None:
             raise NotImplementedError
 
@@ -506,7 +506,7 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
 
         return features
 
-    def empty_database(self, fov: int=None) -> None:
+    def empty_database(self, fov: int = None) -> None:
         pass
 
     @staticmethod

@@ -109,6 +109,17 @@ class SimpleGlobalAlignment(GlobalAlignment):
                     fovStart[0] + fovCoordinates[1]*micronsPerPixel,
                     fovStart[1] + fovCoordinates[2]*micronsPerPixel)
 
+    def fov_global_extent(self, fov):
+
+        """
+        Returns the global extent of an fov, output interleaved as
+        xmin, ymin, xmax, ymax
+        """
+
+        return [x for y in (self.fov_coordinates_to_global(fov, (0, 0)),
+                            self.fov_coordinates_to_global(fov, (2048, 2048)))
+                for x in y]
+
     def global_coordinates_to_fov(self, fov, globalCoordinates):
         tform = np.linalg.inv(self.fov_to_global_transform(fov))
 
@@ -129,9 +140,9 @@ class SimpleGlobalAlignment(GlobalAlignment):
     def get_global_extent(self):
         fovSize = self.dataSet.get_image_dimensions()
         fovBounds = [self.fov_coordinates_to_global(x, (0, 0))
-                     for x in self.dataSet.get_fovs()] \
-                    + [self.fov_coordinates_to_global(x, fovSize)
-                       for x in self.dataSet.get_fovs()]
+                     for x in self.dataSet.get_fovs()] + \
+                    [self.fov_coordinates_to_global(x, fovSize)
+                     for x in self.dataSet.get_fovs()]
 
         minX = np.min([x[0] for x in fovBounds])
         maxX = np.max([x[0] for x in fovBounds])
@@ -185,7 +196,7 @@ class CorrelationGlobalAlignment(GlobalAlignment):
         else:
             return 0
 
-    def _get_overlapping_regions(self, fov: int, minArea: int=2000):
+    def _get_overlapping_regions(self, fov: int, minArea: int = 2000):
         """Get a list of all the fovs that overlap with the specified fov.
         """
         positions = self.dataSet.get_stage_positions()

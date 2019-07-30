@@ -28,8 +28,9 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
         return [self.parameters['filter_task'],
                 self.parameters['assignment_task']]
 
-    def get_partitioned_barcodes(self, fov: int=None) -> pandas.DataFrame:
-        """Retrieve the cell by barcode matrixes calculated from this analysis task.
+    def get_partitioned_barcodes(self, fov: int = None) -> pandas.DataFrame:
+        """Retrieve the cell by barcode matrixes calculated from this
+        analysis task.
 
         Args:
             fov: the fov to get the barcode table for. If not specified, the
@@ -69,37 +70,16 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
             index=[x.get_feature_id() for x in currentCells])
 
         for cell in currentCells:
-            cellMinX, cellMinY, cellMaxX, cellMaxY = cell.get_bounding_box()
-            cellCount = [0] * codebook.get_barcode_count()
-            allBoundaries = cell.get_boundaries()
-            barcodesToConsider = currentFOVBarcodes[
-                (currentFOVBarcodes['global_x'] >= cellMinX) &
-                (currentFOVBarcodes['global_x'] <= cellMaxX) &
-                (currentFOVBarcodes['global_y'] >= cellMinY) &
-                (currentFOVBarcodes['global_y'] <= cellMaxY)]
-
-            for zPos in list(range(len(allBoundaries))):
-                if len(allBoundaries[zPos]) > 0:
-                    for elem in allBoundaries[zPos]:
-                        currentZBarcodes = \
-                            barcodesToConsider[
-                                barcodesToConsider['z'] == zPos]\
-                                .loc[:, ['global_x', 'global_y', 'barcode_id']]
-                        if len(currentZBarcodes) > 0:
-                            points = [geometry.Point(x[0], x[1]) for x in
-                                      currentZBarcodes.loc[:,
-                                      ['global_x', 'global_y']].values.tolist()]
-                            within = [elem.contains(point) for point in points]
-                            hits = np.where(within)
-                            hits = np.take(currentZBarcodes['barcode_id']
-                                           .values.tolist(), hits)[0]
-                            uniqueHits = list(set(hits))
-                            for hit in uniqueHits:
-                                cellCount[hit] += list(hits).count(hit)
-            countsDF.loc[cell.get_feature_id(), :] = cellCount
+            contained = cell.contains_positions(currentFOVBarcodes.loc[:,
+                                                ['global_x', 'global_y',
+                                                 'global_z']].values)
+            count = currentFOVBarcodes[contained].groupby('barcode_id').size()
+            count = count.reindex(range(data.get_codebook().get_barcode_count())
+                                  , fill_value=0)
+            countDF.loc[cell.get_feature_id(), :] = count.values.tolist()
 
         barcodeNames = [codebook.get_name_for_barcode_index(x)
-                 for x in countsDF.columns.values.tolist()]
+                        for x in countsDF.columns.values.tolist()]
         countsDF.columns = barcodeNames
 
         self.dataSet.save_dataframe_to_csv(
@@ -108,6 +88,11 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
 
 
 class ExportPartitionedBarcodes(analysistask.AnalysisTask):
+
+    """
+    An analysis task that combines counts per cells data from each
+    field of view into a single output file.
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)

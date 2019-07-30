@@ -262,7 +262,7 @@ class DataOrganization(object):
 
         except FileNotFoundError:          
             uniqueEntries = self.data.drop_duplicates(
-                subset=['imageType','imageRegExp'],keep='first')
+                subset=['imageType', 'imageRegExp'], keep='first')
 
             uniqueTypes = uniqueEntries['imageType']
             uniqueIndexes = uniqueEntries.index.values.tolist()

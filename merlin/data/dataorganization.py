@@ -92,7 +92,11 @@ class DataOrganization(object):
         Args:
             dataChannelIndex: The index of the data channel
         Returns:
+<<<<<<< HEAD
             The name of the specified data channel,
+=======
+            The name of the specified data channel, 
+>>>>>>> master
             primarily relevant for non-multiplex measurements
         """
         return self.data.iloc[dataChannelIndex]['channelName']

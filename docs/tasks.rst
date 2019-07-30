@@ -117,13 +117,7 @@ partition.PartitionBarcodes
 
 Description: Assigns RNAs to cells if the RNA falls within the segmentation boundary of the cell. Yields a counts per cell csv file for a given fov.
 
-
 partition.ExportPartitionedBarcodes
 ----------------------------------
 
 Description: Combines the counts per cell csv files from each fov into a single output file.
-
-
-
-
-

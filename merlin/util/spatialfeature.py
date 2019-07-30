@@ -35,6 +35,9 @@ class SpatialFeature(object):
                 frame.
             zCoordinates: the z position for each of the z indexes. If not
                 specified, each z index is assumed to have unit height.
+            uniqueID: the uuid of this feature. If no uuid is specified,
+                a new uuid is randomly generated.
+            label: unused
         """
         self._boundaryList = boundaryList
         self._fov = fov
@@ -241,6 +244,48 @@ class SpatialFeature(object):
                     return False
 
         return True
+
+    def contains_point(self, point: geometry.Point, zIndex: int) -> bool:
+        """Determine if this spatial feature contains the specified point.
+
+        Args:
+            point: the point to check
+            zIndex: the z-index that the point corresponds to
+        Returns:
+            True if the boundaries of this spatial feature in the zIndex plane
+                contain the given point.
+        """
+        for boundaryElement in self.get_boundaries()[zIndex]:
+            if boundaryElement.contains(point):
+                return True
+
+        return False
+
+    def contains_positions(self, positionList: np.ndarray) -> np.ndarray:
+        """Determine if this spatial feature contains the specified positions
+        
+        Args:
+            positionList: a N x 3 numpy array containing the (x, y, z)
+                positions for N points where x and y are spatial coordinates
+                and z is the z index. If z is not an integer it is rounded
+                to the nearest integer.
+        Returns:
+            a numpy array of booleans containing true in the i'th index if
+                the i'th point provided is in this spatial feature.
+        """
+        boundaries = self.get_boundaries()
+        positionList[:, 2] = np.round(positionList[:, 2])
+
+        containmentList = np.zeros(positionList.shape[0], dtype=np.bool)
+
+        for zIndex in range(len(boundaries)):
+            currentIndexes = np.where(positionList[:, 2] == zIndex)[0]
+            currentContainment = [self.contains_point(
+                geometry.Point(x[0], x[1]), zIndex)
+                for x in positionList[currentIndexes]]
+            containmentList[currentIndexes] = currentContainment
+
+        return containmentList
 
     def to_json_dict(self) -> Dict:
         return {

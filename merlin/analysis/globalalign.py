@@ -40,8 +40,8 @@ class GlobalAlignment(analysistask.AnalysisTask):
 
         Args:
             fov: the fov where the coordinates are measured
-            globalCoordinates: a list of tuples containing 
-                the x and y coordinates (in pixels) in the specified fov.
+            globalCoordinates: a list of tuples containing the x and
+                               y coordinates (in pixels) in the specified fov.
         Returns:
             A list of tuples containing the global x and y coordinates
             (in microns)
@@ -109,11 +109,16 @@ class SimpleGlobalAlignment(GlobalAlignment):
                     fovStart[0] + fovCoordinates[1]*micronsPerPixel,
                     fovStart[1] + fovCoordinates[2]*micronsPerPixel)
 
-    def fov_global_extent(self, fov):
+    def fov_global_extent(self, fov: int) -> List[float, float, float, float]:
 
         """
         Returns the global extent of an fov, output interleaved as
         xmin, ymin, xmax, ymax
+
+        Args:
+            fov: the fov of interest
+        Returns:
+            a list of four floats, representing the xmin, xmax, ymin, ymax
         """
 
         return [x for y in (self.fov_coordinates_to_global(fov, (0, 0)),

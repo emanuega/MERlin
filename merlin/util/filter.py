@@ -1,10 +1,9 @@
 from scipy import ndimage
-import numpy as np    
+import numpy as np
 
 """
 This module contains code for performing filtering operations on images
 """
-
 
 def high_pass_filter(img: np.ndarray, lowPassKrernel: int) -> np.ndarray:
 	"""
@@ -16,9 +15,8 @@ def high_pass_filter(img: np.ndarray, lowPassKrernel: int) -> np.ndarray:
 		the high pass filtered image image
 
 	"""
-	img = img.astype(np.int16)
-	lowpass = ndimage.gaussian_filter(img, lowPassKrernel)
-	gauss_highpass = img - lowpass
-	gauss_highpass[gauss_highpass < 0] = 0
-	return gauss_highpass
-
+    img = img.astype(np.int16)
+    lowpass = ndimage.gaussian_filter(img, lowPassKrernel)
+    gauss_highpass = img - lowpass
+    gauss_highpass[gauss_highpass < 0] = 0
+    return gauss_highpass

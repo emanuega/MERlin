@@ -21,7 +21,7 @@ class WatershedSegment(analysistask.ParallelAnalysisTask):
     image data in each field of view using a watershed algorithm.
     
     Since each field of view is analyzed individually, the segmentations
-    should be cleaned in order to merge cells that cross the field of 
+    should be cleaned in order to merge cells that cross the field of
     view boundary.
     """
 
@@ -107,10 +107,10 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
         self.regionIndex = None
 
     def get_estimated_memory(self):
-        return 2048 
+        return 2048
 
     def get_estimated_time(self):
-        return 30 
+        return 30
 
     def get_dependencies(self):
         return [self.parameters['segment_task']]
@@ -182,11 +182,11 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
 
     def _clean_polygon(self, inputPolygon):
         """Cleans the polygon if polygon manipulations resulted in
-        a multipolygon or an empty shape. 
+        a multipolygon or an empty shape.
 
         Returns:
-            The cleaned polygon. If the multipolygon is passed, this will 
-            return the largest polygon within the multipolygon. If a 
+            The cleaned polygon. If the multipolygon is passed, this will
+            return the largest polygon within the multipolygon. If a
             non-polygon shape is passed, this function will return None.
         """
         if inputPolygon.geom_type == 'Polygon':
@@ -218,7 +218,7 @@ class CleanCellSegmentation(analysistask.AnalysisTask):
         for i, currentCell in enumerate(mergedCells):
             edgesFromCell = refinedComponents.edges(i)
 
-            if currentCell.geom_type == 'Polygon': 
+            if currentCell.geom_type == 'Polygon':
                 cleanedCell = geometry.Polygon(currentCell)
                 for edge in edgesFromCell:
                     if edge[0] != edge[1] and cleanedCell is not None:

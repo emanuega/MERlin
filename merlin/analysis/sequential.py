@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import pandas
-=======
-import pandas 
->>>>>>> master
 import rtree
 import networkx
 import numpy as np

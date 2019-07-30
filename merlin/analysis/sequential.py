@@ -1,4 +1,4 @@
-import pandas 
+import pandas
 import rtree
 import networkx
 import numpy as np
@@ -13,7 +13,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
 
     """
     An analysis task that calculates the signal intensity within the boundaries
-    of a cell for all rounds not used in the codebook, useful for measuring 
+    of a cell for all rounds not used in the codebook, useful for measuring
     RNA species that were stained individually.
     """
 
@@ -28,10 +28,10 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         return len(self.dataSet.get_fovs())
 
     def get_estimated_memory(self):
-        return 2048 
+        return 2048
 
     def get_estimated_time(self):
-        return 1 
+        return 1
 
     def get_dependencies(self):
         return [self.parameters['warp_task'],
@@ -46,14 +46,14 @@ class SumSignal(analysistask.ParallelAnalysisTask):
                 cellCoords.append([])
             else:
                 pixels = []
-                for region in regions: 
+                for region in regions:
                     coords = region.exterior.coords.xy
                     xyZip = list(zip(coords[0].tolist(), coords[1].tolist()))
                     pixels.append(np.array(
                                 self.alignTask.global_coordinates_to_fov(
                                     cell.get_fov(), xyZip)))
                 cellCoords.append(pixels)
-        # keptCells and keptCellIDs prevent cells with no area from getting 
+        # keptCells and keptCellIDs prevent cells with no area from getting
         # through, isn't strictly necessary if get_intersection_graph
         # is run with an area threshold
         keptCells = [cellCoords[x] for x in range(len(cells))
@@ -74,17 +74,15 @@ class SumSignal(analysistask.ParallelAnalysisTask):
 
     @staticmethod
     def get_intersection_graph(polygonList, areaThreshold=250):
-        # This is only currently necessary to eliminate 
+        # This is only currently necessary to eliminate
         # problematic cell overlaps. If cell boundaries have been cleaned
-        # prior to running sum signal this isn't necessary    
-
+        # prior to running sum signal this isn't necessary
         polygonIndex = rtree.index.Index()
         intersectGraphEdges = [[i, i] for i in range(len(polygonList))]
         for i, cell in enumerate(polygonList):
             if len(cell.get_bounding_box()) == 4:
                 putativeIntersects = list(polygonIndex.intersection(
                                           cell.get_bounding_box()))
-            
                 if len(putativeIntersects) > 0:
                     try:
                         intersectGraphEdges += \
@@ -99,7 +97,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
 
         intersectionGraph = networkx.Graph()
         intersectionGraph.add_edges_from(intersectGraphEdges)
-        
+
         return intersectionGraph
 
     def _get_sum_signal(self, fov, channels, zIndex):
@@ -108,8 +106,8 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         sTask = self.dataSet.load_analysis_task(self.parameters['segment_task'])
 
         sDB = sTask.get_feature_database()
-        cells = sDB.read_features(fov)  
-    
+        cells = sDB.read_features(fov)
+
         # If cell boundaries are going to be cleaned prior to this we should
         # remove the part enclosed by pound symbols
         ig = self.get_intersection_graph(cells, areaThreshold=0)
@@ -124,9 +122,10 @@ class SumSignal(analysistask.ParallelAnalysisTask):
             if self.highpass:
                 img = filter.high_pass_filter(
                     img, self.parameters['highpass_sigma'])
-            signals.append(self._extract_signal(cells, img, zIndex).iloc[:, [0]])
-        
-        #adding num of pixels
+            signals.append(self._extract_signal(cells, img,
+                                                zIndex).iloc[:, [0]])
+
+        # adding num of pixels
         signals.append(self._extract_signal(cells, img, zIndex).iloc[:, [1]])
 
         compiledSignal = pandas.concat(signals, 1)
@@ -134,7 +133,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
 
         return compiledSignal
 
-    def get_sum_signals(self, fov: int=None) -> pandas.DataFrame:
+    def get_sum_signals(self, fov: int = None) -> pandas.DataFrame:
         """Retrieve the sum signals calculated from this analysis task.
 
         Args:
@@ -177,10 +176,10 @@ class ExportSumSignals(analysistask.AnalysisTask):
         super().__init__(dataSet, parameters, analysisName)
 
     def get_estimated_memory(self):
-        return 2048 
+        return 2048
 
     def get_estimated_time(self):
-        return 5 
+        return 5
 
     def get_dependencies(self):
         return [self.parameters['sequential_task']]

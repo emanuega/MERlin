@@ -7,13 +7,15 @@ from merlin.util import spatialfeature
 
 
 testCoords1 = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
-feature1 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)]], 0)
-
 testCoords2 = [(0, 0), (2, 0), (2, 2), (0, 2), (0, 0)]
-feature2 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords2)]], 0)
 
+feature1 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)]], 0)
+feature2 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords2)]], 0)
 feature3 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)],
                                           [geometry.Polygon(testCoords1)]],
+                                         0, zCoordinates=np.array([0, 0.5]))
+feature4 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)],
+                                          [geometry.Polygon(testCoords2)]],
                                          0, zCoordinates=np.array([0, 0.5]))
 
 
@@ -41,13 +43,14 @@ def test_feature_from_label_matrix_transform():
         testLabels, 0, transformMatrix)
 
     assert len(feature.get_boundaries()[0]) == 1
-    assert feature.get_boundaries()[0][0].equals(geometry.Polygon(
-        list(zip([7.2, 7.2, 7.0, 5.0, 4.8, 4.8, 5.0, 7.0, 7.2],
-                 [6.0, 3.5, 3.25, 3.25, 3.5, 6.0, 6.25, 6.25, 6.0]))))
+    assert feature.get_boundaries()[0][0].equals(
+        geometry.Polygon(list(zip(
+            [7.2, 7.2, 7.0, 5.0, 4.8, 4.8, 5.0, 7.0, 7.2],
+            [6.0, 3.5, 3.25, 3.25, 3.5, 6.0, 6.25, 6.25, 6.0]))))
 
 
 @pytest.mark.parametrize('feature, volume',
-                          [(feature1, 1), (feature2, 4), (feature3, 0.5)])
+                         [(feature1, 1), (feature2, 4), (feature3, 0.5)])
 def test_feature_get_volume(feature, volume):
     assert feature.get_volume() == volume
 
@@ -132,8 +135,8 @@ def test_feature_contained_within_boundary():
 
     overlappingLabels = np.zeros((1, 8, 8))
     overlappingLabels[0, 0:5, 0:5] = 1
-    overlappingFeature = spatialfeature.SpatialFeature.feature_from_label_matrix(
-        overlappingLabels, 0)
+    overlappingFeature = spatialfeature.SpatialFeature\
+        .feature_from_label_matrix(overlappingLabels, 0)
 
     assert interiorFeature.is_contained_within_boundary(exteriorFeature)
     assert not exteriorFeature.is_contained_within_boundary(interiorFeature)
@@ -143,3 +146,32 @@ def test_feature_contained_within_boundary():
 
     assert exteriorFeature.is_contained_within_boundary(overlappingFeature)
     assert overlappingFeature.is_contained_within_boundary(exteriorFeature)
+
+
+def test_feature_contains_point():
+    point1 = geometry.Point(-0.1, -0.1)
+    point2 = geometry.Point(0.9, 0.9)
+    point3 = geometry.Point(1.5, 1.5)
+
+    assert not feature1.contains_point(point1, 0)
+    assert not feature1.contains_point(point2, 0)
+    assert feature1.contains_point(point3, 0)
+    assert not feature4.contains_point(point1, 0)
+    assert not feature4.contains_point(point2, 0)
+    assert feature4.contains_point(point3, 0)
+    assert not feature4.contains_point(point1, 1)
+    assert feature4.contains_point(point2, 1)
+    assert feature4.contains_point(point3, 1)
+
+
+def test_feature_contains_positions():
+    positions1 = np.array([[0, 0, 0], [1.5, 1.5, 0]])
+    positions2 = np.array([[-0.1, -0.1, 0], [0.9, 0.9, 0], [1.5, 1.5, 0],
+                           [-0.1, -0.1, 1], [0.9, 0.9, 1], [1.5, 1.5, 1]])
+    assert all([a == b for a, b in zip(feature1.contains_positions(positions1),
+                                       [False, True])])
+    assert all([a == b for a, b in zip(feature4.contains_positions(positions1),
+                                       [False, True])])
+    assert all([a == b for a, b in zip(feature4.contains_positions(positions2),
+                                       [False, False, True,
+                                        False, True, True])])

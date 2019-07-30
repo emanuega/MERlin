@@ -21,12 +21,12 @@ class SpatialFeature(object):
     """
 
     def __init__(self, boundaryList: List[List[geometry.Polygon]], fov: int,
-                 zCoordinates: np.ndarray=None, uniqueID: int=None,
-                 label: int=-1) -> None:
+                 zCoordinates: np.ndarray = None, uniqueID: int = None,
+                 label: int = -1) -> None:
         """Create a new feature specified by a list of pixels
 
         Args:
-            boundaryList: a least of boundaries that define this feature.
+            boundaryList: a list of boundaries that define this feature.
                 The first index of the list corresponds with the z index.
                 The second index corresponds with the index of the shape since
                 some regions might split in some z indexes.
@@ -35,6 +35,9 @@ class SpatialFeature(object):
                 frame.
             zCoordinates: the z position for each of the z indexes. If not
                 specified, each z index is assumed to have unit height.
+            uniqueID: the uuid of this feature. If no uuid is specified,
+                a new uuid is randomly generated.
+            label: unused
         """
         self._boundaryList = boundaryList
         self._fov = fov
@@ -51,9 +54,9 @@ class SpatialFeature(object):
 
     @staticmethod
     def feature_from_label_matrix(labelMatrix: np.ndarray, fov: int,
-                                  transformationMatrix: np.ndarray=None,
-                                  zCoordinates: np.ndarray=None,
-                                  label: int=-1):
+                                  transformationMatrix: np.ndarray = None,
+                                  zCoordinates: np.ndarray = None,
+                                  label: int = -1):
         """Generate a new feature from the specified label matrix.
 
         Args:
@@ -179,7 +182,7 @@ class SpatialFeature(object):
 
         intersectArea = 0
         for p1Set, p2Set in zip(self.get_boundaries(),
-                          intersectFeature.get_boundaries()):
+                                intersectFeature.get_boundaries()):
             for p1 in p1Set:
                 for p2 in p2Set:
                     intersectArea += p1.intersection(p2).area
@@ -242,6 +245,48 @@ class SpatialFeature(object):
 
         return True
 
+    def contains_point(self, point: geometry.Point, zIndex: int) -> bool:
+        """Determine if this spatial feature contains the specified point.
+
+        Args:
+            point: the point to check
+            zIndex: the z-index that the point corresponds to
+        Returns:
+            True if the boundaries of this spatial feature in the zIndex plane
+                contain the given point.
+        """
+        for boundaryElement in self.get_boundaries()[zIndex]:
+            if boundaryElement.contains(point):
+                return True
+
+        return False
+
+    def contains_positions(self, positionList: np.ndarray) -> np.ndarray:
+        """Determine if this spatial feature contains the specified positions
+
+        Args:
+            positionList: a N x 3 numpy array containing the (x, y, z)
+                positions for N points where x and y are spatial coordinates
+                and z is the z index. If z is not an integer it is rounded
+                to the nearest integer.
+        Returns:
+            a numpy array of booleans containing true in the i'th index if
+                the i'th point provided is in this spatial feature.
+        """
+        boundaries = self.get_boundaries()
+        positionList[:, 2] = np.round(positionList[:, 2])
+
+        containmentList = np.zeros(positionList.shape[0], dtype=np.bool)
+
+        for zIndex in range(len(boundaries)):
+            currentIndexes = np.where(positionList[:, 2] == zIndex)[0]
+            currentContainment = [self.contains_point(
+                geometry.Point(x[0], x[1]), zIndex)
+                for x in positionList[currentIndexes]]
+            containmentList[currentIndexes] = currentContainment
+
+        return containmentList
+
     def to_json_dict(self) -> Dict:
         return {
             'fov': self._fov,
@@ -286,7 +331,7 @@ class SpatialFeatureDB(object):
         pass
 
     @abstractmethod
-    def read_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int = None) -> List[SpatialFeature]:
         """Read the features in this database
 
         Args:
@@ -296,7 +341,7 @@ class SpatialFeatureDB(object):
         pass
 
     @abstractmethod
-    def empty_database(self, fov: int=None) -> None:
+    def empty_database(self, fov: int = None) -> None:
         """Remove all features from this database.
 
         Args:
@@ -388,7 +433,7 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
             for currentFeature in features:
                 self._save_feature_to_hdf5_group(featureGroup, currentFeature)
 
-    def read_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int = None) -> List[SpatialFeature]:
         if fov is None:
             featureList = [f for x in self._dataSet.get_fovs()
                            for f in self.read_features(x)]
@@ -408,7 +453,7 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
         return featureList
 
-    def empty_database(self, fov: int=None) -> None:
+    def empty_database(self, fov: int = None) -> None:
         if fov is None:
             for f in self._dataSet.get_fovs():
                 self.empty_database(f)
@@ -432,7 +477,8 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
 
         try:
             existingFeatures = [SpatialFeature.from_json_dict(x)
-                                for x in self._dataSet.load_json_analysis_result(
+                                for x
+                                in self._dataSet.load_json_analysis_result(
                     'feature_data', self._analysisTask, fov, 'features')]
 
             existingIDs = set([x.get_feature_id() for x in existingFeatures])
@@ -450,7 +496,7 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
             featuresAsJSON, 'feature_data', self._analysisTask,
             fov, 'features')
 
-    def read_features(self, fov: int=None) -> List[SpatialFeature]:
+    def read_features(self, fov: int = None) -> List[SpatialFeature]:
         if fov is None:
             raise NotImplementedError
 
@@ -460,7 +506,7 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
 
         return features
 
-    def empty_database(self, fov: int=None) -> None:
+    def empty_database(self, fov: int = None) -> None:
         pass
 
     @staticmethod

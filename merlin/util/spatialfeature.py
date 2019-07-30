@@ -263,7 +263,7 @@ class SpatialFeature(object):
 
     def contains_positions(self, positionList: np.ndarray) -> np.ndarray:
         """Determine if this spatial feature contains the specified positions
-        
+
         Args:
             positionList: a N x 3 numpy array containing the (x, y, z)
                 positions for N points where x and y are spatial coordinates

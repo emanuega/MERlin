@@ -28,7 +28,7 @@ class InputDataError(Exception):
 class DataOrganization(object):
 
     """
-    A class to specify the organization of raw images in the original 
+    A class to specify the organization of raw images in the original
     image files.
     """
 
@@ -39,21 +39,21 @@ class DataOrganization(object):
         If filePath is not specified, a previously stored DataOrganization
         is loaded from the dataSet if it exists. If filePath is specified,
         the DataOrganization at the specified filePath is loaded and
-        stored in the dataSet, overwriting any previously stored 
+        stored in the dataSet, overwriting any previously stored
         DataOrganization.
 
         Raises:
-            InputDataError: If the set of raw data is incomplete or the 
+            InputDataError: If the set of raw data is incomplete or the
                     format of the raw data deviates from expectations.
         """
-        
+
         self._dataSet = dataSet
 
         if filePath is not None:
             if not os.path.exists(filePath):
                 filePath = os.sep.join(
                         [merlin.DATA_ORGANIZATION_HOME, filePath])
-        
+
             self.data = pandas.read_csv(
                 filePath,
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
@@ -92,7 +92,7 @@ class DataOrganization(object):
         Args:
             dataChannelIndex: The index of the data channel
         Returns:
-            The name of the specified data channel, 
+            The name of the specified data channel,
             primarily relevant for non-multiplex measurements
         """
         return self.data.iloc[dataChannelIndex]['channelName']
@@ -119,7 +119,7 @@ class DataOrganization(object):
         Args:
             dataChannel: the data channel index
         Returns:
-            the color for this data channel as a stringourc 
+            the color for this data channel as a string
         """
         return str(self.data.at[dataChannel, 'color'])
 
@@ -260,7 +260,7 @@ class DataOrganization(object):
         try:
             self.fileMap = self._dataSet.load_dataframe_from_csv('filemap')
 
-        except FileNotFoundError:          
+        except FileNotFoundError:
             uniqueEntries = self.data.drop_duplicates(
                 subset=['imageType', 'imageRegExp'], keep='first')
 
@@ -282,11 +282,11 @@ class DataOrganization(object):
                                 transformedName['imagingRound'] = -1
                             transformedName['imagePath'] = currentFile
                             fileData.append(transformedName)
-        
+
             self.fileMap = pandas.DataFrame(fileData)
             self.fileMap[['imagingRound', 'fov']] = \
                 self.fileMap[['imagingRound', 'fov']].astype(int)
-    
+
             self._validate_file_map()
 
             self._dataSet.save_dataframe_to_csv(
@@ -298,7 +298,7 @@ class DataOrganization(object):
         of the raw images are present.
 
         Raises:
-            InputDataError: If the set of raw data is incomplete or the 
+            InputDataError: If the set of raw data is incomplete or the
                     format of the raw data deviates from expectations.
         """
 
@@ -327,7 +327,7 @@ class DataOrganization(object):
                     imageSize = self._dataSet.image_stack_size(imagePath)
                 except Exception:
                     raise InputDataError(
-                        ('Unable to determine image stack size for fov {0} from' 
+                        ('Unable to determine image stack size for fov {0} from'
                          ' data channel {1} at {2}')
                         .format(dataChannel, fov, imagePath))
 

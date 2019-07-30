@@ -74,8 +74,8 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
                                                 ['global_x', 'global_y',
                                                  'global_z']].values)
             count = currentFOVBarcodes[contained].groupby('barcode_id').size()
-            count = count.reindex(range(data.get_codebook().get_barcode_count())
-                                  , fill_value=0)
+            count = count.reindex(
+                range(data.get_codebook().get_barcode_count()), fill_value=0)
             countDF.loc[cell.get_feature_id(), :] = count.values.tolist()
 
         barcodeNames = [codebook.get_name_for_barcode_index(x)

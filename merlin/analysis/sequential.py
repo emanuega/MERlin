@@ -107,7 +107,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
 
         sDB = sTask.get_feature_database()
         cells = sDB.read_features(fov)
-    
+
         # If cell boundaries are going to be cleaned prior to this we should
         # remove the part enclosed by pound symbols
         ig = self.get_intersection_graph(cells, areaThreshold=0)
@@ -124,7 +124,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
                     img, self.parameters['highpass_sigma'])
             signals.append(self._extract_signal(cells, img,
                                                 zIndex).iloc[:, [0]])
-        
+
         # adding num of pixels
         signals.append(self._extract_signal(cells, img, zIndex).iloc[:, [1]])
 

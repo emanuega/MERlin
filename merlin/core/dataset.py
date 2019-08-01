@@ -58,10 +58,8 @@ class DataSet(object):
 
         self.rawDataPath = os.sep.join([dataHome, dataDirectoryName])
         if not os.path.isdir(self.rawDataPath):
-            print('Cannot find {}'.format(self.rawDataPath))
-            # raise FileNotFoundError(
-            #         errno.ENOENT, os.strerror(errno.ENOENT), self.rawDataPath)
-            
+            print('Cannot find raw data path: {}'.format(self.rawDataPath))
+
         self.analysisPath = os.sep.join([analysisHome, dataDirectoryName])
         os.makedirs(self.analysisPath, exist_ok=True)
 

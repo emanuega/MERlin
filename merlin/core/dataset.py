@@ -494,7 +494,7 @@ class DataSet(object):
             if os.path.isdir(os.path.join(self.analysisPath, a)):
                 if os.path.exists(
                         os.path.join(self.analysisPath, a, 'tasks')):
-                    analysisList = analysisList.append(a)
+                    analysisList.append(a)
 
         analysisList.sort()
         return analysisList

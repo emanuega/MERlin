@@ -86,7 +86,6 @@ class DataSet(object):
 
         return workflowPath
 
-
     def save_figure(self, analysisTask: TaskOrName, figure: plt.Figure,
                     figureName: str) -> None:
         """Save the figure into the analysis results for this DataSet
@@ -483,6 +482,22 @@ class DataSet(object):
         """
         analysisDirectory = self.get_analysis_subdirectory(analysisTask)
         shutil.rmtree(analysisDirectory)
+
+    def get_analysis_tasks(self) -> List[str]:
+        """
+        Get a list of the analysis tasks within this dataset.
+
+        Returns: A list of the analysis task names.
+        """
+        analysisList = []
+        for a in os.listdir(self.analysisPath):
+            if os.path.isdir(os.path.join(self.analysisPath, a)):
+                if os.path.exists(
+                        os.path.join(self.analysisPath, a, 'tasks')):
+                    analysisList = analysisList.append(a)
+
+        analysisList.sort()
+        return analysisList
 
     def analysis_exists(self, analysisTaskName: str) -> bool:
         """

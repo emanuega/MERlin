@@ -317,7 +317,7 @@ class DataSet(object):
         hPath = self._analysis_result_save_path(
                 resultName, analysisTask, resultIndex, subdirectory, '.hdf5') \
 
-        if mode=='r' and not os.path.exists(hPath):
+        if mode == 'r' and not os.path.exists(hPath):
             raise FileNotFoundError(('Unable to open %s for reading since ' +
                                     'it does not exist.') % hPath)
 
@@ -552,6 +552,9 @@ class DataSet(object):
 
     def _analysis_status_file(self, analysisTask: analysistask.AnalysisTask,
                               eventName: str, fragmentIndex: int=None) -> str:
+        if isinstance(analysisTask, str):
+            analysisTask = self.load_analysis_task(analysisTask)
+
         if fragmentIndex is None:
             fileName = analysisTask.get_analysis_name() + '.' + eventName
         else:
@@ -561,7 +564,7 @@ class DataSet(object):
                 fileName])
 
     def get_analysis_environment(self, analysisTask: analysistask.AnalysisTask,
-                                fragmentIndex: int=None) -> None:
+                                 fragmentIndex: int=None) -> None:
         """Get the environment variables for the system used to run the
         specified analysis task.
 

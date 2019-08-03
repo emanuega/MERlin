@@ -115,15 +115,15 @@ class SlurmReport(analysistask.AnalysisTask):
                             'caps']:
                 plt.setp(bPlot[element], color=c)
 
-        fig = plt.figure(figsize=(15, 4))
+        fig = plt.figure(figsize=(15, 12))
         bp = plt.boxplot([d['MaxRSS'].str[:-1].astype(float)
                          for d in reportDict.values()],
-                         positions=np.arange(len(reportDict))-0.25,
+                         positions=np.arange(len(reportDict))-0.15,
                          widths=0.25)
         setBoxColors(bp, 'r')
         bp = plt.boxplot([d['ReqMem'].str[:-2].astype(float)
                          for d in reportDict.values()],
-                         positions=np.arange(len(reportDict))+0.25,
+                         positions=np.arange(len(reportDict))+0.15,
                          widths=0.25)
         setBoxColors(bp, 'b')
         plt.xticks(np.arange(len(reportDict)), list(reportDict.keys()),
@@ -136,18 +136,19 @@ class SlurmReport(analysistask.AnalysisTask):
         hR.set_visible(False)
         plt.ylabel('Memory per job (mb)')
         plt.title('Memory summary')
+        plt.xlim([-0.5, len(reportDict)+0.5])
         plt.tight_layout(pad=1)
         self.dataSet.save_figure(self, fig, 'memory_summary')
 
-        fig = plt.figure(figsize=(15, 4))
+        fig = plt.figure(figsize=(15, 12))
         bp = plt.boxplot([d['Elapsed'] / np.timedelta64(1, 'm')
                          for d in reportDict.values()],
-                         positions=np.arange(len(reportDict))-0.25,
+                         positions=np.arange(len(reportDict))-0.15,
                          widths=0.25)
         setBoxColors(bp, 'r')
         bp = plt.boxplot([d['Timelimit'] / np.timedelta64(1, 'm')
                          for d in reportDict.values()],
-                         positions=np.arange(len(reportDict))+0.25,
+                         positions=np.arange(len(reportDict))+0.15,
                          widths=0.25)
         setBoxColors(bp, 'b')
         plt.xticks(np.arange(len(reportDict)), list(reportDict.keys()),
@@ -160,6 +161,7 @@ class SlurmReport(analysistask.AnalysisTask):
         hR.set_visible(False)
         plt.ylabel('Time per job (min)')
         plt.title('Time summary')
+        plt.xlim([-0.5, len(reportDict)+0.5])
         plt.tight_layout(pad=1)
         self.dataSet.save_figure(self, fig, 'time_summary')
 

@@ -109,7 +109,7 @@ class SimpleGlobalAlignment(GlobalAlignment):
                     fovStart[0] + fovCoordinates[1]*micronsPerPixel,
                     fovStart[1] + fovCoordinates[2]*micronsPerPixel)
 
-    def fov_global_extent(self, fov: int) -> List[float, float, float, float]:
+    def fov_global_extent(self, fov: int) -> List[float]:
 
         """
         Returns the global extent of an fov, output interleaved as

@@ -200,7 +200,8 @@ class SlurmReport(analysistask.AnalysisTask):
             'barcode_count': self.dataSet.get_codebook().get_barcode_count(),
             'fov_count': len(self.dataSet.get_fovs()),
             'z_count': len(self.dataSet.get_z_positions()),
-            'sequential_count': len(self.dataSet.get_sequential_rounds()),
+            'sequential_count': len(self.dataSet.get_dataorganization()
+                                    .get_sequential_rounds()),
             'dataset_name': self.dataSet.dataSetName,
             'report_time': reportTime
         }

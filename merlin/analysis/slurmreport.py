@@ -75,7 +75,7 @@ class SlurmReport(analysistask.AnalysisTask):
         outputDF = outputDF.assign(Timelimit=pandas.to_timedelta(
             outputDF['Timelimit'].apply(reformat_timedelta), unit='s'))
 
-        return outputDF
+        return outputDF.reindex()
 
     def _plot_slurm_report(self, slurmDF, analysisName):
         fig = plt.figure(figsize=(15, 4))
@@ -115,7 +115,8 @@ class SlurmReport(analysistask.AnalysisTask):
             currentTask = self.dataSet.load_analysis_task(t)
             if currentTask.is_complete():
                 slurmDF = self._generate_slurm_report(currentTask)
-                self.dataSet.save_dataframe_to_csv()
+                self.dataSet.save_dataframe_to_csv(slurmDF, t, self,
+                                                   'reports')
                 dfStream = io.StringIO()
                 slurmDF.to_csv(dfStream, sep='|')
                 self._plot_slurm_report(slurmDF, t)

@@ -136,7 +136,10 @@ class SlurmReport(analysistask.AnalysisTask):
         hR.set_visible(False)
         plt.ylabel('Memory per job (mb)')
         plt.title('Memory summary')
-        plt.xlim([-0.5, len(reportDict)+0.5])
+        plt.ylim([100, plt.ylim()[1]])
+        plt.xlim([-0.5, len(reportDict)-0.5])
+        plt.vlines(np.arange(0.5, len(reportDict)), ymin=plt.ylim()[0],
+                   ymax=plt.ylim()[1], linestyles='dashed')
         plt.tight_layout(pad=1)
         self.dataSet.save_figure(self, fig, 'memory_summary')
 
@@ -162,6 +165,8 @@ class SlurmReport(analysistask.AnalysisTask):
         plt.ylabel('Time per job (min)')
         plt.title('Time summary')
         plt.xlim([-0.5, len(reportDict)+0.5])
+        plt.vlines(np.arange(0.5, len(reportDict)), ymin=plt.ylim()[0],
+                   ymax=plt.ylim()[1], linestyles='dashed')
         plt.tight_layout(pad=1)
         self.dataSet.save_figure(self, fig, 'time_summary')
 
@@ -200,7 +205,7 @@ class SlurmReport(analysistask.AnalysisTask):
             'barcode_count': self.dataSet.get_codebook().get_barcode_count(),
             'fov_count': len(self.dataSet.get_fovs()),
             'z_count': len(self.dataSet.get_z_positions()),
-            'sequential_count': len(self.dataSet.get_dataorganization()
+            'sequential_count': len(self.dataSet.get_data_organization()
                                     .get_sequential_rounds()),
             'dataset_name': self.dataSet.dataSetName,
             'report_time': reportTime

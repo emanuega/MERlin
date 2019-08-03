@@ -189,8 +189,8 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            fov: the fov where the coordinates are measured</span>
-<span class="sd">            globalCoordinates: a list of tuples containing </span>
-<span class="sd">                the x and y coordinates (in pixels) in the specified fov.</span>
+<span class="sd">            globalCoordinates: a list of tuples containing the x and</span>
+<span class="sd">                               y coordinates (in pixels) in the specified fov.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            A list of tuples containing the global x and y coordinates</span>
 <span class="sd">            (in microns)</span>
@@ -258,6 +258,22 @@
                     <span class="n">fovStart</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">fovCoordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">micronsPerPixel</span><span class="p">,</span>
                     <span class="n">fovStart</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">fovCoordinates</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">micronsPerPixel</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="SimpleGlobalAlignment.fov_global_extent"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.globalalign.SimpleGlobalAlignment.fov_global_extent">[docs]</a>    <span class="k">def</span> <span class="nf">fov_global_extent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the global extent of an fov, output interleaved as</span>
+<span class="sd">        xmin, ymin, xmax, ymax</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fov: the fov of interest</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            a list of four floats, representing the xmin, xmax, ymin, ymax</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fov_coordinates_to_global</span><span class="p">(</span><span class="n">fov</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">fov_coordinates_to_global</span><span class="p">(</span><span class="n">fov</span><span class="p">,</span> <span class="p">(</span><span class="mi">2048</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)))</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span></div>
+
 <div class="viewcode-block" id="SimpleGlobalAlignment.global_coordinates_to_fov"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.globalalign.SimpleGlobalAlignment.global_coordinates_to_fov">[docs]</a>    <span class="k">def</span> <span class="nf">global_coordinates_to_fov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">globalCoordinates</span><span class="p">):</span>
         <span class="n">tform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fov_to_global_transform</span><span class="p">(</span><span class="n">fov</span><span class="p">))</span>
 
@@ -278,9 +294,9 @@
 <div class="viewcode-block" id="SimpleGlobalAlignment.get_global_extent"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.globalalign.SimpleGlobalAlignment.get_global_extent">[docs]</a>    <span class="k">def</span> <span class="nf">get_global_extent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">fovSize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_image_dimensions</span><span class="p">()</span>
         <span class="n">fovBounds</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fov_coordinates_to_global</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-                     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()]</span> \
-                    <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fov_coordinates_to_global</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fovSize</span><span class="p">)</span>
-                       <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()]</span>
+                     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()]</span> <span class="o">+</span> \
+                    <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fov_coordinates_to_global</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fovSize</span><span class="p">)</span>
+                     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()]</span>
 
         <span class="n">minX</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fovBounds</span><span class="p">])</span>
         <span class="n">maxX</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fovBounds</span><span class="p">])</span>
@@ -334,7 +350,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">_get_overlapping_regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">minArea</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">2000</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_overlapping_regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">minArea</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a list of all the fovs that overlap with the specified fov.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_stage_positions</span><span class="p">()</span>

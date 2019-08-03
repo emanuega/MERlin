@@ -207,9 +207,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">dataHome</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">])</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                    <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">)</span>
-            
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Cannot find raw data path: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">))</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">analysisHome</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">])</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -235,7 +234,6 @@
             <span class="n">outFile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">workflowString</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">workflowPath</span></div>
-
 
 <div class="viewcode-block" id="DataSet.save_figure"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_figure">[docs]</a>    <span class="k">def</span> <span class="nf">save_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span> <span class="n">figure</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span>
                     <span class="n">figureName</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -468,7 +466,7 @@
         <span class="n">hPath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
                 <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.hdf5&#39;</span><span class="p">)</span> \
 
-        <span class="k">if</span> <span class="n">mode</span><span class="o">==</span><span class="s1">&#39;r&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">hPath</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;r&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">hPath</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">((</span><span class="s1">&#39;Unable to open </span><span class="si">%s</span><span class="s1"> for reading since &#39;</span> <span class="o">+</span>
                                     <span class="s1">&#39;it does not exist.&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="n">hPath</span><span class="p">)</span>
 
@@ -634,6 +632,22 @@
         <span class="n">analysisDirectory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_subdirectory</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">)</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">analysisDirectory</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="DataSet.get_analysis_tasks"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a list of the analysis tasks within this dataset.</span>
+
+<span class="sd">        Returns: A list of the analysis task names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">analysisList</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="n">a</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">)):</span>
+                    <span class="n">analysisList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+        <span class="n">analysisList</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">analysisList</span></div>
+
 <div class="viewcode-block" id="DataSet.analysis_exists"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.analysis_exists">[docs]</a>    <span class="k">def</span> <span class="nf">analysis_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTaskName</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Determine if an analysis task with the specified name exists in this </span>
@@ -687,6 +701,9 @@
 
     <span class="k">def</span> <span class="nf">_analysis_status_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
                               <span class="n">eventName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">analysisTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">fragmentIndex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">fileName</span> <span class="o">=</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">eventName</span>
         <span class="k">else</span><span class="p">:</span>
@@ -696,7 +713,7 @@
                 <span class="n">fileName</span><span class="p">])</span>
 
 <div class="viewcode-block" id="DataSet.get_analysis_environment"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_environment">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                                <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                                 <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Get the environment variables for the system used to run the</span>
 <span class="sd">        specified analysis task.</span>
 

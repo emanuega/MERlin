@@ -155,11 +155,12 @@
 <span class="kn">import</span> <span class="nn">rtree</span>
 <span class="kn">from</span> <span class="nn">shapely</span> <span class="k">import</span> <span class="n">geometry</span>
 <span class="kn">from</span> <span class="nn">shapely.ops</span> <span class="k">import</span> <span class="n">unary_union</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
-
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="k">import</span> <span class="n">cKDTree</span>
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">spatialfeature</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">watershed</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
 
 
 <div class="viewcode-block" id="WatershedSegment"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.WatershedSegment">[docs]</a><span class="k">class</span> <span class="nc">WatershedSegment</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
@@ -169,7 +170,7 @@
 <span class="sd">    image data in each field of view using a watershed algorithm.</span>
 <span class="sd">    </span>
 <span class="sd">    Since each field of view is analyzed individually, the segmentations</span>
-<span class="sd">    should be cleaned in order to merge cells that cross the field of </span>
+<span class="sd">    should be cleaned in order to merge cells that cross the field of</span>
 <span class="sd">    view boundary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -255,10 +256,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">regionIndex</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="CleanCellSegmentation.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.CleanCellSegmentation.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="mi">2048</span> </div>
+        <span class="k">return</span> <span class="mi">2048</span></div>
 
 <div class="viewcode-block" id="CleanCellSegmentation.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.CleanCellSegmentation.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="mi">30</span> </div>
+        <span class="k">return</span> <span class="mi">30</span></div>
 
 <div class="viewcode-block" id="CleanCellSegmentation.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.CleanCellSegmentation.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">]]</span></div>
@@ -272,8 +273,8 @@
 
 <div class="viewcode-block" id="CleanCellSegmentation.get_cell_polygons"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.CleanCellSegmentation.get_cell_polygons">[docs]</a>    <span class="k">def</span> <span class="nf">get_cell_polygons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cellPolygons</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cellPolygons</span> <span class="o">=</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> \
-                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cell_boundaries</span><span class="p">()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cellPolygons</span> <span class="o">=</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                                 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cell_boundaries</span><span class="p">()]</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cellPolygons</span></div>
 
@@ -299,21 +300,21 @@
 
     <span class="k">def</span> <span class="nf">_get_intersection_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">polygonList</span><span class="p">,</span> <span class="n">areaThreshold</span><span class="o">=</span><span class="mi">250</span><span class="p">):</span>
         <span class="n">polygonIndex</span> <span class="o">=</span> <span class="n">rtree</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">Index</span><span class="p">()</span>
-        <span class="n">intersectGraphEdges</span> <span class="o">=</span> <span class="p">[[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">polygonList</span><span class="p">))]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">polygonList</span><span class="p">):</span>
+        <span class="n">intersectGraphEdges</span> <span class="o">=</span> <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">polygonList</span><span class="p">))]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">polygonList</span><span class="p">):</span>
             <span class="n">putativeIntersects</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">polygonIndex</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">bounds</span><span class="p">))</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">putativeIntersects</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">intersectGraphEdges</span> <span class="o">+=</span> \
-                        <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">putativeIntersects</span> \
-                        <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
-                            <span class="n">polygonList</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">.</span><span class="n">area</span><span class="o">&gt;</span><span class="n">areaThreshold</span><span class="p">]</span> 
+                    <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">putativeIntersects</span>
+                     <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+                        <span class="n">polygonList</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">.</span><span class="n">area</span> <span class="o">&gt;</span> <span class="n">areaThreshold</span><span class="p">]</span>
                 <span class="n">intersectGraphEdges</span> <span class="o">+=</span> \
-                        <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">putativeIntersects</span> \
-                        <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">polygonList</span><span class="p">[</span><span class="n">j</span><span class="p">])]</span> 
+                    <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">putativeIntersects</span>
+                     <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">polygonList</span><span class="p">[</span><span class="n">j</span><span class="p">])]</span>
                 <span class="n">intersectGraphEdges</span> <span class="o">+=</span> \
-                        <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">putativeIntersects</span> \
-                        <span class="k">if</span> <span class="n">polygonList</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">cell</span><span class="p">)]</span> 
+                    <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">putativeIntersects</span>
+                     <span class="k">if</span> <span class="n">polygonList</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">cell</span><span class="p">)]</span>
 
             <span class="n">polygonIndex</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cell</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
 
@@ -330,11 +331,11 @@
 
     <span class="k">def</span> <span class="nf">_clean_polygon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputPolygon</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Cleans the polygon if polygon manipulations resulted in</span>
-<span class="sd">        a multipolygon or an empty shape. </span>
+<span class="sd">        a multipolygon or an empty shape.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The cleaned polygon. If the multipolygon is passed, this will </span>
-<span class="sd">            return the largest polygon within the multipolygon. If a </span>
+<span class="sd">            The cleaned polygon. If the multipolygon is passed, this will</span>
+<span class="sd">            return the largest polygon within the multipolygon. If a</span>
 <span class="sd">            non-polygon shape is passed, this function will return None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">inputPolygon</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s1">&#39;Polygon&#39;</span><span class="p">:</span>
@@ -350,14 +351,14 @@
 
         <span class="c1"># The boundaries are filtered to avoid empty boundaries and to</span>
         <span class="c1"># prevent intersection in the boundary path.</span>
-        <span class="n">rawBoundaries</span> <span class="o">=</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> \
-                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">segmentTask</span><span class="o">.</span><span class="n">get_cell_boundaries</span><span class="p">()]</span>
-        <span class="n">rawBoundaries</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rawBoundaries</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">area</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">rawBoundaries</span> <span class="o">=</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                         <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">segmentTask</span><span class="o">.</span><span class="n">get_cell_boundaries</span><span class="p">()]</span>
+        <span class="n">rawBoundaries</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rawBoundaries</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
 
         <span class="n">overlapComponents</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">networkx</span><span class="o">.</span><span class="n">connected_components</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_get_intersection_graph</span><span class="p">(</span><span class="n">rawBoundaries</span><span class="p">)))</span>
-        <span class="n">mergedCells</span> <span class="o">=</span> <span class="p">[</span><span class="n">unary_union</span><span class="p">([</span><span class="n">rawBoundaries</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">c</span><span class="p">])</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> \
-                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">overlapComponents</span><span class="p">]</span>
+        <span class="n">mergedCells</span> <span class="o">=</span> <span class="p">[</span><span class="n">unary_union</span><span class="p">([</span><span class="n">rawBoundaries</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">c</span><span class="p">])</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">overlapComponents</span><span class="p">]</span>
     
         <span class="n">refinedComponents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_intersection_graph</span><span class="p">(</span>
                 <span class="n">mergedCells</span><span class="p">,</span> <span class="n">areaThreshold</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -366,13 +367,13 @@
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">currentCell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mergedCells</span><span class="p">):</span>
             <span class="n">edgesFromCell</span> <span class="o">=</span> <span class="n">refinedComponents</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">currentCell</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s1">&#39;Polygon&#39;</span><span class="p">:</span> 
+            <span class="k">if</span> <span class="n">currentCell</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s1">&#39;Polygon&#39;</span><span class="p">:</span>
                 <span class="n">cleanedCell</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">currentCell</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edgesFromCell</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">cleanedCell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="k">if</span> <span class="ow">not</span> <span class="n">mergedCells</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">cleanedCell</span><span class="p">):</span>
                             <span class="n">cleanedCell</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_polygon</span><span class="p">(</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">_subtract_region</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_subtract_region</span><span class="p">(</span>
                                     <span class="n">cleanedCell</span><span class="p">,</span> <span class="n">mergedCells</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span>
                 <span class="k">if</span> <span class="n">cleanedCell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">cleanedCells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cleanedCell</span><span class="p">)</span>
@@ -383,6 +384,198 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
                 <span class="n">refinedBoundaries</span><span class="p">,</span> <span class="s1">&#39;cell_boundaries&#39;</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="AssignCellFOV"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.AssignCellFOV">[docs]</a><span class="k">class</span> <span class="nc">AssignCellFOV</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">segmentTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alignTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="AssignCellFOV.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.AssignCellFOV.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">2048</span></div>
+
+<div class="viewcode-block" id="AssignCellFOV.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.AssignCellFOV.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">30</span></div>
+
+<div class="viewcode-block" id="AssignCellFOV.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.AssignCellFOV.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">]]</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_fov_boxes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">allFOVs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fov</span> <span class="ow">in</span> <span class="n">allFOVs</span><span class="p">:</span>
+            <span class="n">coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alignTask</span><span class="o">.</span><span class="n">fov_global_extent</span><span class="p">(</span><span class="n">fov</span><span class="p">))</span>
+
+        <span class="n">coordsDF</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span>
+                                    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;minx&#39;</span><span class="p">,</span> <span class="s1">&#39;miny&#39;</span><span class="p">,</span> <span class="s1">&#39;maxx&#39;</span><span class="p">,</span> <span class="s1">&#39;maxy&#39;</span><span class="p">],</span>
+                                    <span class="n">index</span><span class="o">=</span><span class="n">allFOVs</span><span class="p">)</span>
+        <span class="n">coordsDF</span><span class="p">[</span><span class="s1">&#39;centerX&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">coordsDF</span><span class="p">[</span><span class="s1">&#39;minx&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">coordsDF</span><span class="p">[</span><span class="s1">&#39;maxx&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">coordsDF</span><span class="p">[</span><span class="s1">&#39;centerY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">coordsDF</span><span class="p">[</span><span class="s1">&#39;miny&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">coordsDF</span><span class="p">[</span><span class="s1">&#39;maxy&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="n">boxes</span> <span class="o">=</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">box</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+                 <span class="n">coordsDF</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="s1">&#39;minx&#39;</span><span class="p">,</span> <span class="s1">&#39;miny&#39;</span><span class="p">,</span> <span class="s1">&#39;maxx&#39;</span><span class="p">,</span> <span class="s1">&#39;maxy&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">coordsDF</span><span class="p">,</span> <span class="n">boxes</span>
+
+    <span class="k">def</span> <span class="nf">_construct_fov_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tiledPositions</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                            <span class="n">fovIntersections</span><span class="p">:</span> <span class="n">List</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">tiledPositions</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">fovIntersections</span><span class="p">,</span>
+                                               <span class="p">[</span><span class="s1">&#39;centerX&#39;</span><span class="p">,</span> <span class="s1">&#39;centerY&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_intial_clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">currentFOV</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">currentCells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">segmentTask</span><span class="o">.</span><span class="n">get_feature_database</span><span class="p">()</span>\
+            <span class="o">.</span><span class="n">read_features</span><span class="p">(</span><span class="n">currentFOV</span><span class="p">)</span>
+        <span class="n">cleanCells</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">get_bounding_box</span><span class="p">())</span> <span class="o">==</span> <span class="mi">4</span>
+                      <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">currentCells</span><span class="p">]</span>
+        <span class="n">currentCells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">currentCells</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cleanCells</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">currentCells</span>
+
+    <span class="k">def</span> <span class="nf">_secondary_assignments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">currentFOV</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                               <span class="n">secondaryAssignmentDict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+        <span class="n">currentCells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intial_clean</span><span class="p">(</span><span class="n">currentFOV</span><span class="p">)</span>
+
+        <span class="n">secondaryAssignments</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">secondaryAssignmentDict</span><span class="p">[</span><span class="n">currentFOV</span><span class="p">][</span><span class="n">x</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()]]</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">currentCells</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()</span>
+            <span class="ow">in</span> <span class="n">secondaryAssignmentDict</span><span class="p">[</span><span class="n">currentFOV</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">secondaryAssignments</span>
+
+    <span class="k">def</span> <span class="nf">_construct_spatial_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tree</span><span class="p">:</span> <span class="n">rtree</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">Index</span><span class="p">,</span>
+                                <span class="n">cells</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span> <span class="n">idToNum</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">cells</span><span class="p">:</span>
+            <span class="n">tree</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">idToNum</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()],</span>
+                        <span class="n">element</span><span class="o">.</span><span class="n">get_bounding_box</span><span class="p">(),</span> <span class="n">obj</span><span class="o">=</span><span class="n">element</span><span class="o">.</span><span class="n">get_fov</span><span class="p">())</span>
+
+<div class="viewcode-block" id="AssignCellFOV.get_feature_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.segment.AssignCellFOV.get_feature_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_feature_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">spatialfeature</span><span class="o">.</span><span class="n">HDF5SpatialFeatureDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">featureDB</span> <span class="o">=</span> <span class="n">spatialfeature</span><span class="o">.</span><span class="n">HDF5SpatialFeatureDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">rtree</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">Index</span><span class="p">()</span>
+        <span class="n">allFOVs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()</span>
+        <span class="n">tiledPositions</span><span class="p">,</span> <span class="n">allFOVBoxes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fov_boxes</span><span class="p">()</span>
+        <span class="n">numToID</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">idToNum</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">idTracking</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">currentFOV</span> <span class="ow">in</span> <span class="n">allFOVs</span><span class="p">:</span>
+            <span class="n">currentUnassigned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intial_clean</span><span class="p">(</span><span class="n">currentFOV</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">currentUnassigned</span><span class="p">)):</span>
+                <span class="n">numToID</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">idTracking</span><span class="p">]</span> <span class="o">=</span> <span class="n">currentUnassigned</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()</span>
+                <span class="n">idToNum</span><span class="p">[</span><span class="n">currentUnassigned</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">idTracking</span>
+            <span class="n">idTracking</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">currentUnassigned</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_construct_spatial_tree</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">currentUnassigned</span><span class="p">,</span> <span class="n">idToNum</span><span class="p">)</span>
+
+        <span class="n">secondaryAssignments</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">currentFOV</span> <span class="ow">in</span> <span class="n">allFOVs</span><span class="p">:</span>
+            <span class="n">secondaryAssignments</span><span class="p">[</span><span class="n">currentFOV</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">currentFOV</span> <span class="ow">in</span> <span class="n">allFOVs</span><span class="p">:</span>
+            <span class="n">FOVintersections</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">allFOVBoxes</span><span class="p">))</span>
+                                       <span class="k">if</span> <span class="n">allFOVBoxes</span><span class="p">[</span><span class="n">currentFOV</span><span class="p">]</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span>
+                                                            <span class="n">allFOVBoxes</span><span class="p">[</span><span class="n">x</span><span class="p">])])</span>
+            <span class="n">fovTree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_fov_tree</span><span class="p">(</span><span class="n">tiledPositions</span><span class="p">,</span> <span class="n">FOVintersections</span><span class="p">)</span>
+            <span class="n">currentCells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intial_clean</span><span class="p">(</span><span class="n">currentFOV</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">currentCells</span><span class="p">:</span>
+                <span class="n">overlappingCells</span> <span class="o">=</span> <span class="n">idx</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">get_bounding_box</span><span class="p">(),</span>
+                                                    <span class="n">objects</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">toCheck</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">overlappingCells</span><span class="p">:</span>
+                    <span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">bbox</span>
+                    <span class="n">toCheck</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">numToID</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">],</span>
+                                    <span class="n">c</span><span class="o">.</span><span class="n">object</span><span class="p">,</span>
+                                    <span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">toCheck</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># I dont know if this case will come up but want to guard</span>
+                    <span class="c1"># against this, it implies</span>
+                    <span class="c1"># there was an error in the original tree construction</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;missing </span><span class="si">{}</span><span class="s1"> from tree&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># If a cell does not overlap another cell,</span>
+                    <span class="c1"># keep it and assign it to an fov based on the fov centroid</span>
+                    <span class="c1"># it&#39;s closest to</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">toCheck</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> \
+                            <span class="n">cell</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()</span> <span class="o">==</span> <span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+                        <span class="n">xCenter</span> <span class="o">=</span> <span class="p">(</span><span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">4</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="n">yCenter</span> <span class="o">=</span> <span class="p">(</span><span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">5</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="p">[</span><span class="n">d</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fovTree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xCenter</span><span class="p">,</span> <span class="n">yCenter</span><span class="p">]))</span>
+                        <span class="n">assignedFOV</span> <span class="o">=</span> <span class="n">tiledPositions</span> \
+                            <span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">FOVintersections</span><span class="p">,</span> <span class="p">:]</span> \
+                            <span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="n">i</span><span class="p">]</span>
+                        <span class="n">secondaryAssignments</span><span class="p">[</span><span class="n">currentFOV</span><span class="p">][</span><span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> \
+                            <span class="n">assignedFOV</span>
+                    <span class="c1"># I dont know if this case will come up but want to guard</span>
+                    <span class="c1"># against this, it implies there was an error</span>
+                    <span class="c1"># in the original tree construction</span>
+                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">toCheck</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> \
+                            <span class="n">cell</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">()</span> <span class="o">==</span> <span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;encountered unexpected overlap between </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1">&#39;</span>
+                              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">get_feature_id</span><span class="p">(),</span> <span class="n">toCheck</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+                    <span class="c1"># If a cell overlaps at least one other cell first check if</span>
+                    <span class="c1"># all cells are closest to a particular FOV centroid,</span>
+                    <span class="c1"># then if a cell boundary was determined from that fov</span>
+                    <span class="c1"># keep it, else choose a cell at random. If overlapping</span>
+                    <span class="c1"># cells are closest to different fov centroids,</span>
+                    <span class="c1"># again keep one at random</span>
+                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">toCheck</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="n">toCheckDF</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toCheck</span><span class="p">,</span>
+                                                     <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cell ID&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;initial FOV&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;xmin&#39;</span><span class="p">,</span> <span class="s1">&#39;ymin&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;xmax&#39;</span><span class="p">,</span> <span class="s1">&#39;ymax&#39;</span><span class="p">])</span>
+                        <span class="n">toCheckDF</span><span class="p">[</span><span class="s1">&#39;centerX&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">toCheckDF</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;xmin&#39;</span><span class="p">]</span> <span class="o">+</span>
+                                                <span class="n">toCheckDF</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;xmax&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="n">toCheckDF</span><span class="p">[</span><span class="s1">&#39;centerY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">toCheckDF</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;ymin&#39;</span><span class="p">]</span> <span class="o">+</span>
+                                                <span class="n">toCheckDF</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;ymax&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="p">[</span><span class="n">d</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fovTree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">toCheckDF</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="s1">&#39;centerX&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;centerY&#39;</span><span class="p">]],</span>
+                                               <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">assignedFOV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">tiledPositions</span>
+                                               <span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">FOVintersections</span><span class="p">,</span> <span class="p">:]</span>
+                                               <span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())[</span><span class="n">i</span><span class="p">]</span>
+                        <span class="n">toCheckDF</span><span class="p">[</span><span class="s1">&#39;assigned FOV&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">assignedFOV</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">assignedFOV</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">toCheckDF</span><span class="p">[</span><span class="n">toCheckDF</span><span class="p">[</span><span class="s1">&#39;initial FOV&#39;</span><span class="p">]</span> <span class="o">==</span>
+                                             <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">assignedFOV</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">selected</span> <span class="o">=</span> <span class="n">toCheckDF</span><span class="p">[</span>
+                                    <span class="n">toCheckDF</span><span class="p">[</span><span class="s1">&#39;initial FOV&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+                                        <span class="n">assignedFOV</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">selected</span> <span class="o">=</span> <span class="n">toCheckDF</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">matching</span> <span class="o">=</span> <span class="n">toCheckDF</span><span class="p">[</span><span class="n">toCheckDF</span><span class="p">[</span><span class="s1">&#39;initial FOV&#39;</span><span class="p">]</span> <span class="o">==</span>
+                                                 <span class="n">toCheckDF</span><span class="p">[</span><span class="s1">&#39;assigned FOV&#39;</span><span class="p">]]</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matching</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">selected</span> <span class="o">=</span> <span class="n">toCheckDF</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">selected</span> <span class="o">=</span> <span class="n">matching</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">selectedFOV</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;assigned FOV&#39;</span><span class="p">]</span> \
+                            <span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">selectedCellID</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;cell ID&#39;</span><span class="p">]</span> \
+                            <span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">secondaryAssignments</span><span class="p">[</span>
+                            <span class="n">currentFOV</span><span class="p">][</span><span class="n">selectedCellID</span><span class="p">]</span> <span class="o">=</span> <span class="n">selectedFOV</span>
+
+        <span class="k">for</span> <span class="n">currentFOV</span> <span class="ow">in</span> <span class="n">allFOVs</span><span class="p">:</span>
+            <span class="n">secondaryCellAssignments</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_secondary_assignments</span><span class="p">(</span><span class="n">currentFOV</span><span class="p">,</span> <span class="n">secondaryAssignments</span><span class="p">)</span>
+            <span class="n">allFOV</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">secondaryCellAssignments</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">allFOV</span><span class="p">:</span>
+                <span class="n">cellsInFOV</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">secondaryCellAssignments</span>
+                              <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">f</span><span class="p">]</span>
+                <span class="n">featureDB</span><span class="o">.</span><span class="n">write_features</span><span class="p">(</span><span class="n">cellsInFOV</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
+
+
+
+
 
 
 

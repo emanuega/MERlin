@@ -151,17 +151,708 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="merlin-util-barcodedb-module">
-<h2>merlin.util.barcodedb module<a class="headerlink" href="#merlin-util-barcodedb-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.util.barcodedb">
+<span id="merlin-util-barcodedb-module"></span><h2>merlin.util.barcodedb module<a class="headerlink" href="#module-merlin.util.barcodedb" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.util.barcodedb.BarcodeDB">
+<em class="property">class </em><code class="descclassname">merlin.util.barcodedb.</code><code class="descname">BarcodeDB</code><span class="sig-paren">(</span><em>dataSet</em>, <em>analysisTask</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An abstract class for storing and retrieving barcode information.</p>
+<dl class="docutils">
+<dt>For each barcode in the database, the following information is stored:</dt>
+<dd><p class="first">barcode - the error corrected binary word corresponding to the barcode
+assigned_barcode -
+barcode_id - the index of the barcode in the codebook
+fov - the field of view where the barcode was identified
+mean_intensity - the mean intensity in the pixels corresponding to</p>
+<blockquote>
+<div>this  barcode</div></blockquote>
+<dl class="docutils">
+<dt>max_intensity - the max intensity in the pixels corresponding to</dt>
+<dd>this barcode</dd>
+</dl>
+<p>area - the number of pixels covered by the barcode
+mean_distance - the distance between the barcode and the measured</p>
+<blockquote>
+<div>pixel traces averaged for all pixels corresponding to the barcode</div></blockquote>
+<dl class="docutils">
+<dt>min_distance - the minimum distance between the barcode and the measured</dt>
+<dd>pixel traces of all pixels corresponding to the barcode</dd>
+</dl>
+<p>x,y,z - the average x,y,z position of all pixels covered by the barcode
+weighted_x, weighted_y, weighted_z - the average x,y,z position of</p>
+<blockquote>
+<div>of all pixels covered by the barcode weighted by the magnitude
+of each pixel</div></blockquote>
+<p>global_x, global_y, global_z - the global x,y,z position of the barcode
+cell_index - the cell that contains this barcode
+intensity_i - the mean intensity across corresponding pixels for</p>
+<blockquote class="last">
+<div>bit i where i is an integer from 0 to the number of bits-1.</div></blockquote>
+</dd>
+</dl>
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.empty_database">
+<code class="descname">empty_database</code><span class="sig-paren">(</span><em>fov: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.empty_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.empty_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all barcodes from this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fov</strong> – index of the field of view. If specified, only barcodes
+corresponding to the specified fov will be removed. Otherwise,
+all barcodes will be removed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcodes">
+<code class="descname">get_barcodes</code><span class="sig-paren">(</span><em>fov: int = None</em>, <em>columnList: List[str] = None</em>, <em>chunksize: int = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get barcodes stored in this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fov</strong> – index of the field view. If None, barcodes for all fovs
+are returned.</li>
+<li><strong>columnList</strong> – list of columns to extract. If not specified, all
+columns are returned.</li>
+<li><strong>chunksize</strong> – the size of chunks to iterate. If not specified, a
+pandas dataframe is returned otherwise an iterator over the
+barcodes is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>if chunksize is not set, a pandas dataframe containing all the</dt>
+<dd><p class="first last">requested barcodes is returned. Otherwise an iterator is
+returned that iterates over the requested barcodes.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_filtered_barcodes">
+<code class="descname">get_filtered_barcodes</code><span class="sig-paren">(</span><em>areaThreshold: int</em>, <em>intensityThreshold: float</em>, <em>distanceThreshold: float = None</em>, <em>fov: int = None</em>, <em>chunksize: int = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_filtered_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_filtered_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get barcodes from this barcode database that pass the area and
+intensity thresholds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>areaThreshold</strong> – the minimum area threshold. Barcodes that
+have an area equal to the specified threshold are included
+in the output.</li>
+<li><strong>intensityThreshold</strong> – the minimum value for mean_intenity for
+the select barcodes</li>
+<li><strong>distanceThreshold</strong> – the maximum value for min_distance for
+the select barcodes</li>
+<li><strong>fov</strong> – index of the field view. If None, barcodes for all fovs
+are returned.</li>
+<li><strong>chunksize</strong> – the size of chunks to iterate. If not specified, a
+pandas dataframe is returned otherwise an iterator over the
+barcodes is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>if chunksize is not set, a pandas dataframe containing all the</dt>
+<dd><p class="first last">requested barcodes is returned. Otherwise an iterator is
+returned that iterates over the requested barcodes.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_intensities_for_barcodes_with_area">
+<code class="descname">get_intensities_for_barcodes_with_area</code><span class="sig-paren">(</span><em>area: int</em><span class="sig-paren">)</span> &#x2192; pandas.core.series.Series<a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_intensities_for_barcodes_with_area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_intensities_for_barcodes_with_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the barcode intensities for barcodes that have the specified
+area.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.write_barcodes">
+<code class="descname">write_barcodes</code><span class="sig-paren">(</span><em>barcodeInformation: pandas.core.frame.DataFrame</em>, <em>fov: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.write_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.write_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the specified barcodes into the barcode database.</p>
+<p>If all the barcodes correspond to the same fov, then fov can be
+specified to improve performance. This function does not verify that
+fov is specified incorrectly. If fov is specified but the provided
+barcodes are not all from the same fov, the barcode database may become
+corrupted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>barcodeInformation</strong> – barcodes to write to the database. The
+dataframe must have the columns specified for a barcode
+database.</li>
+<li><strong>fov</strong> – the fov of the barcodes if they all correspond to the same
+fov. If barcodeInformation contains barcodes from different
+fovs, then fov should be set to None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcode_intensities">
+<code class="descname">get_barcode_intensities</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pandas.core.series.Series<a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcode_intensities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcode_intensities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get mean intensities for all barcodes in this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">series containing mean intensity for all barcodes</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcode_areas">
+<code class="descname">get_barcode_areas</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pandas.core.series.Series<a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcode_areas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcode_areas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get areas for all barcodes in this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">series containing areas for all barcodes</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.BarcodeDB.get_barcode_distances">
+<code class="descname">get_barcode_distances</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pandas.core.series.Series<a class="reference internal" href="merlin/util/barcodedb.html#BarcodeDB.get_barcode_distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.BarcodeDB.get_barcode_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get distances for all barcodes in this database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">series containing distances for all barcodes</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.util.barcodedb.PyTablesBarcodeDB">
+<em class="property">class </em><code class="descclassname">merlin.util.barcodedb.</code><code class="descname">PyTablesBarcodeDB</code><span class="sig-paren">(</span><em>dataSet: merlin.core.dataset.DataSet</em>, <em>analysisTask</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#PyTablesBarcodeDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.PyTablesBarcodeDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.util.barcodedb.BarcodeDB" title="merlin.util.barcodedb.BarcodeDB"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.util.barcodedb.BarcodeDB</span></code></a></p>
+<dl class="method">
+<dt id="merlin.util.barcodedb.PyTablesBarcodeDB.empty_database">
+<code class="descname">empty_database</code><span class="sig-paren">(</span><em>fov: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/util/barcodedb.html#PyTablesBarcodeDB.empty_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.PyTablesBarcodeDB.empty_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all barcodes from this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fov</strong> – index of the field of view. If specified, only barcodes
+corresponding to the specified fov will be removed. Otherwise,
+all barcodes will be removed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.PyTablesBarcodeDB.get_barcodes">
+<code class="descname">get_barcodes</code><span class="sig-paren">(</span><em>fov=None</em>, <em>columnList=None</em>, <em>chunkSize=None</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="merlin/util/barcodedb.html#PyTablesBarcodeDB.get_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.PyTablesBarcodeDB.get_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get barcodes stored in this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fov</strong> – index of the field view. If None, barcodes for all fovs
+are returned.</li>
+<li><strong>columnList</strong> – list of columns to extract. If not specified, all
+columns are returned.</li>
+<li><strong>chunksize</strong> – the size of chunks to iterate. If not specified, a
+pandas dataframe is returned otherwise an iterator over the
+barcodes is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>if chunksize is not set, a pandas dataframe containing all the</dt>
+<dd><p class="first last">requested barcodes is returned. Otherwise an iterator is
+returned that iterates over the requested barcodes.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.PyTablesBarcodeDB.get_filtered_barcodes">
+<code class="descname">get_filtered_barcodes</code><span class="sig-paren">(</span><em>areaThreshold: int</em>, <em>intensityThreshold: float</em>, <em>distanceThreshold: float = None</em>, <em>fov: int = None</em>, <em>chunksize: int = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#PyTablesBarcodeDB.get_filtered_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.PyTablesBarcodeDB.get_filtered_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get barcodes from this barcode database that pass the area and
+intensity thresholds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>areaThreshold</strong> – the minimum area threshold. Barcodes that
+have an area equal to the specified threshold are included
+in the output.</li>
+<li><strong>intensityThreshold</strong> – the minimum value for mean_intenity for
+the select barcodes</li>
+<li><strong>distanceThreshold</strong> – the maximum value for min_distance for
+the select barcodes</li>
+<li><strong>fov</strong> – index of the field view. If None, barcodes for all fovs
+are returned.</li>
+<li><strong>chunksize</strong> – the size of chunks to iterate. If not specified, a
+pandas dataframe is returned otherwise an iterator over the
+barcodes is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>if chunksize is not set, a pandas dataframe containing all the</dt>
+<dd><p class="first last">requested barcodes is returned. Otherwise an iterator is
+returned that iterates over the requested barcodes.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.PyTablesBarcodeDB.get_intensities_for_barcodes_with_area">
+<code class="descname">get_intensities_for_barcodes_with_area</code><span class="sig-paren">(</span><em>area: int</em><span class="sig-paren">)</span> &#x2192; pandas.core.series.Series<a class="reference internal" href="merlin/util/barcodedb.html#PyTablesBarcodeDB.get_intensities_for_barcodes_with_area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.PyTablesBarcodeDB.get_intensities_for_barcodes_with_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the barcode intensities for barcodes that have the specified
+area.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.PyTablesBarcodeDB.write_barcodes">
+<code class="descname">write_barcodes</code><span class="sig-paren">(</span><em>barcodeInformation: pandas.core.frame.DataFrame</em>, <em>fov: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/util/barcodedb.html#PyTablesBarcodeDB.write_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.PyTablesBarcodeDB.write_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the specified barcodes into the barcode database.</p>
+<p>If all the barcodes correspond to the same fov, then fov can be
+specified to improve performance. This function does not verify that
+fov is specified incorrectly. If fov is specified but the provided
+barcodes are not all from the same fov, the barcode database may become
+corrupted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>barcodeInformation</strong> – barcodes to write to the database. The
+dataframe must have the columns specified for a barcode
+database.</li>
+<li><strong>fov</strong> – the fov of the barcodes if they all correspond to the same
+fov. If barcodeInformation contains barcodes from different
+fovs, then fov should be set to None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB">
+<em class="property">class </em><code class="descclassname">merlin.util.barcodedb.</code><code class="descname">SQLiteBarcodeDB</code><span class="sig-paren">(</span><em>dataSet</em>, <em>analysisTask</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.util.barcodedb.BarcodeDB" title="merlin.util.barcodedb.BarcodeDB"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.util.barcodedb.BarcodeDB</span></code></a></p>
+<p>A class for storing and retrieving barcode information using a
+SQLite back end.</p>
+<p>This barcode database stores the barcodes corresponding to each FOV
+into its own SQLite file so that multiple FOVS can be processed
+in parallel efficiently.</p>
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.get_barcodes">
+<code class="descname">get_barcodes</code><span class="sig-paren">(</span><em>fov=None</em>, <em>columnList=None</em>, <em>chunksize=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.get_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.get_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get barcodes stored in this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fov</strong> – index of the field view. If None, barcodes for all fovs
+are returned.</li>
+<li><strong>columnList</strong> – list of columns to extract. If not specified, all
+columns are returned.</li>
+<li><strong>chunksize</strong> – the size of chunks to iterate. If not specified, a
+pandas dataframe is returned otherwise an iterator over the
+barcodes is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>if chunksize is not set, a pandas dataframe containing all the</dt>
+<dd><p class="first last">requested barcodes is returned. Otherwise an iterator is
+returned that iterates over the requested barcodes.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.get_filtered_barcodes">
+<code class="descname">get_filtered_barcodes</code><span class="sig-paren">(</span><em>areaThreshold</em>, <em>intensityThreshold</em>, <em>fov=None</em>, <em>chunksize=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.get_filtered_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.get_filtered_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get barcodes from this barcode database that pass the area and
+intensity thresholds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>areaThreshold</strong> – the minimum area threshold. Barcodes that
+have an area equal to the specified threshold are included
+in the output.</li>
+<li><strong>intensityThreshold</strong> – the minimum value for mean_intenity for
+the select barcodes</li>
+<li><strong>distanceThreshold</strong> – the maximum value for min_distance for
+the select barcodes</li>
+<li><strong>fov</strong> – index of the field view. If None, barcodes for all fovs
+are returned.</li>
+<li><strong>chunksize</strong> – the size of chunks to iterate. If not specified, a
+pandas dataframe is returned otherwise an iterator over the
+barcodes is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>if chunksize is not set, a pandas dataframe containing all the</dt>
+<dd><p class="first last">requested barcodes is returned. Otherwise an iterator is
+returned that iterates over the requested barcodes.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.get_intensities_for_barcodes_with_area">
+<code class="descname">get_intensities_for_barcodes_with_area</code><span class="sig-paren">(</span><em>area</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.get_intensities_for_barcodes_with_area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.get_intensities_for_barcodes_with_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the barcode intensities for barcodes that have the specified
+area.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.write_barcodes">
+<code class="descname">write_barcodes</code><span class="sig-paren">(</span><em>barcodeInformation</em>, <em>fov=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.write_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.write_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the specified barcodes into the barcode database.</p>
+<p>If all the barcodes correspond to the same fov, then fov can be
+specified to improve performance. This function does not verify that
+fov is specified incorrectly. If fov is specified but the provided
+barcodes are not all from the same fov, the barcode database may become
+corrupted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>barcodeInformation</strong> – barcodes to write to the database. The
+dataframe must have the columns specified for a barcode
+database.</li>
+<li><strong>fov</strong> – the fov of the barcodes if they all correspond to the same
+fov. If barcodeInformation contains barcodes from different
+fovs, then fov should be set to None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.barcodedb.SQLiteBarcodeDB.empty_database">
+<code class="descname">empty_database</code><span class="sig-paren">(</span><em>fov=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/barcodedb.html#SQLiteBarcodeDB.empty_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.barcodedb.SQLiteBarcodeDB.empty_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all barcodes from this database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fov</strong> – index of the field of view. If specified, only barcodes
+corresponding to the specified fov will be removed. Otherwise,
+all barcodes will be removed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-util-binary-module">
-<h2>merlin.util.binary module<a class="headerlink" href="#merlin-util-binary-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.util.binary">
+<span id="merlin-util-binary-module"></span><h2>merlin.util.binary module<a class="headerlink" href="#module-merlin.util.binary" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="merlin.util.binary.bit_list_to_int">
+<code class="descclassname">merlin.util.binary.</code><code class="descname">bit_list_to_int</code><span class="sig-paren">(</span><em>bitList: List[bool]</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="merlin/util/binary.html#bit_list_to_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.binary.bit_list_to_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a binary list to an integer</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>bitList</strong> – the binary list to convert</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The integer corresponding to the input bit list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="merlin.util.binary.int_to_bit_list">
+<code class="descclassname">merlin.util.binary.</code><code class="descname">int_to_bit_list</code><span class="sig-paren">(</span><em>intIn: int</em>, <em>bitCount: int</em><span class="sig-paren">)</span> &#x2192; List[bool]<a class="reference internal" href="merlin/util/binary.html#int_to_bit_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.binary.int_to_bit_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an integer to a binary list with the specified number of bits.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>intIn</strong> – the integer to convert</li>
+<li><strong>bitCount</strong> – the number of bits to include in the output bit list</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>A list of bit that specifies the input integer. The least significant</dt>
+<dd><p class="first last">bit is first in the list.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="merlin.util.binary.k_bit_set">
+<code class="descclassname">merlin.util.binary.</code><code class="descname">k_bit_set</code><span class="sig-paren">(</span><em>n: int</em>, <em>k: int</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="merlin/util/binary.html#k_bit_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.binary.k_bit_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if the k’th bit of integer n is set to 1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n</strong> – the integer to check</li>
+<li><strong>k</strong> – the index of the bit to check where 0 corresponds with the least
+significant bit</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>true if the k’th bit of the integer n is 1, otherwise false. If</dt>
+<dd><p class="first last">k is None, this function returns None.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="merlin.util.binary.flip_bit">
+<code class="descclassname">merlin.util.binary.</code><code class="descname">flip_bit</code><span class="sig-paren">(</span><em>barcode: List[bool], bitIndex: int</em><span class="sig-paren">)</span> &#x2192; List[bool]<a class="reference internal" href="merlin/util/binary.html#flip_bit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.binary.flip_bit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a version of the provided barcode where the bit at the
+specified index is inverted.</p>
+<p>The provided barcode is left unchanged. It is copied before flipping the
+bit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>barcode</strong> – A binary array where the i’th entry corresponds with the
+value of the i’th bit</li>
+<li><strong>bitIndex</strong> – The index of the bit to reverse</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A copy of barcode with bitIndex inverted</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-util-decoding-module">
-<h2>merlin.util.decoding module<a class="headerlink" href="#merlin-util-decoding-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.util.decoding">
+<span id="merlin-util-decoding-module"></span><h2>merlin.util.decoding module<a class="headerlink" href="#module-merlin.util.decoding" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="merlin.util.decoding.normalize">
+<code class="descclassname">merlin.util.decoding.</code><code class="descname">normalize</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.normalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="merlin.util.decoding.PixelBasedDecoder">
+<em class="property">class </em><code class="descclassname">merlin.util.decoding.</code><code class="descname">PixelBasedDecoder</code><span class="sig-paren">(</span><em>codebook: merlin.data.codebook.Codebook</em>, <em>scaleFactors: numpy.ndarray = None</em>, <em>backgrounds: numpy.ndarray = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#PixelBasedDecoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.PixelBasedDecoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="merlin.util.decoding.PixelBasedDecoder.decode_pixels">
+<code class="descname">decode_pixels</code><span class="sig-paren">(</span><em>imageData: numpy.ndarray</em>, <em>scaleFactors: numpy.ndarray = None</em>, <em>backgrounds: numpy.ndarray = None</em>, <em>distanceThreshold: float = 0.5176</em>, <em>magnitudeThreshold: float = 1</em>, <em>lowPassSigma: float = 1</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/util/decoding.html#PixelBasedDecoder.decode_pixels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.PixelBasedDecoder.decode_pixels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign barcodes to the pixels in the provided image stock.</p>
+<p>Each pixel is assigned to the nearest barcode from the codebook if
+the distance between the normalized pixel trace and the barcode is
+less than the distance threshold.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>imageData</strong> – input image stack. The first dimension indexes the bit
+number and the second and third dimensions contain the
+corresponding image.</li>
+<li><strong>scaleFactors</strong> – factors to rescale each bit prior to normalization.
+The length of scaleFactors must be equal to the number of bits.</li>
+<li><strong>backgrounds</strong> – background to subtract from each bit prior to applying
+the scale factors and prior to normalization. The length of
+backgrounds must be equal to the number of bits.</li>
+<li><strong>distanceThreshold</strong> – the maximum distance between an assigned pixel
+and the nearest barcode. Pixels for which the nearest barcode
+is greater than distanceThreshold are left unassigned.</li>
+<li><strong>magnitudeThreshold</strong> – the minimum pixel magnitude for which a
+barcode can be assigned that pixel. All pixels that fall
+below the magnitude threshold are not assigned a barcode
+in the decoded image.</li>
+<li><strong>lowPassSigma</strong> – standard deviation for the low pass filter that is
+applied to the images prior to decoding.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>Four results are returned as a tuple (decodedImage, pixelMagnitudes,</dt>
+<dd><p class="first last">normalizedPixelTraces, distances). decodedImage is an image
+indicating the barcode index assigned to each pixel. Pixels
+for which a barcode is not assigned have a value of -1.
+pixelMagnitudes is an image where each pixel is the norm of
+the pixel trace after scaling by the provided scaleFactors.
+normalizedPixelTraces is an image stack containing the
+normalized intensities for each pixel. distances is an
+image containing the distance for each pixel to the assigned
+barcode.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.decoding.PixelBasedDecoder.extract_barcodes_with_index">
+<code class="descname">extract_barcodes_with_index</code><span class="sig-paren">(</span><em>barcodeIndex: int</em>, <em>decodedImage: numpy.ndarray</em>, <em>pixelMagnitudes: numpy.ndarray</em>, <em>pixelTraces: numpy.ndarray</em>, <em>distances: numpy.ndarray</em>, <em>fov: int</em>, <em>cropWidth: int</em>, <em>zIndex: int = None</em>, <em>globalAligner=None</em>, <em>segmenter=None</em>, <em>minimumArea: int = 0</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="merlin/util/decoding.html#PixelBasedDecoder.extract_barcodes_with_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.PixelBasedDecoder.extract_barcodes_with_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract the barcode information from the decoded image for barcodes
+that were decoded to the specified barcode index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>barcodeIndex</strong> – the index of the barcode to extract the corresponding
+barcodes</li>
+<li><strong>decodedImage</strong> – the image indicating the barcode index assigned to
+each pixel</li>
+<li><strong>pixelMagnitudes</strong> – an image containing norm of the intensities for
+each pixel across all bits after scaling by the scale factors</li>
+<li><strong>pixelTraces</strong> – an image stack containing the normalized pixel
+intensity traces</li>
+<li><strong>distances</strong> – an image indicating the distance between the normalized
+pixel trace and the assigned barcode for each pixel</li>
+<li><strong>fov</strong> – the index of the field of view</li>
+<li><strong>cropWidth</strong> – the number of pixels around the edge of each image within
+which barcodes are excluded from the output list.</li>
+<li><strong>zIndex</strong> – the index of the z position</li>
+<li><strong>globalAligner</strong> – the aligner used for converted to local x,y
+coordinates to global x,y coordinates</li>
+<li><strong>segmenter</strong> – the cell segmenter for assigning a cell for each of the
+identified barcodes</li>
+<li><strong>minimumArea</strong> – the minimum area of barcodes to identify. Barcodes
+less than the specified minimum area are ignored.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>a pandas dataframe containing all the barcodes decoded with the</dt>
+<dd><p class="first last">specified barcode index</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.util.decoding.PixelBasedDecoder.extract_refactors">
+<code class="descname">extract_refactors</code><span class="sig-paren">(</span><em>decodedImage</em>, <em>pixelMagnitudes</em>, <em>normalizedPixelTraces</em>, <em>extractBackgrounds=False</em><span class="sig-paren">)</span> &#x2192; Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]<a class="reference internal" href="merlin/util/decoding.html#PixelBasedDecoder.extract_refactors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.util.decoding.PixelBasedDecoder.extract_refactors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the scale factors that would result in the mean
+on bit intensity for each bit to be equal.</p>
+<p>This code follows the legacy matlab decoder.</p>
+<p>If the scale factors for this decoder are not set to 1, then the
+calculated scale factors are dependent on the input scale factors
+used for the decoding.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>imageSet</strong> – the image stack to decode in order to determine the
+scale factors</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>a tuple containing an array of the scale factors, an array</dt>
+<dd>of the backgrounds, and an array of the abundance of each
+barcode determined during the decoding. For the scale factors
+and the backgrounds, the i’th entry is the scale factor
+for bit i. If extractBackgrounds is false, the returned
+background array is all zeros.</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.util">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-merlin.util" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -197,17 +888,7 @@
 
     
     
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'../',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script type="text/javascript" src="../_static/jquery.js"></script>
         <script type="text/javascript" src="../_static/underscore.js"></script>
         <script type="text/javascript" src="../_static/doctools.js"></script>

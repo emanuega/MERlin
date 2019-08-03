@@ -108,10 +108,66 @@ class SlurmReport(analysistask.AnalysisTask):
         plt.tight_layout(pad=1)
         self.dataSet.save_figure(self, fig, analysisName)
 
+    def _plot_slurm_summary(self, reportDict):
+
+        def setBoxColors(bPlot, c):
+            for element in ['boxes', 'whiskers', 'fliers', 'means', 'medians',
+                            'caps']:
+                plt.setp(bPlot[element], color=c)
+
+        fig = plt.figure(figsize=(15, 4))
+        bp = plt.boxplot([d['MaxRSS'].str[:-1].astype(float)
+                         for d in reportDict.values()],
+                         positions=np.arange(len(reportDict))-0.25,
+                         widths=0.25)
+        setBoxColors(bp, 'r')
+        bp = plt.boxplot([d['ReqMem'].str[:-2].astype(float)
+                         for d in reportDict.values()],
+                         positions=np.arange(len(reportDict))+0.25,
+                         widths=0.25)
+        setBoxColors(bp, 'b')
+        plt.xticks(np.arange(len(reportDict)), list(reportDict.keys()),
+                   rotation='vertical')
+        plt.yscale('log')
+        hB, = plt.plot([1, 1], 'b-')
+        hR, = plt.plot([1, 1], 'r-')
+        plt.legend((hB, hR), ('Requested', 'Max used'))
+        hB.set_visible(False)
+        hR.set_visible(False)
+        plt.ylabel('Memory per job (mb)')
+        plt.title('Memory summary')
+        plt.tight_layout(pad=1)
+        self.dataSet.save_figure(self, fig, 'memory_summary')
+
+        fig = plt.figure(figsize=(15, 4))
+        bp = plt.boxplot([d['Elapsed'] / np.timedelta64(1, 'm')
+                         for d in reportDict.values()],
+                         positions=np.arange(len(reportDict))-0.25,
+                         widths=0.25)
+        setBoxColors(bp, 'r')
+        bp = plt.boxplot([d['Timelimit'] / np.timedelta64(1, 'm')
+                         for d in reportDict.values()],
+                         positions=np.arange(len(reportDict))+0.25,
+                         widths=0.25)
+        setBoxColors(bp, 'b')
+        plt.xticks(np.arange(len(reportDict)), list(reportDict.keys()),
+                   rotation='vertical')
+        plt.yscale('log')
+        hB, = plt.plot([1, 1], 'b-')
+        hR, = plt.plot([1, 1], 'r-')
+        plt.legend((hB, hR), ('Requested', 'Used'))
+        hB.set_visible(False)
+        hR.set_visible(False)
+        plt.ylabel('Time per job (min)')
+        plt.title('Time summary')
+        plt.tight_layout(pad=1)
+        self.dataSet.save_figure(self, fig, 'time_summary')
+
     def _run_analysis(self):
         taskList = self.dataSet.get_analysis_tasks()
 
         reportTime = int(time.time())
+        reportDict = {}
         for t in taskList:
             currentTask = self.dataSet.load_analysis_task(t)
             if currentTask.is_complete():
@@ -121,6 +177,7 @@ class SlurmReport(analysistask.AnalysisTask):
                 dfStream = io.StringIO()
                 slurmDF.to_csv(dfStream, sep='|')
                 self._plot_slurm_report(slurmDF, t)
+                reportDict[t] = slurmDF
 
                 try:
                     requests.post('http://www.georgeemanuel.com/merlin/post',
@@ -129,8 +186,10 @@ class SlurmReport(analysistask.AnalysisTask):
                                                    str(reportTime)])
                                          + '.csv': dfStream},
                                   timeout=10)
-                except requests.exceptions.RequestException as e:
+                except requests.exceptions.RequestException:
                     pass
+
+        self._plot_slurm_summary(reportDict)
 
         datasetMeta = {
             'image_width': self.dataSet.get_image_dimensions()[0],
@@ -138,7 +197,7 @@ class SlurmReport(analysistask.AnalysisTask):
             'barcode_length': self.dataSet.get_codebook().get_bit_count(),
             'barcode_count': self.dataSet.get_codebook().get_barcode_count(),
             'fov_count': len(self.dataSet.get_fovs()),
-            'z_count': len(self.dataSet.get_z_positions),
+            'z_count': len(self.dataSet.get_z_positions()),
             'sequential_count': len(self.dataSet.get_sequential_rounds()),
             'dataset_name': self.dataSet.dataSetName,
             'report_time': reportTime
@@ -146,5 +205,5 @@ class SlurmReport(analysistask.AnalysisTask):
         try:
             requests.post('http://www.georgeemanuel.com/merlin/post',
                           data=datasetMeta, timeout=10)
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             pass

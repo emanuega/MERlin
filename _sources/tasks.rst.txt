@@ -121,3 +121,12 @@ partition.ExportPartitionedBarcodes
 ----------------------------------
 
 Description: Combines the counts per cell csv files from each fov into a single output file.
+
+slurmreport.SlurmReport
+-------------------------------
+
+Description: An analysis task that generates reports on previously completed analysis tasks using Slurm. This analysis task only works when Merlin is run through Slurm with every analysis task fragment run as a separate job. This task uploads the Slurm report to a central repository to track Merlin's performance.
+
+Parameters:
+
+* run\_after\_task -- the task to wait for before generating the Slurm report

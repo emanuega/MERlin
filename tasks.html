@@ -95,6 +95,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#sequential-exportsumsignals">sequential.ExportSumSignals</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#partition-partitionbarcodes">partition.PartitionBarcodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#partition-exportpartitionedbarcodes">partition.ExportPartitionedBarcodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#slurmreport-slurmreport">slurmreport.SlurmReport</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to MERlin</a></li>
@@ -272,6 +273,14 @@
 <div class="section" id="partition-exportpartitionedbarcodes">
 <h2>partition.ExportPartitionedBarcodes<a class="headerlink" href="#partition-exportpartitionedbarcodes" title="Permalink to this headline">¶</a></h2>
 <p>Description: Combines the counts per cell csv files from each fov into a single output file.</p>
+</div>
+<div class="section" id="slurmreport-slurmreport">
+<h2>slurmreport.SlurmReport<a class="headerlink" href="#slurmreport-slurmreport" title="Permalink to this headline">¶</a></h2>
+<p>Description: An analysis task that generates reports on previously completed analysis tasks using Slurm. This analysis task only works when Merlin is run through Slurm with every analysis task fragment run as a separate job. This task uploads the Slurm report to a central repository to track Merlin’s performance.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li>run_after_task – the task to wait for before generating the Slurm report</li>
+</ul>
 </div>
 </div>
 

@@ -104,6 +104,7 @@ class SlurmReport(analysistask.AnalysisTask):
                     widths=0.25)
         plt.xticks([1], ['MaxDiskWrite'])
         plt.ylabel('Number of mb written')
+        plt.suptitle(analysisName)
         plt.tight_layout(pad=1)
         self.dataSet.save_figure(self, fig, analysisName)
 

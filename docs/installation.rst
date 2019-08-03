@@ -9,16 +9,19 @@ To ensure that Merlin and its dependencies don't interfere with other packages t
 An anaconda virtual environment can be created using the command:
 
 .. code-block:: none
+
     conda create -n merlin_env python=3.6
 
 and the new environment can be activated using the command:
 
 .. code-block:: none
+
     conda activate merlin_env
 
 or 
 
 .. code-block:: none
+
     source activate merlin_env
 
 Installing prerequisites
@@ -29,11 +32,13 @@ Storm-analysis_ must be installed prior to installing this package. Additionally
 .. _Storm-analysis: https://github.com/ZhuangLab/storm-analysis
 
 .. code-block:: none
+
     conda install rtree pytables
 
 On Harvard research computing, matplotlib raises an error saying that 'CXXABI_1.3.9' is not found. This can be corrected by:
 
 .. code-block:: none
+
     module load gcc/8.2.0-fasrc01
     
 Installing MERlin
@@ -42,9 +47,11 @@ Installing MERlin
 MERlin can be installed by cloning the repository and installing with pip:
 
 .. code-block:: none
+
     git clone https://github.com/emanuega/MERlin
 
 .. code-block:: none
+
     pip install -e MERlin
 
 Specifying paths with a .env file

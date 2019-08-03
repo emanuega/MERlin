@@ -3,6 +3,7 @@ import pandas
 import io
 import requests
 import time
+import json
 from matplotlib import pyplot as plt
 import numpy as np
 
@@ -175,6 +176,7 @@ class SlurmReport(analysistask.AnalysisTask):
 
         reportTime = int(time.time())
         reportDict = {}
+        analysisParameters = {}
         for t in taskList:
             currentTask = self.dataSet.load_analysis_task(t)
             if currentTask.is_complete():
@@ -185,13 +187,14 @@ class SlurmReport(analysistask.AnalysisTask):
                 slurmDF.to_csv(dfStream, sep='|')
                 self._plot_slurm_report(slurmDF, t)
                 reportDict[t] = slurmDF
+                analysisParameters[t] = currentTask.get_parameters()
 
                 try:
-                    requests.post('http://www.georgeemanuel.com/merlin/post',
-                                  data=currentTask.get_parameters(),
-                                  files={'_'.join([t, self.dataSet.dataSetName,
-                                                   str(reportTime)])
-                                         + '.csv': dfStream},
+                    requests.post('http://merlin.georgeemanuel.com/post',
+                                  files={'file': (
+                                      '.'.join([t, self.dataSet.dataSetName,
+                                                str(reportTime)]) + '.csv',
+                                      dfStream.getvalue())},
                                   timeout=10)
                 except requests.exceptions.RequestException:
                     pass
@@ -208,10 +211,14 @@ class SlurmReport(analysistask.AnalysisTask):
             'sequential_count': len(self.dataSet.get_data_organization()
                                     .get_sequential_rounds()),
             'dataset_name': self.dataSet.dataSetName,
-            'report_time': reportTime
+            'report_time': reportTime,
+            'analysis_parameters': analysisParameters
         }
         try:
-            requests.post('http://www.georgeemanuel.com/merlin/post',
-                          data=datasetMeta, timeout=10)
+            requests.post('http://merlin.georgeemanuel.com/post',
+                          files={'file': ('.'.join(
+                              [self.dataSet.dataSetName, str(reportTime)])
+                                         + '.json', json.dumps(datasetMeta))},
+                          timeout=10)
         except requests.exceptions.RequestException:
             pass

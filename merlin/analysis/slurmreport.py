@@ -58,6 +58,11 @@ class SlurmReport(analysistask.AnalysisTask):
         outputDF = outputDF.assign(
             JobID=outputDF['JobID'].str.partition('.')[0])
 
+        def get_not_nan(listIn):
+            return listIn.dropna().iloc[0]
+
+        outputDF = outputDF.groupby('JobID').aggregate(get_not_nan)
+
         def reformat_timedelta(elapsedIn):
             splitElapsed = elapsedIn.split('-')
             if len(splitElapsed) > 1:
@@ -69,11 +74,6 @@ class SlurmReport(analysistask.AnalysisTask):
             outputDF['Elapsed'].apply(reformat_timedelta), unit='s'))
         outputDF = outputDF.assign(Timelimit=pandas.to_timedelta(
             outputDF['Timelimit'].apply(reformat_timedelta), unit='s'))
-
-        def get_not_nan(listIn):
-            return listIn.dropna().iloc[0]
-
-        outputDF = outputDF.groupby('JobID').aggregate(get_not_nan)
 
         return outputDF
 
@@ -110,7 +110,6 @@ class SlurmReport(analysistask.AnalysisTask):
     def _run_analysis(self):
         taskList = self.dataSet.get_analysis_tasks()
 
-        completeTasks = []
         reportTime = int(time.time())
         for t in taskList:
             currentTask = self.dataSet.load_analysis_task(t)
@@ -130,7 +129,6 @@ class SlurmReport(analysistask.AnalysisTask):
                                   timeout=10)
                 except requests.exceptions.RequestException as e:
                     pass
-                completeTasks.append(currentTask)
 
         datasetMeta = {
             'image_width': self.dataSet.get_image_dimensions()[0],

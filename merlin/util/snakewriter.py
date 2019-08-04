@@ -13,7 +13,7 @@ class SnakemakeRule(object):
 
     @staticmethod
     def _add_quotes(stringIn):
-        return '"%s"' % stringIn
+        return '\'%s\'' % stringIn
 
     @staticmethod
     def _clean_string(stringIn):
@@ -68,11 +68,11 @@ class SnakemakeRule(object):
         shellString += ''.join(
             ['-m merlin -t ',
              self._clean_string(self._analysisTask.analysisName),
-             ' -e \'',
-             self._clean_string(self._analysisTask.dataSet.dataHome), '\'',
-             ' -s \'',
+             ' -e \"',
+             self._clean_string(self._analysisTask.dataSet.dataHome), '\"',
+             ' -s \"',
              self._clean_string(self._analysisTask.dataSet.analysisHome),
-             '\''])
+             '\"'])
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
             shellString += ' -i {wildcards.i}'
         shellString += ' ' + self._clean_string(

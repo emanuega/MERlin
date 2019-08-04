@@ -64,7 +64,7 @@ class SnakemakeRule(object):
         if self._pythonPath is None:
             shellString = 'python '
         else:
-            shellString = self._pythonPath + ' '
+            shellString = self._clean_string(self._pythonPath) + ' '
         shellString += ''.join(
             ['-m merlin -t ',
              self._clean_string(self._analysisTask.analysisName),

@@ -49,6 +49,11 @@ def build_parser():
     return parser
 
 
+def _clean_string_arg(stringIn):
+    if stringIn is None:
+        return None
+    return stringIn.strip('\'').strip('\"')
+
 def merlin():
     print('MERlin - the MERFISH decoding pipeline')
     parser = build_parser()
@@ -61,12 +66,12 @@ def merlin():
 
     dataSet = dataset.MERFISHDataSet(
         args.dataset,
-        dataOrganizationName=args.data_organization,
-        codebookName=args.codebook,
-        microscopeParametersName=args.microscope_parameters,
-        positionFileName=args.positions,
-        dataHome=args.data_home,
-        analysisHome=args.analysis_home
+        dataOrganizationName=_clean_string_arg(args.data_organization),
+        codebookName=_clean_string_arg(args.codebook),
+        microscopeParametersName=_clean_string_arg(args.microscope_parameters),
+        positionFileName=_clean_string_arg(args.positions),
+        dataHome=_clean_string_arg(args.data_home),
+        analysisHome=_clean_string_arg(args.analysis_home)
     )
 
     parametersHome = m.ANALYSIS_PARAMETERS_HOME

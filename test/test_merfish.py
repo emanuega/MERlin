@@ -2,7 +2,6 @@ import os
 import json
 import pytest
 
-from merlin.core import scheduler
 from merlin.core import executor
 import merlin
 

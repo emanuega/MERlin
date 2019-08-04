@@ -19,12 +19,15 @@ class SnakemakeRule(object):
     def _clean_string(stringIn):
         return stringIn.replace('\\', '/')
 
+    def _expand_as_string(self, taskName, indexCount) -> str:
+        return 'expand(%s, g=list(range(%i)))' % (self._add_quotes(
+            self._analysisTask.dataSet.analysis_done_filename(taskName, '{g}')),
+            indexCount)
+
     def _generate_input_names(self, task):
         if isinstance(task, analysistask.ParallelAnalysisTask):
-            return ','.join(
-                [self._clean_string(self._add_quotes(
-                    self._analysisTask.dataSet.analysis_done_filename(task, i)))
-                 for i in range(task.fragment_count())])
+            return self._clean_string(self._expand_as_string(
+                task.get_analysis_name(), task.fragment_count()))
         else:
             return self._clean_string(self._add_quotes(
                 self._analysisTask.dataSet.analysis_done_filename(task)))
@@ -38,13 +41,15 @@ class SnakemakeRule(object):
 
     def _generate_output(self) -> str:
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-            return self._clean_string(self._add_quotes(
-                self._analysisTask.dataSet.analysis_done_filename(
-                self._analysisTask, '{i}')))
+            return self._clean_string(
+                self._add_quotes(
+                    self._analysisTask.dataSet.analysis_done_filename(
+                        self._analysisTask, '{i}')))
         else:
-            return self._clean_string(self._add_quotes(
-                self._analysisTask.dataSet.analysis_done_filename(
-                self._analysisTask)))
+            return self._clean_string(
+                self._add_quotes(
+                    self._analysisTask.dataSet.analysis_done_filename(
+                        self._analysisTask)))
 
     def _generate_message(self) -> str:
         messageString = \
@@ -116,7 +121,7 @@ class SnakemakeGenerator(object):
         return analysisTasks
 
     def generate_workflow(self) -> str:
-        """Generate a snakemake workflow the for the analysis parameters
+        """Generate a snakemake workflow for the analysis parameters
         of this SnakemakeGenerator and save the workflow into the dataset.
 
         Returns:

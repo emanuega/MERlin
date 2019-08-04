@@ -1,5 +1,4 @@
 import os
-import errno
 import json
 import shutil
 import pandas
@@ -20,7 +19,7 @@ from typing import Dict
 import h5py
 import tables
 
-from storm_analysis.sa_library import datareader
+from merlin.util import datareader
 import merlin
 from merlin.core import analysistask
 from merlin.data import dataorganization
@@ -764,8 +763,8 @@ class ImageDataSet(DataSet):
                 or currentFile.endswith('.tiff')])
 
     def load_image(self, imagePath, frameIndex):
-        with datareader.inferReader(imagePath) as reader:
-            imageIn = reader.loadAFrame(int(frameIndex))
+        with datareader.infer_reader(imagePath) as reader:
+            imageIn = reader.load_frame(int(frameIndex))
             if self.transpose:
                 imageIn = np.transpose(imageIn)
             if self.flipHorizontal:
@@ -785,8 +784,8 @@ class ImageDataSet(DataSet):
         if not os.path.exists(imagePath):
             return None
 
-        with datareader.inferReader(imagePath) as reader:
-            return reader.filmSize()
+        with datareader.infer_reader(imagePath) as reader:
+            return reader.film_size()
 
     def _import_microscope_parameters(self, microscopeParametersName):
         sourcePath = os.sep.join([merlin.MICROSCOPE_PARAMETERS_HOME,

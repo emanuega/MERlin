@@ -27,9 +27,7 @@ or
 Installing prerequisites
 ==========================
 
-Storm-analysis_ must be installed prior to installing this package. Additionally, the packages rtree and pytables are not properly installed by pip and should be installed independently. For example, using Anaconda:
-
-.. _Storm-analysis: https://github.com/ZhuangLab/storm-analysis
+The packages rtree and pytables are not properly installed by pip and should be installed independently. For example, using Anaconda:
 
 .. code-block:: none
 

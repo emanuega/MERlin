@@ -17,6 +17,9 @@ POSITION_HOME = os.sep.join(
 MICROSCOPE_PARAMETERS_HOME = os.sep.join(
         [PARAMETERS_HOME, 'microscope_parameters'])
 FPKM_HOME = os.sep.join([PARAMETERS_HOME, 'fpkm'])
+SNAKEMAKE_PARAMETERS_HOME = os.sep.join(
+    [PARAMETERS_HOME, 'snakemake_parameters'])
+
 
 def version():
     import pkg_resources

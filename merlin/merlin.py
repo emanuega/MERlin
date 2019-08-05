@@ -5,6 +5,8 @@ import os
 import json
 import sys
 import snakemake
+import time
+import requests
 
 import merlin as m
 from merlin.core import dataset
@@ -45,6 +47,11 @@ def build_parser():
                         help='the data home directory')
     parser.add_argument('-s', '--analysis-home',
                         help='the analysis home directory')
+    parser.add_argument('-k', '--snakemake-parameters',
+                        help='the name of the snakemake parameters file')
+    parser.add_argument('--no_report',
+                        help='flag indicating that the snakemake stats ' +
+                        'should not be shared to improve MERlin')
 
     return parser
 
@@ -53,6 +60,7 @@ def _clean_string_arg(stringIn):
     if stringIn is None:
         return None
     return stringIn.strip('\'').strip('\"')
+
 
 def merlin():
     print('MERlin - the MERFISH decoding pipeline')
@@ -82,7 +90,8 @@ def merlin():
         # so that new analysis tasks are generated to match the new parameters
         with open(os.sep.join(
                 [parametersHome, args.analysis_parameters]), 'r') as f:
-            print('Generating specified analysis tasks')
+            print('Generating analysis tasks from %s' %
+                  os.sep.join([parametersHome, args.analysis_parameters]))
             analysisParameters = json.load(f)
             snakeGenerator = snakewriter.SnakemakeGenerator(
                 analysisParameters, dataSet, sys.executable)
@@ -95,5 +104,57 @@ def merlin():
             e.run(dataSet.load_analysis_task(args.analysis_task),
                   index=args.fragment_index, join=True)
         elif snakefilePath:
-            print('Running pipeline with snakemake')
-            snakemake.snakemake(snakefilePath, cores=args.core_count)
+            snakemakeParameters = {}
+            if args.snakemake_parameters:
+                with open(os.sep.join([m.SNAKEMAKE_PARAMETERS_HOME,
+                                      args.snakemake_parameters])) as f:
+                    snakemakeParameters = json.load(f)
+
+            print('Running MERlin pipeline through snakemake')
+            snakemake.snakemake(snakefilePath, cores=args.core_count,
+                                workdir=dataSet.get_snakemake_path(),
+                                stats=snakefilePath + '.stats',
+                                **snakemakeParameters)
+
+            if not args.no_report:
+                reportTime = int(time.time())
+                try:
+                    with open(snakefilePath + '.stats', 'r') as f:
+                        requests.post('http://merlin.georgeemanuel.com/post',
+                                      files={
+                                          'file': (
+                                              '.'.join(
+                                                  ['snakestats',
+                                                   dataSet.dataSetName,
+                                                   str(reportTime)]) + '.csv',
+                                              f)},
+                                      timeout=10)
+                except requests.exceptions.RequestException:
+                    pass
+
+                analysisParameters = {
+                    t: dataSet.load_analysis_task(t).get_parameters()
+                    for t in dataSet.get_analysis_tasks()}
+                datasetMeta = {
+                    'image_width': dataSet.get_image_dimensions()[0],
+                    'image_height': dataSet.get_image_dimensions()[1],
+                    'barcode_length': dataSet.get_codebook().get_bit_count(),
+                    'barcode_count': dataSet.get_codebook().get_barcode_count(),
+                    'fov_count': len(dataSet.get_fovs()),
+                    'z_count': len(dataSet.get_z_positions()),
+                    'sequential_count': len(dataSet.get_data_organization()
+                                            .get_sequential_rounds()),
+                    'dataset_name': dataSet.dataSetName,
+                    'report_time': reportTime,
+                    'analysis_parameters': analysisParameters
+                }
+                try:
+                    requests.post('http://merlin.georgeemanuel.com/post',
+                                  files={'file': ('.'.join(
+                                      [dataSet.dataSetName,
+                                       str(reportTime)])
+                                                  + '.json',
+                                                  json.dumps(datasetMeta))},
+                                  timeout=10)
+                except requests.exceptions.RequestException:
+                    pass

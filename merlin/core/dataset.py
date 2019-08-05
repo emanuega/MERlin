@@ -75,7 +75,7 @@ class DataSet(object):
 
         Returns: the path to the saved workflow
         """
-        snakemakePath = os.sep.join([self.analysisPath, 'snakemake'])
+        snakemakePath = self.get_snakemake_path()
         os.makedirs(snakemakePath, exist_ok=True)
 
         workflowPath = os.sep.join(
@@ -85,6 +85,13 @@ class DataSet(object):
             outFile.write(workflowString)
 
         return workflowPath
+
+    def get_snakemake_path(self) -> str:
+        """Get the directory for storing files related to snakemake.
+
+        Returns: the snakemake path as a string
+        """
+        return os.sep.join([self.analysisPath, 'snakemake'])
 
     def save_figure(self, analysisTask: TaskOrName, figure: plt.Figure,
                     figureName: str) -> None:

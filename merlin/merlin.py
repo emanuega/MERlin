@@ -93,7 +93,7 @@ def merlin():
             print('Generating analysis tasks from %s' %
                   os.sep.join([parametersHome, args.analysis_parameters]))
             analysisParameters = json.load(f)
-            snakeGenerator = snakewriter.SnakemakeGenerator(
+            snakeGenerator = snakewriter.SnakefileGenerator(
                 analysisParameters, dataSet, sys.executable)
             snakefilePath = snakeGenerator.generate_workflow()
             print('Snakefile generated at %s' % snakefilePath)

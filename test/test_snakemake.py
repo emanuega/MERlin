@@ -28,7 +28,7 @@ def test_snakemake_generator_one_task(simple_merfish_data):
          'parameters': {}}
     ]}
 
-    generator = snakewriter.SnakemakeGenerator(taskDict, simple_merfish_data)
+    generator = snakewriter.SnakefileGenerator(taskDict, simple_merfish_data)
     workflow = generator.generate_workflow()
     outputTask = simple_merfish_data.load_analysis_task('SimpleAnalysisTask')
     assert not outputTask.is_complete()
@@ -54,7 +54,7 @@ def test_snakemake_generator_task_chain(simple_merfish_data):
          'parameters': {'dependencies': ['Task2']}}
     ]}
 
-    generator = snakewriter.SnakemakeGenerator(taskDict, simple_merfish_data)
+    generator = snakewriter.SnakefileGenerator(taskDict, simple_merfish_data)
     workflow = generator.generate_workflow()
     outputTask1 = simple_merfish_data.load_analysis_task('Task1')
     outputTask2 = simple_merfish_data.load_analysis_task('Task2')

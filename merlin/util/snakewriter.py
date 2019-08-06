@@ -1,4 +1,5 @@
 import importlib
+import networkx
 
 from merlin.core import analysistask
 from merlin.core import dataset
@@ -93,7 +94,7 @@ class SnakemakeRule(object):
         return self._generate_input_names(self._analysisTask)
 
 
-class SnakemakeGenerator(object):
+class SnakefileGenerator(object):
 
     def __init__(self, analysisParameters, dataSet: dataset.DataSet,
                  pythonPath: str=None):
@@ -120,6 +121,17 @@ class SnakemakeGenerator(object):
             analysisTasks[newTask.get_analysis_name()] = newTask
         return analysisTasks
 
+    def _identify_terminal_tasks(self, analysisTasks):
+        taskGraph = networkx.DiGraph()
+        for x in analysisTasks.keys():
+            taskGraph.add_node(x)
+
+        for x, a in analysisTasks.items():
+            for d in a.get_dependencies():
+                taskGraph.add_edge(d, x)
+
+        return [k for k, v in taskGraph.out_degree if v == 0]
+
     def generate_workflow(self) -> str:
         """Generate a snakemake workflow for the analysis parameters
         of this SnakemakeGenerator and save the workflow into the dataset.
@@ -127,11 +139,14 @@ class SnakemakeGenerator(object):
         Returns:
             the path to the generated snakemake workflow
         """
-        ruleList = [SnakemakeRule(x, self._pythonPath)
-                    for x in self._parse_parameters().values()]
+        analysisTasks = self._parse_parameters()
+        ruleList = {k: SnakemakeRule(v, self._pythonPath)
+                    for k, v in analysisTasks.items()}
 
+        terminalTasks = self._identify_terminal_tasks(analysisTasks)
         workflowString = 'rule all: \n\tinput: ' + \
-            ','.join([x.full_output() for x in ruleList]) + '\n\n'
-        workflowString += '\n'.join([x.as_string() for x in ruleList])
+            ','.join([ruleList[x].full_output() for x in terminalTasks]) + \
+            '\n\n'
+        workflowString += '\n'.join([x.as_string() for x in ruleList.values()])
 
         return self._dataSet.save_workflow(workflowString)

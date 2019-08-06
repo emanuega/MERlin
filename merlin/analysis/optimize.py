@@ -118,7 +118,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         dataOrganization = self.dataSet.get_data_organization()
         codebook = self.dataSet.get_codebook()
         return sorted({dataOrganization.get_data_channel_color(
-            dataOrganization.get_data_channel_index(x))
+            dataOrganization.get_data_channel_for_bit(x))
             for x in codebook.get_bit_names()})
 
     def _calculate_initial_scale_factors(self) -> np.ndarray:

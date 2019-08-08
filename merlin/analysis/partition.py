@@ -1,5 +1,4 @@
 import pandas
-from shapely import geometry
 import numpy as np
 
 from merlin.core import analysistask
@@ -75,8 +74,9 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
                                                  'global_z']].values)
             count = currentFOVBarcodes[contained].groupby('barcode_id').size()
             count = count.reindex(
-                range(data.get_codebook().get_barcode_count()), fill_value=0)
-            countDF.loc[cell.get_feature_id(), :] = count.values.tolist()
+                range(self.dataSet.get_codebook().get_barcode_count()),
+                fill_value=0)
+            countsDF.loc[cell.get_feature_id(), :] = count.values.tolist()
 
         barcodeNames = [codebook.get_name_for_barcode_index(x)
                         for x in countsDF.columns.values.tolist()]

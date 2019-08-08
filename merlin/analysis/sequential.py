@@ -20,6 +20,9 @@ class SumSignal(analysistask.ParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        if 'apply_highpass' not in self.parameters:
+            self.parameters['apply_highpass'] = True
+
         self.highpass = str(self.parameters['apply_highpass']).upper() == 'TRUE'
         self.alignTask = self.dataSet.load_analysis_task(
             self.parameters['global_align_task'])

@@ -4,7 +4,6 @@ import json
 import shutil
 import pandas
 import numpy as np
-import sqlalchemy
 import fnmatch
 import tifffile
 import importlib
@@ -714,25 +713,6 @@ class DataSet(object):
         self._reset_analysis_event(analysisTask, 'run', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'done', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'error', fragmentIndex)
-
-    def get_database_engine(self, analysisTask: analysistask.AnalysisTask=None,
-                            index: int=None):
-        if analysisTask is None:
-            return sqlalchemy.create_engine('sqlite:///' +
-                    os.sep.join([self.analysisPath, 'analysis_data.db']))
-        else:
-            dbPath = os.sep.join(
-                        [self.analysisPath, analysisTask.get_analysis_name(),
-                         'db'])
-            os.makedirs(dbPath, exist_ok=True)
-
-            if index is None:
-                dbName = 'analysis_data.db'
-            else:
-                dbName = 'analysis_data' + str(index) + '.db'
-
-            return sqlalchemy.create_engine(os.sep.join(
-                        ['sqlite:///' + dbPath, dbName]))
 
 
 class ImageDataSet(DataSet):

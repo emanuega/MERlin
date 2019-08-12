@@ -8,7 +8,6 @@ from typing import Tuple
 from typing import Dict
 from shapely import geometry
 import h5py
-import pandas
 import merlin
 
 from merlin.core import dataset
@@ -132,6 +131,14 @@ class SpatialFeature(object):
     def _remove_invalid_boundaries(
             inPolygons: List[geometry.Polygon]) -> List[geometry.Polygon]:
         return [p for p in inPolygons if p.is_valid]
+
+    def set_fov(self, nowFOV: int) -> None:
+        """Update the FOV for this spatial feature.
+
+        Args:
+            nowFOV: the new FOV index
+        """
+        self._fov = newFOV
 
     def get_fov(self) -> int:
         return self._fov

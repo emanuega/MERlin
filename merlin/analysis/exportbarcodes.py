@@ -33,8 +33,8 @@ class ExportBarcodes(analysistask.AnalysisTask):
         filterTask = self.dataSet.load_analysis_task(
                 self.parameters['filter_task'])        
 
-        barcodeData = filterTask.get_barcode_database() \
-                .get_barcodes(columnList=self.columns)
+        barcodeData = filterTask.get_barcode_database().get_barcodes(
+            columnList=self.columns)
 
         if self.excludeBlanks:
             codebook = self.dataSet.get_codebook()

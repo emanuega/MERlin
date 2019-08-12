@@ -43,10 +43,10 @@ class SumSignal(analysistask.ParallelAnalysisTask):
                 self.parameters['segment_task'],
                 self.parameters['global_align_task']]
 
-    def _extract_signal(self, cells, inputImage, zplane) -> pandas.DataFrame:
+    def _extract_signal(self, cells, inputImage, zIndex) -> pandas.DataFrame:
         cellCoords = []
         for cell in cells:
-            regions = cell.get_boundaries()[zplane]
+            regions = cell.get_boundaries()[zIndex]
             if len(regions) == 0:
                 cellCoords.append([])
             else:
@@ -66,10 +66,8 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         keptCellIDs = [str(cells[x].get_feature_id()) for x in range(len(cells))
                        if len(cellCoords[x]) > 0]
         mask = np.zeros(inputImage.shape, np.uint8)
-        i = 1
-        for cell in keptCells:
-            cv2.drawContours(mask, cell, -1, i, -1)
-            i += 1
+        for i, cell in enumerate(keptCells):
+            cv2.drawContours(mask, cell, -1, i+1, -1)
         props = regionprops(mask, inputImage)
         propsOut = pandas.DataFrame(
             data=[(x.intensity_image.sum(), x.filled_area) for x in props],
@@ -110,8 +108,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         fTask = self.dataSet.load_analysis_task(self.parameters['warp_task'])
         sTask = self.dataSet.load_analysis_task(self.parameters['segment_task'])
 
-        sDB = sTask.get_feature_database()
-        cells = sDB.read_features(fov)
+        cells = sTask.get_feature_database().read_features(fov)
 
         # If cell boundaries are going to be cleaned prior to this we should
         # remove the part enclosed by pound symbols

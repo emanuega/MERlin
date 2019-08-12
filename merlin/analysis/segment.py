@@ -422,6 +422,8 @@ class AssignCellFOV(analysistask.AnalysisTask):
             for f in allFOV:
                 cellsInFOV = [x[0] for x in secondaryCellAssignments
                               if x[1] == f]
+                for c in cellsInFOV:
+                    c.set_fov(f)
                 featureDB.write_features(cellsInFOV, f)
 
 

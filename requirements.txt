@@ -5,7 +5,7 @@ tifffile>=0.14.0
 opencv-python>=3
 scikit-image>=0.14.0
 scikit-learn>=0.19.0
-numpy==1.15.1
+numpy>1.16.0
 matplotlib
 networkx
 rtree
@@ -21,3 +21,4 @@ numexpr>=2.6.2
 cython>=0.21
 snakemake
 requests>=2.4.2
+tables

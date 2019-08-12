@@ -132,7 +132,7 @@ class SpatialFeature(object):
             inPolygons: List[geometry.Polygon]) -> List[geometry.Polygon]:
         return [p for p in inPolygons if p.is_valid]
 
-    def set_fov(self, nowFOV: int) -> None:
+    def set_fov(self, newFOV: int) -> None:
         """Update the FOV for this spatial feature.
 
         Args:

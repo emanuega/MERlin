@@ -32,7 +32,7 @@ class StreamingPlotPerformance(analysistask.AnalysisTask):
         return 30000
 
     def get_estimated_time(self):
-        return 180
+        return 2880
 
     def get_dependencies(self):
         return [self.parameters['decode_task'],

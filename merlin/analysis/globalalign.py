@@ -63,7 +63,7 @@ class GlobalAlignment(analysistask.AnalysisTask):
         pass
 
     @abstractmethod
-    def get_global_extent(self) -> Tuple[float, float, float, float]:
+    def get_global_extent(self) -> Tuple:
         """Get the extent of the global coordinate system.
 
         Returns:

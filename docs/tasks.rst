@@ -130,3 +130,15 @@ Description: An analysis task that generates reports on previously completed ana
 Parameters:
 
 * run\_after\_task -- the task to wait for before generating the Slurm report
+
+plotperformance.StreamingPlotPerformance
+-------------------------------
+
+Description: Create QC plots of decoding, filtering, optimization, and segmentation as soon as such data is ready.
+
+
+plotperformance.PlotPerformance
+-------------------------------
+
+Description: Create QC plots of decoding, filtering, optimization, and segmentation once all data is available.
+

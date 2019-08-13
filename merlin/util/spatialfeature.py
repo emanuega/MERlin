@@ -378,11 +378,12 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
     @staticmethod
     def _save_feature_to_hdf5_group(h5Group: h5py.Group,
-                                    feature: SpatialFeature) -> None:
+                                    feature: SpatialFeature,
+                                    fov: int) -> None:
         featureKey = str(feature.get_feature_id())
         featureGroup = h5Group.create_group(featureKey)
         featureGroup.attrs['id'] = np.string_(feature.get_feature_id())
-        featureGroup.attrs['fov'] = feature.get_fov()
+        featureGroup.attrs['fov'] = fov
         featureGroup.attrs['bounding_box'] = \
             np.array(feature.get_bounding_box())
         featureGroup.attrs['volume'] = feature.get_volume()
@@ -438,7 +439,8 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
             featureGroup = f.require_group('featuredata')
             featureGroup.attrs['version'] = merlin.version()
             for currentFeature in features:
-                self._save_feature_to_hdf5_group(featureGroup, currentFeature)
+                self._save_feature_to_hdf5_group(featureGroup, currentFeature,
+                                                 fov)
 
     def read_features(self, fov: int = None) -> List[SpatialFeature]:
         if fov is None:

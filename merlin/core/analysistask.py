@@ -51,6 +51,11 @@ class AnalysisTask(ABC):
         self.parameters['module'] = type(self).__module__
         self.parameters['class'] = type(self).__name__
 
+        if 'codebook' in self.parameters:
+            self.codebook = self.parameters['codebook']
+        else:
+            self.codebook = None
+
     def save(self, overwrite=False) -> None:
         """Save a copy of this AnalysisTask into the data set.
 

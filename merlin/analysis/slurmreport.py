@@ -204,8 +204,10 @@ class SlurmReport(analysistask.AnalysisTask):
         datasetMeta = {
             'image_width': self.dataSet.get_image_dimensions()[0],
             'image_height': self.dataSet.get_image_dimensions()[1],
-            'barcode_length': self.dataSet.get_codebook().get_bit_count(),
-            'barcode_count': self.dataSet.get_codebook().get_barcode_count(),
+            'barcode_length': self.dataSet.get_codebook(self.codebook
+                                                        ).get_bit_count(),
+            'barcode_count': self.dataSet.get_codebook(self.codebook
+                                                       ).get_barcode_count(),
             'fov_count': len(self.dataSet.get_fovs()),
             'z_count': len(self.dataSet.get_z_positions()),
             'sequential_count': len(self.dataSet.get_data_organization()

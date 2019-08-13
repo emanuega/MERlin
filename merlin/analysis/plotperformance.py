@@ -54,7 +54,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         fpkmPath = os.sep.join([merlin.FPKM_HOME, self.parameters['fpkm_file']])
         fpkm = pandas.read_csv(fpkmPath, index_col='name')
         barcodes = self.filterTask.get_barcode_database().get_barcodes()
-        codebook = self.dataSet.get_codebook()
+        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
 
         barcodeIndexes = codebook.get_coding_indexes()
         barcodeCounts = np.array(
@@ -75,7 +75,8 @@ class PlotPerformance(analysistask.AnalysisTask):
 
     def _plot_radial_density(self):
         bitColors = self.dataSet.get_data_organization().data['color']
-        bcSet = self.dataSet.get_codebook().get_barcodes()
+        bcSet = self.dataSet.get_codebook(codebookName=self.codebook
+                                          ).get_barcodes()
         singleColorBarcodes = [i for i, b in enumerate(bcSet) if
                                bitColors[np.where(b)[0]].nunique() == 1]
         multiColorBarcodes = [i for i, b in enumerate(bcSet) if
@@ -183,10 +184,13 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_intensity_area_violin')
 
     def _plot_bitwise_intensity_violin(self):
-        bcDF = pandas.DataFrame(self.dataSet.get_codebook().get_barcodes())
+        bcDF = pandas.DataFrame(self.dataSet.get_codebook(codebookName=
+                                                          self.codebook
+                                                          ).get_barcodes())
 
         bc = self.filterTask.get_barcode_database().get_barcodes()
-        bitCount = self.dataSet.get_codebook().get_bit_count()
+        bitCount = self.dataSet.get_codebook(codebookName=self.codebook
+                                             ).get_bit_count()
         onIntensities = [bc[bc['barcode_id'].isin(bcDF[bcDF[i] == 1].index)]
                          ['intensity_%i' % i].tolist() for i in range(bitCount)]
         offIntensities = [bc[bc['barcode_id'].isin(bcDF[bcDF[i] == 0].index)]
@@ -210,7 +214,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_bitwise_intensity_violin')
 
     def _plot_blank_distribution(self):
-        codebook = self.dataSet.get_codebook()
+        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
         bc = self.filterTask.get_barcode_database().get_barcodes()
         minX = np.min(bc['global_x'])
         minY = np.min(bc['global_y'])
@@ -234,7 +238,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'blank_spatial_distribution')
 
     def _plot_matched_barcode_distribution(self):
-        codebook = self.dataSet.get_codebook()
+        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
         bc = self.filterTask.get_barcode_database().get_barcodes()
         minX = np.min(bc['global_x'])
         minY = np.min(bc['global_y'])
@@ -290,7 +294,7 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'optimization_barcode_counts')
 
     def _plot_barcode_abundances(self, barcodes, outputName):
-        codebook = self.dataSet.get_codebook()
+        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
         blankIDs = codebook.get_blank_indexes()
 
         uniqueBarcodes, bcCounts = np.unique(barcodes['barcode_id'],

@@ -830,7 +830,8 @@ class MERFISHDataSet(ImageDataSet):
             codebookName: the name of the codebook to use. The codebook
                     should be present in the analysis parameters
                     directory. A full path can be provided for a codebook
-                    present in another directory.
+                    present in another directory. If giving two codebooks,
+                    separate them by a comma without additional spaces
             dataOrganizationName: the name of the data organization to use.
                     The data organization should be present in the analysis
                     parameters directory. A full path can be provided for
@@ -860,10 +861,20 @@ class MERFISHDataSet(ImageDataSet):
 
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
-        self.codebook = codebook.Codebook(self, codebookName)
+        codebookNames = codebookName.split(',')
+        self.codebook = dict()
+        for codebookName in codebookNames:
+            name = os.path.splitext(os.path.basename(codebookName))[0]
+            self.codebook[name] = codebook.Codebook(self, codebookName)
 
-    def get_codebook(self) -> codebook.Codebook:
-        return self.codebook
+    def get_codebook(self, codebookName: str = None) -> codebook.Codebook:
+        if codebookName is None:
+            if len(self.codebook.items()) == 1:
+                return list(self.codebook.values)[0]
+            else:
+                return self.codebook
+        else:
+            return self.codebook[codebookName]
 
     def get_data_organization(self) -> dataorganization.DataOrganization:
         return self.dataOrganization

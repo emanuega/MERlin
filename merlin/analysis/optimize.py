@@ -56,7 +56,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
 
-        codebook = self.dataSet.get_codebook()
+        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
 
         fovIndex = np.random.choice(list(self.dataSet.get_fovs()))
         zIndex = np.random.choice(
@@ -116,7 +116,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
     def _get_used_colors(self) -> List[str]:
         dataOrganization = self.dataSet.get_data_organization()
-        codebook = self.dataSet.get_codebook()
+        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
         return sorted({dataOrganization.get_data_channel_color(
             dataOrganization.get_data_channel_for_bit(x))
             for x in codebook.get_bit_names()})
@@ -125,7 +125,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
             self.parameters['preprocess_task'])
 
-        bitCount = self.dataSet.get_codebook().get_bit_count()
+        bitCount = self.dataSet.get_codebook(codebookName=
+                                             self.codebook).get_bit_count()
         initialScaleFactors = np.zeros(bitCount)
         pixelHistograms = preprocessTask.get_pixel_histogram()
         for i in range(bitCount):
@@ -150,7 +151,9 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
     def _get_previous_backgrounds(self) -> np.ndarray:
         if 'previous_iteration' not in self.parameters:
-            backgrounds = np.zeros(self.dataSet.get_codebook().get_bit_count())
+            backgrounds = np.zeros(self.dataSet.get_codebook(codebookName=
+                                                             self.codebook
+                                                             ).get_bit_count())
         else:
             previousIteration = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration'])
@@ -217,7 +220,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 self._get_previous_chromatic_transformations()
             previousCorrector = aberration.RigidChromaticCorrector(
                 previousTransformations, self.get_reference_color())
-            codebook = self.dataSet.get_codebook()
+            codebook = self.dataSet.get_codebook(codebookName=self.codebook)
             dataOrganization = self.dataSet.get_data_organization()
 
             barcodes = self.get_barcode_database().get_barcodes()
@@ -435,7 +438,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         iterationCount = self.parameters['iteration_count']
         fovPerIteration = self.parameters['fov_per_iteration']
 
-        codebook = self.dataSet.get_codebook()
+        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
         bitCount = codebook.get_bit_count()
         barcodeCount = codebook.get_barcode_count()
         decoder = decoding.PixelBasedDecoder(codebook)
@@ -471,7 +474,8 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
             self.parameters['preprocess_task'])
 
-        bitCount = self.dataSet.get_codebook().get_bit_count()
+        bitCount = self.dataSet.get_codebook(codebookName=self.codebook
+                                             ).get_bit_count()
         initialScaleFactors = np.zeros(bitCount)
         pixelHistograms = preprocessTask.get_pixel_histogram()
         for i in range(bitCount):

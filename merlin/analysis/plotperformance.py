@@ -184,9 +184,8 @@ class PlotPerformance(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'barcode_intensity_area_violin')
 
     def _plot_bitwise_intensity_violin(self):
-        bcDF = pandas.DataFrame(self.dataSet.get_codebook(codebookName=
-                                                          self.codebook
-                                                          ).get_barcodes())
+        bcDF = pandas.DataFrame(self.dataSet.get_codebook(
+            codebookName=self.codebook).get_barcodes())
 
         bc = self.filterTask.get_barcode_database().get_barcodes()
         bitCount = self.dataSet.get_codebook(codebookName=self.codebook

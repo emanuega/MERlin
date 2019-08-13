@@ -125,8 +125,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
             self.parameters['preprocess_task'])
 
-        bitCount = self.dataSet.get_codebook(codebookName=
-                                             self.codebook).get_bit_count()
+        bitCount = self.dataSet.get_codebook(codebookName=self.codebook
+                                             ).get_bit_count()
         initialScaleFactors = np.zeros(bitCount)
         pixelHistograms = preprocessTask.get_pixel_histogram()
         for i in range(bitCount):
@@ -151,9 +151,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
     def _get_previous_backgrounds(self) -> np.ndarray:
         if 'previous_iteration' not in self.parameters:
-            backgrounds = np.zeros(self.dataSet.get_codebook(codebookName=
-                                                             self.codebook
-                                                             ).get_bit_count())
+            backgrounds = np.zeros(self.dataSet.get_codebook(
+                codebookName=self.codebook).get_bit_count())
         else:
             previousIteration = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration'])

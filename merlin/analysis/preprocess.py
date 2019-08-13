@@ -87,9 +87,8 @@ class DeconvolutionPreprocess(Preprocess):
             return np.array([self.get_processed_image(
                 fov, self.dataSet.get_data_organization()
                     .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
-                    for b in self.dataSet.get_codebook(codebookName=
-                                                       self.codebook
-                                                       ).get_bit_names()])
+                    for b in self.dataSet.get_codebook(
+                    codebookName=self.codebook).get_bit_names()])
 
     def get_processed_image(
             self, fov, dataChannel, zIndex,
@@ -111,9 +110,8 @@ class DeconvolutionPreprocess(Preprocess):
 
         # this currently only is to calculate the pixel histograms in order
         # to estimate the initial scale factors. This is likely unnecessary
-        for bi, b in enumerate(self.dataSet.get_codebook(codebookName=
-                                                         self.codebook
-                                                         ).get_bit_names()):
+        for bi, b in enumerate(self.dataSet.get_codebook(
+                codebookName=self.codebook).get_bit_names()):
             dataChannel = self.dataSet.get_data_organization()\
                     .get_data_channel_for_bit(b)
             for i in range(len(self.dataSet.get_z_positions())):

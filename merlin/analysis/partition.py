@@ -45,7 +45,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
             ).reset_index(drop=True)
 
         return self.dataSet.load_dataframe_from_csv(
-            'counts_per_cell', self.get_analysis_name(), fov)
+            'counts_per_cell', self.get_analysis_name(), fov, index_col=0)
 
     def _run_analysis(self, fragmentIndex):
         filterTask = self.dataSet.load_analysis_task(

@@ -152,7 +152,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
 
         return self.dataSet.load_dataframe_from_csv(
             'sequential_signal', self.get_analysis_name(),
-            fov, 'signals')
+            fov, 'signals', index_col=0)
 
     def _run_analysis(self, fragmentIndex):
         zIndex = int(self.parameters['z_index'])

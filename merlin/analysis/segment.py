@@ -2,10 +2,8 @@ import cv2
 import numpy as np
 from skimage import measure
 from skimage import segmentation
-import networkx
 import rtree
 from shapely import geometry
-from shapely.ops import unary_union
 from typing import List, Dict
 from scipy.spatial import cKDTree
 from merlin.core import analysistask

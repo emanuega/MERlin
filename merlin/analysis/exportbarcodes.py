@@ -37,7 +37,7 @@ class ExportBarcodes(analysistask.AnalysisTask):
             columnList=self.columns)
 
         if self.excludeBlanks:
-            codebook = self.dataSet.get_codebook(codebookName=self.codebook)
+            codebook = self.dataSet.get_codebook(idx=self.codebookNum)
             barcodeData = barcodeData[
                     barcodeData['barcode_id'].isin(
                         codebook.get_coding_indexes())]

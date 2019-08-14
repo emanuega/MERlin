@@ -23,6 +23,9 @@ class SlurmReport(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        if 'codebook_index' not in self.parameters:
+            self.parameters['codebook_index'] = 0
+
     def get_estimated_memory(self):
         return 2048
 
@@ -204,10 +207,10 @@ class SlurmReport(analysistask.AnalysisTask):
         datasetMeta = {
             'image_width': self.dataSet.get_image_dimensions()[0],
             'image_height': self.dataSet.get_image_dimensions()[1],
-            'barcode_length': self.dataSet.get_codebook(self.codebook
-                                                        ).get_bit_count(),
-            'barcode_count': self.dataSet.get_codebook(self.codebook
-                                                       ).get_barcode_count(),
+            'barcode_length': self.dataSet.get_codebook(
+                self.parameters['codebook_index']).get_bit_count(),
+            'barcode_count': self.dataSet.get_codebook(
+                self.parameters['codebook_index']).get_barcode_count(),
             'fov_count': len(self.dataSet.get_fovs()),
             'z_count': len(self.dataSet.get_z_positions()),
             'sequential_count': len(self.dataSet.get_data_organization()

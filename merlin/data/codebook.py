@@ -18,7 +18,7 @@ class Codebook(object):
     A Codebook stores the association of barcodes to genes.
     """
 
-    def __init__(self, dataSet, filePath=None):
+    def __init__(self, dataSet, filePath):
         """
         Create a new Codebook for the data in the specified data set.
 
@@ -30,40 +30,48 @@ class Codebook(object):
         """
         self._dataSet = dataSet
 
-        if filePath is not None:
-            if not os.path.exists(filePath):
-                filePath = os.sep.join(
-                        [merlin.CODEBOOK_HOME, filePath])
+        allAnalysisFiles = os.listdir(self._dataSet.analysisPath)
+        existingCodebooks = [x for x in allAnalysisFiles if 'codebook' in x]
 
-            newVersion = True
-            with open(filePath, 'r') as f:
-                if 'version' in f.readline():
-                    newVersion = False
+        currentCodebookNum = len(existingCodebooks)
 
-            if newVersion:
-                self._data = pandas.read_csv(filePath)
+        if not os.path.exists(filePath):
+            filePath = os.sep.join(
+                    [merlin.CODEBOOK_HOME, filePath])
 
-            else:
-                headerLength = 3
-                barcodeData = pandas.read_csv(
-                    filePath, header=headerLength, skipinitialspace=True,
-                    usecols=['name', 'id', 'barcode'],
-                    converters={'barcode': _parse_barcode_from_string})
-                with open(filePath, 'r') as inFile:
-                    csvReader = csv.reader(inFile, delimiter=',')
-                    header = [row for i, row in enumerate(csvReader)
-                              if i < headerLength]
+        newVersion = True
+        with open(filePath, 'r') as f:
+            if 'version' in f.readline():
+                newVersion = False
 
-                bitNames = [x.strip() for x in header[2][1:]]
+        if newVersion:
+            self._data = pandas.read_csv(filePath)
 
-                self._data = self._generate_codebook_dataframe(
-                        barcodeData, bitNames)
-
-            self._dataSet.save_dataframe_to_csv(
-                    self._data, 'codebook', index=False)
-            
         else:
-            self._data = self._dataSet.load_dataframe_from_csv('codebook')
+            headerLength = 3
+            barcodeData = pandas.read_csv(
+                filePath, header=headerLength, skipinitialspace=True,
+                usecols=['name', 'id', 'barcode'],
+                converters={'barcode': _parse_barcode_from_string})
+            with open(filePath, 'r') as inFile:
+                csvReader = csv.reader(inFile, delimiter=',')
+                header = [row for i, row in enumerate(csvReader)
+                          if i < headerLength]
+
+            bitNames = [x.strip() for x in header[2][1:]]
+
+            self._data = self._generate_codebook_dataframe(
+                    barcodeData, bitNames)
+        name = os.path.splitext(os.path.basename(filePath))[0]
+
+        if not os.path.isfile('{}/codebook_{}_{}.csv'.format(
+                self._dataSet.analysisPath, currentCodebookNum, name)):
+            self._dataSet.save_dataframe_to_csv(self._data,
+                                                'codebook_{}_{}'.format(
+                                                    currentCodebookNum, name),
+                                                index=False)
+        self.codebook_name = name
+
 
     @staticmethod
     def _generate_codebook_dataframe(barcodeData, bitNames):
@@ -173,3 +181,14 @@ class Codebook(object):
         if len(matches) == 0:
             return None
         return matches.index[0]
+
+    def get_codebook_name(self):
+        """
+        Gets the original file name used to generate a codebook saved in the
+        analysis directory
+
+        Returns:
+            Original file name of codebook
+        """
+        return self.codebook_name
+

@@ -32,6 +32,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             self.parameters['optimize_background'] = False
         if 'optimize_chromatic_correction' not in self.parameters:
             self.parameters['optimize_chromatic_correction'] = False
+        if 'codebook_index' not in self.parameters:
+            self.parameters['codebook_index'] = 0
 
     def get_estimated_memory(self):
         return 4000
@@ -56,7 +58,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
 
-        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
+        codebook = self.dataSet.get_codebook(self.parameters['codebook_index'])
 
         fovIndex = np.random.choice(list(self.dataSet.get_fovs()))
         zIndex = np.random.choice(
@@ -116,7 +118,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
     def _get_used_colors(self) -> List[str]:
         dataOrganization = self.dataSet.get_data_organization()
-        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
+        codebook = self.dataSet.get_codebook(self.parameters['codebook_index'])
         return sorted({dataOrganization.get_data_channel_color(
             dataOrganization.get_data_channel_for_bit(x))
             for x in codebook.get_bit_names()})
@@ -125,7 +127,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
             self.parameters['preprocess_task'])
 
-        bitCount = self.dataSet.get_codebook(codebookName=self.codebook
+        bitCount = self.dataSet.get_codebook(self.parameters['codebook_index']
                                              ).get_bit_count()
         initialScaleFactors = np.zeros(bitCount)
         pixelHistograms = preprocessTask.get_pixel_histogram()
@@ -152,7 +154,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
     def _get_previous_backgrounds(self) -> np.ndarray:
         if 'previous_iteration' not in self.parameters:
             backgrounds = np.zeros(self.dataSet.get_codebook(
-                codebookName=self.codebook).get_bit_count())
+                self.parameters['codebook_index']).get_bit_count())
         else:
             previousIteration = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration'])
@@ -219,7 +221,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 self._get_previous_chromatic_transformations()
             previousCorrector = aberration.RigidChromaticCorrector(
                 previousTransformations, self.get_reference_color())
-            codebook = self.dataSet.get_codebook(codebookName=self.codebook)
+            codebook = self.dataSet.get_codebook(
+                self.parameters['codebook_index'])
             dataOrganization = self.dataSet.get_data_organization()
 
             barcodes = self.get_barcode_database().get_barcodes()
@@ -437,7 +440,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         iterationCount = self.parameters['iteration_count']
         fovPerIteration = self.parameters['fov_per_iteration']
 
-        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
+        codebook = self.dataSet.get_codebook(self.parameters['codebook_index'])
         bitCount = codebook.get_bit_count()
         barcodeCount = codebook.get_barcode_count()
         decoder = decoding.PixelBasedDecoder(codebook)
@@ -473,7 +476,7 @@ class Optimize(analysistask.InternallyParallelAnalysisTask):
         preprocessTask = self.dataSet.load_analysis_task(
             self.parameters['preprocess_task'])
 
-        bitCount = self.dataSet.get_codebook(codebookName=self.codebook
+        bitCount = self.dataSet.get_codebook(self.parameters['codebook_index']
                                              ).get_bit_count()
         initialScaleFactors = np.zeros(bitCount)
         pixelHistograms = preprocessTask.get_pixel_histogram()

@@ -30,6 +30,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['lowpass_sigma'] = 1
         if 'decode_3d' not in self.parameters:
             self.parameters['decode_3d'] = False
+        if 'codebook_index' not in self.parameters:
+            self.parameters['codebook_index'] = 0
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.get_image_dimensions()
@@ -66,13 +68,13 @@ class Decode(analysistask.ParallelAnalysisTask):
         lowPassSigma = self.parameters['lowpass_sigma']
 
         decoder = decoding.PixelBasedDecoder(
-            self.dataSet.get_codebook(codebookName=self.codebook))
+            self.dataSet.get_codebook(self.parameters['codebook_index']))
         scaleFactors = optimizeTask.get_scale_factors()
         backgrounds = optimizeTask.get_backgrounds()
         chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
         zPositionCount = len(self.dataSet.get_z_positions())
-        bitCount = self.dataSet.get_codebook(codebookName=self.codebook
+        bitCount = self.dataSet.get_codebook(self.parameters['codebook_index']
                                              ).get_bit_count()
         imageShape = self.dataSet.get_image_dimensions()
         decodedImages = np.zeros((zPositionCount, *imageShape), dtype=np.int16)
@@ -169,6 +171,6 @@ class Decode(analysistask.ParallelAnalysisTask):
                 i, decodedImage, pixelMagnitudes, pixelTraces, distances, fov,
                 self.cropWidth, zIndex, globalTask, segmentTask, minimumArea)
                 for i in range(
-                    self.dataSet.get_codebook(codebookName=self.codebook
+                    self.dataSet.get_codebook(self.parameters['codebook_index']
                                               ).get_barcode_count())]),
             fov=fov)

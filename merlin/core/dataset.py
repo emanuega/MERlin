@@ -819,7 +819,7 @@ class ImageDataSet(DataSet):
 
 class MERFISHDataSet(ImageDataSet):
 
-    def __init__(self, dataDirectoryName: str, codebookName: str=None,
+    def __init__(self, dataDirectoryName: str, codebookName: List=[],
                 dataOrganizationName: str=None, positionFileName: str=None,
                 dataHome: str=None, analysisHome: str=None,
                 microscopeParametersName: str=None):
@@ -827,11 +827,10 @@ class MERFISHDataSet(ImageDataSet):
 
         Args:
             dataDirectoryName: the relative directory to the raw data
-            codebookName: the name of the codebook to use. The codebook
+            codebookName: A list of the names of codebooks to use. The codebook
                     should be present in the analysis parameters
                     directory. A full path can be provided for a codebook
-                    present in another directory. If giving two codebooks,
-                    separate them by a comma without additional spaces
+                    present in another directory.
             dataOrganizationName: the name of the data organization to use.
                     The data organization should be present in the analysis
                     parameters directory. A full path can be provided for
@@ -861,20 +860,20 @@ class MERFISHDataSet(ImageDataSet):
 
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
-        codebookNames = codebookName.split(',')
         self.codebook = dict()
-        for codebookName in codebookNames:
-            name = os.path.splitext(os.path.basename(codebookName))[0]
-            self.codebook[name] = codebook.Codebook(self, codebookName)
-
-    def get_codebook(self, codebookName: str = None) -> codebook.Codebook:
-        if codebookName is None:
-            if len(self.codebook.items()) == 1:
-                return list(self.codebook.values)[0]
-            else:
-                return self.codebook
+        if len(codebookName) == 0:
+            for i in range(len(codebookName)):
+                self.codebook[i] = codebook.Codebook(self, codebookName[i])
         else:
-            return self.codebook[codebookName]
+            allAnalysisFiles = os.listdir(self.analysisPath)
+            existingCodebooks = [x for x in allAnalysisFiles if 'codebook' in x]
+            for cb in existingCodebooks:
+                cbNum = int(cb.split('_')[1])
+                self.codebook[cbNum] = codebook.Codebook(self, '{}/{}'.format(
+                    self.analysisPath,cb))
+
+    def get_codebook(self, codebookIndex: int) -> codebook.Codebook:
+        return self.codebook[codebookIndex]
 
     def get_data_organization(self) -> dataorganization.DataOrganization:
         return self.dataOrganization

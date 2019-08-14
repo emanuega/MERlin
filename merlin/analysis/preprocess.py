@@ -50,6 +50,8 @@ class DeconvolutionPreprocess(Preprocess):
                 int(2 * np.ceil(2 * self.parameters['decon_sigma']) + 1)
         if 'decon_iterations' not in self.parameters:
             self.parameters['decon_iterations'] = 20
+        if 'codebook_index' not in self.parameters:
+            self.parameters['codebook_index'] = 0
 
         self._highPassSigma = self.parameters['highpass_sigma']
         self._deconSigma = self.parameters['decon_sigma']
@@ -81,14 +83,14 @@ class DeconvolutionPreprocess(Preprocess):
                 fov, self.dataSet.get_data_organization()
                     .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
                 for zIndex in range(len(self.dataSet.get_z_positions()))]
-                for b in self.dataSet.get_codebook(codebookName=self.codebook
-                                                   ).get_bit_names()])
+                for b in self.dataSet.get_codebook(
+                    self.parameters['codebook_index']).get_bit_names()])
         else:
             return np.array([self.get_processed_image(
                 fov, self.dataSet.get_data_organization()
                     .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
                     for b in self.dataSet.get_codebook(
-                    codebookName=self.codebook).get_bit_names()])
+                    self.parameters['codebook_index']).get_bit_names()])
 
     def get_processed_image(
             self, fov, dataChannel, zIndex,
@@ -104,14 +106,14 @@ class DeconvolutionPreprocess(Preprocess):
 
         histogramBins = np.arange(0, np.iinfo(np.uint16).max, 1)
         pixelHistogram = np.zeros(
-                (self.dataSet.get_codebook(codebookName=self.codebook
+                (self.dataSet.get_codebook(self.parameters['codebook_index']
                                            ).get_bit_count(),
                     len(histogramBins)-1))
 
         # this currently only is to calculate the pixel histograms in order
         # to estimate the initial scale factors. This is likely unnecessary
         for bi, b in enumerate(self.dataSet.get_codebook(
-                codebookName=self.codebook).get_bit_names()):
+                self.parameters['codebook_index']).get_bit_names()):
             dataChannel = self.dataSet.get_data_organization()\
                     .get_data_channel_for_bit(b)
             for i in range(len(self.dataSet.get_z_positions())):

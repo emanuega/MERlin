@@ -103,7 +103,7 @@ class AdaptiveFilterBarcodes(analysistask.AnalysisTask):
         return barcodeSet[np.take(thresholdedBlankFraction, raveledIndexes)]
 
     def _calculate_error_rate(self, barcodeSet):
-        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
+        codebook = self.dataSet.get_codebook(idx=self.codebookNum)
         blankFraction = len(
             codebook.get_blank_indexes()) / codebook.get_barcode_count()
         return np.sum(barcodeSet['barcode_id'].isin(
@@ -112,7 +112,7 @@ class AdaptiveFilterBarcodes(analysistask.AnalysisTask):
     def _run_analysis(self):
         decodeTask = self.dataSet.load_analysis_task(
             self.parameters['decode_task'])
-        codebook = self.dataSet.get_codebook(codebookName=self.codebook)
+        codebook = self.dataSet.get_codebook(idx=self.codebookNum)
 
         allBarcodes = decodeTask.get_barcode_database().get_barcodes(
             columnList=['barcode_id', 'mean_intensity', 'min_distance', 'area'])

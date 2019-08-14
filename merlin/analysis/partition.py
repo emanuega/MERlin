@@ -49,7 +49,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
 
     def _run_analysis(self, fragmentIndex):
         filterTask = self.dataSet.load_analysis_task(
-            self.parameters['filter_barcodes_task'])
+            self.parameters['filter_task'])
         assignmentTask = self.dataSet.load_analysis_task(
             self.parameters['assignment_task'])
 

@@ -90,7 +90,7 @@ def merlin():
         # so that new analysis tasks are generated to match the new parameters
         with open(os.sep.join(
                 [parametersHome, args.analysis_parameters]), 'r') as f:
-            print('Generating analysis tasks from %s' %
+            print('Generating analysis tasks specified in %s' %
                   os.sep.join([parametersHome, args.analysis_parameters]))
             analysisParameters = json.load(f)
             snakeGenerator = snakewriter.SnakefileGenerator(

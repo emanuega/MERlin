@@ -113,7 +113,7 @@ def merlin():
             print('Running MERlin pipeline through snakemake')
             snakemake.snakemake(snakefilePath, cores=args.core_count,
                                 workdir=dataSet.get_snakemake_path(),
-                                stats=snakefilePath + '.stats',
+                                stats=snakefilePath + '.stats', lock=False,
                                 **snakemakeParameters)
 
             if not args.no_report:

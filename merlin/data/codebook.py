@@ -191,4 +191,3 @@ class Codebook(object):
             Original file name of codebook
         """
         return self.codebook_name
-

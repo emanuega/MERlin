@@ -819,7 +819,7 @@ class ImageDataSet(DataSet):
 
 class MERFISHDataSet(ImageDataSet):
 
-    def __init__(self, dataDirectoryName: str, codebookName: List=[],
+    def __init__(self, dataDirectoryName: str, codebookName: List = [],
                 dataOrganizationName: str=None, positionFileName: str=None,
                 dataHome: str=None, analysisHome: str=None,
                 microscopeParametersName: str=None):
@@ -870,7 +870,7 @@ class MERFISHDataSet(ImageDataSet):
             for cb in existingCodebooks:
                 cbNum = int(cb.split('_')[1])
                 self.codebook[cbNum] = codebook.Codebook(self, '{}/{}'.format(
-                    self.analysisPath,cb))
+                    self.analysisPath, cb))
 
     def get_codebook(self, codebookIndex: int) -> codebook.Codebook:
         return self.codebook[codebookIndex]

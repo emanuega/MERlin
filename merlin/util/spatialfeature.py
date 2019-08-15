@@ -9,6 +9,7 @@ from typing import Dict
 from shapely import geometry
 import h5py
 import merlin
+import pandas
 
 from merlin.core import dataset
 
@@ -471,6 +472,35 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
         self._dataSet.delete_hdf5_file('feature_data', self._analysisTask,
                                        fov, 'features')
 
+    def read_feature_metadata(self, fov: int = None) -> pandas.DataFrame:
+        if fov is None:
+            finalDF = pandas.concat([self.read_feature_metadata(x)
+                                     for x in self._dataSet.get_fovs()], 0)
+
+        else:
+            with self._dataSet.open_hdf5_file('r', 'feature_data',
+                                              self._analysisTask, fov,
+                                              'features') as f:
+                allAttrKeys = []
+                allAttrValues = []
+                for key in f['featuredata'].keys():
+                    attrNames = list(f['featuredata'][key].attrs.keys())
+                    attrValues = list(f['featuredata'][key].attrs.values())
+                    allAttrKeys.append(attrNames)
+                    allAttrValues.append(attrValues)
+
+                columns = list(np.unique(allAttrKeys))
+                df = pandas.DataFrame(data=allAttrValues, columns=columns)
+                finalDF = df.loc[:, ['fov', 'volume']].copy(deep=True)
+                finalDF.index = df['id'].str.decode(encoding='utf-8'
+                                                    ).values.tolist()
+                boundingBoxDF = pandas.DataFrame(
+                    df['bounding_box'].values.tolist(),
+                    index=finalDF.index)
+                finalDF['global_x'] = (boundingBoxDF[0] + boundingBoxDF[2]) / 2
+                finalDF['global_y'] = (boundingBoxDF[1] + boundingBoxDF[3]) / 2
+
+        return finalDF
 
 class JSONSpatialFeatureDB(SpatialFeatureDB):
 

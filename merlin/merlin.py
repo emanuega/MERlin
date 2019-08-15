@@ -128,7 +128,7 @@ def run_with_snakemake(
     print('Running MERlin pipeline through snakemake')
     snakemake.snakemake(snakefilePath, cores=coreCount,
                         workdir=dataSet.get_snakemake_path(),
-                        stats=snakefilePath + '.stats',
+                        stats=snakefilePath + '.stats', lock=False,
                         **snakemakeParameters)
 
     if report:

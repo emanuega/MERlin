@@ -42,7 +42,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
             return pandas.concat(
                 [self.get_partitioned_barcodes(fov)
                  for fov in self.dataSet.get_fovs()]
-            ).reset_index(drop=True)
+            )
 
         return self.dataSet.load_dataframe_from_csv(
             'counts_per_cell', self.get_analysis_name(), fov, index_col=0)

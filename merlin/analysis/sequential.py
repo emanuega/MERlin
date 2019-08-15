@@ -148,7 +148,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         if fov is None:
             return pandas.concat(
                 [self.get_sum_signals(fov) for fov in self.dataSet.get_fovs()]
-            ).reset_index(drop=True)
+            )
 
         return self.dataSet.load_dataframe_from_csv(
             'sequential_signal', self.get_analysis_name(),
@@ -163,10 +163,10 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         normSignal = fovSignal.iloc[:, :-1].div(fovSignal.loc[:, 'Pixels'], 0)
 
         normSignal.columns = geneNames
-        normSignal.reset_index(inplace=True)
         columns = normSignal.columns.values.tolist()
-        columns[0] = 'cell ID'
+        columns[0] = 'cell_ID'
         normSignal.columns = columns
+        normSignal.set_index('cell_ID', drop=True, inplace=True)
 
         self.dataSet.save_dataframe_to_csv(
                 normSignal, 'sequential_signal', self.get_analysis_name(),

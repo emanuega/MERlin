@@ -107,10 +107,6 @@ def test_feature_hdf5_db_read_write_delete_multiple_fov(
     readFeaturesEmpty = featureDB.read_features()
     metaDataEmpty = featureDB.read_feature_metadata()
 
-    print(featureMetadata)
-    print(feature1.get_feature_id())
-    print(feature2.get_feature_id())
-
     assert len(readFeatures0) == 1
     assert len(featureMetadata0) == 1
     assert readFeatures0[0].equals(feature1)

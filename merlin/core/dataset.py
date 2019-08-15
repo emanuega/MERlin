@@ -873,6 +873,7 @@ class MERFISHDataSet(ImageDataSet):
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
         if codebookNames:
+            print(codebookNames)
             self.codebooks = [codebook.Codebook(self, name, i)
                               for i, name in enumerate(codebookNames)]
         else:
@@ -893,6 +894,8 @@ class MERFISHDataSet(ImageDataSet):
         """
         existingCodebookName = self.get_stored_codebook_name(
             codebook.get_codebook_index())
+        print('saving codebook')
+        print(existingCodebookName)
         if existingCodebookName and existingCodebookName \
                 != codebook.get_codebook_name():
             raise FileExistsError(('Unable to save codebook %s with index %i '
@@ -940,8 +943,9 @@ class MERFISHDataSet(ImageDataSet):
                         if ('codebook_%i_' % codebookIndex) in x]
         if len(codebookFile) < 1:
             return None
-        codebookName = '_'.join(os.path.basename(
-            codebookFile[0]).split('_')[2:])
+        print(codebookFile)
+        codebookName = '_'.join(os.path.splitext(os.path.basename(
+            codebookFile[0]))[0].split('_')[2:])
         return codebook.Codebook(
             self, codebookFile[0], codebookIndex, codebookName)
 
@@ -961,7 +965,16 @@ class MERFISHDataSet(ImageDataSet):
                         if ('codebook_%i_' % codebookIndex) in x]
         if len(codebookFile) < 1:
             return None
-        return '_'.join(os.path.basename(codebookFile[0]).split('_')[2:])
+        return '_'.join(os.path.splitext(
+            os.path.basename(codebookFile[0]))[0].split('_')[2:])
+
+    def get_codebooks(self) -> List[codebook.Codebook]:
+        """ Get the codebooks associated with this dataset.
+
+        Returns:
+            A list containing the codebooks for this dataset.
+        """
+        return self.codebooks
 
     def get_codebook(self, codebookIndex: int = 0) -> codebook.Codebook:
         return self.codebooks[codebookIndex]

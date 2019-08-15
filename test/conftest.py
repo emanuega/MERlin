@@ -44,6 +44,11 @@ def base_files():
             [merlin.CODEBOOK_HOME, 'test_codebook.csv']))
     shutil.copyfile(
         os.sep.join(
+            ['.', 'auxiliary_files', 'test_codebook2.csv']),
+        os.sep.join(
+            [merlin.CODEBOOK_HOME, 'test_codebook2.csv']))
+    shutil.copyfile(
+        os.sep.join(
             ['.', 'auxiliary_files', 'test_positions.csv']),
         os.sep.join(
             [merlin.POSITION_HOME, 'test_positions.csv']))
@@ -60,6 +65,20 @@ def base_files():
 
 
 @pytest.fixture(scope='session')
+def merfish_files(base_files):
+    os.mkdir(merfishDataDirectory)
+
+    for imageFile in glob.iglob(
+            os.sep.join(['.', 'auxiliary_files', '*.tif'])):
+        if os.path.isfile(imageFile):
+            shutil.copy(imageFile, merfishDataDirectory)
+
+    yield
+
+    shutil.rmtree(merfishDataDirectory)
+
+
+@pytest.fixture(scope='session')
 def simple_data(base_files):
     os.mkdir(dataDirectory)
     testData = dataset.DataSet('test')
@@ -70,14 +89,7 @@ def simple_data(base_files):
 
 
 @pytest.fixture(scope='session')
-def simple_merfish_data(base_files):
-    os.mkdir(merfishDataDirectory)
-
-    for imageFile in glob.iglob(
-            os.sep.join(['.', 'auxiliary_files', '*.tif'])):
-        if os.path.isfile(imageFile):
-            shutil.copy(imageFile, merfishDataDirectory)
-
+def simple_merfish_data(merfish_files):
     testMERFISHData = dataset.MERFISHDataSet(
             'merfish_test', 
             dataOrganizationName='test_data_organization.csv',
@@ -85,7 +97,16 @@ def simple_merfish_data(base_files):
             positionFileName='test_positions.csv')
     yield testMERFISHData
 
-    shutil.rmtree(merfishDataDirectory)
+
+@pytest.fixture(scope='session')
+def two_codebook_merfish_data(merfish_files):
+    testMERFISHData = dataset.MERFISHDataSet(
+            'merfish_test',
+            dataOrganizationName='test_data_organization.csv',
+            codebookNames=['test_codebook2.csv', 'test_codebook.csv'],
+            positionFileName='test_positions.csv',
+            analysisHome=os.sep.join(['.', 'test_analysis_two_codebook']))
+    yield testMERFISHData
 
 
 @pytest.fixture(scope='function')

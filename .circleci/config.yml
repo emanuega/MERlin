@@ -30,6 +30,6 @@ jobs:
       - run:
           name: run tests
           command: |
-            conda activate merlin_env
-            cd ~/repo/MERlin/test
+            source activate merlin_env
+            cd ~/MERlin/test
             pytest -v --cov=calculator

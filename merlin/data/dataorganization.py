@@ -10,11 +10,9 @@ import merlin
 
 def _parse_list(inputString: str, dtype=float):
     if ',' in inputString:
-        return np.fromstring(
-                inputString.strip('[] '), dtype=dtype, sep=',')
+        return np.fromstring(inputString.strip('[] '), dtype=dtype, sep=',')
     else:
-        return np.fromstring(
-                inputString.strip('[] '), dtype=dtype, sep=' ')
+        return np.fromstring(inputString.strip('[] '), dtype=dtype, sep=' ')
 
 
 def _parse_int_list(inputString: str):
@@ -236,7 +234,8 @@ class DataOrganization(object):
             contains the name associated with that channel in the data
             organization file.
         """
-        multiplexBits = self._dataSet.get_codebook().get_bit_names()
+        multiplexBits = {b for x in self._dataSet.get_codebooks()
+                         for b in x.get_bit_names()}
         sequentialChannels = [i for i in self.get_data_channels()
                               if self.get_data_channel_readout_name(i)
                               not in multiplexBits]

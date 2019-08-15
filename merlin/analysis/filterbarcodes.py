@@ -38,6 +38,11 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
     def get_dependencies(self):
         return [self.parameters['decode_task']]
 
+    def get_codebook(self):
+        decodeTask = self.dataSet.load_analysis_task(
+            self.parameters['decode_task'])
+        return decodeTask.get_codebook()
+
     def _run_analysis(self, fragmentIndex):
         decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])

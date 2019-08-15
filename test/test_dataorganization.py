@@ -16,9 +16,9 @@ def test_dataorganization_get_channel_name(simple_merfish_data):
                 .get_data_channel_name(i) == 'bit' + str(i+1)
 
     assert simple_merfish_data.get_data_organization()\
-        .get_data_channel_name(16) == 'cellstain'
+        .get_data_channel_name(16) == 'DAPI'
     assert simple_merfish_data.get_data_organization()\
-        .get_data_channel_name(17) == 'nuclearstain'
+        .get_data_channel_name(17) == 'polyT'
 
 
 def test_dataorganization_get_channel_index(simple_merfish_data):
@@ -27,9 +27,9 @@ def test_dataorganization_get_channel_index(simple_merfish_data):
             .get_data_channel_index('bit' + str(i+1)) == i
 
     assert simple_merfish_data.get_data_organization() \
-        .get_data_channel_index('cellstain') == 16
+        .get_data_channel_index('DAPI') == 16
     assert simple_merfish_data.get_data_organization() \
-        .get_data_channel_index('nuclearstain') == 17
+        .get_data_channel_index('polyT') == 17
 
 
 def test_dataorganization_get_fovs(simple_merfish_data):
@@ -49,13 +49,17 @@ def test_dataorganization_get_fiducial_information(simple_merfish_data):
     for d in data.get_data_channels():
         assert data.get_fiducial_frame_index(d) == 2
     assert os.path.normpath(data.get_fiducial_filename(0, 0)) \
-        == os.path.normpath('test_data/merfish_test/test_0_0.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_0_0.tif'))
     assert os.path.normpath(data.get_fiducial_filename(0, 1)) \
-        == os.path.normpath('test_data/merfish_test/test_1_0.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_1_0.tif'))
     assert os.path.normpath(data.get_fiducial_filename(1, 1)) \
-        == os.path.normpath('test_data/merfish_test/test_1_0.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_1_0.tif'))
     assert os.path.normpath(data.get_fiducial_filename(2, 1)) \
-        == os.path.normpath('test_data/merfish_test/test_1_1.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_1_1.tif'))
 
 
 def test_dataorganization_get_image_information(simple_merfish_data):
@@ -64,13 +68,17 @@ def test_dataorganization_get_image_information(simple_merfish_data):
     assert data.get_image_frame_index(1, 0) == 0
     assert data.get_image_frame_index(16, 0) == 3
     assert os.path.normpath(data.get_image_filename(0, 0)) \
-        == os.path.normpath('test_data/merfish_test/test_0_0.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_0_0.tif'))
     assert os.path.normpath(data.get_image_filename(0, 1)) \
-        == os.path.normpath('test_data/merfish_test/test_1_0.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_1_0.tif'))
     assert os.path.normpath(data.get_image_filename(1, 1)) \
-        == os.path.normpath('test_data/merfish_test/test_1_0.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_1_0.tif'))
     assert os.path.normpath(data.get_image_filename(2, 1)) \
-        == os.path.normpath('test_data/merfish_test/test_1_1.tif')
+        == os.path.normpath(
+        os.path.abspath('test_data/merfish_test/test_1_1.tif'))
 
 
 def test_dataorganization_load_from_dataset(simple_merfish_data):
@@ -109,7 +117,7 @@ def test_dataorganization_get_sequential_rounds(simple_merfish_data):
         dataOrganization.get_sequential_rounds()
 
     assert sequentialRounds == [16, 17]
-    assert sequentialChannels == ['cellstain', 'nuclearstain']
+    assert sequentialChannels == ['DAPI', 'polyT']
 
 
 def test_dataorganization_get_sequential_rounds_two_codebooks(

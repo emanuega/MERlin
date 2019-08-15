@@ -12,13 +12,28 @@
             }
         },
         {
-            "task": "Optimize",
+            "task": "OptimizeIteration",
             "module": "optimize",
+            "analysis_name": "Optimize1",
             "parameters": {
                 "preprocess_task": "DeconvolutionPreprocess",
+                "warp_task": "FiducialCorrelationWarp",
                 "fov_per_iteration": 2,
                 "iteration_count": 2,
-                "estimate_initial_scale_factors_from_cdf": true
+                "optimize_chromatic_correction": false
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "optimize",
+            "analysis_name": "Optimize2",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocess",
+                "warp_task": "FiducialCorrelationWarp",
+                "fov_per_iteration": 2,
+                "iteration_count": 2,
+                "optimize_chromatic_correction": false,
+                "previous_iteration": "Optimize1"
             }
         },
         {
@@ -26,9 +41,8 @@
             "module": "decode",
             "parameters": {
                 "preprocess_task": "DeconvolutionPreprocess",
-                "optimize_task": "Optimize",
+                "optimize_task": "Optimize2",
                 "global_align_task": "SimpleGlobalAlignment",
-                "segment_task": "CleanCellSegmentation",
                 "crop_width": 10
             }
         },
@@ -55,30 +69,11 @@
             }
         },
         {
-            "task": "SegmentCells",
+            "task": "WatershedSegment",
             "module": "segment",
             "parameters": {
                 "warp_task": "FiducialCorrelationWarp",
                 "global_align_task": "SimpleGlobalAlignment"
-            }
-        },
-        {
-            "task": "CleanCellSegmentation",
-            "module": "segment",
-            "parameters": {
-                "segment_task": "SegmentCells"
-            }
-        },
-        {
-            "task": "PlotPerformance",
-            "module": "plotperformance",
-            "analysis_name": "PlotPerformanceStrict",
-            "parameters": {
-                "preprocess_task": "DeconvolutionPreprocess",
-                "optimize_task": "Optimize",
-                "decode_task": "Decode",
-                "filter_task": "StrictFilterBarcodes",
-                "segment_task": "CleanCellSegmentation"
             }
         },
         {

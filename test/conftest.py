@@ -6,15 +6,13 @@ from merlin.core import dataset
 from merlin.analysis import testtask
 import merlin
 
-merlin.DATA_HOME = os.sep.join(['.', 'test_data'])
-merlin.ANALYSIS_HOME = os.sep.join(['.', 'test_analysis'])
-merlin.ANALYSIS_PARAMETERS_HOME = os.sep.join(
-        ['.', 'test_analysis_parameters'])
-merlin.CODEBOOK_HOME = os.sep.join(['.', 'test_codebooks'])
-merlin.DATA_ORGANIZATION_HOME = os.sep.join(['.', 'test_dataorganization'])
-merlin.POSITION_HOME = os.sep.join(['.', 'test_poitions'])
-merlin.MICROSCOPE_PARAMETERS_HOME = os.sep.join(
-        ['.', 'test_microcope_parameters'])
+merlin.DATA_HOME = os.path.abspath('test_data')
+merlin.ANALYSIS_HOME = os.path.abspath('test_analysis')
+merlin.ANALYSIS_PARAMETERS_HOME = os.path.abspath('test_analysis_parameters')
+merlin.CODEBOOK_HOME = os.path.abspath('test_codebooks')
+merlin.DATA_ORGANIZATION_HOME = os.path.abspath('test_dataorganization')
+merlin.POSITION_HOME = os.path.abspath('test_positions')
+merlin.MICROSCOPE_PARAMETERS_HOME = os.path.abspath('test_microcope_parameters')
 
 
 dataDirectory = os.sep.join([merlin.DATA_HOME, 'test'])
@@ -57,6 +55,12 @@ def base_files():
             ['.', 'auxiliary_files', 'test_analysis_parameters.json']),
         os.sep.join(
             [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_parameters.json']))
+    shutil.copyfile(
+        os.sep.join(
+            ['.', 'auxiliary_files', 'test_microscope_parameters.json']),
+        os.sep.join(
+            [merlin.MICROSCOPE_PARAMETERS_HOME,
+             'test_microscope_parameters.json']))
 
     yield
 
@@ -94,7 +98,8 @@ def simple_merfish_data(merfish_files):
             'merfish_test', 
             dataOrganizationName='test_data_organization.csv',
             codebookNames=['test_codebook.csv'],
-            positionFileName='test_positions.csv')
+            positionFileName='test_positions.csv',
+            microscopeParametersName='test_microscope_parameters.json')
     yield testMERFISHData
 
 
@@ -105,8 +110,11 @@ def two_codebook_merfish_data(merfish_files):
             dataOrganizationName='test_data_organization.csv',
             codebookNames=['test_codebook2.csv', 'test_codebook.csv'],
             positionFileName='test_positions.csv',
-            analysisHome=os.sep.join(['.', 'test_analysis_two_codebook']))
+            analysisHome=os.sep.join(['.', 'test_analysis_two_codebook']),
+            microscopeParametersName='test_microscope_parameters.json')
     yield testMERFISHData
+
+    shutil.rmtree('test_analysis_two_codebook')
 
 
 @pytest.fixture(scope='function')

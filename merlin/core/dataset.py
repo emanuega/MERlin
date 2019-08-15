@@ -419,7 +419,7 @@ class DataSet(object):
 
         savePath = self._analysis_result_save_path(
                 resultName, analysisName, resultIndex, subdirectory, '.npy')
-        return np.load(savePath)
+        return np.load(savePath, allow_pickle=True)
 
     def get_analysis_subdirectory(
             self, analysisTask: TaskOrName, subdirectory: str = None,
@@ -894,8 +894,6 @@ class MERFISHDataSet(ImageDataSet):
         """
         existingCodebookName = self.get_stored_codebook_name(
             codebook.get_codebook_index())
-        print('saving codebook')
-        print(existingCodebookName)
         if existingCodebookName and existingCodebookName \
                 != codebook.get_codebook_name():
             raise FileExistsError(('Unable to save codebook %s with index %i '
@@ -943,7 +941,6 @@ class MERFISHDataSet(ImageDataSet):
                         if ('codebook_%i_' % codebookIndex) in x]
         if len(codebookFile) < 1:
             return None
-        print(codebookFile)
         codebookName = '_'.join(os.path.splitext(os.path.basename(
             codebookFile[0]))[0].split('_')[2:])
         return codebook.Codebook(

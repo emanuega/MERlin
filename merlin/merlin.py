@@ -7,7 +7,7 @@ import sys
 import snakemake
 import time
 import requests
-import io
+from typing import TextIO
 from typing import Dict
 
 import merlin as m
@@ -112,7 +112,7 @@ def merlin():
 
 
 def generate_analysis_tasks_and_snakefile(dataSet: dataset.MERFISHDataSet,
-                                          parametersFile: io.TextIO) -> str:
+                                          parametersFile: TextIO) -> str:
     print('Generating analysis tasks from %s' % parametersFile.name)
     analysisParameters = json.load(parametersFile)
     snakeGenerator = snakewriter.SnakefileGenerator(

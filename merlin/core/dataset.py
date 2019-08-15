@@ -32,7 +32,7 @@ TaskOrName = Union[analysistask.AnalysisTask, str]
 class DataSet(object):
 
     def __init__(self, dataDirectoryName: str,
-                 dataHome: str = None, analysisHome: str =  None):
+                 dataHome: str = None, analysisHome: str = None):
         """Create a dataset for the specified raw data.
 
         Args:
@@ -202,7 +202,7 @@ class DataSet(object):
             return os.sep.join([self.get_analysis_subdirectory(
                 analysisTask, subdirectory), saveName])
 
-    def list_analysis_files(self, analysisTask: TaskOrName=None,
+    def list_analysis_files(self, analysisTask: TaskOrName = None,
                             subdirectory: str = None, extension: str = None,
                             fullPath: bool = True) -> List[str]:
         basePath = self._analysis_result_save_path(
@@ -729,7 +729,8 @@ class DataSet(object):
 class ImageDataSet(DataSet):
 
     def __init__(self, dataDirectoryName: str, dataHome: str = None,
-                analysisHome: str = None, microscopeParametersName: str = None):
+                 analysisHome: str = None,
+                 microscopeParametersName: str = None):
         """Create a dataset for the specified raw data.
 
         Args:

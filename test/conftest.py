@@ -95,7 +95,7 @@ def simple_data(base_files):
 @pytest.fixture(scope='session')
 def simple_merfish_data(merfish_files):
     testMERFISHData = dataset.MERFISHDataSet(
-            'merfish_test', 
+            'merfish_test',
             dataOrganizationName='test_data_organization.csv',
             codebookNames=['test_codebook.csv'],
             positionFileName='test_positions.csv',

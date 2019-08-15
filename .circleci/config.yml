@@ -16,6 +16,7 @@ jobs:
           command: |
             conda create -n merlin_env python=3.6
             conda config --add channels conda-forge
+            conda config --add channels bioconda
             conda config --set always_yes true
             conda config --set quiet true
             source activate merlin_env

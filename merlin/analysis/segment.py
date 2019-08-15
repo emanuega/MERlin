@@ -275,7 +275,11 @@ class AssignCellFOV(analysistask.AnalysisTask):
                               if x[1] == f]
                 featureDB.write_features(cellsInFOV, f)
 
+
 class ExportCellMetadata(analysistask.AnalysisTask):
+    """
+    An analysis task exports cell metadata.
+    """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)

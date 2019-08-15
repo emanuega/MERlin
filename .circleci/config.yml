@@ -14,6 +14,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            conda init bash
             conda create -n merlin_env python=3.6
             conda config --add channels conda-forge
             conda config --set always_yes true

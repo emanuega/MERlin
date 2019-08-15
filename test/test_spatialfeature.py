@@ -100,16 +100,37 @@ def test_feature_hdf5_db_read_write_delete_multiple_fov(
     readFeatures = featureDB.read_features()
     readFeatures0 = featureDB.read_features(0)
     readFeatures1 = featureDB.read_features(1)
+    featureMetadata = featureDB.read_feature_metadata()
+    featureMetadata0 = featureDB.read_feature_metadata(0)
+    featureMetadata1 = featureDB.read_feature_metadata(1)
     featureDB.empty_database()
     readFeaturesEmpty = featureDB.read_features()
+    metaDataEmpty = featureDB.read_feature_metadata()
+
+    print(featureMetadata)
+    print(feature1.get_feature_id())
+    print(feature2.get_feature_id())
 
     assert len(readFeatures0) == 1
+    assert len(featureMetadata0) == 1
     assert readFeatures0[0].equals(feature1)
+    assert int(featureMetadata0.index[0]) == feature1.get_feature_id()
+    assert np.allclose(featureMetadata0.iloc[0][
+                           ['fov', 'volume', 'center_x', 'center_y',
+                            'min_x', 'min_y', 'max_x', 'max_y']].values,
+                       np.array([0, 1, 1.5, 1.5, 1, 1, 2, 2]))
 
     assert len(readFeatures1) == 1
+    assert len(featureMetadata1) == 1
     assert readFeatures1[0].equals(tempFeature2)
+    assert int(featureMetadata1.index[0]) == tempFeature2.get_feature_id()
+    assert np.allclose(featureMetadata1.iloc[0][
+        ['fov', 'volume', 'center_x', 'center_y',
+         'min_x', 'min_y', 'max_x', 'max_y']].values,
+           np.array([1, 4, 1, 1, 0, 0, 2, 2]))
 
     assert len(readFeatures) == 2
+    assert len(featureMetadata) == 2
     if readFeatures[0].get_feature_id() == feature1.get_feature_id():
         f1Index = 0
         f2Index = 1
@@ -120,6 +141,7 @@ def test_feature_hdf5_db_read_write_delete_multiple_fov(
     assert readFeatures[f2Index].equals(tempFeature2)
 
     assert len(readFeaturesEmpty) == 0
+    assert len(metaDataEmpty) == 0
 
 
 def test_feature_contained_within_boundary():

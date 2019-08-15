@@ -9,6 +9,7 @@ from typing import Dict
 from shapely import geometry
 import h5py
 import merlin
+import pandas
 
 from merlin.core import dataset
 
@@ -470,6 +471,56 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
         self._dataSet.delete_hdf5_file('feature_data', self._analysisTask,
                                        fov, 'features')
+
+    def read_feature_metadata(self, fov: int = None) -> pandas.DataFrame:
+        """ Get the metadata for the features stored within this feature
+        database.
+
+        Args:
+            fov: an index of a fov to only get the features within the
+                specified field of view. If not specified features
+                within all fields of view are returned.
+        Returns: a data frame containing the metadata, including:
+            fov, volume, center_x, center_y, min_x, min_y, max_x, max_y.
+            Coordinates are in microns.
+        """
+        if fov is None:
+            finalDF = pandas.concat([self.read_feature_metadata(x)
+                                     for x in self._dataSet.get_fovs()], 0)
+
+        else:
+            try:
+                with self._dataSet.open_hdf5_file('r', 'feature_data',
+                                                  self._analysisTask, fov,
+                                                  'features') as f:
+                    allAttrKeys = []
+                    allAttrValues = []
+                    for key in f['featuredata'].keys():
+                        attrNames = list(f['featuredata'][key].attrs.keys())
+                        attrValues = list(f['featuredata'][key].attrs.values())
+                        allAttrKeys.append(attrNames)
+                        allAttrValues.append(attrValues)
+
+                    columns = list(np.unique(allAttrKeys))
+                    df = pandas.DataFrame(data=allAttrValues, columns=columns)
+                    finalDF = df.loc[:, ['fov', 'volume']].copy(deep=True)
+                    finalDF.index = df['id'].str.decode(encoding='utf-8'
+                                                        ).values.tolist()
+                    boundingBoxDF = pandas.DataFrame(
+                        df['bounding_box'].values.tolist(),
+                        index=finalDF.index)
+                    finalDF['center_x'] = \
+                        (boundingBoxDF[0] + boundingBoxDF[2]) / 2
+                    finalDF['center_y'] = \
+                        (boundingBoxDF[1] + boundingBoxDF[3]) / 2
+                    finalDF['min_x'] = boundingBoxDF[0]
+                    finalDF['max_x'] = boundingBoxDF[2]
+                    finalDF['min_y'] = boundingBoxDF[1]
+                    finalDF['max_y'] = boundingBoxDF[3]
+            except FileNotFoundError:
+                return pandas.DataFrame()
+
+        return finalDF
 
 
 class JSONSpatialFeatureDB(SpatialFeatureDB):

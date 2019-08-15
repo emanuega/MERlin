@@ -79,10 +79,16 @@ Parameters:
 * seed\_channel\_name -- The name of the data channel to use to find seeds
 * watershed\_channel\_name -- The name of the data channel to use as the watershed image.W
 
-segment.CleanCellSegmentation
+segment.AssignCellFOV
 --------------------------------
 
-Description: Cleans the cell segmentation by merging cells that were fargmented along the field of view boundaries.
+Description: Assigns each cell to the FOV centroid they are closest to, and eliminates overlapping cells from the dataset, keeping 1.
+
+segment.ExportCellMetadata
+--------------------------------
+
+Description: Exports a csv containing the cell metadata, i.e. fov, volume, x and y coordinates.
+
 
 generatemosaic.GenerateMosaic
 -------------------------------

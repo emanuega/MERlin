@@ -2,7 +2,6 @@ import os
 import pytest
 import shutil
 import glob
-from merlin.core import analysistask
 from merlin.core import dataset
 from merlin.analysis import testtask
 import merlin
@@ -24,10 +23,10 @@ merfishDataDirectory = os.sep.join([merlin.DATA_HOME, 'merfish_test'])
 
 @pytest.fixture(scope='session')
 def base_files():
-    folderList = [merlin.DATA_HOME, merlin.ANALYSIS_HOME, \
-            merlin.ANALYSIS_PARAMETERS_HOME, merlin.CODEBOOK_HOME, \
-            merlin.DATA_ORGANIZATION_HOME, merlin.POSITION_HOME, \
-            merlin.MICROSCOPE_PARAMETERS_HOME]
+    folderList = [merlin.DATA_HOME, merlin.ANALYSIS_HOME,
+                  merlin.ANALYSIS_PARAMETERS_HOME, merlin.CODEBOOK_HOME,
+                  merlin.DATA_ORGANIZATION_HOME, merlin.POSITION_HOME,
+                  merlin.MICROSCOPE_PARAMETERS_HOME]
     for folder in folderList:
         if os.path.exists(folder):
             shutil.rmtree(folder)
@@ -82,7 +81,7 @@ def simple_merfish_data(base_files):
     testMERFISHData = dataset.MERFISHDataSet(
             'merfish_test', 
             dataOrganizationName='test_data_organization.csv',
-            codebookName='test_codebook.csv',
+            codebookNames=['test_codebook.csv'],
             positionFileName='test_positions.csv')
     yield testMERFISHData
 
@@ -115,6 +114,3 @@ def simple_merfish_task(simple_merfish_data, request):
         simple_merfish_data, parameters={'a': 5, 'b': 'b_string'})
     yield task
     simple_merfish_data.delete_analysis(task)
-
-
-

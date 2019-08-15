@@ -75,7 +75,7 @@ def merlin():
     dataSet = dataset.MERFISHDataSet(
         args.dataset,
         dataOrganizationName=_clean_string_arg(args.data_organization),
-        codebookName=_clean_string_arg(args.codebook),
+        codebookNames=_clean_string_arg(args.codebook),
         microscopeParametersName=_clean_string_arg(args.microscope_parameters),
         positionFileName=_clean_string_arg(args.positions),
         dataHome=_clean_string_arg(args.data_home),

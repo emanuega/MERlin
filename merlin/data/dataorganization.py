@@ -10,11 +10,9 @@ import merlin
 
 def _parse_list(inputString: str, dtype=float):
     if ',' in inputString:
-        return np.fromstring(
-                inputString.strip('[] '), dtype=dtype, sep=',')
+        return np.fromstring(inputString.strip('[] '), dtype=dtype, sep=',')
     else:
-        return np.fromstring(
-                inputString.strip('[] '), dtype=dtype, sep=' ')
+        return np.fromstring(inputString.strip('[] '), dtype=dtype, sep=' ')
 
 
 def _parse_int_list(inputString: str):

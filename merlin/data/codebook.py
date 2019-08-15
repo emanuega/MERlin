@@ -18,7 +18,8 @@ class Codebook(object):
     A Codebook stores the association of barcodes to genes.
     """
 
-    def __init__(self, dataSet, filePath):
+    def __init__(self, dataSet, filePath, codebookIndex: int=0,
+                 codebookName: str=None):
         """
         Create a new Codebook for the data in the specified data set.
 
@@ -29,15 +30,8 @@ class Codebook(object):
         Codebook.
         """
         self._dataSet = dataSet
-
-        allAnalysisFiles = os.listdir(self._dataSet.analysisPath)
-        existingCodebooks = [x for x in allAnalysisFiles if 'codebook' in x]
-
-        currentCodebookNum = len(existingCodebooks)
-
         if not os.path.exists(filePath):
-            filePath = os.sep.join(
-                    [merlin.CODEBOOK_HOME, filePath])
+            filePath = os.sep.join([merlin.CODEBOOK_HOME, filePath])
 
         newVersion = True
         with open(filePath, 'r') as f:
@@ -46,7 +40,6 @@ class Codebook(object):
 
         if newVersion:
             self._data = pandas.read_csv(filePath)
-
         else:
             headerLength = 3
             barcodeData = pandas.read_csv(
@@ -62,16 +55,12 @@ class Codebook(object):
 
             self._data = self._generate_codebook_dataframe(
                     barcodeData, bitNames)
-        name = os.path.splitext(os.path.basename(filePath))[0]
 
-        if not os.path.isfile('{}/codebook_{}_{}.csv'.format(
-                self._dataSet.analysisPath, currentCodebookNum, name)):
-            self._dataSet.save_dataframe_to_csv(self._data,
-                                                'codebook_{}_{}'.format(
-                                                    currentCodebookNum, name),
-                                                index=False)
-        self.codebook_name = name
-
+        if not codebookName:
+            codebookName = os.path.splitext(os.path.basename(filePath))[0]
+        self._codebookName = codebookName
+        self._codebookIndex = codebookIndex
+        self._dataSet.save_codebook(self)
 
     @staticmethod
     def _generate_codebook_dataframe(barcodeData, bitNames):
@@ -82,8 +71,15 @@ class Codebook(object):
         df[bitNames] = df[bitNames].astype('uint8')
         return df
 
+    def get_data(self) -> pandas.DataFrame:
+        """ Get the dataframe that contains the information for this codebook
+
+        Returns: The pandas dataframe
+        """
+        return self._data
+
     def get_barcode(self, index: int) -> List[bool]:
-        """Get the barcode with the specified index.
+        """ Get the barcode with the specified index.
 
         Args:
             index: the index of the barcode in the barcode list
@@ -108,7 +104,7 @@ class Codebook(object):
         return len(self.get_bit_names())
 
     def get_bit_names(self) -> List[str]:
-        """Get the names of the bits for this MERFISH data set.
+        """ Get the names of the bits for this MERFISH data set.
 
         Returns:
             A list of the names of the bits in order from the lowest to highest
@@ -116,7 +112,7 @@ class Codebook(object):
         return [s for s in self._data.columns if s not in ['name', 'id']]
 
     def get_barcodes(self, ignoreBlanks=False) -> np.array:
-        """Get the barcodes present in this codebook.
+        """ Get the barcodes present in this codebook.
         
         Args:
             ignoreBlanks: flag indicating whether barcodes corresponding 
@@ -134,7 +130,7 @@ class Codebook(object):
                              for i, x in self._data.iterrows()])
 
     def get_coding_indexes(self) -> List[int]:
-        """Get the barcode indexes that correspond with genes.
+        """ Get the barcode indexes that correspond with genes.
 
         Returns:
             A list of barcode indexes that correspond with genes and not 
@@ -144,7 +140,7 @@ class Codebook(object):
                 ~self._data['name'].str.contains('Blank', case=False)].index
     
     def get_blank_indexes(self) -> List[int]:
-        """Get the barcode indexes that do not correspond with genes.
+        """ Get the barcode indexes that do not correspond with genes.
 
         Returns:
             A list of barcode indexes that correspond with blanks
@@ -153,7 +149,7 @@ class Codebook(object):
                 self._data['name'].str.contains('Blank', case=False)].index
 
     def get_gene_names(self) -> List[str]:
-        """"Get the names of the genes represented in this codebook.
+        """" Get the names of the genes represented in this codebook.
 
         Returns:
             A list of the gene names. The list does not contain the names of
@@ -162,7 +158,7 @@ class Codebook(object):
         return self._data.loc[self.get_coding_indexes()]['name'].tolist()
 
     def get_name_for_barcode_index(self, index: int) -> str:
-        """Get the gene name for the barcode with the specified index.
+        """ Get the gene name for the barcode with the specified index.
 
         Returns:
             The gene name
@@ -170,7 +166,7 @@ class Codebook(object):
         return self._data.loc[index]['name']
 
     def get_barcode_index_for_name(self, name: str) -> Union[int, None]:
-        """Get the barcode index for the barcode with the specified name.
+        """ Get the barcode index for the barcode with the specified name.
 
         Returns:
             The barcode index. If name appears more than once, the index of
@@ -182,12 +178,19 @@ class Codebook(object):
             return None
         return matches.index[0]
 
-    def get_codebook_name(self):
-        """
-        Gets the original file name used to generate a codebook saved in the
-        analysis directory
+    def get_codebook_name(self) -> str:
+        """ Gets the name of this codebook
 
         Returns:
-            Original file name of codebook
+            The codebook name. This is the original file name of codebook.
         """
-        return self.codebook_name
+        return self._codebookName
+
+    def get_codebook_index(self) -> int:
+        """ Get the index of this codebook
+
+        Returns:
+            The codebook index. All codebooks associated with the same dataset
+            will have unique indexes starting from 0.
+        """
+        return self._codebookIndex

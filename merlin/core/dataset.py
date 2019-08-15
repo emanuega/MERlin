@@ -1,5 +1,4 @@
 import os
-import errno
 import json
 import shutil
 import pandas
@@ -16,6 +15,7 @@ from typing import List
 from typing import Tuple
 from typing import Union
 from typing import Dict
+from typing import Optional
 import h5py
 import tables
 
@@ -186,7 +186,7 @@ class DataSet(object):
             return os.sep.join([destPath, imageBaseName+str(imageIndex)+'.tif'])
 
     def _analysis_result_save_path(
-            self, resultName: str, analysisName: TaskOrName,
+            self, resultName: str, analysisTask: TaskOrName,
             resultIndex: int=None, subdirectory: str=None,
             fileExtension: str=None) -> str:
 
@@ -196,11 +196,23 @@ class DataSet(object):
         if fileExtension is not None:
             saveName += fileExtension
 
-        if analysisName is None:
+        if analysisTask is None:
             return os.sep.join([self.analysisPath, saveName])
         else:
             return os.sep.join([self.get_analysis_subdirectory(
-                analysisName, subdirectory), saveName])
+                analysisTask, subdirectory), saveName])
+
+    def list_analysis_files(self, analysisTask: TaskOrName=None,
+                            subdirectory: str=None, extension: str=None,
+                            fullPath: bool=True) -> List[str]:
+        basePath = self._analysis_result_save_path(
+            '', analysisTask, subdirectory=subdirectory)
+        fileList = os.listdir(basePath)
+        if extension:
+            fileList = [x for x in fileList if x.endswith(extension)]
+        if fullPath:
+            fileList = [os.path.join(basePath, x) for x in fileList]
+        return fileList
 
     def save_dataframe_to_csv(
             self, dataframe: pandas.DataFrame, resultName: str,
@@ -276,8 +288,7 @@ class DataSet(object):
         return tables.open_file(savePath, mode=mode)
 
     def delete_table(self, resultName: str, analysisTask: TaskOrName=None,
-                         resultIndex: int=None, subdirectory: str=None
-                         ) -> None:
+                     resultIndex: int=None, subdirectory: str=None) -> None:
         """Delete an hdf5 file stored in this data set if it exists.
 
         Args:
@@ -819,18 +830,18 @@ class ImageDataSet(DataSet):
 
 class MERFISHDataSet(ImageDataSet):
 
-    def __init__(self, dataDirectoryName: str, codebookName: List = [],
-                dataOrganizationName: str=None, positionFileName: str=None,
-                dataHome: str=None, analysisHome: str=None,
-                microscopeParametersName: str=None):
+    def __init__(self, dataDirectoryName: str, codebookNames: List[str]=None,
+                 dataOrganizationName: str=None, positionFileName: str=None,
+                 dataHome: str=None, analysisHome: str=None,
+                 microscopeParametersName: str=None):
         """Create a MERFISH dataset for the specified raw data.
 
         Args:
             dataDirectoryName: the relative directory to the raw data
-            codebookName: A list of the names of codebooks to use. The codebook
+            codebookNames: A list of the names of codebooks to use. The codebook
                     should be present in the analysis parameters
-                    directory. A full path can be provided for a codebook
-                    present in another directory.
+                    directory. Full paths can be provided for codebooks
+                    present other directories.
             dataOrganizationName: the name of the data organization to use.
                     The data organization should be present in the analysis
                     parameters directory. A full path can be provided for
@@ -860,20 +871,99 @@ class MERFISHDataSet(ImageDataSet):
 
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
-        self.codebook = dict()
-        if len(codebookName) == 0:
-            for i in range(len(codebookName)):
-                self.codebook[i] = codebook.Codebook(self, codebookName[i])
+        if codebookNames:
+            self.codebooks = [codebook.Codebook(self, name, i)
+                              for i, name in enumerate(codebookNames)]
         else:
-            allAnalysisFiles = os.listdir(self.analysisPath)
-            existingCodebooks = [x for x in allAnalysisFiles if 'codebook' in x]
-            for cb in existingCodebooks:
-                cbNum = int(cb.split('_')[1])
-                self.codebook[cbNum] = codebook.Codebook(self, '{}/{}'.format(
-                    self.analysisPath, cb))
+            self.codebooks = self.load_codebooks()
 
-    def get_codebook(self, codebookIndex: int) -> codebook.Codebook:
-        return self.codebook[codebookIndex]
+    def save_codebook(self, codebook: codebook.Codebook) -> None:
+        """ Store the specified codebook in this dataset.
+
+        If a codebook with the same codebook index and codebook name as the
+        specified codebook already exists in this dataset, it is not
+        overwritten.
+
+        Args:
+            codebook: the codebook to store
+        Raises:
+            FileExistsError: If a codebook with the same codebook index but
+                a different codebook name is already save within this dataset.
+        """
+        existingCodebookName = self.get_stored_codebook_name(
+            codebook.get_codebook_index())
+        if existingCodebookName and existingCodebookName \
+                != codebook.get_codebook_name():
+            raise FileExistsError(('Unable to save codebook %s with index %i '
+                                  + ' since codebook %s already exists with '
+                                  + 'the same index')
+                                  % (codebook.get_codebook_name(),
+                                     codebook.get_codebook_index(),
+                                     existingCodebookName))
+
+        if not existingCodebookName:
+            self.save_dataframe_to_csv(
+                codebook.get_data(),
+                '_'.join(['codebook', str(codebook.get_codebook_index()),
+                          codebook.get_codebook_name()]), index=False)
+
+    def load_codebooks(self) -> List[codebook.Codebook]:
+        """ Get all the codebooks stored within this dataset.
+
+        Returns:
+            A list of all the stored codebooks.
+        """
+        codebookList = []
+
+        currentIndex = 0
+        currentCodebook = self.load_codebook(currentIndex)
+        while currentCodebook is not None:
+            codebookList.append(currentCodebook)
+            currentIndex += 1
+            currentCodebook = self.load_codebook(currentIndex)
+
+        return codebookList
+
+    def load_codebook(self, codebookIndex: int=0
+                      ) -> Optional[codebook.Codebook]:
+        """ Load the codebook stored within this dataset with the specified
+        index.
+
+        Args:
+            codebookIndex: the index of the codebook to load.
+        Returns:
+            The codebook stored with the specified codebook index. If no
+            codebook exists with the specified index then None is returned.
+        """
+        codebookFile = [x for x in self.list_analysis_files(extension='.csv')
+                        if ('codebook_%i_' % codebookIndex) in x]
+        if len(codebookFile) < 1:
+            return None
+        codebookName = '_'.join(os.path.basename(
+            codebookFile[0]).split('_')[2:])
+        return codebook.Codebook(
+            self, codebookFile[0], codebookIndex, codebookName)
+
+    def get_stored_codebook_name(self, codebookIndex: int=0) -> Optional[str]:
+        """ Get the name of the codebook stored within this dataset with the
+        specified index.
+
+        Args:
+            codebookIndex: the index of the codebook to load to find the name
+                of.
+        Returns:
+            The name of the codebook stored with the specified codebook index.
+            If no codebook exists with the specified index then None is
+            returned.
+        """
+        codebookFile = [x for x in self.list_analysis_files(extension='.csv')
+                        if ('codebook_%i_' % codebookIndex) in x]
+        if len(codebookFile) < 1:
+            return None
+        return '_'.join(os.path.basename(codebookFile[0]).split('_')[2:])
+
+    def get_codebook(self, codebookIndex: int=0) -> codebook.Codebook:
+        return self.codebooks[codebookIndex]
 
     def get_data_organization(self) -> dataorganization.DataOrganization:
         return self.dataOrganization

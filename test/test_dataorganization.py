@@ -110,3 +110,12 @@ def test_dataorganization_get_sequential_rounds(simple_merfish_data):
 
     assert sequentialRounds == [16, 17]
     assert sequentialChannels == ['cellstain', 'nuclearstain']
+
+
+def test_dataorganization_get_sequential_rounds_two_codebooks(
+        two_codebook_merfish_data):
+    dataOrganization = two_codebook_merfish_data.get_data_organization()
+    sequentialRounds, sequentialChannels = \
+        dataOrganization.get_sequential_rounds()
+
+    assert sequentialRounds == [16, 17]

@@ -234,7 +234,8 @@ class DataOrganization(object):
             contains the name associated with that channel in the data
             organization file.
         """
-        multiplexBits = self._dataSet.get_codebook().get_bit_names()
+        multiplexBits = {b for x in self._dataSet.get_codebooks()
+                         for b in x.get_bit_names()}
         sequentialChannels = [i for i in self.get_data_channels()
                               if self.get_data_channel_readout_name(i)
                               not in multiplexBits]

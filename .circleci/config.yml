@@ -5,7 +5,7 @@ jobs:
     docker:
       - image: continuumio/miniconda3
 
-    working_directory: ~/repo
+    working_directory: ~/MERlin
 
     steps:
       # Step 1: obtain repo from GitHub
@@ -16,16 +16,29 @@ jobs:
           command: |
             conda create -n merlin_env python=3.6
             conda config --add channels conda-forge
+            conda config --add channels bioconda
             conda config --set always_yes true
             conda config --set quiet true
-            conda activate merlin_env
-            conda install rtree pytables
-            cd ~/repo
-            sudo pip install MERlin
+            source activate merlin_env
+            conda install rtree pytables snakemake
+            cd ~
+            pip install -e MERlin
+            cd ~/MERlin
+            printf 'DATA_HOME=~\nANALYSIS_HOME=~\nPARAMETERS_HOME=~\n' >.env
       # Step 3: run linter and tests
       - run:
           name: run tests
           command: |
-            conda activate merlin_env
-            cd ~/repo/MERlin/test
-            pytest -v --cov=calculator
+            source activate merlin_env
+            cd ~/MERlin
+            ls -a
+            cat .env
+            cd ~/MERlin/test
+            mkdir ~/test-reports
+            pytest -v --cov --junitxml=~/test-reports/junit.xml
+
+      - store_test_results:
+          path: ~/test-reports
+
+      - store_artifacts:
+          path: ~/test-reports

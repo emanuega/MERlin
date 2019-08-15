@@ -433,14 +433,15 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
                                    if f.get_fov() == currentFOV]
                 self.write_features(currentFeatures, currentFOV)
 
-        with self._dataSet.open_hdf5_file('a', 'feature_data',
-                                          self._analysisTask, fov, 'features') \
-                as f:
-            featureGroup = f.require_group('featuredata')
-            featureGroup.attrs['version'] = merlin.version()
-            for currentFeature in features:
-                self._save_feature_to_hdf5_group(featureGroup, currentFeature,
-                                                 fov)
+        else:
+            with self._dataSet.open_hdf5_file(
+                    'a', 'feature_data', self._analysisTask, fov, 'features') \
+                    as f:
+                featureGroup = f.require_group('featuredata')
+                featureGroup.attrs['version'] = merlin.version()
+                for currentFeature in features:
+                    self._save_feature_to_hdf5_group(featureGroup, currentFeature,
+                                                     fov)
 
     def read_features(self, fov: int = None) -> List[SpatialFeature]:
         if fov is None:

@@ -20,6 +20,7 @@ jobs:
             conda config --set quiet true
             source activate merlin_env
             conda install rtree pytables
+            cd ~
             pwd
             ls
             ls MERlin

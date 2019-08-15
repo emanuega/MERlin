@@ -30,7 +30,7 @@ def build_parser():
                         help='name of the analysis parameters file to use')
     parser.add_argument('-o', '--data-organization',
                         help='name of the data organization file to use')
-    parser.add_argument('-c', '--codebook', nargs = '+'
+    parser.add_argument('-c', '--codebook', nargs='+'
                         help='name of the codebook to use')
     parser.add_argument('-m', '--microscope-parameters',
                         help='name of the microscope parameters to use')

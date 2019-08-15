@@ -5,7 +5,7 @@ jobs:
     docker:
       - image: continuumio/miniconda3
 
-    working_directory: ~/repo
+    working_directory: ~/MERlin
 
     steps:
       # Step 1: obtain repo from GitHub
@@ -20,7 +20,6 @@ jobs:
             conda config --set quiet true
             source activate merlin_env
             conda install rtree pytables
-            cd ~/repo
             pwd
             ls
             ls MERlin

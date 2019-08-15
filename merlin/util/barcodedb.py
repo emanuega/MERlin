@@ -1,9 +1,6 @@
 from abc import abstractmethod
 from typing import List
-import itertools
 import pandas
-import sqlalchemy
-from sqlalchemy import types
 import numpy as np
 
 from merlin.core import dataset
@@ -43,23 +40,23 @@ class BarcodeDB:
         self._analysisTask = analysisTask
 
     def _get_bc_column_types(self):
-        columnInformation = {'barcode_id': types.SmallInteger(),
-                             'fov': types.SmallInteger(),
-                             'mean_intensity': types.Float(precision=32),
-                             'max_intensity': types.Float(precision=32),
-                             'area': types.SmallInteger(),
-                             'mean_distance': types.Float(precision=32),
-                             'min_distance': types.Float(precision=32),
-                             'x': types.Float(precision=32),
-                             'y': types.Float(precision=32),
-                             'z': types.Float(precision=32),
-                             'global_x': types.Float(precision=32),
-                             'global_y': types.Float(precision=32),
-                             'global_z': types.Float(precision=32),
-                             'cell_index': types.Integer()}
+        columnInformation = {'barcode_id': np.uint16,
+                             'fov': np.uint16,
+                             'mean_intensity': np.float32,
+                             'max_intensity': np.float32,
+                             'area': np.uint16,
+                             'mean_distance': np.float32,
+                             'min_distance': np.float32,
+                             'x': np.float32,
+                             'y': np.float32,
+                             'z': np.float32,
+                             'global_x': np.float32,
+                             'global_y': np.float32,
+                             'global_z': np.float32,
+                             'cell_index': np.int32}
 
         for i in range(self._dataSet.get_codebook().get_bit_count()):
-            columnInformation['intensity_'+str(i)] = types.Float(precision=32)
+            columnInformation['intensity_'+str(i)] = np.float32
 
         return columnInformation
 
@@ -251,149 +248,6 @@ class PyTablesBarcodeDB(BarcodeDB):
         with self._dataSet.open_pandas_hdfstore(
                 'a', 'barcode_data', self._analysisTask, fov, 'barcodes'
         ) as pandasHDF:
-            tablesTypeConversion = {
-                type(types.BigInteger()): np.uint64,
-                type(types.SmallInteger()): np.uint16,
-                type(types.Float(precision=32)): np.float32,
-                type(types.Integer()): np.int32
-            }
-            tablesType = {k: tablesTypeConversion[type(v)] for k, v in
-                          self._get_bc_column_types().items()}
+            tablesType = self._get_bc_column_types()
             pandasHDF.append('barcodes', barcodeInformation.astype(tablesType),
                              format='table')
-
-
-class SQLiteBarcodeDB(BarcodeDB):
-    
-    """A class for storing and retrieving barcode information using a
-    SQLite back end. 
-    
-    This barcode database stores the barcodes corresponding to each FOV
-    into its own SQLite file so that multiple FOVS can be processed 
-    in parallel efficiently.
-    """
-
-    def __init__(self, dataSet, analysisTask):
-        super().__init__(dataSet, analysisTask)
-
-    def _get_barcodeDB(self, fov):
-        return self._dataSet.get_database_engine(
-                self._analysisTask, index=fov)
-    
-    def _initialize_db(self):
-        pass    
-
-    @staticmethod
-    def _aggregate_barcodes_from_iterator(barcodeIterator):
-        barcodeDF = pandas.DataFrame([])
-        for currentBarcodes in barcodeIterator:
-            barcodeDF = barcodeDF.append(currentBarcodes)
-
-        return barcodeDF
-
-    def get_barcodes(self, fov=None, columnList=None, chunksize=None):
-        returnIterator = chunksize is not None
-        chunksize = chunksize or 100000
-        
-        if fov is None:
-            barcodeIterator = itertools.chain.from_iterable(
-                    (self.get_barcodes(fov=x, columnList=columnList,
-                                       chunksize=chunksize)
-                     for x in self._dataSet.get_fovs()))
-        else:
-            dbEngine = self._get_barcodeDB(fov)
-            if not dbEngine.dialect.has_table(dbEngine, 'barcode_information'):
-                return []
-
-            # In order to prevent large memory spikes that happen when pandas
-            # reads the whole database in at once, here it is read in
-            # in smaller increments and aggregated.
-            if columnList is None:
-                barcodeIterator = pandas.read_sql_table(
-                    'barcode_information', dbEngine, chunksize=chunksize)
-            else:
-                barcodeIterator = pandas.read_sql_table(
-                    'barcode_information', dbEngine, columns=columnList,
-                    chunksize=chunksize)
-
-        if returnIterator:
-            return barcodeIterator
-        else:
-            return self._aggregate_barcodes_from_iterator(barcodeIterator)
-
-    def get_filtered_barcodes(
-            self, areaThreshold, intensityThreshold, fov=None, chunksize=None):
-        returnIterator = chunksize is not None
-        chunksize = chunksize or 100000
-
-        queryString = 'select * from barcode_information ' \
-                      + 'where area>=' + str(areaThreshold) \
-                      + ' and mean_intensity>=' + str(intensityThreshold)
-        barcodeIterator = self._iterator_for_query(queryString, fov, chunksize)
-
-        if returnIterator:
-            return barcodeIterator
-        else:
-            return self._aggregate_barcodes_from_iterator(barcodeIterator)
-
-    def get_intensities_for_barcodes_with_area(self, area):
-        queryString = 'select mean_intensity from ' \
-                + 'barcode_information where area=' + str(area)
-        barcodeIterator = self._iterator_for_query(queryString)
-        barcodes = self._aggregate_barcodes_from_iterator(barcodeIterator)
-        if len(barcodes) > 0:
-            return barcodes['mean_intensity'].tolist()
-        else:
-            return []
-
-    def _iterator_for_query(self, queryString, fov=None, chunksize=100000):
-        if fov is None:
-            barcodeIterator = itertools.chain.from_iterable(
-                    (self._iterator_for_query(queryString, fov=x,
-                                              chunksize=chunksize))
-                    for x in self._dataSet.get_fovs())
-        else:
-            dbEngine = self._get_barcodeDB(fov)
-            if not dbEngine.dialect.has_table(dbEngine, 'barcode_information'):
-                return []
-
-            barcodeIterator = pandas.read_sql_query(queryString,
-                                                    dbEngine,
-                                                    chunksize=chunksize)
-
-        return barcodeIterator
-
-    def write_barcodes(self, barcodeInformation, fov=None):
-        if len(barcodeInformation) <= 0:
-            return
-
-        if fov is None:
-            for f in barcodeInformation.fov.unique():
-                self.write_barcodes(
-                        barcodeInformation.loc[barcodeInformation['fov'] == f],
-                        fov=f)
-
-        columnInformation = self._get_bc_column_types()
-        written = False 
-        attempts = 0
-        while not written and attempts < 100:
-            try: 
-                barcodeInformation.to_sql(
-                        'barcode_information', self._get_barcodeDB(fov), 
-                        chunksize=50, dtype=columnInformation, index=False, 
-                        if_exists='append')
-                written = True
-            except sqlalchemy.exc.OperationalError:
-                attempts += 1
-
-        if not written:
-            raise sqlalchemy.exc.OperationalError('Failed to write barcodes',
-                                                  None, self)
-
-    def empty_database(self, fov=None):
-        if fov is None:
-            for f in self._dataSet.get_fovs():
-                self.empty_database(fov=f)
-
-        self._get_barcodeDB(fov).execute(
-                'DROP TABLE IF EXISTS barcode_information;')

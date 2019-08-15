@@ -7,6 +7,8 @@ import sys
 import snakemake
 import time
 import requests
+import io
+from typing import Dict
 
 import merlin as m
 from merlin.core import dataset
@@ -90,13 +92,8 @@ def merlin():
         # so that new analysis tasks are generated to match the new parameters
         with open(os.sep.join(
                 [parametersHome, args.analysis_parameters]), 'r') as f:
-            print('Generating analysis tasks from %s' %
-                  os.sep.join([parametersHome, args.analysis_parameters]))
-            analysisParameters = json.load(f)
-            snakeGenerator = snakewriter.SnakefileGenerator(
-                analysisParameters, dataSet, sys.executable)
-            snakefilePath = snakeGenerator.generate_workflow()
-            print('Snakefile generated at %s' % snakefilePath)
+            snakefilePath = generate_analysis_tasks_and_snakefile(
+                dataSet, f)
 
     if not args.generate_only:
         if args.analysis_task:
@@ -110,51 +107,69 @@ def merlin():
                                       args.snakemake_parameters])) as f:
                     snakemakeParameters = json.load(f)
 
-            print('Running MERlin pipeline through snakemake')
-            snakemake.snakemake(snakefilePath, cores=args.core_count,
-                                workdir=dataSet.get_snakemake_path(),
-                                stats=snakefilePath + '.stats',
-                                **snakemakeParameters)
+            run_with_snakemake(dataSet, snakefilePath, args.core_count,
+                               snakemakeParameters, not args.no_report)
 
-            if not args.no_report:
-                reportTime = int(time.time())
-                try:
-                    with open(snakefilePath + '.stats', 'r') as f:
-                        requests.post('http://merlin.georgeemanuel.com/post',
-                                      files={
-                                          'file': (
-                                              '.'.join(
-                                                  ['snakestats',
-                                                   dataSet.dataSetName,
-                                                   str(reportTime)]) + '.csv',
-                                              f)},
-                                      timeout=10)
-                except requests.exceptions.RequestException:
-                    pass
 
-                analysisParameters = {
-                    t: dataSet.load_analysis_task(t).get_parameters()
-                    for t in dataSet.get_analysis_tasks()}
-                datasetMeta = {
-                    'image_width': dataSet.get_image_dimensions()[0],
-                    'image_height': dataSet.get_image_dimensions()[1],
-                    'barcode_length': dataSet.get_codebook().get_bit_count(),
-                    'barcode_count': dataSet.get_codebook().get_barcode_count(),
-                    'fov_count': len(dataSet.get_fovs()),
-                    'z_count': len(dataSet.get_z_positions()),
-                    'sequential_count': len(dataSet.get_data_organization()
-                                            .get_sequential_rounds()),
-                    'dataset_name': dataSet.dataSetName,
-                    'report_time': reportTime,
-                    'analysis_parameters': analysisParameters
-                }
-                try:
-                    requests.post('http://merlin.georgeemanuel.com/post',
-                                  files={'file': ('.'.join(
-                                      [dataSet.dataSetName,
-                                       str(reportTime)])
-                                                  + '.json',
-                                                  json.dumps(datasetMeta))},
-                                  timeout=10)
-                except requests.exceptions.RequestException:
-                    pass
+def generate_analysis_tasks_and_snakefile(dataSet: dataset.MERFISHDataSet,
+                                          parametersFile: io.TextIO) -> str:
+    print('Generating analysis tasks from %s' % parametersFile.name)
+    analysisParameters = json.load(parametersFile)
+    snakeGenerator = snakewriter.SnakefileGenerator(
+        analysisParameters, dataSet, sys.executable)
+    snakefilePath = snakeGenerator.generate_workflow()
+    print('Snakefile generated at %s' % snakefilePath)
+    return snakefilePath
+
+
+def run_with_snakemake(
+        dataSet: dataset.MERFISHDataSet, snakefilePath: str, coreCount: int,
+        snakemakeParameters: Dict = {}, report: bool = True):
+    print('Running MERlin pipeline through snakemake')
+    snakemake.snakemake(snakefilePath, cores=coreCount,
+                        workdir=dataSet.get_snakemake_path(),
+                        stats=snakefilePath + '.stats',
+                        **snakemakeParameters)
+
+    if report:
+        reportTime = int(time.time())
+        try:
+            with open(snakefilePath + '.stats', 'r') as f:
+                requests.post('http://merlin.georgeemanuel.com/post',
+                              files={
+                                  'file': (
+                                      '.'.join(
+                                          ['snakestats',
+                                           dataSet.dataSetName,
+                                           str(reportTime)]) + '.csv',
+                                      f)},
+                              timeout=10)
+        except requests.exceptions.RequestException:
+            pass
+
+        analysisParameters = {
+            t: dataSet.load_analysis_task(t).get_parameters()
+            for t in dataSet.get_analysis_tasks()}
+        datasetMeta = {
+            'image_width': dataSet.get_image_dimensions()[0],
+            'image_height': dataSet.get_image_dimensions()[1],
+            'barcode_length': dataSet.get_codebook().get_bit_count(),
+            'barcode_count': dataSet.get_codebook().get_barcode_count(),
+            'fov_count': len(dataSet.get_fovs()),
+            'z_count': len(dataSet.get_z_positions()),
+            'sequential_count': len(dataSet.get_data_organization()
+                                    .get_sequential_rounds()),
+            'dataset_name': dataSet.dataSetName,
+            'report_time': reportTime,
+            'analysis_parameters': analysisParameters
+        }
+        try:
+            requests.post('http://merlin.georgeemanuel.com/post',
+                          files={'file': ('.'.join(
+                              [dataSet.dataSetName,
+                               str(reportTime)])
+                                          + '.json',
+                                          json.dumps(datasetMeta))},
+                          timeout=10)
+        except requests.exceptions.RequestException:
+            pass

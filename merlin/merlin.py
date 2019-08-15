@@ -30,7 +30,7 @@ def build_parser():
                         help='name of the analysis parameters file to use')
     parser.add_argument('-o', '--data-organization',
                         help='name of the data organization file to use')
-    parser.add_argument('-c', '--codebook',
+    parser.add_argument('-c', '--codebook', nargs = '+'
                         help='name of the codebook to use')
     parser.add_argument('-m', '--microscope-parameters',
                         help='name of the microscope parameters to use')
@@ -77,7 +77,7 @@ def merlin():
     dataSet = dataset.MERFISHDataSet(
         args.dataset,
         dataOrganizationName=_clean_string_arg(args.data_organization),
-        codebookNames=_clean_string_arg(args.codebook),
+        codebookNames=args.codebook,
         microscopeParametersName=_clean_string_arg(args.microscope_parameters),
         positionFileName=_clean_string_arg(args.positions),
         dataHome=_clean_string_arg(args.data_home),

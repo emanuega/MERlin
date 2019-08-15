@@ -18,8 +18,8 @@ class Codebook(object):
     A Codebook stores the association of barcodes to genes.
     """
 
-    def __init__(self, dataSet, filePath, codebookIndex: int=0,
-                 codebookName: str=None):
+    def __init__(self, dataSet, filePath, codebookIndex: int = 0,
+                 codebookName: str = None):
         """
         Create a new Codebook for the data in the specified data set.
 
@@ -111,7 +111,7 @@ class Codebook(object):
         """
         return [s for s in self._data.columns if s not in ['name', 'id']]
 
-    def get_barcodes(self, ignoreBlanks=False) -> np.array:
+    def get_barcodes(self, ignoreBlanks: bool = False) -> np.array:
         """ Get the barcodes present in this codebook.
         
         Args:

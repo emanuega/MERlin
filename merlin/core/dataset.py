@@ -32,7 +32,7 @@ TaskOrName = Union[analysistask.AnalysisTask, str]
 class DataSet(object):
 
     def __init__(self, dataDirectoryName: str,
-                 dataHome: str=None, analysisHome: str=None):
+                 dataHome: str = None, analysisHome: str =  None):
         """Create a dataset for the specified raw data.
 
         Args:
@@ -113,7 +113,7 @@ class DataSet(object):
 
     def get_analysis_image_set(
             self, analysisTask: TaskOrName, imageBaseName: str,
-            imageIndex: int=None) -> np.ndarray:
+            imageIndex: int = None) -> np.ndarray:
         """Get an analysis image set saved in the analysis for this data set.
 
         Args:
@@ -151,7 +151,7 @@ class DataSet(object):
     
     def writer_for_analysis_images(
             self, analysisTask: TaskOrName, imageBaseName: str,
-            imageIndex: int=None, imagej: bool=True) -> tifffile.TiffWriter:
+            imageIndex: int = None, imagej: bool = True) -> tifffile.TiffWriter:
         """Get a writer for writing tiff files from an analysis task.
 
         Args:
@@ -203,8 +203,8 @@ class DataSet(object):
                 analysisTask, subdirectory), saveName])
 
     def list_analysis_files(self, analysisTask: TaskOrName=None,
-                            subdirectory: str=None, extension: str=None,
-                            fullPath: bool=True) -> List[str]:
+                            subdirectory: str = None, extension: str = None,
+                            fullPath: bool = True) -> List[str]:
         basePath = self._analysis_result_save_path(
             '', analysisTask, subdirectory=subdirectory)
         fileList = os.listdir(basePath)
@@ -216,8 +216,8 @@ class DataSet(object):
 
     def save_dataframe_to_csv(
             self, dataframe: pandas.DataFrame, resultName: str,
-            analysisTask: TaskOrName=None, resultIndex: int=None,
-            subdirectory: str=None, **kwargs) -> None:
+            analysisTask: TaskOrName = None, resultIndex: int = None,
+            subdirectory: str = None, **kwargs) -> None:
         """Save a pandas data frame to a csv file stored in this dataset.
 
         If a previous pandas data frame has been save with the same resultName,
@@ -243,8 +243,8 @@ class DataSet(object):
             dataframe.to_csv(f, **kwargs)
 
     def load_dataframe_from_csv(
-            self, resultName: str, analysisTask: TaskOrName=None,
-            resultIndex: int=None, subdirectory: str=None,
+            self, resultName: str, analysisTask: TaskOrName = None,
+            resultIndex: int = None, subdirectory: str = None,
             **kwargs) -> Union[pandas.DataFrame, None]:
         """Load a pandas data frame from a csv file stored in this data set.
 
@@ -266,29 +266,29 @@ class DataSet(object):
             return pandas.read_csv(f, **kwargs)
 
     def open_pandas_hdfstore(self, mode: str, resultName: str,
-                             analysisName: str, resultIndex: int=None,
-                             subdirectory: str=None) -> pandas.HDFStore:
+                             analysisName: str, resultIndex: int = None,
+                             subdirectory: str = None) -> pandas.HDFStore:
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.h5')
         return pandas.HDFStore(savePath, mode=mode)
 
     def delete_pandas_hdfstore(
-            self, resultName: str, analysisTask: TaskOrName=None,
-            resultIndex: int=None, subdirectory: str=None) -> None:
+            self, resultName: str, analysisTask: TaskOrName = None,
+            resultIndex: int = None, subdirectory: str = None) -> None:
         hPath = self._analysis_result_save_path(
             resultName, analysisTask, resultIndex, subdirectory, '.h5')
         if os.path.exists(hPath):
             os.remove(hPath)
 
     def open_table(self, mode: str, resultName: str, analysisName: str,
-                   resultIndex: int=None, subdirectory: str=None
+                   resultIndex: int = None, subdirectory: str = None
                    ) -> tables.file:
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.h5')
         return tables.open_file(savePath, mode=mode)
 
-    def delete_table(self, resultName: str, analysisTask: TaskOrName=None,
-                     resultIndex: int=None, subdirectory: str=None) -> None:
+    def delete_table(self, resultName: str, analysisTask: TaskOrName = None,
+                     resultIndex: int = None, subdirectory: str = None) -> None:
         """Delete an hdf5 file stored in this data set if it exists.
 
         Args:
@@ -309,8 +309,8 @@ class DataSet(object):
             os.remove(hPath)
 
     def open_hdf5_file(self, mode: str, resultName: str,
-                       analysisTask: TaskOrName=None, resultIndex: int=None,
-                       subdirectory: str=None) -> h5py.File:
+                       analysisTask: TaskOrName = None, resultIndex: int = None,
+                       subdirectory: str = None) -> h5py.File:
         """Open an hdf5 file stored in this data set.
 
         Args:
@@ -340,8 +340,8 @@ class DataSet(object):
 
         return h5py.File(hPath, mode)
 
-    def delete_hdf5_file(self, resultName: str, analysisTask: TaskOrName=None,
-                         resultIndex: int=None, subdirectory: str=None
+    def delete_hdf5_file(self, resultName: str, analysisTask: TaskOrName = None,
+                         resultIndex: int = None, subdirectory: str = None
                          ) -> None:
         """Delete an hdf5 file stored in this data set if it exists.
 
@@ -364,24 +364,24 @@ class DataSet(object):
 
     def save_json_analysis_result(
             self, analysisResult: Dict, resultName: str,
-            analysisName: str, resultIndex: int=None,
-            subdirectory: str=None) -> None:
+            analysisName: str, resultIndex: int = None,
+            subdirectory: str = None) -> None:
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.json')
         with open(savePath, 'w') as f:
             json.dump(analysisResult, f)
 
     def load_json_analysis_result(
-            self, resultName: str, analysisName: str, resultIndex: int=None,
-            subdirectory: str=None) -> Dict:
+            self, resultName: str, analysisName: str, resultIndex: int = None,
+            subdirectory: str = None) -> Dict:
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.json')
         with open(savePath, 'r') as f:
             return json.load(f)
 
     def load_pickle_analysis_result(
-            self, resultName: str, analysisName: str, resultIndex: int=None,
-            subdirectory: str=None) -> Dict:
+            self, resultName: str, analysisName: str, resultIndex: int = None,
+            subdirectory: str = None) -> Dict:
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.pkl')
         with open(savePath, 'rb') as f:
@@ -389,7 +389,7 @@ class DataSet(object):
 
     def save_pickle_analysis_result(
             self, analysisResult, resultName: str, analysisName: str,
-            resultIndex: int=None, subdirectory: str=None):
+            resultIndex: int = None, subdirectory: str = None):
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.pkl')
         with open(savePath, 'wb') as f:
@@ -397,8 +397,8 @@ class DataSet(object):
 
     def save_numpy_analysis_result(
             self, analysisResult: np.ndarray, resultName: str,
-            analysisName: str, resultIndex: int=None,
-            subdirectory: str=None) -> None:
+            analysisName: str, resultIndex: int = None,
+            subdirectory: str = None) -> None:
 
         savePath = self._analysis_result_save_path(
                 resultName, analysisName, resultIndex, subdirectory)
@@ -406,24 +406,24 @@ class DataSet(object):
 
     def save_numpy_txt_analysis_result(
             self, analysisResult: np.ndarray, resultName: str,
-            analysisName: str, resultIndex: int=None,
-            subdirectory: str=None) -> None:
+            analysisName: str, resultIndex: int = None,
+            subdirectory: str = None) -> None:
 
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory)
         np.savetxt(savePath + '.csv', analysisResult)
 
     def load_numpy_analysis_result(
-            self, resultName: str, analysisName: str, resultIndex: int=None,
-            subdirectory: str=None) -> np.array:
+            self, resultName: str, analysisName: str, resultIndex: int = None,
+            subdirectory: str = None) -> np.array:
 
         savePath = self._analysis_result_save_path(
                 resultName, analysisName, resultIndex, subdirectory, '.npy')
         return np.load(savePath)
 
     def get_analysis_subdirectory(
-            self, analysisTask: TaskOrName, subdirectory: str=None,
-            create: bool=True) -> str:
+            self, analysisTask: TaskOrName, subdirectory: str = None,
+            create: bool = True) -> str:
         """
         analysisTask can either be the class or a string containing the
         class name.
@@ -457,7 +457,7 @@ class DataSet(object):
                 analysisTask, subdirectory='log')
         
     def save_analysis_task(self, analysisTask: analysistask.AnalysisTask,
-                           overwrite: bool=False):
+                           overwrite: bool = False):
         saveName = os.sep.join([self.get_task_subdirectory(
             analysisTask), 'task.json'])
 
@@ -526,7 +526,7 @@ class DataSet(object):
         return os.path.exists(analysisPath)
 
     def get_logger(self, analysisTask: analysistask.AnalysisTask,
-                   fragmentIndex: int=None) -> logging.Logger:
+                   fragmentIndex: int = None) -> logging.Logger:
         loggerName = analysisTask.get_analysis_name()
         if fragmentIndex is not None:
             loggerName += '.' + str(fragmentIndex)
@@ -545,7 +545,7 @@ class DataSet(object):
         return logger
 
     def close_logger(self, analysisTask: analysistask.AnalysisTask,
-                     fragmentIndex=None) -> None:
+                     fragmentIndex: int = None) -> None:
         loggerName = analysisTask.get_analysis_name()
         if fragmentIndex is not None:
             loggerName += '.' + str(fragmentIndex)
@@ -559,7 +559,7 @@ class DataSet(object):
             handler.close()
 
     def _log_path(self, analysisTask: analysistask.AnalysisTask,
-                  fragmentIndex=None) -> str:
+                  fragmentIndex: int = None) -> str:
         logName = analysisTask.get_analysis_name()
         if fragmentIndex is not None:
             logName += '_' + str(fragmentIndex)
@@ -568,7 +568,7 @@ class DataSet(object):
         return os.sep.join([self.get_log_subdirectory(analysisTask), logName])
 
     def _analysis_status_file(self, analysisTask: analysistask.AnalysisTask,
-                              eventName: str, fragmentIndex: int=None) -> str:
+                              eventName: str, fragmentIndex: int = None) -> str:
         if isinstance(analysisTask, str):
             analysisTask = self.load_analysis_task(analysisTask)
 
@@ -581,7 +581,7 @@ class DataSet(object):
                 fileName])
 
     def get_analysis_environment(self, analysisTask: analysistask.AnalysisTask,
-                                 fragmentIndex: int=None) -> None:
+                                 fragmentIndex: int = None) -> None:
         """Get the environment variables for the system used to run the
         specified analysis task.
 
@@ -605,31 +605,31 @@ class DataSet(object):
 
     def _record_analysis_environment(
             self, analysisTask: analysistask.AnalysisTask,
-            fragmentIndex: int=None) -> None:
+            fragmentIndex: int = None) -> None:
         fileName = self._analysis_status_file(
             analysisTask, 'environment', fragmentIndex)
         with open(fileName, 'w') as outFile:
             json.dump(dict(os.environ), outFile, indent=4)
 
     def record_analysis_started(self, analysisTask: analysistask.AnalysisTask,
-                                fragmentIndex: int=None) -> None:
+                                fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'start', fragmentIndex)
         self._record_analysis_environment(analysisTask, fragmentIndex)
 
     def record_analysis_running(self, analysisTask: analysistask.AnalysisTask,
-                                fragmentIndex: int=None) -> None:
+                                fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'run', fragmentIndex)
 
     def record_analysis_complete(self, analysisTask: analysistask.AnalysisTask,
-                                 fragmentIndex: int=None) -> None:
+                                 fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'done', fragmentIndex)
 
     def record_analysis_error(self, analysisTask: analysistask.AnalysisTask,
-                              fragmentIndex: int=None) -> None:
+                              fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'error', fragmentIndex)
 
     def get_analysis_start_time(self, analysisTask: analysistask.AnalysisTask,
-                                fragmentIndex: int=None) -> float:
+                                fragmentIndex: int = None) -> float:
         """Get the time that this analysis task started
 
         Returns:
@@ -642,7 +642,7 @@ class DataSet(object):
 
     def get_analysis_complete_time(self, 
                                    analysisTask: analysistask.AnalysisTask,
-                                   fragmentIndex: int=None) -> float:
+                                   fragmentIndex: int = None) -> float:
         """Get the time that this analysis task completed.
 
         Returns:
@@ -666,7 +666,7 @@ class DataSet(object):
 
     def _record_analysis_event(
             self, analysisTask: analysistask.AnalysisTask, eventName: str,
-            fragmentIndex: int=None) -> None:
+            fragmentIndex: int = None) -> None:
         fileName = self._analysis_status_file(
                 analysisTask, eventName, fragmentIndex)
         with open(fileName, 'w') as f:
@@ -674,14 +674,14 @@ class DataSet(object):
 
     def _check_analysis_event(
             self, analysisTask: analysistask.AnalysisTask, eventName: str,
-            fragmentIndex: int=None) -> bool:
+            fragmentIndex: int = None) -> bool:
         fileName = self._analysis_status_file(
             analysisTask, eventName, fragmentIndex)
         return os.path.exists(fileName)
 
     def _reset_analysis_event(
             self, analysisTask: analysistask.AnalysisTask, eventName: str,
-            fragmentIndex: int=None):
+            fragmentIndex: int = None):
         fileName = self._analysis_status_file(
             analysisTask, eventName, fragmentIndex)
 
@@ -691,7 +691,7 @@ class DataSet(object):
             pass
 
     def is_analysis_idle(self, analysisTask: analysistask.AnalysisTask,
-                         fragmentIndex: int=None) -> bool:
+                         fragmentIndex: int = None) -> bool:
         fileName = self._analysis_status_file(
                 analysisTask, 'run', fragmentIndex)
         try:
@@ -700,23 +700,23 @@ class DataSet(object):
             return True
 
     def check_analysis_started(self, analysisTask: analysistask.AnalysisTask,
-                               fragmentIndex: int=None) -> bool:
+                               fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'start', fragmentIndex)
 
     def check_analysis_done(self, analysisTask: analysistask.AnalysisTask,
-                            fragmentIndex: int=None) -> bool:
+                            fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'done', fragmentIndex)
 
     def analysis_done_filename(self, analysisTask: analysistask.AnalysisTask,
-                               fragmentIndex: int=None) -> str:
+                               fragmentIndex: int = None) -> str:
         return self._analysis_status_file(analysisTask, 'done', fragmentIndex)
 
     def check_analysis_error(self, analysisTask: analysistask.AnalysisTask,
-                             fragmentIndex: int=None) -> bool:
+                             fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
 
     def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
-                              fragmentIndex: int=None):
+                              fragmentIndex: int = None):
         if analysisTask.is_running():
             raise analysistask.AnalysisAlreadyStartedException()
 
@@ -728,8 +728,8 @@ class DataSet(object):
 
 class ImageDataSet(DataSet):
 
-    def __init__(self, dataDirectoryName: str, dataHome: str=None,
-                analysisHome: str=None, microscopeParametersName: str=None):
+    def __init__(self, dataDirectoryName: str, dataHome: str = None,
+                analysisHome: str = None, microscopeParametersName: str = None):
         """Create a dataset for the specified raw data.
 
         Args:
@@ -830,10 +830,10 @@ class ImageDataSet(DataSet):
 
 class MERFISHDataSet(ImageDataSet):
 
-    def __init__(self, dataDirectoryName: str, codebookNames: List[str]=None,
-                 dataOrganizationName: str=None, positionFileName: str=None,
-                 dataHome: str=None, analysisHome: str=None,
-                 microscopeParametersName: str=None):
+    def __init__(self, dataDirectoryName: str, codebookNames: List[str] = None,
+                 dataOrganizationName: str = None, positionFileName: str = None,
+                 dataHome: str = None, analysisHome: str = None,
+                 microscopeParametersName: str = None):
         """Create a MERFISH dataset for the specified raw data.
 
         Args:
@@ -924,7 +924,7 @@ class MERFISHDataSet(ImageDataSet):
 
         return codebookList
 
-    def load_codebook(self, codebookIndex: int=0
+    def load_codebook(self, codebookIndex: int = 0
                       ) -> Optional[codebook.Codebook]:
         """ Load the codebook stored within this dataset with the specified
         index.
@@ -944,7 +944,7 @@ class MERFISHDataSet(ImageDataSet):
         return codebook.Codebook(
             self, codebookFile[0], codebookIndex, codebookName)
 
-    def get_stored_codebook_name(self, codebookIndex: int=0) -> Optional[str]:
+    def get_stored_codebook_name(self, codebookIndex: int = 0) -> Optional[str]:
         """ Get the name of the codebook stored within this dataset with the
         specified index.
 
@@ -962,7 +962,7 @@ class MERFISHDataSet(ImageDataSet):
             return None
         return '_'.join(os.path.basename(codebookFile[0]).split('_')[2:])
 
-    def get_codebook(self, codebookIndex: int=0) -> codebook.Codebook:
+    def get_codebook(self, codebookIndex: int = 0) -> codebook.Codebook:
         return self.codebooks[codebookIndex]
 
     def get_data_organization(self) -> dataorganization.DataOrganization:

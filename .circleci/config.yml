@@ -21,6 +21,9 @@ jobs:
             source activate merlin_env
             conda install rtree pytables
             cd ~/repo
+            pwd
+            ls
+            ls MERlin
             pip install -e MERlin
       # Step 3: run linter and tests
       - run:

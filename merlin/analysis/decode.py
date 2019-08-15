@@ -1,11 +1,11 @@
 import numpy as np
 import pandas
-from typing import List
 
 from merlin.core import dataset
 from merlin.core import analysistask
 from merlin.util import decoding
 from merlin.util import barcodedb
+from merlin.data.codebook import Codebook
 
 
 class Decode(analysistask.ParallelAnalysisTask):
@@ -30,8 +30,6 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['lowpass_sigma'] = 1
         if 'decode_3d' not in self.parameters:
             self.parameters['decode_3d'] = False
-        if 'codebook_index' not in self.parameters:
-            self.parameters['codebook_index'] = 0
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.get_image_dimensions()
@@ -55,6 +53,11 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         return dependencies
 
+    def get_codebook(self) -> Codebook:
+        preprocessTask = self.dataSet.load_analysis_task(
+            self.parameters['preprocess_task'])
+        return preprocessTask.get_codebook()
+
     def _run_analysis(self, fragmentIndex):
         """This function decodes the barcodes in a fov and saves them to the
         barcode database.
@@ -67,15 +70,14 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         lowPassSigma = self.parameters['lowpass_sigma']
 
-        decoder = decoding.PixelBasedDecoder(
-            self.dataSet.get_codebook(self.parameters['codebook_index']))
+        codebook = self.get_codebook()
+        decoder = decoding.PixelBasedDecoder(codebook)
         scaleFactors = optimizeTask.get_scale_factors()
         backgrounds = optimizeTask.get_backgrounds()
         chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
         zPositionCount = len(self.dataSet.get_z_positions())
-        bitCount = self.dataSet.get_codebook(self.parameters['codebook_index']
-                                             ).get_bit_count()
+        bitCount = codebook.get_bit_count()
         imageShape = self.dataSet.get_image_dimensions()
         decodedImages = np.zeros((zPositionCount, *imageShape), dtype=np.int16)
         magnitudeImages = np.zeros((zPositionCount, *imageShape),
@@ -170,7 +172,5 @@ class Decode(analysistask.ParallelAnalysisTask):
             pandas.concat([decoder.extract_barcodes_with_index(
                 i, decodedImage, pixelMagnitudes, pixelTraces, distances, fov,
                 self.cropWidth, zIndex, globalTask, segmentTask, minimumArea)
-                for i in range(
-                    self.dataSet.get_codebook(self.parameters['codebook_index']
-                                              ).get_barcode_count())]),
+                for i in range(self.get_codebook().get_barcode_count())]),
             fov=fov)

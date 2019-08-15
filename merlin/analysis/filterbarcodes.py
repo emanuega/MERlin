@@ -1,7 +1,9 @@
 import numpy as np
 from scipy import optimize
+
 from merlin.core import analysistask
 from merlin.util import barcodedb
+from merlin.data.codebook import Codebook
 
 
 class FilterBarcodes(analysistask.ParallelAnalysisTask):
@@ -80,12 +82,17 @@ class AdaptiveFilterBarcodes(analysistask.AnalysisTask):
         return [self.parameters['decode_task']]
 
     def get_adaptive_thresholds(self):
-        return self.dataSet.load_numpy_analysis_result('adaptive_thresholds',
-                                                       self)
+        return self.dataSet.load_numpy_analysis_result(
+            'adaptive_thresholds', self)
+
+    def get_codebook(self) -> Codebook:
+        decodeTask = self.dataSet.load_analysis_task(
+            self.parameters['decode_task'])
+        return decodeTask.get_codebook()
 
     @staticmethod
-    def _extract_barcodes_with_threshold(blankThreshold, barcodeSet,
-                                         blankFractionHistogram, histogramBins):
+    def _extract_barcodes_with_threshold(
+            blankThreshold, barcodeSet, blankFractionHistogram, histogramBins):
         selectData = barcodeSet[
             ['mean_intensity', 'min_distance', 'area']].values
         selectData[:, 0] = np.log10(selectData[:, 0])
@@ -103,7 +110,7 @@ class AdaptiveFilterBarcodes(analysistask.AnalysisTask):
         return barcodeSet[np.take(thresholdedBlankFraction, raveledIndexes)]
 
     def _calculate_error_rate(self, barcodeSet):
-        codebook = self.dataSet.get_codebook(idx=self.codebookNum)
+        codebook = self.get_codebook()
         blankFraction = len(
             codebook.get_blank_indexes()) / codebook.get_barcode_count()
         return np.sum(barcodeSet['barcode_id'].isin(
@@ -112,7 +119,7 @@ class AdaptiveFilterBarcodes(analysistask.AnalysisTask):
     def _run_analysis(self):
         decodeTask = self.dataSet.load_analysis_task(
             self.parameters['decode_task'])
-        codebook = self.dataSet.get_codebook(idx=self.codebookNum)
+        codebook = self.get_codebook()
 
         allBarcodes = decodeTask.get_barcode_database().get_barcodes(
             columnList=['barcode_id', 'mean_intensity', 'min_distance', 'area'])

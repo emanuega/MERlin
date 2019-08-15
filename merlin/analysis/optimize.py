@@ -1,6 +1,4 @@
-import random
 import numpy as np
-import multiprocessing
 import itertools
 from skimage import transform
 from typing import Dict
@@ -12,6 +10,7 @@ from merlin.util import decoding
 from merlin.util import barcodedb
 from merlin.util import registration
 from merlin.util import aberration
+from merlin.data.codebook import Codebook
 
 
 class OptimizeIteration(analysistask.ParallelAnalysisTask):
@@ -32,8 +31,6 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             self.parameters['optimize_background'] = False
         if 'optimize_chromatic_correction' not in self.parameters:
             self.parameters['optimize_chromatic_correction'] = False
-        if 'codebook_index' not in self.parameters:
-            self.parameters['codebook_index'] = 0
 
     def get_estimated_memory(self):
         return 4000
@@ -54,11 +51,15 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
     def get_barcode_database(self) -> barcodedb.BarcodeDB:
         return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
 
+    def get_codebook(self) -> Codebook:
+        preprocessTask = self.dataSet.load_analysis_task(
+            self.parameters['preprocess_task'])
+        return preprocessTask.get_codebook()
+
     def _run_analysis(self, fragmentIndex):
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
-
-        codebook = self.dataSet.get_codebook(self.parameters['codebook_index'])
+        codebook = self.get_codebook()
 
         fovIndex = np.random.choice(list(self.dataSet.get_fovs()))
         zIndex = np.random.choice(
@@ -118,7 +119,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
     def _get_used_colors(self) -> List[str]:
         dataOrganization = self.dataSet.get_data_organization()
-        codebook = self.dataSet.get_codebook(self.parameters['codebook_index'])
+        codebook = self.get_codebook()
         return sorted({dataOrganization.get_data_channel_color(
             dataOrganization.get_data_channel_for_bit(x))
             for x in codebook.get_bit_names()})
@@ -126,9 +127,8 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
     def _calculate_initial_scale_factors(self) -> np.ndarray:
         preprocessTask = self.dataSet.load_analysis_task(
             self.parameters['preprocess_task'])
+        bitCount = self.get_codebook().get_bit_count()
 
-        bitCount = self.dataSet.get_codebook(self.parameters['codebook_index']
-                                             ).get_bit_count()
         initialScaleFactors = np.zeros(bitCount)
         pixelHistograms = preprocessTask.get_pixel_histogram()
         for i in range(bitCount):
@@ -153,8 +153,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
     def _get_previous_backgrounds(self) -> np.ndarray:
         if 'previous_iteration' not in self.parameters:
-            backgrounds = np.zeros(self.dataSet.get_codebook(
-                self.parameters['codebook_index']).get_bit_count())
+            backgrounds = np.zeros(self.get_codebook().get_bit_count())
         else:
             previousIteration = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration'])
@@ -221,8 +220,7 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
                 self._get_previous_chromatic_transformations()
             previousCorrector = aberration.RigidChromaticCorrector(
                 previousTransformations, self.get_reference_color())
-            codebook = self.dataSet.get_codebook(
-                self.parameters['codebook_index'])
+            codebook = self.get_codebook()
             dataOrganization = self.dataSet.get_data_organization()
 
             barcodes = self.get_barcode_database().get_barcodes()
@@ -402,123 +400,4 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
             previousHistory = self.dataSet.load_analysis_task(
                 self.parameters['previous_iteration']
             ).get_barcode_count_history()
-            return np.append(previousHistory, [countsMean],
-                    axis=0)
-
-
-class Optimize(analysistask.InternallyParallelAnalysisTask):
-
-    """
-    An analysis task for optimizing the parameters used for assigning barcodes
-    to the image data.
-    """
-
-    def __init__(self, dataSet, parameters=None, analysisName=None):
-        super().__init__(dataSet, parameters, analysisName)
-
-        if 'iteration_count' not in self.parameters:
-            self.parameters['iteration_count'] = 20
-        if 'fov_per_iteration' not in self.parameters:
-            self.parameters['fov_per_iteration'] = 10
-        if 'estimate_initial_scale_factors_from_cdf' not in self.parameters:
-            self.parameters['estimate_initial_scale_factors_from_cdf'] = False
-        if 'area_threshold' not in self.parameters:
-            self.parameters['area_threshold'] = 4
-
-    def get_estimated_memory(self):
-        return 4000*self.coreCount
-
-    def get_estimated_time(self):
-        return 60 
-
-    def get_dependencies(self):
-        return [self.parameters['preprocess_task']]
-
-    def _run_analysis(self):
-        preprocessTask = self.dataSet.load_analysis_task(
-                self.parameters['preprocess_task'])
-        iterationCount = self.parameters['iteration_count']
-        fovPerIteration = self.parameters['fov_per_iteration']
-
-        codebook = self.dataSet.get_codebook(self.parameters['codebook_index'])
-        bitCount = codebook.get_bit_count()
-        barcodeCount = codebook.get_barcode_count()
-        decoder = decoding.PixelBasedDecoder(codebook)
-        decoder.refactorAreaThreshold = self.parameters['area_threshold']
-
-        scaleFactors = np.ones((iterationCount, bitCount))
-        if self.parameters['estimate_initial_scale_factors_from_cdf']:
-            scaleFactors[0, :] = self._calculate_initial_scale_factors()
-
-        barcodeCounts = np.ones((iterationCount, barcodeCount))
-        pool = multiprocessing.Pool(processes=self.coreCount)
-        for i in range(1, iterationCount):
-            fovIndexes = random.sample(
-                    list(self.dataSet.get_fovs()), fovPerIteration)
-            zIndexes = np.random.choice(
-                    list(range(len(self.dataSet.get_z_positions()))),
-                    fovPerIteration)
-            decoder._scaleFactors = scaleFactors[i - 1, :]
-            r = pool.starmap(decoder.extract_refactors,
-                             ([preprocessTask.get_processed_image_set(
-                                 f, zIndex=z)]
-                                 for f, z in zip(fovIndexes, zIndexes)))
-            scaleFactors[i, :] = scaleFactors[i-1, :] \
-                                 * np.mean([x[0] for x in r], axis=0)
-            barcodeCounts[i, :] = np.mean([x[1] for x in r], axis=0)
-
-        self.dataSet.save_numpy_analysis_result(scaleFactors, 'scale_factors',
-                                                self.analysisName)
-        self.dataSet.save_numpy_analysis_result(barcodeCounts, 'barcode_counts',
-                                                self.analysisName)
-
-    def _calculate_initial_scale_factors(self) -> np.ndarray:
-        preprocessTask = self.dataSet.load_analysis_task(
-            self.parameters['preprocess_task'])
-
-        bitCount = self.dataSet.get_codebook(self.parameters['codebook_index']
-                                             ).get_bit_count()
-        initialScaleFactors = np.zeros(bitCount)
-        pixelHistograms = preprocessTask.get_pixel_histogram()
-        for i in range(bitCount):
-            cumulativeHistogram = np.cumsum(pixelHistograms[i])
-            cumulativeHistogram = cumulativeHistogram/cumulativeHistogram[-1]
-            # Add two to match matlab code.
-            # TODO: Does +2 make sense?
-            initialScaleFactors[i] = \
-                np.argmin(np.abs(cumulativeHistogram-0.9)) + 2
-
-        return initialScaleFactors
-
-    def get_scale_factors(self) -> np.ndarray:
-        """Get the final, optimized scale factors.
-
-        Returns:
-            a one-dimensional numpy array where the i'th entry is the 
-            scale factor corresponding to the i'th bit.
-        """
-        return self.dataSet.load_numpy_analysis_result(
-            'scale_factors', self.analysisName)[-1, :]
-
-    def get_scale_factor_history(self) -> np.ndarray:
-        """Get the scale factors cached for each iteration of the optimization.
-
-        Returns:
-            a two-dimensional numpy array where the i,j'th entry is the 
-            scale factor corresponding to the i'th bit in the j'th 
-            iteration.
-        """
-        return self.dataSet.load_numpy_analysis_result('scale_factors',
-                                                       self.analysisName)
-
-    def get_barcode_count_history(self) -> np.ndarray:
-        """Get the set of barcode counts for each iteration of the
-        optimization.
-
-        Returns:
-            a two-dimensional numpy array where the i,j'th entry is the
-            barcode count corresponding to the i'th barcode in the j'th
-            iteration.
-        """
-        return self.dataSet.load_numpy_analysis_result('barcode_counts',
-                                                       self.analysisName)
+            return np.append(previousHistory, [countsMean], axis=0)

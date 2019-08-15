@@ -1,11 +1,11 @@
 import os
-
 import cv2
 import numpy as np
 
 from merlin.core import analysistask
 from merlin.util import deconvolve
 from merlin.util import aberration
+from merlin.data import codebook
 
 
 class Preprocess(analysistask.ParallelAnalysisTask):
@@ -72,29 +72,28 @@ class DeconvolutionPreprocess(Preprocess):
     def get_dependencies(self):
         return [self.parameters['warp_task']]
 
-
+    def get_codebook(self) -> codebook.Codebook:
+        return self.dataSet.get_codebook(self.parameters['codebook_index'])
 
     def get_processed_image_set(
-            self, fov, zIndex=None,
-            chromaticCorrector: aberration.ChromaticCorrector=None
+            self, fov, zIndex: int = None,
+            chromaticCorrector: aberration.ChromaticCorrector = None
     ) -> np.ndarray:
         if zIndex is None:
             return np.array([[self.get_processed_image(
                 fov, self.dataSet.get_data_organization()
                     .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
                 for zIndex in range(len(self.dataSet.get_z_positions()))]
-                for b in self.dataSet.get_codebook(
-                    self.parameters['codebook_index']).get_bit_names()])
+                for b in self.get_codebook().get_bit_names()])
         else:
             return np.array([self.get_processed_image(
                 fov, self.dataSet.get_data_organization()
                     .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
-                    for b in self.dataSet.get_codebook(
-                    self.parameters['codebook_index']).get_bit_names()])
+                    for b in self.get_codebook().get_bit_names()])
 
     def get_processed_image(
-            self, fov, dataChannel, zIndex,
-            chromaticCorrector: aberration.ChromaticCorrector=None
+            self, fov: int, dataChannel: int, zIndex: int,
+            chromaticCorrector: aberration.ChromaticCorrector = None
     ) -> np.ndarray:
         inputImage = self.warpTask.get_aligned_image(fov, dataChannel, zIndex,
                                                      chromaticCorrector)
@@ -106,14 +105,11 @@ class DeconvolutionPreprocess(Preprocess):
 
         histogramBins = np.arange(0, np.iinfo(np.uint16).max, 1)
         pixelHistogram = np.zeros(
-                (self.dataSet.get_codebook(self.parameters['codebook_index']
-                                           ).get_bit_count(),
-                    len(histogramBins)-1))
+                (self.get_codebook().get_bit_count(), len(histogramBins)-1))
 
         # this currently only is to calculate the pixel histograms in order
         # to estimate the initial scale factors. This is likely unnecessary
-        for bi, b in enumerate(self.dataSet.get_codebook(
-                self.parameters['codebook_index']).get_bit_names()):
+        for bi, b in enumerate(self.get_codebook().get_bit_names()):
             dataChannel = self.dataSet.get_data_organization()\
                     .get_data_channel_for_bit(b)
             for i in range(len(self.dataSet.get_z_positions())):

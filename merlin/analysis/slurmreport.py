@@ -13,7 +13,7 @@ from merlin.core import analysistask
 class SlurmReport(analysistask.AnalysisTask):
 
     """
-    An analysis task that generates reports on previously completed analysis
+    An analysis task that generates plots on previously completed analysis
     tasks using Slurm.
 
     This analysis task only works when Merlin is run through Slurm
@@ -182,7 +182,7 @@ class SlurmReport(analysistask.AnalysisTask):
             if currentTask.is_complete():
                 slurmDF = self._generate_slurm_report(currentTask)
                 self.dataSet.save_dataframe_to_csv(slurmDF, t, self,
-                                                   'reports')
+                                                   'plots')
                 dfStream = io.StringIO()
                 slurmDF.to_csv(dfStream, sep='|')
                 self._plot_slurm_report(slurmDF, t)

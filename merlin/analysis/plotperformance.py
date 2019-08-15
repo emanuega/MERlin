@@ -15,6 +15,7 @@ plt.style.use(
 
 
 class StreamingPlotPerformance(analysistask.AnalysisTask):
+
     """
     An analysis task that is meant to run in the background during decoding
     to make QC plots as the data becomes available. At present this doesnt
@@ -344,7 +345,7 @@ class StreamingPlotPerformance(analysistask.AnalysisTask):
 
         # bitwise intensity plot
         bitCount = len(filterOnIntensity.columns.values.tolist())
-        f, axs = plt.subplots(1, 1, figsize=(bitCount / 2. 5))
+        f, axs = plt.subplots(1, 1, figsize=(bitCount / 2.5))
         onViolin = plt.violinplot(filterOnIntensity,
                                   np.arange(1, bitCount + 1) - 0.25,
                                   showextrema=False, showmedians=True,

@@ -17,32 +17,34 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -151,20 +153,1007 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="merlin-core-analysistask-module">
-<h2>merlin.core.analysistask module<a class="headerlink" href="#merlin-core-analysistask-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.core.analysistask">
+<span id="merlin-core-analysistask-module"></span><h2>merlin.core.analysistask module<a class="headerlink" href="#module-merlin.core.analysistask" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="merlin.core.analysistask.AnalysisAlreadyStartedException">
+<em class="property">exception </em><code class="sig-prename descclassname">merlin.core.analysistask.</code><code class="sig-name descname">AnalysisAlreadyStartedException</code><a class="reference internal" href="merlin/core/analysistask.html#AnalysisAlreadyStartedException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisAlreadyStartedException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="merlin.core.analysistask.AnalysisAlreadyExistsException">
+<em class="property">exception </em><code class="sig-prename descclassname">merlin.core.analysistask.</code><code class="sig-name descname">AnalysisAlreadyExistsException</code><a class="reference internal" href="merlin/core/analysistask.html#AnalysisAlreadyExistsException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisAlreadyExistsException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.core.analysistask.AnalysisTask">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.analysistask.</code><code class="sig-name descname">AnalysisTask</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>An abstract class for performing analysis on a DataSet. Subclasses
+should implement the analysis to perform in the run_analysis() function.</p>
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">overwrite=False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a copy of this AnalysisTask into the data set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>overwrite</strong> – flag indicating if an existing analysis task with the
+same name as this analysis task should be overwritten even
+if the specified parameters are different.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#merlin.core.analysistask.AnalysisAlreadyExistsException" title="merlin.core.analysistask.AnalysisAlreadyExistsException"><strong>AnalysisAlreadyExistsException</strong></a> – if an analysis task with the
+    same name as this analysis task already exists in the
+    data set with different parameters.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">overwrite=True</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run this AnalysisTask.</p>
+<p>Upon completion of the analysis, this function informs the DataSet
+that analysis is complete.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>overwrite</strong> – flag indicating if previous analysis from this
+analysis task should be overwritten.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#merlin.core.analysistask.AnalysisAlreadyStartedException" title="merlin.core.analysistask.AnalysisAlreadyStartedException"><strong>AnalysisAlreadyStartedException</strong></a> – if this analysis task is currently
+    already running or if overwrite is not True and this analysis
+    task has already completed or exited with an error.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.get_estimated_memory">
+<em class="property">abstract </em><code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.get_estimated_time">
+<em class="property">abstract </em><code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.get_dependencies">
+<em class="property">abstract </em><code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[str]<a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.get_parameters">
+<code class="sig-name descname">get_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.get_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.get_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the parameters for this analysis task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the parameter dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.is_error">
+<code class="sig-name descname">is_error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.is_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.is_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if an error has occurred while running this analysis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the analysis is complete and otherwise False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.is_complete">
+<code class="sig-name descname">is_complete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.is_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.is_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if this analysis has completed successfully</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the analysis is complete and otherwise False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.is_started">
+<code class="sig-name descname">is_started</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.is_started"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.is_started" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if this analysis has started.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the analysis has begun and otherwise False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.is_running">
+<code class="sig-name descname">is_running</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.is_running"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.is_running" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if this analysis task is expected to be running,
+but has unexpectedly stopped for more than two minutes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.get_analysis_name">
+<code class="sig-name descname">get_analysis_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.get_analysis_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.get_analysis_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the name for this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the name of this AnalysisTask</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.AnalysisTask.is_parallel">
+<code class="sig-name descname">is_parallel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#AnalysisTask.is_parallel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.AnalysisTask.is_parallel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if this analysis task uses multiple cores.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.core.analysistask.InternallyParallelAnalysisTask">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.analysistask.</code><code class="sig-name descname">InternallyParallelAnalysisTask</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#InternallyParallelAnalysisTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.InternallyParallelAnalysisTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.core.analysistask.AnalysisTask" title="merlin.core.analysistask.AnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.AnalysisTask</span></code></a></p>
+<p>An abstract class for analysis that can only be run in one part,
+but can internally be sped up using multiple processes. Subclasses
+should implement the analysis to perform in te run_analysis() function.</p>
+<dl class="method">
+<dt id="merlin.core.analysistask.InternallyParallelAnalysisTask.set_core_count">
+<code class="sig-name descname">set_core_count</code><span class="sig-paren">(</span><em class="sig-param">coreCount</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#InternallyParallelAnalysisTask.set_core_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.InternallyParallelAnalysisTask.set_core_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the number of parallel processes this analysis task is
+allowed to use.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.InternallyParallelAnalysisTask.is_parallel">
+<code class="sig-name descname">is_parallel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#InternallyParallelAnalysisTask.is_parallel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.InternallyParallelAnalysisTask.is_parallel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if this analysis task uses multiple cores.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.analysistask.</code><code class="sig-name descname">ParallelAnalysisTask</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.core.analysistask.AnalysisTask" title="merlin.core.analysistask.AnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.AnalysisTask</span></code></a></p>
+<p>An abstract class for analysis that can be run in multiple parts
+independently. Subclasses should implement the analysis to perform in
+the run_analysis() function</p>
+<dl class="method">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask.fragment_count">
+<em class="property">abstract </em><code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">fragmentIndex: int = None</em>, <em class="sig-param">overwrite=True</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the specified index of this analysis task.</p>
+<p>If fragment index is not provided. All fragments for this analysis
+task are run in serial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fragmentIndex</strong> – the index of the analysis fragment to run or None
+if all fragments should be run.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask.is_error">
+<code class="sig-name descname">is_error</code><span class="sig-paren">(</span><em class="sig-param">fragmentIndex=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask.is_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask.is_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if an error has occurred while running this analysis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the analysis is complete and otherwise False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask.is_complete">
+<code class="sig-name descname">is_complete</code><span class="sig-paren">(</span><em class="sig-param">fragmentIndex=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask.is_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask.is_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if this analysis has completed successfully</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the analysis is complete and otherwise False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask.is_started">
+<code class="sig-name descname">is_started</code><span class="sig-paren">(</span><em class="sig-param">fragmentIndex=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask.is_started"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask.is_started" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if this analysis has started.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the analysis has begun and otherwise False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask.is_running">
+<code class="sig-name descname">is_running</code><span class="sig-paren">(</span><em class="sig-param">fragmentIndex=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask.is_running"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask.is_running" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if this analysis task is expected to be running,
+but has unexpectedly stopped for more than two minutes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.analysistask.ParallelAnalysisTask.is_parallel">
+<code class="sig-name descname">is_parallel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/analysistask.html#ParallelAnalysisTask.is_parallel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.analysistask.ParallelAnalysisTask.is_parallel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if this analysis task uses multiple cores.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-core-dataset-module">
-<h2>merlin.core.dataset module<a class="headerlink" href="#merlin-core-dataset-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.core.dataset">
+<span id="merlin-core-dataset-module"></span><h2>merlin.core.dataset module<a class="headerlink" href="#module-merlin.core.dataset" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.core.dataset.DataSet">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.dataset.</code><code class="sig-name descname">DataSet</code><span class="sig-paren">(</span><em class="sig-param">dataDirectoryName: str</em>, <em class="sig-param">dataHome: str = None</em>, <em class="sig-param">analysisHome: str = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#DataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_workflow">
+<code class="sig-name descname">save_workflow</code><span class="sig-paren">(</span><em class="sig-param">workflowString: str</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="merlin/core/dataset.html#DataSet.save_workflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a snakemake workflow for analysis of this dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>workflowString</strong> – a string containing the snakemake workflow
+to save</p>
+</dd>
+</dl>
+<p>Returns: the path to the saved workflow</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_snakemake_path">
+<code class="sig-name descname">get_snakemake_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_snakemake_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_snakemake_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the directory for storing files related to snakemake.</p>
+<p>Returns: the snakemake path as a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_figure">
+<code class="sig-name descname">save_figure</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str], figure: matplotlib.figure.Figure, figureName: str</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.save_figure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_figure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the figure into the analysis results for this DataSet</p>
+<p>This function will save the figure in both png and pdf formats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>analysisTask</strong> – the analysis task that generated this figure.</p></li>
+<li><p><strong>figure</strong> – the figure handle for the figure to save</p></li>
+<li><p><strong>figureName</strong> – the name of the file to store the figure in, excluding
+extension</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_image_set">
+<code class="sig-name descname">get_analysis_image_set</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str], imageBaseName: str, imageIndex: int = None</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_image_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_image_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an analysis image set saved in the analysis for this data set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>analysisTask</strong> – the analysis task that generated and stored the
+image set.</p></li>
+<li><p><strong>imageBaseName</strong> – the base name of the image</p></li>
+<li><p><strong>imageIndex</strong> – index of the image set to retrieve</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_image">
+<code class="sig-name descname">get_analysis_image</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str], imageBaseName: str, imageIndex: int, imagesPerSlice: int, sliceIndex: int, frameIndex: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an image from an image set save in the analysis for this
+data set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>analysisTask</strong> – the analysis task that generated and stored the
+image set.</p></li>
+<li><p><strong>imageBaseName</strong> – the base name of the image</p></li>
+<li><p><strong>imageIndex</strong> – index of the image set to retrieve</p></li>
+<li><p><strong>imagesPerSlice</strong> – the number of images in each slice of the image
+file</p></li>
+<li><p><strong>sliceIndex</strong> – the index of the slice to get the image</p></li>
+<li><p><strong>frameIndex</strong> – the index of the frame in the specified slice</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.writer_for_analysis_images">
+<code class="sig-name descname">writer_for_analysis_images</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str], imageBaseName: str, imageIndex: int = None, imagej: bool = True</em><span class="sig-paren">)</span> &#x2192; tifffile.tifffile.TiffWriter<a class="reference internal" href="merlin/core/dataset.html#DataSet.writer_for_analysis_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.writer_for_analysis_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a writer for writing tiff files from an analysis task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>analysisTask</strong> – </p></li>
+<li><p><strong>imageBaseName</strong> – </p></li>
+<li><p><strong>imageIndex</strong> – </p></li>
+<li><p><strong>imagej</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.analysis_tiff_description">
+<em class="property">static </em><code class="sig-name descname">analysis_tiff_description</code><span class="sig-paren">(</span><em class="sig-param">sliceCount: int</em>, <em class="sig-param">frameCount: int</em><span class="sig-paren">)</span> &#x2192; Dict<a class="reference internal" href="merlin/core/dataset.html#DataSet.analysis_tiff_description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.analysis_tiff_description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.list_analysis_files">
+<code class="sig-name descname">list_analysis_files</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">str] = None</em>, <em class="sig-param">subdirectory: str = None</em>, <em class="sig-param">extension: str = None</em>, <em class="sig-param">fullPath: bool = True</em><span class="sig-paren">)</span> &#x2192; List[str]<a class="reference internal" href="merlin/core/dataset.html#DataSet.list_analysis_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.list_analysis_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_dataframe_to_csv">
+<code class="sig-name descname">save_dataframe_to_csv</code><span class="sig-paren">(</span><em class="sig-param">dataframe: pandas.core.frame.DataFrame</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">str] = None</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.save_dataframe_to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_dataframe_to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a pandas data frame to a csv file stored in this dataset.</p>
+<p>If a previous pandas data frame has been save with the same resultName,
+it will be overwritten</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> – the data frame to save</p></li>
+<li><p><strong>resultName</strong> – the name of the output file</p></li>
+<li><p><strong>analysisTask</strong> – the analysis task that the dataframe should be
+saved under. If None, the dataframe is saved to the
+data set root.</p></li>
+<li><p><strong>resultIndex</strong> – index of the dataframe to save or None if no index
+should be specified</p></li>
+<li><p><strong>subdirectory</strong> – subdirectory of the analysis task that the dataframe
+should be saved to or None if the dataframe should be
+saved to the root directory for the analysis task.</p></li>
+<li><p><strong>**kwargs</strong> – arguments to pass on to pandas.to_csv</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.load_dataframe_from_csv">
+<code class="sig-name descname">load_dataframe_from_csv</code><span class="sig-paren">(</span><em class="sig-param">resultName: str</em>, <em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">str] = None</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; Optional[pandas.core.frame.DataFrame]<a class="reference internal" href="merlin/core/dataset.html#DataSet.load_dataframe_from_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.load_dataframe_from_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas data frame from a csv file stored in this data set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resultName</strong> – </p></li>
+<li><p><strong>analysisTask</strong> – </p></li>
+<li><p><strong>resultIndex</strong> – </p></li>
+<li><p><strong>subdirectory</strong> – </p></li>
+<li><p><strong>**kwargs</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the pandas data frame</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>FileNotFoundError</strong> – if the file does not exist</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.open_pandas_hdfstore">
+<code class="sig-name descname">open_pandas_hdfstore</code><span class="sig-paren">(</span><em class="sig-param">mode: str</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; pandas.io.pytables.HDFStore<a class="reference internal" href="merlin/core/dataset.html#DataSet.open_pandas_hdfstore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.open_pandas_hdfstore" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.delete_pandas_hdfstore">
+<code class="sig-name descname">delete_pandas_hdfstore</code><span class="sig-paren">(</span><em class="sig-param">resultName: str</em>, <em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">str] = None</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.delete_pandas_hdfstore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.delete_pandas_hdfstore" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.open_table">
+<code class="sig-name descname">open_table</code><span class="sig-paren">(</span><em class="sig-param">mode: str</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; &lt;module 'tables.file' from 'c:\\users\\george\\anaconda3\\envs\\merenv2\\lib\\site-packages\\tables\\file.py'&gt;<a class="reference internal" href="merlin/core/dataset.html#DataSet.open_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.open_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.delete_table">
+<code class="sig-name descname">delete_table</code><span class="sig-paren">(</span><em class="sig-param">resultName: str</em>, <em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">str] = None</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.delete_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.delete_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete an hdf5 file stored in this data set if it exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resultName</strong> – the name of the output file</p></li>
+<li><p><strong>analysisTask</strong> – the analysis task that should be associated with this
+hdf5 file. If None, the file is assumed to be in the
+data set root.</p></li>
+<li><p><strong>resultIndex</strong> – index of the dataframe to save or None if no index
+should be specified</p></li>
+<li><p><strong>subdirectory</strong> – subdirectory of the analysis task that the dataframe
+should be saved to or None if the dataframe should be
+saved to the root directory for the analysis task.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.open_hdf5_file">
+<code class="sig-name descname">open_hdf5_file</code><span class="sig-paren">(</span><em class="sig-param">mode: str</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">str] = None</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; h5py._hl.files.File<a class="reference internal" href="merlin/core/dataset.html#DataSet.open_hdf5_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.open_hdf5_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open an hdf5 file stored in this data set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> – the mode for opening the file, either ‘r’, ‘r+’, ‘w’, ‘w-‘,
+or ‘a’.</p></li>
+<li><p><strong>resultName</strong> – the name of the output file</p></li>
+<li><p><strong>analysisTask</strong> – the analysis task that should be associated with this
+hdf5 file. If None, the file is assumed to be in the
+data set root.</p></li>
+<li><p><strong>resultIndex</strong> – index of the dataframe to save or None if no index
+should be specified</p></li>
+<li><p><strong>subdirectory</strong> – subdirectory of the analysis task that the dataframe
+should be saved to or None if the dataframe should be
+saved to the root directory for the analysis task.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a h5py file object connected to the hdf5 file</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Raise:</dt><dd><dl class="simple">
+<dt>FileNotFoundError: if the mode is ‘r’ and the specified hdf5 file</dt><dd><p>does not exist</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.delete_hdf5_file">
+<code class="sig-name descname">delete_hdf5_file</code><span class="sig-paren">(</span><em class="sig-param">resultName: str</em>, <em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">str] = None</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.delete_hdf5_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.delete_hdf5_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete an hdf5 file stored in this data set if it exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resultName</strong> – the name of the output file</p></li>
+<li><p><strong>analysisTask</strong> – the analysis task that should be associated with this
+hdf5 file. If None, the file is assumed to be in the
+data set root.</p></li>
+<li><p><strong>resultIndex</strong> – index of the dataframe to save or None if no index
+should be specified</p></li>
+<li><p><strong>subdirectory</strong> – subdirectory of the analysis task that the dataframe
+should be saved to or None if the dataframe should be
+saved to the root directory for the analysis task.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_json_analysis_result">
+<code class="sig-name descname">save_json_analysis_result</code><span class="sig-paren">(</span><em class="sig-param">analysisResult: Dict</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.save_json_analysis_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_json_analysis_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.load_json_analysis_result">
+<code class="sig-name descname">load_json_analysis_result</code><span class="sig-paren">(</span><em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; Dict<a class="reference internal" href="merlin/core/dataset.html#DataSet.load_json_analysis_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.load_json_analysis_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.load_pickle_analysis_result">
+<code class="sig-name descname">load_pickle_analysis_result</code><span class="sig-paren">(</span><em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; Dict<a class="reference internal" href="merlin/core/dataset.html#DataSet.load_pickle_analysis_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.load_pickle_analysis_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_pickle_analysis_result">
+<code class="sig-name descname">save_pickle_analysis_result</code><span class="sig-paren">(</span><em class="sig-param">analysisResult</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#DataSet.save_pickle_analysis_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_pickle_analysis_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_numpy_analysis_result">
+<code class="sig-name descname">save_numpy_analysis_result</code><span class="sig-paren">(</span><em class="sig-param">analysisResult: numpy.ndarray</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.save_numpy_analysis_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_numpy_analysis_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_numpy_txt_analysis_result">
+<code class="sig-name descname">save_numpy_txt_analysis_result</code><span class="sig-paren">(</span><em class="sig-param">analysisResult: numpy.ndarray</em>, <em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.save_numpy_txt_analysis_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_numpy_txt_analysis_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.load_numpy_analysis_result">
+<code class="sig-name descname">load_numpy_analysis_result</code><span class="sig-paren">(</span><em class="sig-param">resultName: str</em>, <em class="sig-param">analysisName: str</em>, <em class="sig-param">resultIndex: int = None</em>, <em class="sig-param">subdirectory: str = None</em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="reference internal" href="merlin/core/dataset.html#DataSet.load_numpy_analysis_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.load_numpy_analysis_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_subdirectory">
+<code class="sig-name descname">get_analysis_subdirectory</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str], subdirectory: str = None, create: bool = True</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_subdirectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_subdirectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>analysisTask can either be the class or a string containing the
+class name.</p>
+<dl class="simple">
+<dt>create - Flag indicating if the analysis subdirectory should be</dt><dd><p>created if it does not already exist.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_task_subdirectory">
+<code class="sig-name descname">get_task_subdirectory</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str]</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#DataSet.get_task_subdirectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_task_subdirectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_log_subdirectory">
+<code class="sig-name descname">get_log_subdirectory</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str]</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#DataSet.get_log_subdirectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_log_subdirectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.save_analysis_task">
+<code class="sig-name descname">save_analysis_task</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">overwrite: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#DataSet.save_analysis_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.save_analysis_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.load_analysis_task">
+<code class="sig-name descname">load_analysis_task</code><span class="sig-paren">(</span><em class="sig-param">analysisTaskName: str</em><span class="sig-paren">)</span> &#x2192; merlin.core.analysistask.AnalysisTask<a class="reference internal" href="merlin/core/dataset.html#DataSet.load_analysis_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.load_analysis_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.delete_analysis">
+<code class="sig-name descname">delete_analysis</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: Union[merlin.core.analysistask.AnalysisTask, str]</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.delete_analysis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.delete_analysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all files associated with the provided analysis
+from this data set.</p>
+<p>Before deleting an analysis task, it must be verified that the
+analysis task is not running.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_tasks">
+<code class="sig-name descname">get_analysis_tasks</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[str]<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list of the analysis tasks within this dataset.</p>
+<p>Returns: A list of the analysis task names.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.analysis_exists">
+<code class="sig-name descname">analysis_exists</code><span class="sig-paren">(</span><em class="sig-param">analysisTaskName: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="merlin/core/dataset.html#DataSet.analysis_exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.analysis_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if an analysis task with the specified name exists in this
+dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_logger">
+<code class="sig-name descname">get_logger</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; logging.Logger<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.close_logger">
+<code class="sig-name descname">close_logger</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.close_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.close_logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_environment">
+<code class="sig-name descname">get_analysis_environment</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_environment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_environment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the environment variables for the system used to run the
+specified analysis task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>analysisTask</strong> – The completed analysis task to get the environment
+variables for.</p></li>
+<li><p><strong>fragmentIndex</strong> – The fragment index of the analysis task to
+get the environment variables for.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns: A dictionary of the environment variables. If the job has not</dt><dd><p>yet run, then None is returned.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.record_analysis_started">
+<code class="sig-name descname">record_analysis_started</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.record_analysis_started"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.record_analysis_started" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.record_analysis_running">
+<code class="sig-name descname">record_analysis_running</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.record_analysis_running"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.record_analysis_running" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.record_analysis_complete">
+<code class="sig-name descname">record_analysis_complete</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.record_analysis_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.record_analysis_complete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.record_analysis_error">
+<code class="sig-name descname">record_analysis_error</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#DataSet.record_analysis_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.record_analysis_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_start_time">
+<code class="sig-name descname">get_analysis_start_time</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_start_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_start_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the time that this analysis task started</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The start time for the analysis task execution in seconds since
+the epoch in UTC.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_complete_time">
+<code class="sig-name descname">get_analysis_complete_time</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_complete_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_complete_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the time that this analysis task completed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The completion time for the analysis task execution in seconds since
+the epoch in UTC.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.get_analysis_elapsed_time">
+<code class="sig-name descname">get_analysis_elapsed_time</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/core/dataset.html#DataSet.get_analysis_elapsed_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.get_analysis_elapsed_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the time that this analysis took to complete.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The elapsed time for the analysis task execution in seconds.
+Returns None if the analysis task has not yet completed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.is_analysis_idle">
+<code class="sig-name descname">is_analysis_idle</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="merlin/core/dataset.html#DataSet.is_analysis_idle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.is_analysis_idle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.check_analysis_started">
+<code class="sig-name descname">check_analysis_started</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="merlin/core/dataset.html#DataSet.check_analysis_started"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.check_analysis_started" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.check_analysis_done">
+<code class="sig-name descname">check_analysis_done</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="merlin/core/dataset.html#DataSet.check_analysis_done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.check_analysis_done" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.analysis_done_filename">
+<code class="sig-name descname">analysis_done_filename</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="merlin/core/dataset.html#DataSet.analysis_done_filename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.analysis_done_filename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.check_analysis_error">
+<code class="sig-name descname">check_analysis_error</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="merlin/core/dataset.html#DataSet.check_analysis_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.check_analysis_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.DataSet.reset_analysis_status">
+<code class="sig-name descname">reset_analysis_status</code><span class="sig-paren">(</span><em class="sig-param">analysisTask: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">fragmentIndex: int = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#DataSet.reset_analysis_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.DataSet.reset_analysis_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.core.dataset.ImageDataSet">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.dataset.</code><code class="sig-name descname">ImageDataSet</code><span class="sig-paren">(</span><em class="sig-param">dataDirectoryName: str</em>, <em class="sig-param">dataHome: str = None</em>, <em class="sig-param">analysisHome: str = None</em>, <em class="sig-param">microscopeParametersName: str = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#ImageDataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.ImageDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.core.dataset.DataSet" title="merlin.core.dataset.DataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.dataset.DataSet</span></code></a></p>
+<dl class="method">
+<dt id="merlin.core.dataset.ImageDataSet.get_image_file_names">
+<code class="sig-name descname">get_image_file_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#ImageDataSet.get_image_file_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.ImageDataSet.get_image_file_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.ImageDataSet.load_image">
+<code class="sig-name descname">load_image</code><span class="sig-paren">(</span><em class="sig-param">imagePath</em>, <em class="sig-param">frameIndex</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#ImageDataSet.load_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.ImageDataSet.load_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.ImageDataSet.image_stack_size">
+<code class="sig-name descname">image_stack_size</code><span class="sig-paren">(</span><em class="sig-param">imagePath</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#ImageDataSet.image_stack_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.ImageDataSet.image_stack_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the size of the image stack stored in the specified image path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a three element list with [width, height, frameCount] or None</dt><dd><p>if the file does not exist</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.ImageDataSet.get_microns_per_pixel">
+<code class="sig-name descname">get_microns_per_pixel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#ImageDataSet.get_microns_per_pixel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.ImageDataSet.get_microns_per_pixel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the conversion factor to convert pixels to microns.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.ImageDataSet.get_image_dimensions">
+<code class="sig-name descname">get_image_dimensions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#ImageDataSet.get_image_dimensions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.ImageDataSet.get_image_dimensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the dimensions of the images in this data set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A tuple containing the width and height of each image in pixels.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.core.dataset.MERFISHDataSet">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.dataset.</code><code class="sig-name descname">MERFISHDataSet</code><span class="sig-paren">(</span><em class="sig-param">dataDirectoryName: str</em>, <em class="sig-param">codebookNames: List[str] = None</em>, <em class="sig-param">dataOrganizationName: str = None</em>, <em class="sig-param">positionFileName: str = None</em>, <em class="sig-param">dataHome: str = None</em>, <em class="sig-param">analysisHome: str = None</em>, <em class="sig-param">microscopeParametersName: str = None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.core.dataset.ImageDataSet" title="merlin.core.dataset.ImageDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.dataset.ImageDataSet</span></code></a></p>
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.save_codebook">
+<code class="sig-name descname">save_codebook</code><span class="sig-paren">(</span><em class="sig-param">codebook: merlin.data.codebook.Codebook</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.save_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.save_codebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store the specified codebook in this dataset.</p>
+<p>If a codebook with the same codebook index and codebook name as the
+specified codebook already exists in this dataset, it is not
+overwritten.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>codebook</strong> – the codebook to store</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>FileExistsError</strong> – If a codebook with the same codebook index but
+    a different codebook name is already save within this dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.load_codebooks">
+<code class="sig-name descname">load_codebooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[merlin.data.codebook.Codebook]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.load_codebooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.load_codebooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the codebooks stored within this dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of all the stored codebooks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.load_codebook">
+<code class="sig-name descname">load_codebook</code><span class="sig-paren">(</span><em class="sig-param">codebookIndex: int = 0</em><span class="sig-paren">)</span> &#x2192; Optional[merlin.data.codebook.Codebook]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.load_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.load_codebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the codebook stored within this dataset with the specified
+index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>codebookIndex</strong> – the index of the codebook to load.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The codebook stored with the specified codebook index. If no
+codebook exists with the specified index then None is returned.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_stored_codebook_name">
+<code class="sig-name descname">get_stored_codebook_name</code><span class="sig-paren">(</span><em class="sig-param">codebookIndex: int = 0</em><span class="sig-paren">)</span> &#x2192; Optional[str]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_stored_codebook_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_stored_codebook_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the name of the codebook stored within this dataset with the
+specified index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>codebookIndex</strong> – the index of the codebook to load to find the name
+of.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The name of the codebook stored with the specified codebook index.
+If no codebook exists with the specified index then None is
+returned.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_codebooks">
+<code class="sig-name descname">get_codebooks</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[merlin.data.codebook.Codebook]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_codebooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_codebooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the codebooks associated with this dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list containing the codebooks for this dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_codebook">
+<code class="sig-name descname">get_codebook</code><span class="sig-paren">(</span><em class="sig-param">codebookIndex: int = 0</em><span class="sig-paren">)</span> &#x2192; merlin.data.codebook.Codebook<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_codebook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_data_organization">
+<code class="sig-name descname">get_data_organization</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; merlin.data.dataorganization.DataOrganization<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_data_organization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_data_organization" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_stage_positions">
+<code class="sig-name descname">get_stage_positions</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[List[float]]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_stage_positions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_stage_positions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_fov_offset">
+<code class="sig-name descname">get_fov_offset</code><span class="sig-paren">(</span><em class="sig-param">fov: int</em><span class="sig-paren">)</span> &#x2192; Tuple[float, float]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_fov_offset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_fov_offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the offset of the specified fov in the global coordinate system.
+This offset is based on the anticipated stage position.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fov</strong> – index of the field of view</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tuple specifying the x and y offset of the top right corner
+of the specified fov in pixels.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.z_index_to_position">
+<code class="sig-name descname">z_index_to_position</code><span class="sig-paren">(</span><em class="sig-param">zIndex: int</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.z_index_to_position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.z_index_to_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the z position associated with the provided z index.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.position_to_z_index">
+<code class="sig-name descname">position_to_z_index</code><span class="sig-paren">(</span><em class="sig-param">zPosition: float</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.position_to_z_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.position_to_z_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the z index associated with the specified z position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>Exception</strong> – If the provided z position is not specified in this
+    dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_z_positions">
+<code class="sig-name descname">get_z_positions</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[float]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_z_positions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_z_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the z positions present in this dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A sorted list of all unique z positions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_fovs">
+<code class="sig-name descname">get_fovs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[int]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_fovs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_fovs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_imaging_rounds">
+<code class="sig-name descname">get_imaging_rounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; List[int]<a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_imaging_rounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_imaging_rounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_raw_image">
+<code class="sig-name descname">get_raw_image</code><span class="sig-paren">(</span><em class="sig-param">dataChannel</em>, <em class="sig-param">fov</em>, <em class="sig-param">zPosition</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_raw_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_raw_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.core.dataset.MERFISHDataSet.get_fiducial_image">
+<code class="sig-name descname">get_fiducial_image</code><span class="sig-paren">(</span><em class="sig-param">dataChannel</em>, <em class="sig-param">fov</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/dataset.html#MERFISHDataSet.get_fiducial_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.dataset.MERFISHDataSet.get_fiducial_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-core-executor-module">
-<h2>merlin.core.executor module<a class="headerlink" href="#merlin-core-executor-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.core.executor">
+<span id="merlin-core-executor-module"></span><h2>merlin.core.executor module<a class="headerlink" href="#module-merlin.core.executor" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.core.executor.Executor">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.executor.</code><code class="sig-name descname">Executor</code><a class="reference internal" href="merlin/core/executor.html#Executor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.executor.Executor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="merlin.core.executor.Executor.run">
+<em class="property">abstract </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">task: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">index: int = None</em>, <em class="sig-param">callback: Callable = None</em>, <em class="sig-param">join: bool = False</em>, <em class="sig-param">rerunCompleted: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/executor.html#Executor.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.executor.Executor.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run an analysis task.</p>
+<p>This method will not run analysis tasks that are already currently
+running and analysis is terminated early due to error or otherwise
+will not be restarted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – the analysis task to run.</p></li>
+<li><p><strong>index</strong> – index of the analysis to run for a parallel analysis task.</p></li>
+<li><p><strong>callback</strong> – function ta call upon completion of the analysis.</p></li>
+<li><p><strong>join</strong> – flag indicating if the execution threads should be joined to
+the current thread. If True, this function doesn’t return
+until the analysis is complete.</p></li>
+<li><p><strong>rerunCompleted</strong> – flag indicating if previous analysis should be
+run again even if it has previously completed. If overwrite
+is True, analysis will be run on the task regardless of its
+status. If overwrite is False, analysis will only be run on
+the task or fragments of the task that have either not been
+started or have previously completed in error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.core.executor.LocalExecutor">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.core.executor.</code><code class="sig-name descname">LocalExecutor</code><span class="sig-paren">(</span><em class="sig-param">coreCount=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/core/executor.html#LocalExecutor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.executor.LocalExecutor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.core.executor.Executor" title="merlin.core.executor.Executor"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.executor.Executor</span></code></a></p>
+<dl class="method">
+<dt id="merlin.core.executor.LocalExecutor.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">task: merlin.core.analysistask.AnalysisTask</em>, <em class="sig-param">index: int = None</em>, <em class="sig-param">callback: Callable = None</em>, <em class="sig-param">join: bool = False</em>, <em class="sig-param">rerunCompleted: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="merlin/core/executor.html#LocalExecutor.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.core.executor.LocalExecutor.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run an analysis task.</p>
+<p>This method will not run analysis tasks that are already currently
+running and analysis is terminated early due to error or otherwise
+will not be restarted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – the analysis task to run.</p></li>
+<li><p><strong>index</strong> – index of the analysis to run for a parallel analysis task.</p></li>
+<li><p><strong>callback</strong> – function ta call upon completion of the analysis.</p></li>
+<li><p><strong>join</strong> – flag indicating if the execution threads should be joined to
+the current thread. If True, this function doesn’t return
+until the analysis is complete.</p></li>
+<li><p><strong>rerunCompleted</strong> – flag indicating if previous analysis should be
+run again even if it has previously completed. If overwrite
+is True, analysis will be run on the task regardless of its
+status. If overwrite is False, analysis will only be run on
+the task or fragments of the task that have either not been
+started or have previously completed in error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="merlin-core-scheduler-module">
 <h2>merlin.core.scheduler module<a class="headerlink" href="#merlin-core-scheduler-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.core">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-merlin.core" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -196,35 +1185,16 @@
   
 
 
-  
-
-    
-    
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'../',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

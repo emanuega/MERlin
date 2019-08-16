@@ -17,32 +17,34 @@
   
 
   
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
-
-  
-  <script src="../../../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -149,12 +151,12 @@
   <h1>Source code for merlin.analysis.decode</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
 
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">dataset</span>
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">decoding</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">barcodedb</span>
+<span class="kn">from</span> <span class="nn">merlin.data.codebook</span> <span class="k">import</span> <span class="n">Codebook</span>
 
 
 <div class="viewcode-block" id="Decode"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode">[docs]</a><span class="k">class</span> <span class="nc">Decode</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
@@ -202,6 +204,11 @@
 
         <span class="k">return</span> <span class="n">dependencies</span></div>
 
+<div class="viewcode-block" id="Decode.get_codebook"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.get_codebook">[docs]</a>    <span class="k">def</span> <span class="nf">get_codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Codebook</span><span class="p">:</span>
+        <span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span></div>
+
     <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This function decodes the barcodes in a fov and saves them to the</span>
 <span class="sd">        barcode database.</span>
@@ -214,13 +221,14 @@
 
         <span class="n">lowPassSigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;lowpass_sigma&#39;</span><span class="p">]</span>
 
-        <span class="n">decoder</span> <span class="o">=</span> <span class="n">decoding</span><span class="o">.</span><span class="n">PixelBasedDecoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">())</span>
+        <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">decoding</span><span class="o">.</span><span class="n">PixelBasedDecoder</span><span class="p">(</span><span class="n">codebook</span><span class="p">)</span>
         <span class="n">scaleFactors</span> <span class="o">=</span> <span class="n">optimizeTask</span><span class="o">.</span><span class="n">get_scale_factors</span><span class="p">()</span>
         <span class="n">backgrounds</span> <span class="o">=</span> <span class="n">optimizeTask</span><span class="o">.</span><span class="n">get_backgrounds</span><span class="p">()</span>
         <span class="n">chromaticCorrector</span> <span class="o">=</span> <span class="n">optimizeTask</span><span class="o">.</span><span class="n">get_chromatic_corrector</span><span class="p">()</span>
 
         <span class="n">zPositionCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">())</span>
-        <span class="n">bitCount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()</span>
+        <span class="n">bitCount</span> <span class="o">=</span> <span class="n">codebook</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()</span>
         <span class="n">imageShape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_image_dimensions</span><span class="p">()</span>
         <span class="n">decodedImages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zPositionCount</span><span class="p">,</span> <span class="o">*</span><span class="n">imageShape</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
         <span class="n">magnitudeImages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zPositionCount</span><span class="p">,</span> <span class="o">*</span><span class="n">imageShape</span><span class="p">),</span>
@@ -315,8 +323,7 @@
             <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">decoder</span><span class="o">.</span><span class="n">extract_barcodes_with_index</span><span class="p">(</span>
                 <span class="n">i</span><span class="p">,</span> <span class="n">decodedImage</span><span class="p">,</span> <span class="n">pixelMagnitudes</span><span class="p">,</span> <span class="n">pixelTraces</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">globalTask</span><span class="p">,</span> <span class="n">segmentTask</span><span class="p">,</span> <span class="n">minimumArea</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_barcode_count</span><span class="p">())]),</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_barcode_count</span><span class="p">())]),</span>
             <span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">)</span></div>
 </pre></div>
 
@@ -347,25 +354,16 @@
   
 
 
-  
-
-    
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

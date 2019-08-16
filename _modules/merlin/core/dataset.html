@@ -17,32 +17,34 @@
   
 
   
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
-
-  
-  <script src="../../../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -148,12 +150,10 @@
             
   <h1>Source code for merlin.core.dataset</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">sqlalchemy</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
 <span class="kn">import</span> <span class="nn">tifffile</span>
 <span class="kn">import</span> <span class="nn">importlib</span>
@@ -166,10 +166,11 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span>
 <span class="kn">import</span> <span class="nn">h5py</span>
 <span class="kn">import</span> <span class="nn">tables</span>
 
-<span class="kn">from</span> <span class="nn">storm_analysis.sa_library</span> <span class="k">import</span> <span class="n">datareader</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">datareader</span>
 <span class="kn">import</span> <span class="nn">merlin</span>
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
 <span class="kn">from</span> <span class="nn">merlin.data</span> <span class="k">import</span> <span class="n">dataorganization</span>
@@ -182,7 +183,7 @@
 <div class="viewcode-block" id="DataSet"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet">[docs]</a><span class="k">class</span> <span class="nc">DataSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                 <span class="n">dataHome</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisHome</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                 <span class="n">dataHome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">analysisHome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a dataset for the specified raw data.</span>
 
 <span class="sd">        Args:</span>
@@ -224,7 +225,7 @@
 
 <span class="sd">        Returns: the path to the saved workflow</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">snakemakePath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="s1">&#39;snakemake&#39;</span><span class="p">])</span>
+        <span class="n">snakemakePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_snakemake_path</span><span class="p">()</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">snakemakePath</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">workflowPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
@@ -234,6 +235,13 @@
             <span class="n">outFile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">workflowString</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">workflowPath</span></div>
+
+<div class="viewcode-block" id="DataSet.get_snakemake_path"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_snakemake_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_snakemake_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the directory for storing files related to snakemake.</span>
+
+<span class="sd">        Returns: the snakemake path as a string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="s1">&#39;snakemake&#39;</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="DataSet.save_figure"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_figure">[docs]</a>    <span class="k">def</span> <span class="nf">save_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span> <span class="n">figure</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span>
                     <span class="n">figureName</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -256,7 +264,7 @@
 
 <div class="viewcode-block" id="DataSet.get_analysis_image_set"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_image_set">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_image_set</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span> <span class="n">imageBaseName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">imageIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="n">imageIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Get an analysis image set saved in the analysis for this data set.</span>
 
 <span class="sd">        Args:</span>
@@ -294,7 +302,7 @@
     
 <div class="viewcode-block" id="DataSet.writer_for_analysis_images"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.writer_for_analysis_images">[docs]</a>    <span class="k">def</span> <span class="nf">writer_for_analysis_images</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span> <span class="n">imageBaseName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">imageIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">imagej</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tifffile</span><span class="o">.</span><span class="n">TiffWriter</span><span class="p">:</span>
+            <span class="n">imageIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">imagej</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tifffile</span><span class="o">.</span><span class="n">TiffWriter</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Get a writer for writing tiff files from an analysis task.</span>
 
 <span class="sd">        Args:</span>
@@ -329,7 +337,7 @@
             <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">destPath</span><span class="p">,</span> <span class="n">imageBaseName</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">imageIndex</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.tif&#39;</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">_analysis_result_save_path</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span>
             <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">fileExtension</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 
@@ -339,16 +347,28 @@
         <span class="k">if</span> <span class="n">fileExtension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">saveName</span> <span class="o">+=</span> <span class="n">fileExtension</span>
 
-        <span class="k">if</span> <span class="n">analysisName</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">analysisTask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="n">saveName</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">get_analysis_subdirectory</span><span class="p">(</span>
-                <span class="n">analysisName</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">),</span> <span class="n">saveName</span><span class="p">])</span>
+                <span class="n">analysisTask</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">),</span> <span class="n">saveName</span><span class="p">])</span>
+
+<div class="viewcode-block" id="DataSet.list_analysis_files"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.list_analysis_files">[docs]</a>    <span class="k">def</span> <span class="nf">list_analysis_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                            <span class="n">fullPath</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">basePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
+            <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">,</span> <span class="n">subdirectory</span><span class="o">=</span><span class="n">subdirectory</span><span class="p">)</span>
+        <span class="n">fileList</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">basePath</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extension</span><span class="p">:</span>
+            <span class="n">fileList</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fileList</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">extension</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">fullPath</span><span class="p">:</span>
+            <span class="n">fileList</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">basePath</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fileList</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">fileList</span></div>
 
 <div class="viewcode-block" id="DataSet.save_dataframe_to_csv"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_dataframe_to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">save_dataframe_to_csv</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Save a pandas data frame to a csv file stored in this dataset.</span>
 
 <span class="sd">        If a previous pandas data frame has been save with the same resultName,</span>
@@ -374,8 +394,8 @@
             <span class="n">dataframe</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.load_dataframe_from_csv"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.load_dataframe_from_csv">[docs]</a>    <span class="k">def</span> <span class="nf">load_dataframe_from_csv</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Load a pandas data frame from a csv file stored in this data set.</span>
 
@@ -397,30 +417,29 @@
             <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.open_pandas_hdfstore"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.open_pandas_hdfstore">[docs]</a>    <span class="k">def</span> <span class="nf">open_pandas_hdfstore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                             <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                             <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">HDFStore</span><span class="p">:</span>
+                             <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                             <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">HDFStore</span><span class="p">:</span>
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.h5&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">HDFStore</span><span class="p">(</span><span class="n">savePath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.delete_pandas_hdfstore"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.delete_pandas_hdfstore">[docs]</a>    <span class="k">def</span> <span class="nf">delete_pandas_hdfstore</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">hPath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.h5&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">hPath</span><span class="p">):</span>
             <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">hPath</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.open_table"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.open_table">[docs]</a>    <span class="k">def</span> <span class="nf">open_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                   <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span>
+                   <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
                    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tables</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.h5&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">tables</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">savePath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DataSet.delete_table"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.delete_table">[docs]</a>    <span class="k">def</span> <span class="nf">delete_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                         <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span>
-                         <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="DataSet.delete_table"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.delete_table">[docs]</a>    <span class="k">def</span> <span class="nf">delete_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                     <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Delete an hdf5 file stored in this data set if it exists.</span>
 
 <span class="sd">        Args:</span>
@@ -441,8 +460,8 @@
             <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">hPath</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.open_hdf5_file"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.open_hdf5_file">[docs]</a>    <span class="k">def</span> <span class="nf">open_hdf5_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                       <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                       <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">:</span>
+                       <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                       <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Open an hdf5 file stored in this data set.</span>
 
 <span class="sd">        Args:</span>
@@ -472,8 +491,8 @@
 
         <span class="k">return</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">hPath</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DataSet.delete_hdf5_file"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.delete_hdf5_file">[docs]</a>    <span class="k">def</span> <span class="nf">delete_hdf5_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                         <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span>
+<div class="viewcode-block" id="DataSet.delete_hdf5_file"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.delete_hdf5_file">[docs]</a>    <span class="k">def</span> <span class="nf">delete_hdf5_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                         <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
                          <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Delete an hdf5 file stored in this data set if it exists.</span>
 
@@ -496,24 +515,24 @@
 
 <div class="viewcode-block" id="DataSet.save_json_analysis_result"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_json_analysis_result">[docs]</a>    <span class="k">def</span> <span class="nf">save_json_analysis_result</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisResult</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.json&#39;</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">savePath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">analysisResult</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.load_json_analysis_result"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.load_json_analysis_result">[docs]</a>    <span class="k">def</span> <span class="nf">load_json_analysis_result</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.json&#39;</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">savePath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.load_pickle_analysis_result"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.load_pickle_analysis_result">[docs]</a>    <span class="k">def</span> <span class="nf">load_pickle_analysis_result</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.pkl&#39;</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">savePath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -521,7 +540,7 @@
 
 <div class="viewcode-block" id="DataSet.save_pickle_analysis_result"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_pickle_analysis_result">[docs]</a>    <span class="k">def</span> <span class="nf">save_pickle_analysis_result</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisResult</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.pkl&#39;</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">savePath</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -529,8 +548,8 @@
 
 <div class="viewcode-block" id="DataSet.save_numpy_analysis_result"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_numpy_analysis_result">[docs]</a>    <span class="k">def</span> <span class="nf">save_numpy_analysis_result</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisResult</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
                 <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">)</span>
@@ -538,24 +557,24 @@
 
 <div class="viewcode-block" id="DataSet.save_numpy_txt_analysis_result"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_numpy_txt_analysis_result">[docs]</a>    <span class="k">def</span> <span class="nf">save_numpy_txt_analysis_result</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisResult</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
             <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">)</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">savePath</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="n">analysisResult</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.load_numpy_analysis_result"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.load_numpy_analysis_result">[docs]</a>    <span class="k">def</span> <span class="nf">load_numpy_analysis_result</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">resultName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
 
         <span class="n">savePath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_result_save_path</span><span class="p">(</span>
                 <span class="n">resultName</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">,</span> <span class="n">resultIndex</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">,</span> <span class="s1">&#39;.npy&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">savePath</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">savePath</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.get_analysis_subdirectory"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_subdirectory">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_subdirectory</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">create</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">TaskOrName</span><span class="p">,</span> <span class="n">subdirectory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        analysisTask can either be the class or a string containing the</span>
 <span class="sd">        class name.</span>
@@ -589,7 +608,7 @@
                 <span class="n">analysisTask</span><span class="p">,</span> <span class="n">subdirectory</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">)</span></div>
         
 <div class="viewcode-block" id="DataSet.save_analysis_task"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_analysis_task">[docs]</a>    <span class="k">def</span> <span class="nf">save_analysis_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                           <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                           <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="n">saveName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">get_task_subdirectory</span><span class="p">(</span>
             <span class="n">analysisTask</span><span class="p">),</span> <span class="s1">&#39;task.json&#39;</span><span class="p">])</span>
 
@@ -658,7 +677,7 @@
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">analysisPath</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.get_logger"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_logger">[docs]</a>    <span class="k">def</span> <span class="nf">get_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                   <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
+                   <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
         <span class="n">loggerName</span> <span class="o">=</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">fragmentIndex</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">loggerName</span> <span class="o">+=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
@@ -677,7 +696,7 @@
         <span class="k">return</span> <span class="n">logger</span></div>
 
 <div class="viewcode-block" id="DataSet.close_logger"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.close_logger">[docs]</a>    <span class="k">def</span> <span class="nf">close_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                     <span class="n">fragmentIndex</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                     <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">loggerName</span> <span class="o">=</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">fragmentIndex</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">loggerName</span> <span class="o">+=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
@@ -691,7 +710,7 @@
             <span class="n">handler</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_log_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                  <span class="n">fragmentIndex</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+                  <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">logName</span> <span class="o">=</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">fragmentIndex</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logName</span> <span class="o">+=</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
@@ -700,7 +719,7 @@
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">get_log_subdirectory</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">),</span> <span class="n">logName</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">_analysis_status_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                              <span class="n">eventName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+                              <span class="n">eventName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">analysisTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">)</span>
 
@@ -713,7 +732,7 @@
                 <span class="n">fileName</span><span class="p">])</span>
 
 <div class="viewcode-block" id="DataSet.get_analysis_environment"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_environment">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                                 <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                                 <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Get the environment variables for the system used to run the</span>
 <span class="sd">        specified analysis task.</span>
 
@@ -737,31 +756,31 @@
 
     <span class="k">def</span> <span class="nf">_record_analysis_environment</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fileName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_status_file</span><span class="p">(</span>
             <span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;environment&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outFile</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">),</span> <span class="n">outFile</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DataSet.record_analysis_started"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.record_analysis_started">[docs]</a>    <span class="k">def</span> <span class="nf">record_analysis_started</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                                <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_record_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_record_analysis_environment</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.record_analysis_running"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.record_analysis_running">[docs]</a>    <span class="k">def</span> <span class="nf">record_analysis_running</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                                <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_record_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.record_analysis_complete"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.record_analysis_complete">[docs]</a>    <span class="k">def</span> <span class="nf">record_analysis_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                                 <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                                 <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_record_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;done&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.record_analysis_error"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.record_analysis_error">[docs]</a>    <span class="k">def</span> <span class="nf">record_analysis_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                              <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                              <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_record_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.get_analysis_start_time"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_start_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                                <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+                                <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Get the time that this analysis task started</span>
 
 <span class="sd">        Returns:</span>
@@ -774,7 +793,7 @@
 
 <div class="viewcode-block" id="DataSet.get_analysis_complete_time"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_complete_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_complete_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
                                    <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                                   <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+                                   <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Get the time that this analysis task completed.</span>
 
 <span class="sd">        Returns:</span>
@@ -798,7 +817,7 @@
 
     <span class="k">def</span> <span class="nf">_record_analysis_event</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span> <span class="n">eventName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fileName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_status_file</span><span class="p">(</span>
                 <span class="n">analysisTask</span><span class="p">,</span> <span class="n">eventName</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -806,14 +825,14 @@
 
     <span class="k">def</span> <span class="nf">_check_analysis_event</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span> <span class="n">eventName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">fileName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_status_file</span><span class="p">(</span>
             <span class="n">analysisTask</span><span class="p">,</span> <span class="n">eventName</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fileName</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_reset_analysis_event</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span> <span class="n">eventName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">fileName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_status_file</span><span class="p">(</span>
             <span class="n">analysisTask</span><span class="p">,</span> <span class="n">eventName</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
 
@@ -823,7 +842,7 @@
             <span class="k">pass</span>
 
 <div class="viewcode-block" id="DataSet.is_analysis_idle"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.is_analysis_idle">[docs]</a>    <span class="k">def</span> <span class="nf">is_analysis_idle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                         <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+                         <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">fileName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_status_file</span><span class="p">(</span>
                 <span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -832,55 +851,37 @@
             <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="DataSet.check_analysis_started"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.check_analysis_started">[docs]</a>    <span class="k">def</span> <span class="nf">check_analysis_started</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                               <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+                               <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.check_analysis_done"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.check_analysis_done">[docs]</a>    <span class="k">def</span> <span class="nf">check_analysis_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+                            <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;done&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.analysis_done_filename"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.analysis_done_filename">[docs]</a>    <span class="k">def</span> <span class="nf">analysis_done_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                               <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+                               <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysis_status_file</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;done&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.check_analysis_error"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.check_analysis_error">[docs]</a>    <span class="k">def</span> <span class="nf">check_analysis_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                             <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+                             <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.reset_analysis_status"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.reset_analysis_status">[docs]</a>    <span class="k">def</span> <span class="nf">reset_analysis_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
-                              <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                              <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="k">raise</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisAlreadyStartedException</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;done&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="DataSet.get_database_engine"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_database_engine">[docs]</a>    <span class="k">def</span> <span class="nf">get_database_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                            <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">analysisTask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="s1">&#39;sqlite:///&#39;</span> <span class="o">+</span>
-                    <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="s1">&#39;analysis_data.db&#39;</span><span class="p">]))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dbPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">(),</span>
-                         <span class="s1">&#39;db&#39;</span><span class="p">])</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dbPath</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">dbName</span> <span class="o">=</span> <span class="s1">&#39;analysis_data.db&#39;</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">dbName</span> <span class="o">=</span> <span class="s1">&#39;analysis_data&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.db&#39;</span>
-
-            <span class="k">return</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                        <span class="p">[</span><span class="s1">&#39;sqlite:///&#39;</span> <span class="o">+</span> <span class="n">dbPath</span><span class="p">,</span> <span class="n">dbName</span><span class="p">]))</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ImageDataSet"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.ImageDataSet">[docs]</a><span class="k">class</span> <span class="nc">ImageDataSet</span><span class="p">(</span><span class="n">DataSet</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataHome</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">analysisHome</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">microscopeParametersName</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataHome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">analysisHome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">microscopeParametersName</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a dataset for the specified raw data.</span>
 
 <span class="sd">        Args:</span>
@@ -913,8 +914,8 @@
                 <span class="ow">or</span> <span class="n">currentFile</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tiff&#39;</span><span class="p">)])</span></div>
 
 <div class="viewcode-block" id="ImageDataSet.load_image"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.ImageDataSet.load_image">[docs]</a>    <span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imagePath</span><span class="p">,</span> <span class="n">frameIndex</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">datareader</span><span class="o">.</span><span class="n">inferReader</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
-            <span class="n">imageIn</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">loadAFrame</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">frameIndex</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">datareader</span><span class="o">.</span><span class="n">infer_reader</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
+            <span class="n">imageIn</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">load_frame</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">frameIndex</span><span class="p">))</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transpose</span><span class="p">:</span>
                 <span class="n">imageIn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">imageIn</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flipHorizontal</span><span class="p">:</span>
@@ -934,8 +935,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">imagePath</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="k">with</span> <span class="n">datareader</span><span class="o">.</span><span class="n">inferReader</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">filmSize</span><span class="p">()</span></div>
+        <span class="k">with</span> <span class="n">datareader</span><span class="o">.</span><span class="n">infer_reader</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">film_size</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_import_microscope_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">microscopeParametersName</span><span class="p">):</span>
         <span class="n">sourcePath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">merlin</span><span class="o">.</span><span class="n">MICROSCOPE_PARAMETERS_HOME</span><span class="p">,</span>
@@ -981,18 +982,18 @@
 
 <div class="viewcode-block" id="MERFISHDataSet"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet">[docs]</a><span class="k">class</span> <span class="nc">MERFISHDataSet</span><span class="p">(</span><span class="n">ImageDataSet</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">codebookName</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">dataOrganizationName</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">positionFileName</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">dataHome</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisHome</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">microscopeParametersName</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">codebookNames</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">dataOrganizationName</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">positionFileName</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">dataHome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">analysisHome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">microscopeParametersName</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a MERFISH dataset for the specified raw data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dataDirectoryName: the relative directory to the raw data</span>
-<span class="sd">            codebookName: the name of the codebook to use. The codebook</span>
+<span class="sd">            codebookNames: A list of the names of codebooks to use. The codebook</span>
 <span class="sd">                    should be present in the analysis parameters</span>
-<span class="sd">                    directory. A full path can be provided for a codebook</span>
-<span class="sd">                    present in another directory.</span>
+<span class="sd">                    directory. Full paths can be provided for codebooks</span>
+<span class="sd">                    present other directories.</span>
 <span class="sd">            dataOrganizationName: the name of the data organization to use.</span>
 <span class="sd">                    The data organization should be present in the analysis</span>
 <span class="sd">                    parameters directory. A full path can be provided for</span>
@@ -1022,10 +1023,109 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">dataOrganization</span> <span class="o">=</span> <span class="n">dataorganization</span><span class="o">.</span><span class="n">DataOrganization</span><span class="p">(</span>
                 <span class="bp">self</span><span class="p">,</span> <span class="n">dataOrganizationName</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">codebook</span> <span class="o">=</span> <span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">codebookName</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">codebookNames</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">codebookNames</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">codebooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                              <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">codebookNames</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">codebooks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_codebooks</span><span class="p">()</span>
 
-<div class="viewcode-block" id="MERFISHDataSet.get_codebook"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.get_codebook">[docs]</a>    <span class="k">def</span> <span class="nf">get_codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">codebook</span></div>
+<div class="viewcode-block" id="MERFISHDataSet.save_codebook"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.save_codebook">[docs]</a>    <span class="k">def</span> <span class="nf">save_codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">codebook</span><span class="p">:</span> <span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Store the specified codebook in this dataset.</span>
+
+<span class="sd">        If a codebook with the same codebook index and codebook name as the</span>
+<span class="sd">        specified codebook already exists in this dataset, it is not</span>
+<span class="sd">        overwritten.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            codebook: the codebook to store</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            FileExistsError: If a codebook with the same codebook index but</span>
+<span class="sd">                a different codebook name is already save within this dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">existingCodebookName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_stored_codebook_name</span><span class="p">(</span>
+            <span class="n">codebook</span><span class="o">.</span><span class="n">get_codebook_index</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">existingCodebookName</span> <span class="ow">and</span> <span class="n">existingCodebookName</span> \
+                <span class="o">!=</span> <span class="n">codebook</span><span class="o">.</span><span class="n">get_codebook_name</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">((</span><span class="s1">&#39;Unable to save codebook </span><span class="si">%s</span><span class="s1"> with index </span><span class="si">%i</span><span class="s1"> &#39;</span>
+                                  <span class="o">+</span> <span class="s1">&#39; since codebook </span><span class="si">%s</span><span class="s1"> already exists with &#39;</span>
+                                  <span class="o">+</span> <span class="s1">&#39;the same index&#39;</span><span class="p">)</span>
+                                  <span class="o">%</span> <span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_codebook_name</span><span class="p">(),</span>
+                                     <span class="n">codebook</span><span class="o">.</span><span class="n">get_codebook_index</span><span class="p">(),</span>
+                                     <span class="n">existingCodebookName</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">existingCodebookName</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_dataframe_to_csv</span><span class="p">(</span>
+                <span class="n">codebook</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span>
+                <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;codebook&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_codebook_index</span><span class="p">()),</span>
+                          <span class="n">codebook</span><span class="o">.</span><span class="n">get_codebook_name</span><span class="p">()]),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MERFISHDataSet.load_codebooks"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.load_codebooks">[docs]</a>    <span class="k">def</span> <span class="nf">load_codebooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the codebooks stored within this dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of all the stored codebooks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">codebookList</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">currentIndex</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">currentCodebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_codebook</span><span class="p">(</span><span class="n">currentIndex</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">currentCodebook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">codebookList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">currentCodebook</span><span class="p">)</span>
+            <span class="n">currentIndex</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">currentCodebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_codebook</span><span class="p">(</span><span class="n">currentIndex</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">codebookList</span></div>
+
+<div class="viewcode-block" id="MERFISHDataSet.load_codebook"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.load_codebook">[docs]</a>    <span class="k">def</span> <span class="nf">load_codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">codebookIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+                      <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Load the codebook stored within this dataset with the specified</span>
+<span class="sd">        index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            codebookIndex: the index of the codebook to load.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The codebook stored with the specified codebook index. If no</span>
+<span class="sd">            codebook exists with the specified index then None is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">codebookFile</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_analysis_files</span><span class="p">(</span><span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.csv&#39;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;codebook_</span><span class="si">%i</span><span class="s1">_&#39;</span> <span class="o">%</span> <span class="n">codebookIndex</span><span class="p">)</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">codebookFile</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">codebookName</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span>
+            <span class="n">codebookFile</span><span class="p">[</span><span class="mi">0</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="k">return</span> <span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">codebookFile</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">codebookIndex</span><span class="p">,</span> <span class="n">codebookName</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MERFISHDataSet.get_stored_codebook_name"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.get_stored_codebook_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_stored_codebook_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">codebookIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Get the name of the codebook stored within this dataset with the</span>
+<span class="sd">        specified index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            codebookIndex: the index of the codebook to load to find the name</span>
+<span class="sd">                of.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The name of the codebook stored with the specified codebook index.</span>
+<span class="sd">            If no codebook exists with the specified index then None is</span>
+<span class="sd">            returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">codebookFile</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_analysis_files</span><span class="p">(</span><span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.csv&#39;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;codebook_</span><span class="si">%i</span><span class="s1">_&#39;</span> <span class="o">%</span> <span class="n">codebookIndex</span><span class="p">)</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">codebookFile</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">codebookFile</span><span class="p">[</span><span class="mi">0</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])</span></div>
+
+<div class="viewcode-block" id="MERFISHDataSet.get_codebooks"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.get_codebooks">[docs]</a>    <span class="k">def</span> <span class="nf">get_codebooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Get the codebooks associated with this dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list containing the codebooks for this dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">codebooks</span></div>
+
+<div class="viewcode-block" id="MERFISHDataSet.get_codebook"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.get_codebook">[docs]</a>    <span class="k">def</span> <span class="nf">get_codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">codebookIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">codebook</span><span class="o">.</span><span class="n">Codebook</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">codebooks</span><span class="p">[</span><span class="n">codebookIndex</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="MERFISHDataSet.get_data_organization"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet.get_data_organization">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_organization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">dataorganization</span><span class="o">.</span><span class="n">DataOrganization</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataOrganization</span></div>
@@ -1119,9 +1219,6 @@
 
     <span class="k">def</span> <span class="nf">_convert_parameter_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listIn</span><span class="p">,</span> <span class="n">castFunction</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">castFunction</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">listIn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">delimiter</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span></div>
-
-
-
 </pre></div>
 
            </div>
@@ -1151,25 +1248,16 @@
   
 
 
-  
-
-    
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

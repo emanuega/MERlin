@@ -17,32 +17,34 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -151,11 +153,114 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="merlin-view-widgets-regionview-module">
-<h2>merlin.view.widgets.regionview module<a class="headerlink" href="#merlin-view-widgets-regionview-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.view.widgets.regionview">
+<span id="merlin-view-widgets-regionview-module"></span><h2>merlin.view.widgets.regionview module<a class="headerlink" href="#module-merlin.view.widgets.regionview" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.view.widgets.regionview.RegionViewWidget">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.view.widgets.regionview.</code><code class="sig-name descname">RegionViewWidget</code><span class="sig-paren">(</span><em class="sig-param">warpTask</em>, <em class="sig-param">barcodeDB</em>, <em class="sig-param">dataSet</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionViewWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionViewWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionViewWidget.fov_scroll_update">
+<code class="sig-name descname">fov_scroll_update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionViewWidget.fov_scroll_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionViewWidget.fov_scroll_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionViewWidget.z_scroll_update">
+<code class="sig-name descname">z_scroll_update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionViewWidget.z_scroll_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionViewWidget.z_scroll_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionViewWidget.set_fov">
+<code class="sig-name descname">set_fov</code><span class="sig-paren">(</span><em class="sig-param">fov</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionViewWidget.set_fov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionViewWidget.set_fov" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionViewWidget.set_z_index">
+<code class="sig-name descname">set_z_index</code><span class="sig-paren">(</span><em class="sig-param">zIndex</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionViewWidget.set_z_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionViewWidget.set_z_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.view.widgets.regionview.</code><code class="sig-name descname">RegionImageViewWidget</code><span class="sig-paren">(</span><em class="sig-param">imageData</em>, <em class="sig-param">vSynchronize</em>, <em class="sig-param">bitIndex=None</em>, <em class="sig-param">barcodes=None</em>, <em class="sig-param">title=''</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget.set_data">
+<code class="sig-name descname">set_data</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">barcodes=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget.set_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget.set_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget.scale_image">
+<code class="sig-name descname">scale_image</code><span class="sig-paren">(</span><em class="sig-param">inputImage</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget.scale_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget.scale_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget.paintEvent">
+<code class="sig-name descname">paintEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPaintEvent</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget.paintEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget.paintEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget.mousePressEvent">
+<code class="sig-name descname">mousePressEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget.mousePressEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget.mousePressEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget.mouseReleaseEvent">
+<code class="sig-name descname">mouseReleaseEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget.mouseReleaseEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget.mouseReleaseEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget.mouseMoveEvent">
+<code class="sig-name descname">mouseMoveEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget.mouseMoveEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget.mouseMoveEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.RegionImageViewWidget.wheelEvent">
+<code class="sig-name descname">wheelEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QWheelEvent</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#RegionImageViewWidget.wheelEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.RegionImageViewWidget.wheelEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.view.widgets.regionview.ImageViewSynchronizer">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.view.widgets.regionview.</code><code class="sig-name descname">ImageViewSynchronizer</code><a class="reference internal" href="merlin/view/widgets/regionview.html#ImageViewSynchronizer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.ImageViewSynchronizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtCore.QObject</span></code></p>
+<dl class="attribute">
+<dt id="merlin.view.widgets.regionview.ImageViewSynchronizer.updateViewSignal">
+<code class="sig-name descname">updateViewSignal</code><a class="headerlink" href="#merlin.view.widgets.regionview.ImageViewSynchronizer.updateViewSignal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.ImageViewSynchronizer.get_transform">
+<code class="sig-name descname">get_transform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#ImageViewSynchronizer.get_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.ImageViewSynchronizer.get_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.ImageViewSynchronizer.get_cursor_position">
+<code class="sig-name descname">get_cursor_position</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#ImageViewSynchronizer.get_cursor_position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.ImageViewSynchronizer.get_cursor_position" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.ImageViewSynchronizer.set_cursor_position">
+<code class="sig-name descname">set_cursor_position</code><span class="sig-paren">(</span><em class="sig-param">newPosition</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#ImageViewSynchronizer.set_cursor_position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.ImageViewSynchronizer.set_cursor_position" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.ImageViewSynchronizer.get_selected_barcode">
+<code class="sig-name descname">get_selected_barcode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#ImageViewSynchronizer.get_selected_barcode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.ImageViewSynchronizer.get_selected_barcode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.view.widgets.regionview.ImageViewSynchronizer.set_selected_barcode">
+<code class="sig-name descname">set_selected_barcode</code><span class="sig-paren">(</span><em class="sig-param">newSelection</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/view/widgets/regionview.html#ImageViewSynchronizer.set_selected_barcode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.view.widgets.regionview.ImageViewSynchronizer.set_selected_barcode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.view.widgets">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-merlin.view.widgets" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -187,35 +292,16 @@
   
 
 
-  
-
-    
-    
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'../',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

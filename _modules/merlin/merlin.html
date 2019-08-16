@@ -17,32 +17,34 @@
   
 
   
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
-
-  
-  <script src="../../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -152,51 +154,69 @@
 <span class="kn">import</span> <span class="nn">dotenv</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">snakemake</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">TextIO</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span>
 
 <span class="kn">import</span> <span class="nn">merlin</span> <span class="k">as</span> <span class="nn">m</span>
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">dataset</span>
-<span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">scheduler</span>
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">executor</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">snakewriter</span>
+
 
 <div class="viewcode-block" id="build_parser"><a class="viewcode-back" href="../merlin.html#merlin.merlin.build_parser">[docs]</a><span class="k">def</span> <span class="nf">build_parser</span><span class="p">():</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Decode MERFISH data.&#39;</span><span class="p">)</span>
 
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--profile&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> 
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;enable profiling&#39;</span><span class="p">)</span>
-
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--profile&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;enable profiling&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--generate-only&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
                         <span class="n">help</span><span class="o">=</span><span class="s1">&#39;only generate the directory structure and &#39;</span> <span class="o">+</span>
                         <span class="s1">&#39;do not run any analysis.&#39;</span><span class="p">)</span>
-
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;dataset&#39;</span><span class="p">,</span> 
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;directory where the raw data is stored&#39;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-a&#39;</span><span class="p">,</span> <span class="s1">&#39;--analysis-parameters&#39;</span><span class="p">,</span> 
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the analysis parameters file to use&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;dataset&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;directory where the raw data is stored&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-a&#39;</span><span class="p">,</span> <span class="s1">&#39;--analysis-parameters&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the analysis parameters file to use&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="s1">&#39;--data-organization&#39;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the data organization file to use&#39;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="s1">&#39;--codebook&#39;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the codebook to use&#39;</span><span class="p">)</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the data organization file to use&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="s1">&#39;--codebook&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the codebook to use&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="s1">&#39;--microscope-parameters&#39;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the microscope parameters to use&#39;</span><span class="p">)</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the microscope parameters to use&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-p&#39;</span><span class="p">,</span> <span class="s1">&#39;--positions&#39;</span><span class="p">,</span>
                         <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the position file to use&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="s1">&#39;--core-count&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of cores to use for the analysis&#39;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-t&#39;</span><span class="p">,</span> <span class="s1">&#39;--analysis-task&#39;</span><span class="p">,</span> 
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;the name of the analysis task to execute. If no &#39;</span>
-                    <span class="o">+</span> <span class="s1">&#39;analysis task is provided, all tasks are executed.&#39;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-i&#39;</span><span class="p">,</span> <span class="s1">&#39;--fragment-index&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;the index of the fragment of the analysis task to execute&#39;</span><span class="p">)</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of cores to use for the analysis&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-t&#39;</span><span class="p">,</span> <span class="s1">&#39;--analysis-task&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;the name of the analysis task to execute. If no &#39;</span>
+             <span class="o">+</span> <span class="s1">&#39;analysis task is provided, all tasks are executed.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-i&#39;</span><span class="p">,</span> <span class="s1">&#39;--fragment-index&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;the index of the fragment of the analysis task to execute&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-e&#39;</span><span class="p">,</span> <span class="s1">&#39;--data-home&#39;</span><span class="p">,</span>
                         <span class="n">help</span><span class="o">=</span><span class="s1">&#39;the data home directory&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="s1">&#39;--analysis-home&#39;</span><span class="p">,</span>
                         <span class="n">help</span><span class="o">=</span><span class="s1">&#39;the analysis home directory&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-k&#39;</span><span class="p">,</span> <span class="s1">&#39;--snakemake-parameters&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;the name of the snakemake parameters file&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no_report&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;flag indicating that the snakemake stats &#39;</span> <span class="o">+</span>
+                        <span class="s1">&#39;should not be shared to improve MERlin&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
+<span class="k">def</span> <span class="nf">_clean_string_arg</span><span class="p">(</span><span class="n">stringIn</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">stringIn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">stringIn</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&quot;</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="merlin"><a class="viewcode-back" href="../merlin.html#merlin.merlin.merlin">[docs]</a><span class="k">def</span> <span class="nf">merlin</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MERlin - MERFISH decoding software&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MERlin - the MERFISH decoding pipeline&#39;</span><span class="p">)</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">build_parser</span><span class="p">()</span>
     <span class="n">args</span><span class="p">,</span> <span class="n">argv</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()</span>
     <span class="n">dotenv</span><span class="o">.</span><span class="n">load_dotenv</span><span class="p">(</span><span class="n">dotenv</span><span class="o">.</span><span class="n">find_dotenv</span><span class="p">())</span>
@@ -207,32 +227,103 @@
 
     <span class="n">dataSet</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">MERFISHDataSet</span><span class="p">(</span>
         <span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
-        <span class="n">dataOrganizationName</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">data_organization</span><span class="p">,</span>
-        <span class="n">codebookName</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">codebook</span><span class="p">,</span>
-        <span class="n">microscopeParametersName</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">microscope_parameters</span><span class="p">,</span>
-        <span class="n">positionFileName</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">positions</span><span class="p">,</span>
-        <span class="n">dataHome</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">data_home</span><span class="p">,</span>
-        <span class="n">analysisHome</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">analysis_home</span>
+        <span class="n">dataOrganizationName</span><span class="o">=</span><span class="n">_clean_string_arg</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data_organization</span><span class="p">),</span>
+        <span class="n">codebookNames</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">codebook</span><span class="p">,</span>
+        <span class="n">microscopeParametersName</span><span class="o">=</span><span class="n">_clean_string_arg</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">microscope_parameters</span><span class="p">),</span>
+        <span class="n">positionFileName</span><span class="o">=</span><span class="n">_clean_string_arg</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">positions</span><span class="p">),</span>
+        <span class="n">dataHome</span><span class="o">=</span><span class="n">_clean_string_arg</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data_home</span><span class="p">),</span>
+        <span class="n">analysisHome</span><span class="o">=</span><span class="n">_clean_string_arg</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">analysis_home</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">parametersHome</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">ANALYSIS_PARAMETERS_HOME</span>
     <span class="n">e</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">LocalExecutor</span><span class="p">(</span><span class="n">coreCount</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">core_count</span><span class="p">)</span>
+    <span class="n">snakefilePath</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">analysis_parameters</span><span class="p">:</span>
-        <span class="c1">#This is run in all cases that analysis parameters are provided</span>
-        <span class="c1">#so that new analysis tasks are generated to match the new parameters</span>
+        <span class="c1"># This is run in all cases that analysis parameters are provided</span>
+        <span class="c1"># so that new analysis tasks are generated to match the new parameters</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">parametersHome</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">analysis_parameters</span><span class="p">]),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">Scheduler</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+            <span class="n">snakefilePath</span> <span class="o">=</span> <span class="n">generate_analysis_tasks_and_snakefile</span><span class="p">(</span>
+                <span class="n">dataSet</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">generate_only</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">analysis_task</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Running </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">analysis_task</span><span class="p">)</span>
             <span class="n">e</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">analysis_task</span><span class="p">),</span>
-                    <span class="n">index</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">fragment_index</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">analysis_parameters</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Starting scheduler&#39;</span><span class="p">)</span>
-            <span class="n">s</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+                  <span class="n">index</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">fragment_index</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">snakefilePath</span><span class="p">:</span>
+            <span class="n">snakemakeParameters</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">snakemake_parameters</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">SNAKEMAKE_PARAMETERS_HOME</span><span class="p">,</span>
+                                      <span class="n">args</span><span class="o">.</span><span class="n">snakemake_parameters</span><span class="p">]))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">snakemakeParameters</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
+            <span class="n">run_with_snakemake</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">snakefilePath</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">core_count</span><span class="p">,</span>
+                               <span class="n">snakemakeParameters</span><span class="p">,</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">no_report</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="generate_analysis_tasks_and_snakefile"><a class="viewcode-back" href="../merlin.html#merlin.merlin.generate_analysis_tasks_and_snakefile">[docs]</a><span class="k">def</span> <span class="nf">generate_analysis_tasks_and_snakefile</span><span class="p">(</span><span class="n">dataSet</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">MERFISHDataSet</span><span class="p">,</span>
+                                          <span class="n">parametersFile</span><span class="p">:</span> <span class="n">TextIO</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generating analysis tasks from </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">parametersFile</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">analysisParameters</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">parametersFile</span><span class="p">)</span>
+    <span class="n">snakeGenerator</span> <span class="o">=</span> <span class="n">snakewriter</span><span class="o">.</span><span class="n">SnakefileGenerator</span><span class="p">(</span>
+        <span class="n">analysisParameters</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">)</span>
+    <span class="n">snakefilePath</span> <span class="o">=</span> <span class="n">snakeGenerator</span><span class="o">.</span><span class="n">generate_workflow</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Snakefile generated at </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">snakefilePath</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">snakefilePath</span></div>
+
+
+<div class="viewcode-block" id="run_with_snakemake"><a class="viewcode-back" href="../merlin.html#merlin.merlin.run_with_snakemake">[docs]</a><span class="k">def</span> <span class="nf">run_with_snakemake</span><span class="p">(</span>
+        <span class="n">dataSet</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">MERFISHDataSet</span><span class="p">,</span> <span class="n">snakefilePath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">coreCount</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">snakemakeParameters</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Running MERlin pipeline through snakemake&#39;</span><span class="p">)</span>
+    <span class="n">snakemake</span><span class="o">.</span><span class="n">snakemake</span><span class="p">(</span><span class="n">snakefilePath</span><span class="p">,</span> <span class="n">cores</span><span class="o">=</span><span class="n">coreCount</span><span class="p">,</span>
+                        <span class="n">workdir</span><span class="o">=</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_snakemake_path</span><span class="p">(),</span>
+                        <span class="n">stats</span><span class="o">=</span><span class="n">snakefilePath</span> <span class="o">+</span> <span class="s1">&#39;.stats&#39;</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">snakemakeParameters</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">report</span><span class="p">:</span>
+        <span class="n">reportTime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">snakefilePath</span> <span class="o">+</span> <span class="s1">&#39;.stats&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;http://merlin.georgeemanuel.com/post&#39;</span><span class="p">,</span>
+                              <span class="n">files</span><span class="o">=</span><span class="p">{</span>
+                                  <span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="p">(</span>
+                                      <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                                          <span class="p">[</span><span class="s1">&#39;snakestats&#39;</span><span class="p">,</span>
+                                           <span class="n">dataSet</span><span class="o">.</span><span class="n">dataSetName</span><span class="p">,</span>
+                                           <span class="nb">str</span><span class="p">(</span><span class="n">reportTime</span><span class="p">)])</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span><span class="p">,</span>
+                                      <span class="n">f</span><span class="p">)},</span>
+                              <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">analysisParameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">t</span><span class="p">:</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">get_analysis_tasks</span><span class="p">()}</span>
+        <span class="n">datasetMeta</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;image_width&#39;</span><span class="p">:</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">get_image_dimensions</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;image_height&#39;</span><span class="p">:</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">get_image_dimensions</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;barcode_length&#39;</span><span class="p">:</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">(),</span>
+            <span class="s1">&#39;barcode_count&#39;</span><span class="p">:</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_barcode_count</span><span class="p">(),</span>
+            <span class="s1">&#39;fov_count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">()),</span>
+            <span class="s1">&#39;z_count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_z_positions</span><span class="p">()),</span>
+            <span class="s1">&#39;sequential_count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_data_organization</span><span class="p">()</span>
+                                    <span class="o">.</span><span class="n">get_sequential_rounds</span><span class="p">()),</span>
+            <span class="s1">&#39;dataset_name&#39;</span><span class="p">:</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">dataSetName</span><span class="p">,</span>
+            <span class="s1">&#39;report_time&#39;</span><span class="p">:</span> <span class="n">reportTime</span><span class="p">,</span>
+            <span class="s1">&#39;analysis_parameters&#39;</span><span class="p">:</span> <span class="n">analysisParameters</span>
+        <span class="p">}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;http://merlin.georgeemanuel.com/post&#39;</span><span class="p">,</span>
+                          <span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                              <span class="p">[</span><span class="n">dataSet</span><span class="o">.</span><span class="n">dataSetName</span><span class="p">,</span>
+                               <span class="nb">str</span><span class="p">(</span><span class="n">reportTime</span><span class="p">)])</span>
+                                          <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">,</span>
+                                          <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">datasetMeta</span><span class="p">))},</span>
+                          <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+            <span class="k">pass</span></div>
 </pre></div>
 
            </div>
@@ -262,25 +353,16 @@
   
 
 
-  
-
-    
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

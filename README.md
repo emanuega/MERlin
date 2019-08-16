@@ -10,4 +10,5 @@ For more information on installation and usage, please see the [documentation](h
 ## Authors
 
 * **George Emanuel** - *Initial work* 
+* **Stephen Eichhorn**
 

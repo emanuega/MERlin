@@ -110,5 +110,5 @@ class ExportPartitionedBarcodes(analysistask.AnalysisTask):
         parsedBarcodes = pTask.get_partitioned_barcodes()
 
         self.dataSet.save_dataframe_to_csv(
-                    parsedBarcodes, 'partition_barcodes_combined',
+                    parsedBarcodes, 'barcodes_per_feature',
                     self.get_analysis_name())

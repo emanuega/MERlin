@@ -192,5 +192,5 @@ class ExportSumSignals(analysistask.AnalysisTask):
         signals = sTask.get_sum_signals()
 
         self.dataSet.save_dataframe_to_csv(
-                    signals, 'sequential_signal_compiled',
+                    signals, 'sequential_sum_signals',
                     self.get_analysis_name())

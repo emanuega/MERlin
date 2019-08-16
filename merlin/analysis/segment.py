@@ -276,8 +276,28 @@ class AssignCellFOV(analysistask.AnalysisTask):
                 featureDB.write_features(cellsInFOV, f)
 
 
+class ExportCellMetadata(analysistask.AnalysisTask):
+    """
+    An analysis task exports cell metadata.
+    """
 
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
 
+        self.segmentTask = self.dataSet.load_analysis_task(
+            self.parameters['segment_task'])
 
+    def get_estimated_memory(self):
+        return 2048
 
+    def get_estimated_time(self):
+        return 30
 
+    def get_dependencies(self):
+        return [self.parameters['segment_task']]
+
+    def _run_analysis(self):
+        df = self.segmentTask.get_feature_database().read_feature_metadata()
+
+        self.dataSet.save_dataframe_to_csv(df, 'cell_metadata',
+                                           self.analysisName)

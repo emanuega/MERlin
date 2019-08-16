@@ -89,7 +89,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#decode-decode">decode.Decode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#filterbarcodes-filterbarcodes">filterbarcodes.FilterBarcodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#segment-segmentcells">segment.SegmentCells</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#segment-cleancellsegmentation">segment.CleanCellSegmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#segment-assigncellfov">segment.AssignCellFOV</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#segment-exportcellmetadata">segment.ExportCellMetadata</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generatemosaic-generatemosaic">generatemosaic.GenerateMosaic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sequential-sumsignal">sequential.SumSignal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sequential-exportsumsignals">sequential.ExportSumSignals</a></li>
@@ -237,9 +238,13 @@
 <li>watershed_channel_name – The name of the data channel to use as the watershed image.W</li>
 </ul>
 </div>
-<div class="section" id="segment-cleancellsegmentation">
-<h2>segment.CleanCellSegmentation<a class="headerlink" href="#segment-cleancellsegmentation" title="Permalink to this headline">¶</a></h2>
-<p>Description: Cleans the cell segmentation by merging cells that were fargmented along the field of view boundaries.</p>
+<div class="section" id="segment-assigncellfov">
+<h2>segment.AssignCellFOV<a class="headerlink" href="#segment-assigncellfov" title="Permalink to this headline">¶</a></h2>
+<p>Description: Assigns each cell to the FOV centroid they are closest to, and eliminates overlapping cells from the dataset, keeping 1.</p>
+</div>
+<div class="section" id="segment-exportcellmetadata">
+<h2>segment.ExportCellMetadata<a class="headerlink" href="#segment-exportcellmetadata" title="Permalink to this headline">¶</a></h2>
+<p>Description: Exports a csv containing the cell metadata, i.e. fov, volume, x and y coordinates.</p>
 </div>
 <div class="section" id="generatemosaic-generatemosaic">
 <h2>generatemosaic.GenerateMosaic<a class="headerlink" href="#generatemosaic-generatemosaic" title="Permalink to this headline">¶</a></h2>
@@ -325,7 +330,17 @@
 
     
     
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>

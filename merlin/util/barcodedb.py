@@ -55,7 +55,7 @@ class BarcodeDB:
                              'global_z': np.float32,
                              'cell_index': np.int32}
 
-        for i in range(self._dataSet.get_codebook().get_bit_count()):
+        for i in range(self._analysisTask.get_codebook().get_bit_count()):
             columnInformation['intensity_'+str(i)] = np.float32
 
         return columnInformation

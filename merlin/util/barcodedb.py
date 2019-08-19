@@ -38,7 +38,11 @@ class BarcodeDB:
     def __init__(self, dataSet, analysisTask):
         self._dataSet = dataSet
         self._analysisTask = analysisTask
-
+        if 'preprocess_task' in self._analysisTask.parameters:
+            self._codebook = self._analysisTask.get_codebook()
+        else:
+            self._codebook = self._dataSet.get_codebook()
+            
     def _get_bc_column_types(self):
         columnInformation = {'barcode_id': np.uint16,
                              'fov': np.uint16,
@@ -55,7 +59,7 @@ class BarcodeDB:
                              'global_z': np.float32,
                              'cell_index': np.int32}
 
-        for i in range(self._analysisTask.get_codebook().get_bit_count()):
+        for i in range(self._codebook.get_bit_count()):
             columnInformation['intensity_'+str(i)] = np.float32
 
         return columnInformation

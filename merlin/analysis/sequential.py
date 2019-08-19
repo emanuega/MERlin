@@ -114,9 +114,9 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         # remove the part enclosed by pound symbols
         ig = self.get_intersection_graph(cells, areaThreshold=0)
 
-        cellIndex = [x for x in ig.nodes() if len(ig.edges(nbunch=x)) == 1
-                     and cells[x].get_volume() > 0.0]
-        cells = [cells[x] for x in range(len(cells)) if x in cellIndex]
+        #cellIndex = [x for x in ig.nodes() if len(ig.edges(nbunch=x)) == 1
+        #             and cells[x].get_volume() > 0.0]
+        #cells = [cells[x] for x in range(len(cells)) if x in cellIndex]
 
         signals = []
         for ch in channels:
@@ -161,12 +161,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
 
         fovSignal = self._get_sum_signal(fragmentIndex, channels, zIndex)
         normSignal = fovSignal.iloc[:, :-1].div(fovSignal.loc[:, 'Pixels'], 0)
-
         normSignal.columns = geneNames
-        columns = normSignal.columns.values.tolist()
-        columns[0] = 'cell_ID'
-        normSignal.columns = columns
-        normSignal.set_index('cell_ID', drop=True, inplace=True)
 
         self.dataSet.save_dataframe_to_csv(
                 normSignal, 'sequential_signal', self.get_analysis_name(),

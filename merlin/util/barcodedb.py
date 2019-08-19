@@ -38,9 +38,9 @@ class BarcodeDB:
     def __init__(self, dataSet, analysisTask):
         self._dataSet = dataSet
         self._analysisTask = analysisTask
-        if 'preprocess_task' in self._analysisTask.parameters:
+        try:
             self._codebook = self._analysisTask.get_codebook()
-        else:
+        except AttributeError:
             self._codebook = self._dataSet.get_codebook()
             
     def _get_bc_column_types(self):

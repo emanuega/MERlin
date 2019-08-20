@@ -110,7 +110,7 @@ class DataOrganization(object):
         """
         return self.data[self.data['channelName'].apply(
             lambda x: str(x).lower()).str.match(
-            dataChannelName.lower()).index.values.tolist()[0]
+            dataChannelName.lower())].index.values.tolist()[0]
 
 
     def get_data_channel_color(self, dataChannel: int) -> str:

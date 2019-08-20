@@ -30,9 +30,6 @@ jobs:
           name: run tests
           command: |
             source activate merlin_env
-            cd ~/MERlin
-            ls -a
-            cat .env
             cd ~/MERlin/test
             mkdir ~/test-reports
             pytest -v --cov --junitxml=~/test-reports/junit.xml

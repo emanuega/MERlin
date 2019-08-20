@@ -75,48 +75,12 @@ class SumSignal(analysistask.ParallelAnalysisTask):
             columns=['Intensity', 'Pixels'])
         return propsOut
 
-    @staticmethod
-    def get_intersection_graph(polygonList, areaThreshold=250):
-        # This is only currently necessary to eliminate
-        # problematic cell overlaps. If cell boundaries have been cleaned
-        # prior to running sum signal this isn't necessary
-        polygonIndex = rtree.index.Index()
-        intersectGraphEdges = [[i, i] for i in range(len(polygonList))]
-        for i, cell in enumerate(polygonList):
-            if len(cell.get_bounding_box()) == 4:
-                putativeIntersects = list(polygonIndex.intersection(
-                                          cell.get_bounding_box()))
-                if len(putativeIntersects) > 0:
-                    try:
-                        intersectGraphEdges += \
-                                [[i, j] for j in putativeIntersects
-                                 if cell.intersection(
-                                    polygonList[j]) > areaThreshold]
-                    except Exception:
-                        print('Unable to calculate intersection for cell %i'
-                              % i)
-
-                polygonIndex.insert(i, cell.get_bounding_box())
-
-        intersectionGraph = networkx.Graph()
-        intersectionGraph.add_edges_from(intersectGraphEdges)
-
-        return intersectionGraph
-
     def _get_sum_signal(self, fov, channels, zIndex):
 
         fTask = self.dataSet.load_analysis_task(self.parameters['warp_task'])
         sTask = self.dataSet.load_analysis_task(self.parameters['segment_task'])
 
         cells = sTask.get_feature_database().read_features(fov)
-
-        # If cell boundaries are going to be cleaned prior to this we should
-        # remove the part enclosed by pound symbols
-        ig = self.get_intersection_graph(cells, areaThreshold=0)
-
-        #cellIndex = [x for x in ig.nodes() if len(ig.edges(nbunch=x)) == 1
-        #             and cells[x].get_volume() > 0.0]
-        #cells = [cells[x] for x in range(len(cells)) if x in cellIndex]
 
         signals = []
         for ch in channels:

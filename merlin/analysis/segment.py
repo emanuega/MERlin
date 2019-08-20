@@ -137,10 +137,8 @@ class AssignCellFOV(analysistask.AnalysisTask):
     def _intial_clean(self, currentFOV: int):
         currentCells = self.segmentTask.get_feature_database()\
             .read_features(currentFOV)
-        cleanCells = [len(cell.get_bounding_box()) == 4
-                      for cell in currentCells]
-        currentCells = np.take(currentCells, np.where(cleanCells))[0].tolist()
-        return currentCells
+        return [cell for cell in currentCells 
+                if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
 
     def _secondary_assignments(self, currentFOV: int,
                                secondaryAssignmentDict: Dict):

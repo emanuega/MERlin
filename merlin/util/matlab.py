@@ -8,7 +8,8 @@ python libraries.
 """
 
 
-def imregionalmax(inputData: np.ndarray, mask: np.ndarray=None) -> np.ndarray:
+def imregionalmax(inputData: np.ndarray, mask: np.ndarray=None,
+                  maxIterations: int=300) -> np.ndarray:
     """Compute the regional maximum of inputData.
 
     This is algorithmically equivalent to Matlab's imregionalmax for 3d
@@ -67,7 +68,8 @@ def imregionalmax(inputData: np.ndarray, mask: np.ndarray=None) -> np.ndarray:
         return True
 
     done = False
-    while not done:
+    iterationCount = 0
+    while not done and iterationCount < maxIterations:
         tempResult = result.copy()
         for k in range(inputData.shape[0]):
             for i in range(inputData.shape[1]):
@@ -77,6 +79,7 @@ def imregionalmax(inputData: np.ndarray, mask: np.ndarray=None) -> np.ndarray:
 
         done = np.array_equal(result, tempResult)
         result = tempResult
+        iterationCount += 1
 
     return result
 

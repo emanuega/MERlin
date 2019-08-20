@@ -55,7 +55,7 @@ MERlin can be installed by cloning the repository and installing with pip:
 Specifying paths with a .env file
 ==================================
 
-A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the MERlin root directory:
+A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the user home directory (~\.env on linux or C:\users\UserName\.env on Windows):
 
 * DATA\_HOME - The path of the root directory to the raw data.
 * ANALYSIS\_HOME - The path of the root directory where analysis results should be stored.

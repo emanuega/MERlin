@@ -1,7 +1,7 @@
 import dotenv
 import os
 
-dotenv.load_dotenv(dotenv.find_dotenv())
+dotenv.load_dotenv(os.path.join(os.path.expanduser('~'), '.env'))
 
 DATA_HOME = os.path.expanduser(os.environ.get('DATA_HOME'))
 ANALYSIS_HOME = os.path.expanduser(os.environ.get('ANALYSIS_HOME'))

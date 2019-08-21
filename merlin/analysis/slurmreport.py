@@ -182,25 +182,28 @@ class SlurmReport(analysistask.AnalysisTask):
         analysisParameters = {}
         for t in taskList:
             currentTask = self.dataSet.load_analysis_task(t)
-            if currentTask.is_complete():
-                slurmDF = self._generate_slurm_report(currentTask)
-                self.dataSet.save_dataframe_to_csv(slurmDF, t, self,
-                                                   'reports')
-                dfStream = io.StringIO()
-                slurmDF.to_csv(dfStream, sep='|')
-                self._plot_slurm_report(slurmDF, t)
-                reportDict[t] = slurmDF
-                analysisParameters[t] = currentTask.get_parameters()
+            try:
+                if currentTask.is_complete():
+                    slurmDF = self._generate_slurm_report(currentTask)
+                    self.dataSet.save_dataframe_to_csv(slurmDF, t, self,
+                                                       'reports')
+                    dfStream = io.StringIO()
+                    slurmDF.to_csv(dfStream, sep='|')
+                    self._plot_slurm_report(slurmDF, t)
+                    reportDict[t] = slurmDF
+                    analysisParameters[t] = currentTask.get_parameters()
 
-                try:
-                    requests.post('http://merlin.georgeemanuel.com/post',
-                                  files={'file': (
-                                      '.'.join([t, self.dataSet.dataSetName,
-                                                str(reportTime)]) + '.csv',
-                                      dfStream.getvalue())},
-                                  timeout=10)
-                except requests.exceptions.RequestException:
-                    pass
+                    try:
+                        requests.post('http://merlin.georgeemanuel.com/post',
+                                      files={'file': (
+                                          '.'.join([t, self.dataSet.dataSetName,
+                                                    str(reportTime)]) + '.csv',
+                                          dfStream.getvalue())},
+                                      timeout=10)
+                    except requests.exceptions.RequestException:
+                        pass
+            except Exception:
+                pass
 
         self._plot_slurm_summary(reportDict)
 

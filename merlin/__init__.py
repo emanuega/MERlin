@@ -7,7 +7,7 @@ DATA_HOME = os.path.expanduser(os.environ.get('DATA_HOME'))
 ANALYSIS_HOME = os.path.expanduser(os.environ.get('ANALYSIS_HOME'))
 PARAMETERS_HOME = os.path.expanduser(os.environ.get('PARAMETERS_HOME'))
 ANALYSIS_PARAMETERS_HOME = os.sep.join(
-        [PARAMETERS_HOME, 'analysis_parameters'])
+        [PARAMETERS_HOME, 'analysis'])
 CODEBOOK_HOME = os.sep.join(
         [PARAMETERS_HOME, 'codebooks'])
 DATA_ORGANIZATION_HOME = os.sep.join(
@@ -15,10 +15,10 @@ DATA_ORGANIZATION_HOME = os.sep.join(
 POSITION_HOME = os.sep.join(
         [PARAMETERS_HOME, 'positions'])
 MICROSCOPE_PARAMETERS_HOME = os.sep.join(
-        [PARAMETERS_HOME, 'microscope_parameters'])
+        [PARAMETERS_HOME, 'microscope'])
 FPKM_HOME = os.sep.join([PARAMETERS_HOME, 'fpkm'])
 SNAKEMAKE_PARAMETERS_HOME = os.sep.join(
-    [PARAMETERS_HOME, 'snakemake_parameters'])
+    [PARAMETERS_HOME, 'snakemake'])
 
 
 def version():

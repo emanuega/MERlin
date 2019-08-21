@@ -2,18 +2,18 @@
     "analysis_tasks": [
         {
             "task": "FiducialCorrelationWarp",
-            "module": "warp"
+            "module": "merlin.analysis.warp"
         },
         {
             "task": "DeconvolutionPreprocess",
-            "module": "preprocess",
+            "module": "merlin.analysis.preprocess",
             "parameters": {
                 "warp_task": "FiducialCorrelationWarp"
             }
         },
         {
             "task": "OptimizeIteration",
-            "module": "optimize",
+            "module": "merlin.analysis.optimize",
             "analysis_name": "Optimize1",
             "parameters": {
                 "preprocess_task": "DeconvolutionPreprocess",
@@ -25,7 +25,7 @@
         },
         {
             "task": "OptimizeIteration",
-            "module": "optimize",
+            "module": "merlin.analysis.optimize",
             "analysis_name": "Optimize2",
             "parameters": {
                 "preprocess_task": "DeconvolutionPreprocess",
@@ -38,7 +38,7 @@
         },
         {
             "task": "Decode",
-            "module": "decode",
+            "module": "merlin.analysis.decode",
             "parameters": {
                 "preprocess_task": "DeconvolutionPreprocess",
                 "optimize_task": "Optimize2",
@@ -48,11 +48,11 @@
         },
         {
             "task": "SimpleGlobalAlignment",
-            "module": "globalalign"
+            "module": "merlin.analysis.globalalign"
         },
         {
             "task": "GenerateMosaic",
-            "module": "generatemosaic",
+            "module": "merlin.analysis.generatemosaic",
             "parameters": {
                 "global_align_task": "SimpleGlobalAlignment",
                 "warp_task": "FiducialCorrelationWarp"
@@ -60,7 +60,7 @@
         },
         {
             "task": "FilterBarcodes",
-            "module": "filterbarcodes",
+            "module": "merlin.analysis.filterbarcodes",
             "analysis_name": "StrictFilterBarcodes",
             "parameters": {
                 "decode_task": "Decode",
@@ -70,7 +70,7 @@
         },
         {
             "task": "WatershedSegment",
-            "module": "segment",
+            "module": "merlin.analysis.segment",
             "parameters": {
                 "warp_task": "FiducialCorrelationWarp",
                 "global_align_task": "SimpleGlobalAlignment"
@@ -78,7 +78,7 @@
         },
         {
             "task": "ExportBarcodes",
-            "module": "exportbarcodes",
+            "module": "merlin.analysis.exportbarcodes",
             "analysis_name": "StrictExportBarcodes",
             "parameters": {
                 "filter_task": "StrictFilterBarcodes"

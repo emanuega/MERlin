@@ -17,36 +17,34 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
 
+  
+  
     
 
   
+
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Usage" href="usage.html" />
     <link rel="prev" title="MERlin" href="index.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
+
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
           
 
           
@@ -197,11 +195,11 @@
 </div>
 <div class="section" id="specifying-paths-with-a-env-file">
 <h2>Specifying paths with a .env file<a class="headerlink" href="#specifying-paths-with-a-env-file" title="Permalink to this headline">¶</a></h2>
-<p>A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the MERlin root directory:</p>
+<p>A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the user home directory (~.env on linux or C:usersUserName.env on Windows):</p>
 <ul class="simple">
-<li><p>DATA_HOME - The path of the root directory to the raw data.</p></li>
-<li><p>ANALYSIS_HOME - The path of the root directory where analysis results should be stored.</p></li>
-<li><p>PARAMETERS_HOME - The path to the directory where the merfish-parameters directory resides.</p></li>
+<li>DATA_HOME - The path of the root directory to the raw data.</li>
+<li>ANALYSIS_HOME - The path of the root directory where analysis results should be stored.</li>
+<li>PARAMETERS_HOME - The path to the directory where the merfish-parameters directory resides.</li>
 </ul>
 <p>The contents of an example .env file are below:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>DATA_HOME=D:/data
@@ -223,7 +221,7 @@ PARAMETERS_HOME=D:/merfish-parameters
         <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral float-left" title="MERlin" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral" title="MERlin" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -249,16 +247,35 @@ PARAMETERS_HOME=D:/merfish-parameters
   
 
 
+  
+
+    
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

@@ -105,8 +105,7 @@ class SnakefileGenerator(object):
     def _parse_parameters(self):
         analysisTasks = {}
         for tDict in self._analysisParameters['analysis_tasks']:
-            analysisModule = importlib.import_module(
-                    'merlin.analysis.' + tDict['module'])
+            analysisModule = importlib.import_module(tDict['module'])
             analysisClass = getattr(analysisModule, tDict['task'])
             analysisParameters = tDict.get('parameters')
             analysisName = tDict.get('analysis_name')

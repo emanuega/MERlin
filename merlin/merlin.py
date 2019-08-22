@@ -1,6 +1,5 @@
 import argparse
 import cProfile
-import dotenv
 import os
 import json
 import sys
@@ -24,6 +23,9 @@ def build_parser():
     parser.add_argument('--generate-only', action='store_true',
                         help='only generate the directory structure and ' +
                         'do not run any analysis.')
+    parser.add_argument('--configure', action='store_true',
+                        help='configure MERlin environment by specifying ' +
+                        ' data, analysis, and parameters directories.')
     parser.add_argument('dataset',
                         help='directory where the raw data is stored')
     parser.add_argument('-a', '--analysis-parameters',
@@ -64,15 +66,36 @@ def _clean_string_arg(stringIn):
     return stringIn.strip('\'').strip('\"')
 
 
+def _get_input_path(prompt):
+    while True:
+        pathString = str(input(prompt))
+        if not os.path.exists(pathString):
+            print('Directory %s does not exist. Please enter a valid path.'
+                  % pathString)
+        else:
+            return pathString
+
+
+def configure_environment():
+    dataHome = _get_input_path('DATA_HOME=')
+    analysisHome = _get_input_path('ANALYSIS_HOME=')
+    parametersHome = _get_input_path('PARAMETERS_HOME=')
+    m.store_env(dataHome, analysisHome, parametersHome)
+
+
 def merlin():
     print('MERlin - the MERFISH decoding pipeline')
     parser = build_parser()
     args, argv = parser.parse_known_args()
-    dotenv.load_dotenv(dotenv.find_dotenv())
 
     if args.profile:
         profiler = cProfile.Profile()
         profiler.enable()
+
+    if args.configure:
+        print('Configuring MERlin environment')
+        configure_environment()
+        return
 
     dataSet = dataset.MERFISHDataSet(
         args.dataset,

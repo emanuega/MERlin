@@ -22,7 +22,7 @@ jobs:
             source activate merlin_env
             conda install rtree pytables snakemake
             cd ~
-            printf 'DATA_HOME=~\nANALYSIS_HOME=~\nPARAMETERS_HOME=~\n' >.env
+            printf 'DATA_HOME=~\nANALYSIS_HOME=~\nPARAMETERS_HOME=~\n' >.merlinenv
             pip install -e MERlin
             cd ~/MERlin
       # Step 3: run linter and tests

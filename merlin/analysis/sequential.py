@@ -58,23 +58,18 @@ class SumSignal(analysistask.ParallelAnalysisTask):
                                 self.alignTask.global_coordinates_to_fov(
                                     cell.get_fov(), xyZip)))
                 cellCoords.append(pixels)
-        # keptCells and keptCellIDs prevent cells with no area from getting
-        # through, isn't strictly necessary if get_intersection_graph
-        # is run with an area threshold
-        keptCells = [cellCoords[x] for x in range(len(cells))
-                     if len(cellCoords[x]) > 0]
-        keptCellIDs = [str(cells[x].get_feature_id()) for x in range(len(cells))
-                       if len(cellCoords[x]) > 0]
+
+        cellIDs = [str(cells[x].get_feature_id()) for x in range(len(cells))]
         mask = np.zeros(inputImage.shape, np.uint8)
-        for i, cell in enumerate(keptCells):
+        for i, cell in enumerate(cellCoords):
             cv2.drawContours(mask, cell, -1, i+1, -1)
         propsDict = {x.label: x for x in regionprops(mask, inputImage)}
         propsOut = pandas.DataFrame(
             data=[(propsDict[k].intensity_image.sum(),
-                   propsDict[k].intensity_image.filled_area)
+                   propsDict[k].filled_area)
                   if k in propsDict else (0, 0)
-                  for k in range(len(keptCells))],
-            index=keptCellIDs,
+                  for k in range(len(cellCoords))],
+            index=cellIDs,
             columns=['Intensity', 'Pixels'])
         return propsOut
 

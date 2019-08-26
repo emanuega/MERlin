@@ -112,7 +112,6 @@ class DataOrganization(object):
             lambda x: str(x).lower()).str.match(
             dataChannelName.lower())].index.values.tolist()[0]
 
-
     def get_data_channel_color(self, dataChannel: int) -> str:
         """Get the color used for measuring the specified data channel.
 

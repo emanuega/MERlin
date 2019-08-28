@@ -213,7 +213,16 @@ class PyTablesBarcodeDB(BarcodeDB):
                                                    columns=columnList)
 
             except OSError:
-                return pandas.DataFrame()
+                barcodes = pandas.DataFrame()
+
+        # if no barcodes are present make sure the dataframe still has the
+        # correct columns
+        if len(barcodes) == 0:
+            if columnList:
+                barcodes = pandas.DataFrame(columns=columnList)
+            else:
+                barcodes = pandas.DataFrame(
+                    columns=self._get_bc_column_types().keys())
 
         return barcodes
 

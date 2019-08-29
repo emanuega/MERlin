@@ -9,10 +9,13 @@ from merlin.core import analysistask
 from merlin.analysis import filterbarcodes
 from random import sample
 import time
+
+from merlin import plots
+
+
 plt.style.use(
         os.sep.join([os.path.dirname(merlin.__file__),
                      'ext', 'default.mplstyle']))
-
 
 class StreamingPlotPerformance(analysistask.AnalysisTask):
 
@@ -563,6 +566,66 @@ class PlotPerformance(analysistask.AnalysisTask):
     decoding.
     """
 
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'exclude_plots' in self.parameters:
+            self.parameters['exclude_plots'] = []
+
+        self.taskTypes = ['decode_task', 'filter_task', 'optimize_task',
+                          'segment_task', 'sum_task', 'partition_task',
+                          'global_align_task']
+
+    def get_estimated_memory(self):
+        return 30000
+
+    def get_estimated_time(self):
+        return 180
+
+    def get_dependencies(self):
+        return []
+
+    def _run_analysis(self):
+        availablePlots = plots.get_available_plots()
+        plotList = [x(self) for x in availablePlots]
+
+        plottingComplete = False
+        while not plottingComplete:
+            pass
+
+        if 'fpkm_file' in self.parameters:
+            self._plot_fpkm_correlation()
+        self._plot_bitwise_intensity_violin()
+        self._plot_radial_density()
+        self._plot_barcode_intensity_distribution()
+        self._plot_barcode_area_distribution()
+        self._plot_barcode_distance_distribution()
+        self._plot_barcode_intensity_area_violin()
+        self._plot_blank_distribution()
+        self._plot_matched_barcode_distribution()
+        self._plot_optimization_scale_factors()
+        self._plot_optimization_barcode_counts()
+        self._plot_all_barcode_abundances()
+        self._plot_filtered_barcode_abundances()
+        if self.segmentTask is not None:
+            self._plot_cell_segmentation()
+        # TODO _ analysis run times
+        # TODO - barcode correlation plots
+        # TODO - alignment error plots - need to save transformation information
+        # first
+        # TODO - barcode size spatial distribution global and FOV average
+        # TODO - barcode distance spatial distribution global and FOV average
+        # TODO - barcode intensity spatial distribution global and FOV average
+        # TODO - good barcodes/blanks per cell
+
+
+class OldPlotPerformance(analysistask.AnalysisTask):
+
+    """
+    An analysis task that generates plots depicting metrics of the MERFISH
+    decoding.
+    """
+
     # TODO all the plotting should be refactored. I do not like the way
     # this class is structured as a long list of plotting functions. It would
     # be more convenient if each plot could track it's dependent tasks and
@@ -751,70 +814,6 @@ class PlotPerformance(analysistask.AnalysisTask):
         plt.legend([onViolin['bodies'][0], offViolin['bodies'][0]], ['1', '0'])
 
         self.dataSet.save_figure(self, fig, 'barcode_bitwise_intensity_violin')
-
-    def _plot_blank_distribution(self):
-        codebook = self.dataSet.get_codebook()
-        bc = self.filterTask.get_barcode_database().get_barcodes()
-        minX = np.min(bc['global_x'])
-        minY = np.min(bc['global_y'])
-        maxX = np.max(bc['global_x'])
-        maxY = np.max(bc['global_y'])
-
-        blankIDs = codebook.get_blank_indexes()
-        blankBC = bc[bc['barcode_id'].isin(blankIDs)]
-
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111)
-        h = ax.hist2d(blankBC['global_x'], blankBC['global_y'],
-                      bins=(np.ceil(maxX-minX)/5, np.ceil(maxY-minY)/5),
-                      cmap=plt.get_cmap('Greys'))
-        cbar = plt.colorbar(h[3], ax=ax)
-        cbar.set_label('Spot count', rotation=270)
-        ax.set_aspect('equal', 'datalim')
-        plt.xlabel('X position (microns)')
-        plt.ylabel('Y position (microns)')
-        plt.title('Spatial distribution of blank barcodes')
-        self.dataSet.save_figure(self, fig, 'blank_spatial_distribution')
-
-    def _plot_matched_barcode_distribution(self):
-        codebook = self.dataSet.get_codebook()
-        bc = self.filterTask.get_barcode_database().get_barcodes()
-        minX = np.min(bc['global_x'])
-        minY = np.min(bc['global_y'])
-        maxX = np.max(bc['global_x'])
-        maxY = np.max(bc['global_y'])
-
-        codingIDs = codebook.get_coding_indexes()
-        codingBC = bc[bc['barcode_id'].isin(codingIDs)]
-
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111)
-        h = ax.hist2d(codingBC['global_x'], codingBC['global_y'],
-                      bins=(np.ceil(maxX-minX)/5, np.ceil(maxY-minY)/5),
-                      cmap=plt.get_cmap('Greys'))
-        cbar = plt.colorbar(h[3], ax=ax)
-        cbar.set_label('Spot count', rotation=270)
-        ax.set_aspect('equal', 'datalim')
-        plt.xlabel('X position (microns)')
-        plt.ylabel('Y position (microns)')
-        plt.title('Spatial distribution of identified barcodes')
-        self.dataSet.save_figure(self, fig, 'barcode_spatial_distribution')
-
-    def _plot_cell_segmentation(self):
-        cellBoundaries = self.segmentTask.get_cell_boundaries()
-
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111)
-        ax.set_aspect('equal', 'datalim')
-
-        def plot_cell_boundary(boundary):
-            ax.plot([x[0] for x in boundary], [x[1] for x in boundary])
-        cellPlots = [plot_cell_boundary(b) for b in cellBoundaries]
-
-        plt.xlabel('X position (microns)')
-        plt.ylabel('Y position (microns)')
-        plt.title('Cell boundaries')
-        self.dataSet.save_figure(self, fig, 'cell_boundaries')
 
     def _plot_optimization_scale_factors(self):
         fig = plt.figure(figsize=(5, 5))

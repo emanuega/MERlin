@@ -1,0 +1,161 @@
+from abc import ABC, abstractmethod
+from typing import List, Dict, Tuple
+from matplotlib import pyplot as plt
+
+from merlin.core import analysistask
+
+
+class AbstractPlot(ABC):
+
+    """
+    A base class for generating a plot of the analysis results. Each plot
+    should inherit from this class.
+    """
+
+    def __init__(self, analysisTask: analysistask.AnalysisTask):
+        """ Create a new AbstractPlot
+
+        Args:
+            analysisTask: the analysisTask where the plot should be saved.
+        """
+        self._analysisTask = analysisTask
+
+    @abstractmethod
+    def get_required_tasks(self) -> Dict[str, Tuple[type]]:
+        """ Get the tasks that are required to be complete prior to
+        generating this plot.
+
+        Returns: A dictionary of the types of tasks as keys and a tuple
+            of the accepted classes as values. The keys can include
+            decode_task, filter_task, optimize_task, segment_task,
+            sum_task, partition_task, and/or global_align_task. If all classes
+            of the specified type are allowed, the value should be 'all'. If
+            no tasks are required then an empty dictionary should be returned.
+        """
+        pass
+
+    @abstractmethod
+    def get_required_metadata(self) -> List[str]:
+        """ Get the plot metadata that is required to generate this plot.
+
+        Returns: A list of strings containing the names of the metadata
+            objects that are required for this task.
+        """
+        pass
+
+    @abstractmethod
+    def _generate_plot(self, inputTasks: Dict[str, analysistask.AnalysisTask],
+                       inputMetadata: Dict[str, 'PlotMetadata']) -> plt.Figure:
+        """ Generate the plot.
+
+        This function should be implemented in all subclasses and the generated
+        figure handle should be returned.
+
+        Args:
+            inputTasks: A dictionary of the input tasks to use to generate the
+                plot. Each analysis task is indexed by a string indicating
+                the task type as in get_required_tasks.
+            inputMetadata: A dictionary of the input metadata for generating
+                this plot. Each metadata object is indexed by the name of the
+                metadata.
+        Returns: the figure handle to the newly generated figure
+        """
+        pass
+
+    def is_relevant(self, inputTasks: Dict[str, analysistask.AnalysisTask]
+                    ) -> bool:
+        """ Determine if this plot is relevant given the analysis tasks
+        provided.
+
+        Args:
+            inputTasks: A dictionary of the analysis tasks indexed with
+                strings indicating the task type as in get_required_tasks
+        Returns: True if this plot can be generated using the provided
+            analysis tasks and false otherwise.
+        """
+        for rTask, rTypes in self.get_required_tasks().items():
+            if not isinstance(inputTasks[rTask], rTypes):
+                return False
+        return True
+
+    def is_ready(self, completeTasks: List[str],
+                 completeMetadata: List[str]) -> bool:
+        """ Determine if all requirements for generating this plot are
+        satisfied.
+
+        Args:
+            completeTasks: A list of the types of tasks that are complete.
+                The list can contain the same strings as in get_required_tasks
+            completeMetadata: A list of the metadata that has been generated.
+        Returns: True if all required tasks and all required metadata
+            is complete
+        """
+        return all([t in completeTasks for t in self.get_required_tasks()])\
+            and all([m in completeMetadata
+                     for m in self.get_required_metadata()])
+
+    def is_complete(self) -> bool:
+        """ Determine if this plot has been generated.
+
+        Returns: True if this plot has been generated and otherwise false.
+        """
+        return all([t in completeTasks for t in self.get_required_tasks()])\
+            and all([m in completeMetadata
+                     for m in self.get_required_metadata()])
+
+    def plot(self, inputTasks: Dict[str, analysistask.AnalysisTask],
+             inputMetadata: Dict[str, 'PlotMetadata']) -> None:
+        """ Generate this plot and save it within the analysis task.
+
+        If the plot is not relevant for the types of analysis tasks passed,
+        then the function will return without generating any plot.
+
+        Args:
+            inputTasks: A dictionary of the input tasks to use to generate the
+                plot. Each analysis task is indexed by a string indicating
+                the task type as in get_required_tasks.
+            inputMetadata: A dictionary of the input metadata for generating
+                this plot. Each metadata object is indexed by the name of the
+                metadata.
+        """
+        if not self.is_relevant(inputTasks):
+            return
+        f = self._generate_plot(inputTasks, inputMetadata)
+        self._analysisTask.dataSet.save_figure(self._analysisTask, f,
+                                               type(self).__name__)
+
+
+class PlotMetadata(ABC):
+
+    def __init__(self, analysisTask: analysistask.AnalysisTask,
+                 taskDict: Dict[str, analysistask.AnalysisTask]):
+        """ Create a new metadata object.
+
+        Args:
+            analysisTask: the analysisTask where the metadata should be saved.
+            taskDict: a dictionary containing the analysis tasks to use
+                to generate the metadata indexed by the type of task as a
+                string as in get_required_tasks
+        """
+        self._analysisTask = analysisTask
+        self._taskDict = taskDict
+
+    @abstractmethod
+    def update(self) -> None:
+        """ Update this metadata with the latest analysis results.
+
+        This method should be implemented in all subclasses and implementations
+        should not wait for additional data to become available. They should
+        only update the metadata as much as possible with the data that is ready
+        when the function is called.
+        """
+        pass
+
+    @abstractmethod
+    def is_complete(self) -> bool:
+        """ Determine if this metadata is complete.
+
+        Returns: True if the metadata is complete or False if additional
+            computation is necessary
+        """
+        pass

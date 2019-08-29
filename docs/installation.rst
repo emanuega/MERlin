@@ -33,7 +33,7 @@ The packages rtree and pytables are not properly installed by pip and should be 
 
     conda install rtree pytables
 
-On Harvard research computing, matplotlib raises an error saying that 'CXXABI_1.3.9' is not found. This can be corrected by:
+On Harvard research computing, matplotlib raises an error saying that 'CXXABI_1.3.9' is not found. This can be corrected by loading the gcc module:
 
 .. code-block:: none
 
@@ -55,11 +55,20 @@ MERlin can be installed by cloning the repository and installing with pip:
 Specifying paths with a .env file
 ==================================
 
-A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the MERlin root directory:
+A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the user home directory (~\.env on linux or C:\users\UserName\.env on Windows):
 
 * DATA\_HOME - The path of the root directory to the raw data.
 * ANALYSIS\_HOME - The path of the root directory where analysis results should be stored.
 * PARAMETERS\_HOME - The path to the directory where the merfish-parameters directory resides.
+
+The PARAMETERS_HOME directory should contain the following folders:
+* analysis - Contains the analysis parameters json files.
+* codebooks - Contains the codebook csv files.
+* dataorganization - Contains the data organization csv files.
+* positions - Contains the position csv files.
+* microscope - Contains the microscope parameters json files.
+* fpkm - Contains the fpkm csv files.
+* snakemake - Contains the snakemake arguments json files.
 
 The contents of an example .env file are below:
 

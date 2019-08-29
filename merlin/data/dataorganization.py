@@ -10,11 +10,9 @@ import merlin
 
 def _parse_list(inputString: str, dtype=float):
     if ',' in inputString:
-        return np.fromstring(
-                inputString.strip('[] '), dtype=dtype, sep=',')
+        return np.fromstring(inputString.strip('[] '), dtype=dtype, sep=',')
     else:
-        return np.fromstring(
-                inputString.strip('[] '), dtype=dtype, sep=' ')
+        return np.fromstring(inputString.strip('[] '), dtype=dtype, sep=' ')
 
 
 def _parse_int_list(inputString: str):
@@ -110,8 +108,9 @@ class DataOrganization(object):
             # TODO this should raise a meaningful exception if the data channel
             # is not found
         """
-        return self.data[self.data['channelName'].str.match(
-            dataChannelName, case=False)].index.tolist()[0]
+        return self.data[self.data['channelName'].apply(
+            lambda x: str(x).lower()).str.match(
+            dataChannelName.lower())].index.values.tolist()[0]
 
     def get_data_channel_color(self, dataChannel: int) -> str:
         """Get the color used for measuring the specified data channel.
@@ -236,7 +235,8 @@ class DataOrganization(object):
             contains the name associated with that channel in the data
             organization file.
         """
-        multiplexBits = self._dataSet.get_codebook().get_bit_names()
+        multiplexBits = {b for x in self._dataSet.get_codebooks()
+                         for b in x.get_bit_names()}
         sequentialChannels = [i for i in self.get_data_channels()
                               if self.get_data_channel_readout_name(i)
                               not in multiplexBits]

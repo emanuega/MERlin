@@ -168,7 +168,8 @@ class PixelBasedDecoder(object):
         """
         properties = measure.regionprops(
                 measure.label(decodedImage == barcodeIndex),
-                intensity_image=pixelMagnitudes)
+                intensity_image=pixelMagnitudes,
+                cache=False)
         dList = [self._bc_properties_to_dict(
             p, barcodeIndex, fov, distances, pixelTraces, zIndex,
             globalAligner, segmenter

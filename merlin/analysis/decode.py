@@ -1,11 +1,13 @@
 import numpy as np
 import pandas
-from typing import List
+import os
+import tempfile
 
 from merlin.core import dataset
 from merlin.core import analysistask
 from merlin.util import decoding
 from merlin.util import barcodedb
+from merlin.data.codebook import Codebook
 
 
 class Decode(analysistask.ParallelAnalysisTask):
@@ -30,6 +32,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['lowpass_sigma'] = 1
         if 'decode_3d' not in self.parameters:
             self.parameters['decode_3d'] = False
+        if 'memory_map' not in self.parameters:
+            self.parameters['memory_map'] = False
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.get_image_dimensions()
@@ -53,6 +57,11 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         return dependencies
 
+    def get_codebook(self) -> Codebook:
+        preprocessTask = self.dataSet.load_analysis_task(
+            self.parameters['preprocess_task'])
+        return preprocessTask.get_codebook()
+
     def _run_analysis(self, fragmentIndex):
         """This function decodes the barcodes in a fov and saves them to the
         barcode database.
@@ -65,13 +74,14 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         lowPassSigma = self.parameters['lowpass_sigma']
 
-        decoder = decoding.PixelBasedDecoder(self.dataSet.get_codebook())
+        codebook = self.get_codebook()
+        decoder = decoding.PixelBasedDecoder(codebook)
         scaleFactors = optimizeTask.get_scale_factors()
         backgrounds = optimizeTask.get_backgrounds()
         chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
         zPositionCount = len(self.dataSet.get_z_positions())
-        bitCount = self.dataSet.get_codebook().get_bit_count()
+        bitCount = codebook.get_bit_count()
         imageShape = self.dataSet.get_image_dimensions()
         decodedImages = np.zeros((zPositionCount, *imageShape), dtype=np.int16)
         magnitudeImages = np.zeros((zPositionCount, *imageShape),
@@ -80,50 +90,73 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         if not decode3d:
             for zIndex in range(zPositionCount):
-                imageSet = preprocessTask.get_processed_image_set(
-                        fragmentIndex, zIndex, chromaticCorrector)
-                imageSet = imageSet.reshape(
-                    (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
-
-                di, pm, npt, d = decoder.decode_pixels(
-                    imageSet, scaleFactors, backgrounds,
-                    lowPassSigma=lowPassSigma,
-                    distanceThreshold=self.parameters['distance_threshold'])
-                self._extract_and_save_barcodes(
-                        decoder, di, pm, npt, d, fragmentIndex, zIndex)
+                di, pm, d = self._process_independent_z_slice(
+                    fragmentIndex, zIndex, chromaticCorrector, scaleFactors,
+                    backgrounds, preprocessTask, decoder
+                )
 
                 decodedImages[zIndex, :, :] = di
                 magnitudeImages[zIndex, :, :] = pm
                 distances[zIndex, :, :] = d
 
         else:
-            normalizedPixelTraces = np.zeros(
-                (zPositionCount, bitCount, *imageShape), dtype=np.float32)
+            with tempfile.TemporaryDirectory as tempDirectory:
+                if self.parameters['memory_map']:
+                    normalizedPixelTraces = np.memmap(
+                        os.path.join(tempDirectory, 'pixel_traces.dat'),
+                        mode='w+', dtype=np.float32,
+                        shape=(zPositionCount, bitCount, *imageShape))
+                else:
+                    normalizedPixelTraces = np.zeros(
+                        (zPositionCount, bitCount, *imageShape),
+                        dtype=np.float32)
 
-            for zIndex in range(zPositionCount):
-                imageSet = preprocessTask.get_processed_image_set(
-                    fragmentIndex, zIndex, chromaticCorrector)
-                imageSet = imageSet.reshape(
-                    (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
+                for zIndex in range(zPositionCount):
+                    imageSet = preprocessTask.get_processed_image_set(
+                        fragmentIndex, zIndex, chromaticCorrector)
+                    imageSet = imageSet.reshape(
+                        (imageSet.shape[0], imageSet.shape[-2],
+                         imageSet.shape[-1]))
 
-                di, pm, npt, d = decoder.decode_pixels(
-                    imageSet, scaleFactors, backgrounds,
-                    lowPassSigma=lowPassSigma,
-                    distanceThreshold=self.parameters['distance_threshold'])
+                    di, pm, npt, d = decoder.decode_pixels(
+                        imageSet, scaleFactors, backgrounds,
+                        lowPassSigma=lowPassSigma,
+                        distanceThreshold=self.parameters['distance_threshold'])
 
-                normalizedPixelTraces[zIndex, :, :, :] = npt
-                decodedImages[zIndex, :, :] = di
-                magnitudeImages[zIndex, :, :] = pm
-                distances[zIndex, :, :] = d
+                    normalizedPixelTraces[zIndex, :, :, :] = npt
+                    decodedImages[zIndex, :, :] = di
+                    magnitudeImages[zIndex, :, :] = pm
+                    distances[zIndex, :, :] = d
 
-            self._extract_and_save_barcodes(
-                decoder, decodedImages, magnitudeImages, normalizedPixelTraces,
-                distances, fragmentIndex)
+                self._extract_and_save_barcodes(
+                    decoder, decodedImages, magnitudeImages,
+                    normalizedPixelTraces,
+                    distances, fragmentIndex)
+
+                del normalizedPixelTraces
 
         if self.parameters['write_decoded_images']:
             self._save_decoded_images(
                 fragmentIndex, zPositionCount, decodedImages, magnitudeImages,
                 distances)
+
+    def _process_independent_z_slice(
+            self, fov: int, zIndex: int, chromaticCorrector, scaleFactors,
+            backgrounds, preprocessTask, decoder):
+
+        imageSet = preprocessTask.get_processed_image_set(
+            fov, zIndex, chromaticCorrector)
+        imageSet = imageSet.reshape(
+            (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
+
+        di, pm, npt, d = decoder.decode_pixels(
+            imageSet, scaleFactors, backgrounds,
+            lowPassSigma=self.parameters['lowpass_sigma'],
+            distanceThreshold=self.parameters['distance_threshold'])
+        self._extract_and_save_barcodes(
+            decoder, di, pm, npt, d, fov, zIndex)
+
+        return di, pm, d
 
     def get_barcode_database(self) -> barcodedb.BarcodeDB:
         return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
@@ -166,6 +199,5 @@ class Decode(analysistask.ParallelAnalysisTask):
             pandas.concat([decoder.extract_barcodes_with_index(
                 i, decodedImage, pixelMagnitudes, pixelTraces, distances, fov,
                 self.cropWidth, zIndex, globalTask, segmentTask, minimumArea)
-                for i in range(
-                    self.dataSet.get_codebook().get_barcode_count())]),
+                for i in range(self.get_codebook().get_barcode_count())]),
             fov=fov)

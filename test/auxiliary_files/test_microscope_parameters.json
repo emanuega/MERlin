@@ -1,0 +1,7 @@
+{
+    "flip_horizontal": false,
+    "flip_vertical": true,
+    "transpose": true,
+    "microns_per_pixel": 0.108,
+    "image_dimensions": [128, 128]
+}

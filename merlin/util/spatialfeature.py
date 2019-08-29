@@ -8,8 +8,8 @@ from typing import Tuple
 from typing import Dict
 from shapely import geometry
 import h5py
-import pandas
 import merlin
+import pandas
 
 from merlin.core import dataset
 
@@ -132,6 +132,14 @@ class SpatialFeature(object):
     def _remove_invalid_boundaries(
             inPolygons: List[geometry.Polygon]) -> List[geometry.Polygon]:
         return [p for p in inPolygons if p.is_valid]
+
+    def set_fov(self, newFOV: int) -> None:
+        """Update the FOV for this spatial feature.
+
+        Args:
+            nowFOV: the new FOV index
+        """
+        self._fov = newFOV
 
     def get_fov(self) -> int:
         return self._fov
@@ -371,11 +379,12 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
     @staticmethod
     def _save_feature_to_hdf5_group(h5Group: h5py.Group,
-                                    feature: SpatialFeature) -> None:
+                                    feature: SpatialFeature,
+                                    fov: int) -> None:
         featureKey = str(feature.get_feature_id())
         featureGroup = h5Group.create_group(featureKey)
         featureGroup.attrs['id'] = np.string_(feature.get_feature_id())
-        featureGroup.attrs['fov'] = feature.get_fov()
+        featureGroup.attrs['fov'] = fov
         featureGroup.attrs['bounding_box'] = \
             np.array(feature.get_bounding_box())
         featureGroup.attrs['volume'] = feature.get_volume()
@@ -425,13 +434,15 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
                                    if f.get_fov() == currentFOV]
                 self.write_features(currentFeatures, currentFOV)
 
-        with self._dataSet.open_hdf5_file('a', 'feature_data',
-                                          self._analysisTask, fov, 'features') \
-                as f:
-            featureGroup = f.require_group('featuredata')
-            featureGroup.attrs['version'] = merlin.version()
-            for currentFeature in features:
-                self._save_feature_to_hdf5_group(featureGroup, currentFeature)
+        else:
+            with self._dataSet.open_hdf5_file(
+                    'a', 'feature_data', self._analysisTask, fov, 'features') \
+                    as f:
+                featureGroup = f.require_group('featuredata')
+                featureGroup.attrs['version'] = merlin.version()
+                for currentFeature in features:
+                    self._save_feature_to_hdf5_group(featureGroup, currentFeature,
+                                                     fov)
 
     def read_features(self, fov: int = None) -> List[SpatialFeature]:
         if fov is None:
@@ -460,6 +471,56 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
 
         self._dataSet.delete_hdf5_file('feature_data', self._analysisTask,
                                        fov, 'features')
+
+    def read_feature_metadata(self, fov: int = None) -> pandas.DataFrame:
+        """ Get the metadata for the features stored within this feature
+        database.
+
+        Args:
+            fov: an index of a fov to only get the features within the
+                specified field of view. If not specified features
+                within all fields of view are returned.
+        Returns: a data frame containing the metadata, including:
+            fov, volume, center_x, center_y, min_x, min_y, max_x, max_y.
+            Coordinates are in microns.
+        """
+        if fov is None:
+            finalDF = pandas.concat([self.read_feature_metadata(x)
+                                     for x in self._dataSet.get_fovs()], 0)
+
+        else:
+            try:
+                with self._dataSet.open_hdf5_file('r', 'feature_data',
+                                                  self._analysisTask, fov,
+                                                  'features') as f:
+                    allAttrKeys = []
+                    allAttrValues = []
+                    for key in f['featuredata'].keys():
+                        attrNames = list(f['featuredata'][key].attrs.keys())
+                        attrValues = list(f['featuredata'][key].attrs.values())
+                        allAttrKeys.append(attrNames)
+                        allAttrValues.append(attrValues)
+
+                    columns = list(np.unique(allAttrKeys))
+                    df = pandas.DataFrame(data=allAttrValues, columns=columns)
+                    finalDF = df.loc[:, ['fov', 'volume']].copy(deep=True)
+                    finalDF.index = df['id'].str.decode(encoding='utf-8'
+                                                        ).values.tolist()
+                    boundingBoxDF = pandas.DataFrame(
+                        df['bounding_box'].values.tolist(),
+                        index=finalDF.index)
+                    finalDF['center_x'] = \
+                        (boundingBoxDF[0] + boundingBoxDF[2]) / 2
+                    finalDF['center_y'] = \
+                        (boundingBoxDF[1] + boundingBoxDF[3]) / 2
+                    finalDF['min_x'] = boundingBoxDF[0]
+                    finalDF['max_x'] = boundingBoxDF[2]
+                    finalDF['min_y'] = boundingBoxDF[1]
+                    finalDF['max_y'] = boundingBoxDF[3]
+            except FileNotFoundError:
+                return pandas.DataFrame()
+
+        return finalDF
 
 
 class JSONSpatialFeatureDB(SpatialFeatureDB):

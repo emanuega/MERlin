@@ -63,7 +63,7 @@ class GlobalAlignment(analysistask.AnalysisTask):
         pass
 
     @abstractmethod
-    def get_global_extent(self) -> Tuple:
+    def get_global_extent(self) -> Tuple[float, float, float, float]:
         """Get the extent of the global coordinate system.
 
         Returns:
@@ -221,3 +221,4 @@ class CorrelationGlobalAlignment(GlobalAlignment):
         fov2 = self.dataSet.get_fiducial_image(0, 1)
 
         return fov1, fov2
+

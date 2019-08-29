@@ -13,7 +13,7 @@ from merlin.core import analysistask
 class SlurmReport(analysistask.AnalysisTask):
 
     """
-    An analysis task that generates plots on previously completed analysis
+    An analysis task that generates reports on previously completed analysis
     tasks using Slurm.
 
     This analysis task only works when Merlin is run through Slurm
@@ -22,6 +22,9 @@ class SlurmReport(analysistask.AnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
+
+        if 'codebook_index' not in self.parameters:
+            self.parameters['codebook_index'] = 0
 
     def get_estimated_memory(self):
         return 2048
@@ -179,33 +182,38 @@ class SlurmReport(analysistask.AnalysisTask):
         analysisParameters = {}
         for t in taskList:
             currentTask = self.dataSet.load_analysis_task(t)
-            if currentTask.is_complete():
-                slurmDF = self._generate_slurm_report(currentTask)
-                self.dataSet.save_dataframe_to_csv(slurmDF, t, self,
-                                                   'plots')
-                dfStream = io.StringIO()
-                slurmDF.to_csv(dfStream, sep='|')
-                self._plot_slurm_report(slurmDF, t)
-                reportDict[t] = slurmDF
-                analysisParameters[t] = currentTask.get_parameters()
+            try:
+                if currentTask.is_complete():
+                    slurmDF = self._generate_slurm_report(currentTask)
+                    self.dataSet.save_dataframe_to_csv(slurmDF, t, self,
+                                                       'reports')
+                    dfStream = io.StringIO()
+                    slurmDF.to_csv(dfStream, sep='|')
+                    self._plot_slurm_report(slurmDF, t)
+                    reportDict[t] = slurmDF
+                    analysisParameters[t] = currentTask.get_parameters()
 
-                try:
-                    requests.post('http://merlin.georgeemanuel.com/post',
-                                  files={'file': (
-                                      '.'.join([t, self.dataSet.dataSetName,
-                                                str(reportTime)]) + '.csv',
-                                      dfStream.getvalue())},
-                                  timeout=10)
-                except requests.exceptions.RequestException:
-                    pass
+                    try:
+                        requests.post('http://merlin.georgeemanuel.com/post',
+                                      files={'file': (
+                                          '.'.join([t, self.dataSet.dataSetName,
+                                                    str(reportTime)]) + '.csv',
+                                          dfStream.getvalue())},
+                                      timeout=10)
+                    except requests.exceptions.RequestException:
+                        pass
+            except Exception:
+                pass
 
         self._plot_slurm_summary(reportDict)
 
         datasetMeta = {
             'image_width': self.dataSet.get_image_dimensions()[0],
             'image_height': self.dataSet.get_image_dimensions()[1],
-            'barcode_length': self.dataSet.get_codebook().get_bit_count(),
-            'barcode_count': self.dataSet.get_codebook().get_barcode_count(),
+            'barcode_length': self.dataSet.get_codebook(
+                self.parameters['codebook_index']).get_bit_count(),
+            'barcode_count': self.dataSet.get_codebook(
+                self.parameters['codebook_index']).get_barcode_count(),
             'fov_count': len(self.dataSet.get_fovs()),
             'z_count': len(self.dataSet.get_z_positions()),
             'sequential_count': len(self.dataSet.get_data_organization()
@@ -222,3 +230,4 @@ class SlurmReport(analysistask.AnalysisTask):
                           timeout=10)
         except requests.exceptions.RequestException:
             pass
+

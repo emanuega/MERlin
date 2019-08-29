@@ -24,7 +24,7 @@ def test_run_single_task(simple_merfish_task):
 def test_snakemake_generator_one_task(simple_merfish_data):
     taskDict = {'analysis_tasks': [
         {'task': 'SimpleAnalysisTask',
-         'module': 'testtask',
+         'module': 'merlin.analysis.testtask',
          'parameters': {}}
     ]}
 
@@ -41,15 +41,15 @@ def test_snakemake_generator_one_task(simple_merfish_data):
 def test_snakemake_generator_task_chain(simple_merfish_data):
     taskDict = {'analysis_tasks': [
         {'task': 'SimpleAnalysisTask',
-         'module': 'testtask',
+         'module': 'merlin.analysis.testtask',
          'analysis_name': 'Task1',
          'parameters': {}},
         {'task': 'SimpleParallelAnalysisTask',
-         'module': 'testtask',
+         'module': 'merlin.analysis.testtask',
          'analysis_name': 'Task2',
          'parameters': {'dependencies': ['Task1']}},
         {'task': 'SimpleParallelAnalysisTask',
-         'module': 'testtask',
+         'module': 'merlin.analysis.testtask',
          'analysis_name': 'Task3',
          'parameters': {'dependencies': ['Task2']}}
     ]}

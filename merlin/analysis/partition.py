@@ -1,5 +1,4 @@
 import pandas
-from shapely import geometry
 import numpy as np
 
 from merlin.core import analysistask
@@ -43,18 +42,19 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
             return pandas.concat(
                 [self.get_partitioned_barcodes(fov)
                  for fov in self.dataSet.get_fovs()]
-            ).reset_index(drop=True)
+            )
 
         return self.dataSet.load_dataframe_from_csv(
-            'counts_per_cell', self.get_analysis_name(), fov)
+            'counts_per_cell', self.get_analysis_name(), fov, index_col=0)
 
     def _run_analysis(self, fragmentIndex):
         filterTask = self.dataSet.load_analysis_task(
-            self.parameters['filter_barcodes_task'])
+            self.parameters['filter_task'])
         assignmentTask = self.dataSet.load_analysis_task(
             self.parameters['assignment_task'])
 
-        codebook = self.dataSet.get_codebook()
+        codebook = filterTask.get_codebook()
+        barcodeCount = codebook.get_barcode_count()
 
         bcDB = filterTask.get_barcode_database()
         currentFOVBarcodes = bcDB.get_barcodes(fragmentIndex)
@@ -64,9 +64,8 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
         currentCells = sDB.read_features(fragmentIndex)
 
         countsDF = pandas.DataFrame(
-            data=np.zeros((len(currentCells),
-                           self.dataSet.get_codebook().get_barcode_count())),
-            columns=range(self.dataSet.get_codebook().get_barcode_count()),
+            data=np.zeros((len(currentCells), barcodeCount)),
+            columns=range(barcodeCount),
             index=[x.get_feature_id() for x in currentCells])
 
         for cell in currentCells:
@@ -74,9 +73,8 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
                                                 ['global_x', 'global_y',
                                                  'global_z']].values)
             count = currentFOVBarcodes[contained].groupby('barcode_id').size()
-            count = count.reindex(
-                range(data.get_codebook().get_barcode_count()), fill_value=0)
-            countDF.loc[cell.get_feature_id(), :] = count.values.tolist()
+            count = count.reindex(range(barcodeCount), fill_value=0)
+            countsDF.loc[cell.get_feature_id(), :] = count.values.tolist()
 
         barcodeNames = [codebook.get_name_for_barcode_index(x)
                         for x in countsDF.columns.values.tolist()]
@@ -112,5 +110,5 @@ class ExportPartitionedBarcodes(analysistask.AnalysisTask):
         parsedBarcodes = pTask.get_partitioned_barcodes()
 
         self.dataSet.save_dataframe_to_csv(
-                    parsedBarcodes, 'partition_barcodes_combined',
+                    parsedBarcodes, 'barcodes_per_feature',
                     self.get_analysis_name())

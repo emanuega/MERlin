@@ -100,7 +100,7 @@ class Decode(analysistask.ParallelAnalysisTask):
                 distances[zIndex, :, :] = d
 
         else:
-            with tempfile.TemporaryDirectory as tempDirectory:
+            with tempfile.TemporaryDirectory() as tempDirectory:
                 if self.parameters['memory_map']:
                     normalizedPixelTraces = np.memmap(
                         os.path.join(tempDirectory, 'pixel_traces.dat'),

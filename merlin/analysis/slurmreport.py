@@ -47,7 +47,7 @@ class SlurmReport(analysistask.AnalysisTask):
         queryResult = subprocess.run(
             ['sacct', '--format=AssocID,Account,Cluster,User,JobID,JobName,'
              + 'NodeList,AveCPU,AveCPUFreq,MaxPages,MaxDiskRead,MaxDiskWrite,'
-             + 'MaxRSS,ReqMem,CPUTime,Elapsed,Start,End,Timelimit',
+             + 'MaxRSS,ReqMem,CPUTime,Elapsed,Submit,Start,End,Timelimit',
              '--units=M', '-P', '-j', ','.join(idList)], stdout=subprocess.PIPE)
 
         slurmJobDF = pandas.read_csv(

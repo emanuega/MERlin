@@ -50,68 +50,68 @@ def generate_random_barcode(fov):
 
 
 barcode1 = {'barcode': 290,
-        'barcode_id': 0,
-        'fov': 0,
-        'mean_intensity': 5.0,
-        'max_intensity': 7.0,
-        'area': 5,
-        'mean_distance': 0.1,
-        'min_distance': 0.05,
-        'x': 10,
-        'y': 5,
-        'z': 15,
-        'global_x': 87,
-        'global_y': 29,
-        'global_z': 14,
-        'cell_index': 8,
-        'intensity_0': 89,
-        'intensity_1': 89,
-        'intensity_2': 89,
-        'intensity_3': 89,
-        'intensity_4': 89,
-        'intensity_5': 89,
-        'intensity_6': 89,
-        'intensity_7': 89,
-        'intensity_8': 89,
-        'intensity_9': 89,
-        'intensity_10': 89,
-        'intensity_11': 89,
-        'intensity_12': 89,
-        'intensity_13': 89,
-        'intensity_14': 89,
-        'intensity_15': 54}
+            'barcode_id': 0,
+            'fov': 0,
+            'mean_intensity': 5.0,
+            'max_intensity': 7.0,
+            'area': 5,
+            'mean_distance': 0.1,
+            'min_distance': 0.05,
+            'x': 10,
+            'y': 5,
+            'z': 15,
+            'global_x': 87,
+            'global_y': 29,
+            'global_z': 14,
+            'cell_index': 8,
+            'intensity_0': 89,
+            'intensity_1': 89,
+            'intensity_2': 89,
+            'intensity_3': 89,
+            'intensity_4': 89,
+            'intensity_5': 89,
+            'intensity_6': 89,
+            'intensity_7': 89,
+            'intensity_8': 89,
+            'intensity_9': 89,
+            'intensity_10': 89,
+            'intensity_11': 89,
+            'intensity_12': 89,
+            'intensity_13': 89,
+            'intensity_14': 89,
+            'intensity_15': 54}
 
 barcode2 = {'barcode': 390,
-        'barcode_id': 1,
-        'fov': 0,
-        'mean_intensity': 5.2,
-        'max_intensity': 7.2,
-        'area': 4,
-        'mean_distance': 0.2,
-        'min_distance': 0.07,
-        'x': 11,
-        'y': 6,
-        'z': 12,
-        'global_x': 81,
-        'global_y': 28,
-        'global_z': 15,
-        'cell_index': 7,
-        'intensity_0': 88,
-        'intensity_1': 88,
-        'intensity_2': 28,
-        'intensity_3': 38,
-        'intensity_4': 48,
-        'intensity_5': 58,
-        'intensity_6': 68,
-        'intensity_7': 78,
-        'intensity_8': 97,
-        'intensity_9': 17,
-        'intensity_10': 27,
-        'intensity_11': 37,
-        'intensity_12': 47,
-        'intensity_13': 57,
-        'intensity_14': 67,
-        'intensity_15': 77}
+            'barcode_id': 1,
+            'fov': 0,
+            'mean_intensity': 5.2,
+            'max_intensity': 7.2,
+            'area': 4,
+            'mean_distance': 0.2,
+            'min_distance': 0.07,
+            'x': 11,
+            'y': 6,
+            'z': 12,
+            'global_x': 81,
+            'global_y': 28,
+            'global_z': 15,
+            'cell_index': 7,
+            'intensity_0': 88,
+            'intensity_1': 88,
+            'intensity_2': 28,
+            'intensity_3': 38,
+            'intensity_4': 48,
+            'intensity_5': 58,
+            'intensity_6': 68,
+            'intensity_7': 78,
+            'intensity_8': 97,
+            'intensity_9': 17,
+            'intensity_10': 27,
+            'intensity_11': 37,
+            'intensity_12': 47,
+            'intensity_13': 57,
+            'intensity_14': 67,
+            'intensity_15': 77}
 
 
 def test_write_and_read_one_fov(barcode_db):
@@ -133,7 +133,10 @@ def test_write_and_read_one_fov_many_barcodes(barcode_db):
     barcodesToWrite = pandas.DataFrame(
             [generate_random_barcode(0) for i in range(200000)])
     barcode_db.write_barcodes(barcodesToWrite, fov=0)
-    readBarcodes = barcode_db.get_barcodes()
+    readBarcodes = barcode_db.get_barcodes()[barcodesToWrite.columns]
+
+    print(barcodesToWrite.head())
+    print(readBarcodes.head())
     assert np.isclose(barcodesToWrite.values.astype(np.float), 
                       readBarcodes.values.astype(np.float)).all()
     barcode_db.empty_database(fov=0)
@@ -151,7 +154,7 @@ def test_multiple_write_one_fov(barcode_db):
     barcode_db.write_barcodes(barcodeSet1, fov=0)
     barcode_db.write_barcodes(barcodeSet2, fov=0)
     barcode_db.write_barcodes(barcodeSet3, fov=0)
-    readBarcodes = barcode_db.get_barcodes()
+    readBarcodes = barcode_db.get_barcodes()[barcodeSet1.columns]
     combinedBarcodes = pandas.concat(
             [barcodeSet1, barcodeSet2, barcodeSet3])
     readBarcodes.sort_values(by=list(readBarcodes.columns)[1:], inplace=True)
@@ -171,7 +174,7 @@ def test_write_and_read_multiple_fov(barcode_db):
             [generate_random_barcode(1) for i in range(10)])
     combinedBarcodes = pandas.concat([barcodeSet1, barcodeSet2])
     barcode_db.write_barcodes(combinedBarcodes)
-    readBarcodes = barcode_db.get_barcodes()
+    readBarcodes = barcode_db.get_barcodes()[barcodeSet1.columns]
     readBarcodes.sort_values(by=list(readBarcodes.columns)[1:], inplace=True)
     combinedBarcodes.sort_values(
             by=list(combinedBarcodes.columns)[1:], inplace=True)

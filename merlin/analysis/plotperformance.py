@@ -587,29 +587,8 @@ class PlotPerformance(analysistask.AnalysisTask):
     def _run_analysis(self):
         taskDict = {t: self.dataSet.load_analysis_task(self.parameters[t])
                     for t in self.taskTypes if t in self.parameters}
-
-        availablePlots = [x(self) for x in plots.get_available_plots()]
-        plotList = [x for x in availablePlots if x.is_relevant(taskDict)]
-
-        requiredMetadata = \
-            {m for p in plotList for m in p.get_required_metadatae()}
-        metadataDict = {x.metadata_name(): x(self, taskDict)
-                        for x in requiredMetadata}
-
-        incompletePlots = [p for p in plotList if not p.is_complete()]
-        while len(incompletePlots) > 0:
-            for m in metadataDict.values():
-                m.update()
-
-            completeTasks = [k for k, v in taskDict.items() if v.is_complete()]
-            completeMetadata = [k for k, v in metadataDict.items()
-                                if v.is_complete()]
-            readyPlots = [p for p in incompletePlots
-                          if p.is_ready(completeTasks, completeMetadata)]
-            for p in readyPlots:
-                p.plot(taskDict, metadataDict)
-            incompletePlots = [p for p in plotList if not p.is_complete()]
-
+        plotEngine = plots.PlotEngine(self, taskDict)
+        while not plotEngine.take_step():
             time.sleep(60)
 
 

@@ -158,7 +158,8 @@ class PlotMetadata(ABC):
         This method should be implemented in all subclasses and implementations
         should not wait for additional data to become available. They should
         only update the metadata as much as possible with the data that is ready
-        when the function is called.
+        when the function is called and should not wait for additional
+        analysis to complete.
         """
         pass
 

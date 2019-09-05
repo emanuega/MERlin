@@ -81,7 +81,10 @@ class AbstractPlot(ABC):
             analysis tasks and false otherwise.
         """
         for rTask, rTypes in self.get_required_tasks().items():
-            if not isinstance(inputTasks[rTask], rTypes):
+            if rTask not in inputTasks:
+                return False
+            if rTypes != 'all' \
+                    and not isinstance(inputTasks[rTask], rTypes):
                 return False
         return True
 

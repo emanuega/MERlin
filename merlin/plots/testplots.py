@@ -1,6 +1,26 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
+from merlin.plots._base import AbstractPlot
 from merlin.plots._base import PlotMetadata
+
+
+class TestPlot(AbstractPlot):
+
+    def __init__(self, analysisTask):
+        super().__init__(analysisTask)
+
+    def get_required_tasks(self):
+        return {'test_task': 'all'}
+
+    def get_required_metadata(self):
+        return [TestPlotMetadata]
+
+    def _generate_plot(self, inputTasks, inputMetadata):
+        fig = plt.figure(figsize=(10, 10))
+        plt.plot(inputMetadata['testplots.TestPlotMetadata'].get_mean_values(),
+                 'x')
+        return fig
 
 
 class TestPlotMetadata(PlotMetadata):

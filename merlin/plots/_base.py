@@ -149,7 +149,7 @@ class PlotMetadata(ABC):
 
     @classmethod
     def metadata_name(cls) -> str:
-        return cls.__module__ + '.' + cls.__class__
+        return cls.__module__.split('.')[-1] + '.' + cls.__name__
 
     @abstractmethod
     def update(self) -> None:

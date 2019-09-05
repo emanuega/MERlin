@@ -10,6 +10,7 @@ def test_metadata(simple_merfish_data):
                                                 {'test_task': randomTask})
     assert not randomTask.is_complete()
     assert not randomMetadata.is_complete()
+    assert randomMetadata.metadata_name() == 'testplots.TestPlotMetadata'
 
     for i in range(randomTask.fragment_count()-1):
         randomTask.run(i)

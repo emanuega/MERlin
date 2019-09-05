@@ -11,10 +11,6 @@ class TestPlotMetadata(PlotMetadata):
         self.completeFragments = [False]*self.testTask.fragment_count()
         self.meanValues = np.zeros(self.testTask.fragment_count())
 
-    @classmethod
-    def metadata_name(cls) -> str:
-        return cls.__module__ + '.' + cls.__class__
-
     def get_mean_values(self) -> np.ndarray:
         return self.meanValues
 

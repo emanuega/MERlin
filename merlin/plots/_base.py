@@ -20,6 +20,13 @@ class AbstractPlot(ABC):
         """
         self._analysisTask = analysisTask
 
+    def figure_name(self) -> str:
+        """ Get the name for identifying this figure.
+
+        Returns: the name of this figure
+        """
+        return type(self).__name__
+
     @abstractmethod
     def get_required_tasks(self) -> Dict[str, Tuple[type]]:
         """ Get the tasks that are required to be complete prior to
@@ -35,10 +42,10 @@ class AbstractPlot(ABC):
         pass
 
     @abstractmethod
-    def get_required_metadata(self) -> List[str]:
+    def get_required_metadata(self) -> List[object]:
         """ Get the plot metadata that is required to generate this plot.
 
-        Returns: A list of strings containing the names of the metadata
+        Returns: A list of class references for the metadata
             objects that are required for this task.
         """
         pass
@@ -91,7 +98,7 @@ class AbstractPlot(ABC):
             is complete
         """
         return all([t in completeTasks for t in self.get_required_tasks()])\
-            and all([m in completeMetadata
+            and all([m.metadata_name() in completeMetadata
                      for m in self.get_required_metadata()])
 
     def is_complete(self) -> bool:
@@ -99,9 +106,8 @@ class AbstractPlot(ABC):
 
         Returns: True if this plot has been generated and otherwise false.
         """
-        return all([t in completeTasks for t in self.get_required_tasks()])\
-            and all([m in completeMetadata
-                     for m in self.get_required_metadata()])
+        return self._analysisTask.dataSet.figure_exists(
+            self._analysisTask, self.figure_name(), type(self).__module__)
 
     def plot(self, inputTasks: Dict[str, analysistask.AnalysisTask],
              inputMetadata: Dict[str, 'PlotMetadata']) -> None:
@@ -122,7 +128,8 @@ class AbstractPlot(ABC):
             return
         f = self._generate_plot(inputTasks, inputMetadata)
         self._analysisTask.dataSet.save_figure(self._analysisTask, f,
-                                               type(self).__name__)
+                                               self.figure_name(),
+                                               type(self).__module__)
 
 
 class PlotMetadata(ABC):
@@ -139,6 +146,10 @@ class PlotMetadata(ABC):
         """
         self._analysisTask = analysisTask
         self._taskDict = taskDict
+
+    @classmethod
+    def metadata_name(cls) -> str:
+        return cls.__module__ + '.' + cls.__class__
 
     @abstractmethod
     def update(self) -> None:

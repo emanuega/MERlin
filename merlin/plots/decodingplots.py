@@ -16,8 +16,8 @@ class CodingBarcodeSpatialDistribution(AbstractPlot):
         return []
 
     def _generate_plot(self, inputTasks, inputMetadata):
-        codebook = self.inputTasks['filter_task'].get_codebook()
-        bc = self.inputTasks['filter_task']\
+        codebook = inputTasks['filter_task'].get_codebook()
+        bc = inputTasks['filter_task']\
             .get_barcode_database().get_barcodes(
                 columnList=['barcode_id', 'global_x', 'global_y'])
         minX = np.min(bc['global_x'])

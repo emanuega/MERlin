@@ -11,11 +11,10 @@ from random import sample
 import time
 
 from merlin import plots
-
-
 plt.style.use(
         os.sep.join([os.path.dirname(merlin.__file__),
                      'ext', 'default.mplstyle']))
+
 
 class StreamingPlotPerformance(analysistask.AnalysisTask):
 
@@ -586,37 +585,32 @@ class PlotPerformance(analysistask.AnalysisTask):
         return []
 
     def _run_analysis(self):
-        availablePlots = plots.get_available_plots()
-        plotList = [x(self) for x in availablePlots]
+        taskDict = {t: self.dataSet.load_analysis_task(self.parameters[t])
+                    for t in self.taskTypes if t in self.parameters}
 
-        plottingComplete = False
-        while not plottingComplete:
-            pass
+        availablePlots = [x(self) for x in plots.get_available_plots()]
+        plotList = [x for x in availablePlots if x.is_relevant(taskDict)]
 
-        if 'fpkm_file' in self.parameters:
-            self._plot_fpkm_correlation()
-        self._plot_bitwise_intensity_violin()
-        self._plot_radial_density()
-        self._plot_barcode_intensity_distribution()
-        self._plot_barcode_area_distribution()
-        self._plot_barcode_distance_distribution()
-        self._plot_barcode_intensity_area_violin()
-        self._plot_blank_distribution()
-        self._plot_matched_barcode_distribution()
-        self._plot_optimization_scale_factors()
-        self._plot_optimization_barcode_counts()
-        self._plot_all_barcode_abundances()
-        self._plot_filtered_barcode_abundances()
-        if self.segmentTask is not None:
-            self._plot_cell_segmentation()
-        # TODO _ analysis run times
-        # TODO - barcode correlation plots
-        # TODO - alignment error plots - need to save transformation information
-        # first
-        # TODO - barcode size spatial distribution global and FOV average
-        # TODO - barcode distance spatial distribution global and FOV average
-        # TODO - barcode intensity spatial distribution global and FOV average
-        # TODO - good barcodes/blanks per cell
+        requiredMetadata = \
+            {m for p in plotList for m in p.get_required_metadatae()}
+        metadataDict = {x.metadata_name(): x(self, taskDict)
+                        for x in requiredMetadata}
+
+        incompletePlots = [p for p in plotList if not p.is_complete()]
+        while len(incompletePlots) > 0:
+            for m in metadataDict.values():
+                m.update()
+
+            completeTasks = [k for k, v in taskDict.items() if v.is_complete()]
+            completeMetadata = [k for k, v in metadataDict.items()
+                                if v.is_complete()]
+            readyPlots = [p for p in incompletePlots
+                          if p.is_ready(completeTasks, completeMetadata)]
+            for p in readyPlots:
+                p.plot(taskDict, metadataDict)
+            incompletePlots = [p for p in plotList if not p.is_complete()]
+
+            time.sleep(60)
 
 
 class OldPlotPerformance(analysistask.AnalysisTask):
@@ -871,14 +865,10 @@ class OldPlotPerformance(analysistask.AnalysisTask):
         self._plot_barcode_area_distribution()
         self._plot_barcode_distance_distribution()
         self._plot_barcode_intensity_area_violin()
-        self._plot_blank_distribution()
-        self._plot_matched_barcode_distribution()
         self._plot_optimization_scale_factors()
         self._plot_optimization_barcode_counts()
         self._plot_all_barcode_abundances()
         self._plot_filtered_barcode_abundances()
-        if self.segmentTask is not None:
-            self._plot_cell_segmentation()
         # TODO _ analysis run times
         # TODO - barcode correlation plots
         # TODO - alignment error plots - need to save transformation information

@@ -154,49 +154,6 @@ class StreamingPlotPerformance(analysistask.AnalysisTask):
                       intHist, distHist,
                       barcodeDF, areaIntensityDF):
 
-        areaBins = self._retrive_bins('area_bins')
-        intBins = self._retrive_bins('intensity_bins')
-        distBins = self._retrive_bins('dist_bins')
-
-        # Mean intensity distribution
-        intensityX = intBins[:-1]
-        shift = (intensityX[0] + intensityX[1]) / 2
-        intensityX = [x + shift for x in intensityX]
-
-        f, axs = plt.subplots(1, 1, figsize=(4, 4))
-        plt.bar(intensityX, intHist)
-        plt.xlabel('Mean intensity ($log_{10}$)')
-        plt.ylabel('Count')
-        plt.title('Intensity distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
-        self.dataSet.save_figure(self, f, 'barcode_intensity_distribution')
-
-        # Area distribution
-        areaX = areaBins[:-1]
-        shift = (areaX[0] + areaX[1]) / 2
-        areaX = [x + shift for x in areaX]
-
-        f, axs = plt.subplots(1, 1, figsize=(4, 4))
-        plt.bar(areaX, areaHist)
-        plt.xlabel('Barcode area (pixels)')
-        plt.ylabel('Count')
-        plt.title('Area distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
-        self.dataSet.save_figure(self, f, 'barcode_area_distribution')
-
-        # Min distance distribution
-        distanceX = distBins[:-1]
-        shift = (distanceX[0] + distanceX[1]) / 2
-        distanceX = [x + shift for x in distanceX]
-
-        f, axs = plt.subplots(1, 1, figsize=(4, 4))
-        plt.bar(distanceX, distHist)
-        plt.xlabel('Barcode distance')
-        plt.ylabel('Count')
-        plt.title('Distance distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
-        self.dataSet.save_figure(self, f, 'barcode_distance_distribution')
-
         # Area vs intensity plot
         allIntByArea = []
         for i in areaIntensityDF.columns.values.tolist():
@@ -386,15 +343,6 @@ class StreamingPlotPerformance(analysistask.AnalysisTask):
         plt.title('Spatial distribution of barcodes')
         self.dataSet.save_figure(self, f, 'barcode_spatial_distribution')
 
-        # radial density
-        f, axs = plt.subplots(1, 1, figsize=(7, 7))
-        plt.plot(range(0, len(countsS) * 5, 5), countsS/np.sum(countsS))
-        plt.plot(range(0, len(countsM) * 5, 5), countsM/np.sum(countsM))
-        plt.legend(['Single color barcodes', 'Multi color barcodes'])
-        plt.xlabel('Radius')
-        plt.ylabel('Normalized radial barcode density')
-        self.dataSet.save_figure(self, f, 'barcode_radial_density')
-
         # FPKM plot
         if 'fpkm_file' in self.parameters:
             fpkmPath = os.sep.join([merlin.FPKM_HOME,
@@ -433,21 +381,6 @@ class StreamingPlotPerformance(analysistask.AnalysisTask):
         plt.ylabel('Iteration number')
         plt.title('Barcode counts optimization history')
         self.dataSet.save_figure(self, f, 'optimization_barcode_counts')
-
-    def _segmentation_plots(self, fov: int, segmentTask):
-        featureDB = segmentTask.get_feature_database()
-        features = featureDB.read_features(fov)
-
-        if len(features[0].get_boundaries()) > 1:
-            zpos = len(features[0].get_boundaries())/2
-        featuresSingleZ = [feature.get_boundaries()[int(zpos)]
-                           for feature in features]
-        featuresSingleZ = [x for y in featuresSingleZ for x in y]
-        allCoords = [[feature.exterior.coords.xy[0].tolist(),
-                      feature.exterior.coords.xy[1].tolist()]
-                     for feature in featuresSingleZ]
-        allCoords = [x for y in allCoords for x in y]
-        plt.plot(*allCoords)
 
     def _run_analysis(self):
         doneDict = {'decode_task': False, 'filter_task': False,
@@ -652,81 +585,6 @@ class OldPlotPerformance(analysistask.AnalysisTask):
                                     correlation[0, 1]))
         self.dataSet.save_figure(self, fig, 'fpkm_correlation')
 
-    def _plot_radial_density(self):
-        bitColors = self.dataSet.get_data_organization().data['color']
-        bcSet = self.filterTask.get_codebook().get_barcodes()
-        singleColorBarcodes = [i for i, b in enumerate(bcSet) if
-                               bitColors[np.where(b)[0]].nunique() == 1]
-        multiColorBarcodes = [i for i, b in enumerate(bcSet) if
-                              bitColors[np.where(b)[0]].nunique() > 1]
-
-        barcodes = self.filterTask.get_barcode_database().get_barcodes()
-        sBC = barcodes[barcodes['barcode_id'].isin(singleColorBarcodes)]
-        mBC = barcodes[barcodes['barcode_id'].isin(multiColorBarcodes)]
-
-        imageSize = self.dataSet.get_image_dimensions()
-        width = imageSize[0]
-        height = imageSize[1]
-
-        def radial_distance(x, y):
-            return np.sqrt((x - 0.5 * width) ** 2 + (y - 0.5 * height) ** 2)
-
-        sRD = [radial_distance(x, y) for x, y in zip(sBC['x'], sBC['y'])]
-        mRD = [radial_distance(x, y) for x, y in zip(mBC['x'], mBC['y'])]
-
-        fig = plt.figure(figsize=(7, 7))
-
-        countsS, binsS = np.histogram(sRD, bins=np.arange(0, 1000, 5))
-        radialCountsS = countsS[1:]
-        normS = radialCountsS / np.mean(radialCountsS[:20])
-        plt.plot(binsS[1:-1], normS)
-
-        countsM, binsM = np.histogram(mRD, bins=np.arange(0, 1000, 5))
-        radialCountsM = countsM[1:]
-        normM = radialCountsM / np.mean(radialCountsM[:20])
-        plt.plot(binsM[1:-1], normM)
-        plt.legend(['Single color barcodes', 'Multi color barcodes'])
-        plt.xlabel('Radius')
-        plt.ylabel('Normalized radial barcode density')
-        self.dataSet.save_figure(self, fig, 'barcode_radial_density')
-
-    # TODO - the functions in this class have too much repeated code
-    # TODO - for the following 4 plots, I can add a line indicating the
-    # barcode selection thresholds.
-    def _plot_barcode_intensity_distribution(self):
-        bcIntensities = self.decodeTask.get_barcode_database() \
-                .get_barcode_intensities()
-        fig = plt.figure(figsize=(4, 4))
-        plt.hist(np.log10(bcIntensities), bins=500)
-        plt.xlabel('Mean intensity ($log_{10}$)')
-        plt.ylabel('Count')
-        plt.title('Intensity distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
-        self.dataSet.save_figure(self, fig, 'barcode_intensity_distribution')
-
-    def _plot_barcode_area_distribution(self):
-        bcAreas = self.decodeTask.get_barcode_database() \
-                .get_barcode_areas()
-        fig = plt.figure(figsize=(4, 4))
-        plt.hist(bcAreas, bins=np.arange(15))
-        plt.xlabel('Barcode area (pixels)')
-        plt.ylabel('Count')
-        plt.title('Area distribution for all barcodes')
-        plt.xticks(np.arange(15))
-        plt.tight_layout(pad=0.2)
-        self.dataSet.save_figure(self, fig, 'barcode_area_distribution')
-
-    def _plot_barcode_distance_distribution(self):
-        bcDistances = self.decodeTask.get_barcode_database() \
-                .get_barcode_distances()
-        fig = plt.figure(figsize=(4, 4))
-        plt.hist(bcDistances, bins=500)
-        plt.xlabel('Barcode distance')
-        plt.ylabel('Count')
-        plt.title('Distance distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
-        self.dataSet.save_figure(self, fig, 'barcode_distance_distribution')
-
     def _plot_barcode_intensity_area_violin(self):
         barcodeDB = self.decodeTask.get_barcode_database()
         intensityData = [np.log10(
@@ -788,22 +646,6 @@ class OldPlotPerformance(analysistask.AnalysisTask):
 
         self.dataSet.save_figure(self, fig, 'barcode_bitwise_intensity_violin')
 
-    def _plot_optimization_scale_factors(self):
-        fig = plt.figure(figsize=(5, 5))
-        seaborn.heatmap(self.optimizeTask.get_scale_factor_history())
-        plt.xlabel('Bit index')
-        plt.ylabel('Iteration number')
-        plt.title('Scale factor optimization history')
-        self.dataSet.save_figure(self, fig, 'optimization_scale_factors')
-
-    def _plot_optimization_barcode_counts(self):
-        fig = plt.figure(figsize=(5, 5))
-        seaborn.heatmap(self.optimizeTask.get_barcode_count_history())
-        plt.xlabel('Barcode index')
-        plt.ylabel('Iteration number')
-        plt.title('Barcode counts optimization history')
-        self.dataSet.save_figure(self, fig, 'optimization_barcode_counts')
-
     def _plot_barcode_abundances(self, barcodes, outputName):
         codebook = self.filterTask.get_codebook()
         blankIDs = codebook.get_blank_indexes()
@@ -839,13 +681,7 @@ class OldPlotPerformance(analysistask.AnalysisTask):
         if 'fpkm_file' in self.parameters:
             self._plot_fpkm_correlation()
         self._plot_bitwise_intensity_violin()
-        self._plot_radial_density()
-        self._plot_barcode_intensity_distribution()
-        self._plot_barcode_area_distribution()
-        self._plot_barcode_distance_distribution()
         self._plot_barcode_intensity_area_violin()
-        self._plot_optimization_scale_factors()
-        self._plot_optimization_barcode_counts()
         self._plot_all_barcode_abundances()
         self._plot_filtered_barcode_abundances()
         # TODO _ analysis run times

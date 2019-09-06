@@ -46,4 +46,3 @@ def test_plotengine(simple_merfish_data):
     assert plotEngine.get_plots()[0].is_complete()
 
     simple_merfish_data.delete_analysis(randomTask)
-

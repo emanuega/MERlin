@@ -1,3 +1,4 @@
+import numpy as np
 from abc import ABC, abstractmethod
 from typing import List, Dict, Tuple
 from matplotlib import pyplot as plt
@@ -153,6 +154,36 @@ class PlotMetadata(ABC):
     @classmethod
     def metadata_name(cls) -> str:
         return cls.__module__.split('.')[-1] + '.' + cls.__name__
+
+    def _load_numpy_metadata(self, resultName: str,
+                             defaultValue: np.ndarray=None) -> np.ndarray:
+        """ Convenience method for reading a result created by this metadata
+        from the dataset.
+
+        Args:
+            resultName: the name of the metadata result
+            defaultValue: the value to return if the metadata is not found
+        Returns: a numpy array with the result or defaultValue if an IOError is
+            raised while reading the metadata
+        """
+        try:
+            self._analysisTask.dataSet.load_numpy_analysis_result(
+                resultName, self._analysisTask,
+                subdirectory=self.metadata_name())
+        except IOError:
+            return defaultValue
+
+    def _save_numpy_metadata(self, result: np.ndarray, resultName: str) -> None:
+        """ Convenience method for saving a result created by this metadata
+        from the dataset.
+
+        Args:
+            result: the numpy array to save
+            resultName: the name of the metadata result
+        """
+        self._analysisTask.dataSet.save_numpy_analysis_result(
+            result, resultName, self._analysisTask,
+            subdirectory=self.metadata_name())
 
     @abstractmethod
     def update(self) -> None:

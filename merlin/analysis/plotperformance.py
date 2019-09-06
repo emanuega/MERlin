@@ -124,32 +124,6 @@ class StreamingPlotPerformance(analysistask.AnalysisTask):
 
         return [areaHist, intHist, distHist, barcodeDF, areaIntensityDF]
 
-    def _plot_barcode_abundances(self, barcodeDF, outputName):
-        codebook = self.dataSet.get_codebook()
-        blankIDs = codebook.get_blank_indexes()
-
-        bcCounts = barcodeDF.groupby('barcode_id').size()
-        barcodeDF = pandas.DataFrame(data=bcCounts.values,
-                                     index=bcCounts.index.values.tolist(),
-                                     columns=['barcode_counts'])
-
-        bcSorted = barcodeDF.sort_values(by='barcode_counts', ascending=False)
-        bcSorted['color'] = [(0.2, 0.2, 0.2)] * len(bcSorted)
-        mask = bcSorted.index.isin(blankIDs)
-        bcSorted['color'] = bcSorted['color'].where(~mask, other=-1)
-        bcSorted = bcSorted.applymap(lambda x: (1, 0, 0) if x is -1 else x)
-        f, axs = plt.subplots(1, 1, figsize=(12, 5))
-
-        plt.bar(np.arange(len(bcSorted)),
-                height=np.log10(bcSorted['barcode_counts']),
-                width=1, color=bcSorted['color'])
-
-        plt.xlabel('Sorted barcode index')
-        plt.ylabel('Count (log10)')
-        plt.title('Abundances for coding (gray) and blank (red) barcodes')
-
-        self.dataSet.save_figure(self, f, outputName)
-
     def _decode_plots(self, areaHist,
                       intHist, distHist,
                       barcodeDF, areaIntensityDF):
@@ -188,9 +162,6 @@ class StreamingPlotPerformance(analysistask.AnalysisTask):
         plt.xlim([0, 17])
         plt.tight_layout(pad=0.2)
         self.dataSet.save_figure(self, f, 'barcode_intensity_area_violin')
-
-        # barcode and blank count frequencies
-        self._plot_barcode_abundances(barcodeDF, 'all_barcode_abundances')
 
     def _sample_filter(self, fovs: List, filterDB):
         for fov in fovs:
@@ -646,44 +617,11 @@ class OldPlotPerformance(analysistask.AnalysisTask):
 
         self.dataSet.save_figure(self, fig, 'barcode_bitwise_intensity_violin')
 
-    def _plot_barcode_abundances(self, barcodes, outputName):
-        codebook = self.filterTask.get_codebook()
-        blankIDs = codebook.get_blank_indexes()
-
-        uniqueBarcodes, bcCounts = np.unique(barcodes['barcode_id'],
-                                             return_counts=True)
-        sortedIndexes = np.argsort(bcCounts)[::-1]
-
-        fig = plt.figure(figsize=(12, 5))
-        plt.bar(np.arange(len(bcCounts)),
-                height=np.log10([bcCounts[x] for x in sortedIndexes]),
-                width=1, color=(0.2, 0.2, 0.2))
-        plt.bar([i for i, x in enumerate(sortedIndexes) if
-                 uniqueBarcodes[x] in blankIDs],
-                height=np.log10([bcCounts[x] for x in sortedIndexes if
-                                 uniqueBarcodes[x] in blankIDs]),
-                width=2, color='r')
-        plt.xlabel('Sorted barcode index')
-        plt.ylabel('Count (log10)')
-        plt.title('Abundances for coding (gray) and blank (red) barcodes')
-
-        self.dataSet.save_figure(self, fig, outputName)
-
-    def _plot_all_barcode_abundances(self):
-        bc = self.decodeTask.get_barcode_database().get_barcodes()
-        self._plot_barcode_abundances(bc, 'all_barcode_abundances')
-
-    def _plot_filtered_barcode_abundances(self):
-        bc = self.filterTask.get_barcode_database().get_barcodes()
-        self._plot_barcode_abundances(bc, 'flitered_barcode_abundances')
-
     def _run_analysis(self):
         if 'fpkm_file' in self.parameters:
             self._plot_fpkm_correlation()
         self._plot_bitwise_intensity_violin()
         self._plot_barcode_intensity_area_violin()
-        self._plot_all_barcode_abundances()
-        self._plot_filtered_barcode_abundances()
         # TODO _ analysis run times
         # TODO - barcode correlation plots
         # TODO - alignment error plots - need to save transformation information

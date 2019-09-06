@@ -90,11 +90,53 @@ class MeanIntensityDistributionPlot(AbstractPlot):
         return fig
 
 
+class DecodedBarcodeAbundancePlot(AbstractPlot):
+
+    def __init__(self, analysisTask):
+        super().__init__(analysisTask)
+
+    def get_required_tasks(self):
+        return {'decode_task': 'all'}
+
+    def get_required_metadata(self):
+        return [DecodedBarcodesMetadata]
+
+    def _generate_plot(self, inputTasks, inputMetadata):
+        decodeTask = inputTasks['decode_task']
+        codebook = decodeTask.get_codebook()
+        decodeMetadata = inputMetadata[
+            'decodeplots.DecodedBarcodesMetadata']
+
+        barcodeCounts = decodeMetadata.barcodeCounts
+        countDF = pandas.DataFrame(decodeMetadata.barcodeCounts,
+                                   index=np.arange(barcodeCounts),
+                                   columns=['counts'])
+
+        codingDF = countDF[countDF.index.isin(codebook.get_coding_indexes)]\
+            .sort_values(by='counts', ascending=False)
+        blankDF = countDF[countDF.index.isin(codebook.get_blank_indexes)]\
+            .sort_values(by='counts', ascending=False)
+
+        fig = plt.figure(figsize=(10, 5))
+        plt.plot(np.arange(len(codingDF)), np.log10(codingDF['counts']),
+                 'b.')
+        plt.plot(np.arange(len(codingDF), len(countDF)),
+                 np.log10(blankDF['counts']), 'r.')
+        plt.xlabel('Sorted barcode index')
+        plt.ylabel('Count (log10)')
+        plt.title('Barcode abundances')
+        plt.legend(['Coding', 'Blank'])
+        plt.tight_layout(pad=0.2)
+
+        return fig
+
+
 class DecodedBarcodesMetadata(PlotMetadata):
 
     def __init__(self, analysisTask, taskDict):
         super().__init__(analysisTask, taskDict)
         self.decodeTask = self._taskDict['decode_task']
+        codebook = self.decodeTask.get_codebook()
 
         self.completeFragments = self._load_numpy_metadata(
             'complete_fragments', [False]*self.decodeTask.fragment_count())
@@ -102,6 +144,8 @@ class DecodedBarcodesMetadata(PlotMetadata):
         self.areaCounts = self._load_numpy_metadata(
             'area_counts', np.zeros(len(self.areaBins)))
 
+        self.barcodeCounts = self._load_numpy_metadata(
+            'barcode_counts', np.zeros(codebook.get_barcode_count()))
         if np.sum(self.completeFragments >= min(
                 20, self.decodeTask.fragment_count())):
             self.intensityBins = self._load_numpy_metadata('intensity_bins')
@@ -139,6 +183,9 @@ class DecodedBarcodesMetadata(PlotMetadata):
         self.binsDetermined = True
 
     def _extract_from_barcodes(self, barcodes):
+        self.barcodeCounts += np.histogram(
+            barcodes['barcode_id'], bins=np.arange(len(self.barcodeCounts)))
+
         self.areaCounts += np.histogram(barcodes['area'],
                                         bins=self.areaBins)[0]
         self.intensityCounts += np.histogram(
@@ -162,7 +209,8 @@ class DecodedBarcodesMetadata(PlotMetadata):
                 self.queuedBarcodeData.append(
                     decodeTask.get_barcode_database().get_barcodes(
                         i,
-                        columnList=['area', 'mean_intensity', 'min_distance']))
+                        columnList=['barcode_id', 'area', 'mean_intensity',
+                                    'min_distance']))
 
                 if np.sum(self.completeFragments) \
                         >= min(20, decodeTask.fragment_count()):
@@ -177,6 +225,7 @@ class DecodedBarcodesMetadata(PlotMetadata):
         if updated:
             self._save_numpy_metadata(self.completeFragments,
                                       'complete_fragments')
+            self._save_numpy_metadata(self.barcodeCounts, 'barcode_counts')
             self._save_numpy_metadata(self.areaCounts, 'area_counts')
             self._save_numpy_metadata(self.intensityCounts, 'intensity_counts')
             self._save_numpy_metadata(self.distanceCounts, 'distance_counts')

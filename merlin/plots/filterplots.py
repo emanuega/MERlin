@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
+import pandas
 from typing import List
 
 from merlin.plots._base import AbstractPlot, PlotMetadata
@@ -164,6 +165,47 @@ class BlankBarcodeFOVDistributionPlot(AbstractPlot):
         return fig
 
 
+class FilteredBarcodeAbundancePlot(AbstractPlot):
+
+    def __init__(self, analysisTask):
+        super().__init__(analysisTask)
+
+    def get_required_tasks(self):
+        return {'filter_task': 'all'}
+
+    def get_required_metadata(self):
+        return [FilteredBarcodesMetadata]
+
+    def _generate_plot(self, inputTasks, inputMetadata):
+        filterTask = inputTasks['filter_task']
+        codebook = filterTask.get_codebook()
+        decodeMetadata = inputMetadata[
+            'decodeplots.DecodedBarcodesMetadata']
+
+        barcodeCounts = decodeMetadata.barcodeCounts
+        countDF = pandas.DataFrame(decodeMetadata.barcodeCounts,
+                                   index=np.arange(barcodeCounts),
+                                   columns=['counts'])
+
+        codingDF = countDF[countDF.index.isin(codebook.get_coding_indexes)]\
+            .sort_values(by='counts', ascending=False)
+        blankDF = countDF[countDF.index.isin(codebook.get_blank_indexes)]\
+            .sort_values(by='counts', ascending=False)
+
+        fig = plt.figure(figsize=(10, 5))
+        plt.plot(np.arange(len(codingDF)), np.log10(codingDF['counts']),
+                 'b.')
+        plt.plot(np.arange(len(codingDF), len(countDF)),
+                 np.log10(blankDF['counts']), 'r.')
+        plt.xlabel('Sorted barcode index')
+        plt.ylabel('Count (log10)')
+        plt.title('Barcode abundances')
+        plt.legend(['Coding', 'Blank'])
+        plt.tight_layout(pad=0.2)
+
+        return fig
+
+
 class FOVSpatialDistributionMetadata(PlotMetadata):
 
     def __init__(self, analysisTask, taskDict):
@@ -252,6 +294,44 @@ class FOVSpatialDistributionMetadata(PlotMetadata):
                                       'spatial_coding_counts')
             self._save_numpy_metadata(self.spatialBlankCounts,
                                       'spatial_blank_counts')
+
+    def is_complete(self) -> bool:
+        return all(self.completeFragments)
+
+
+class FilteredBarcodesMetadata(PlotMetadata):
+
+    def __init__(self, analysisTask, taskDict):
+        super().__init__(analysisTask, taskDict)
+        self.filterTask = self._taskDict['filter_task']
+        codebook = self.filterTask.get_codebook()
+
+        self.completeFragments = self._load_numpy_metadata(
+            'complete_fragments', [False]*self.decodeTask.fragment_count())
+        self.barcodeCounts = self._load_numpy_metadata(
+            'barcode_counts', np.zeros(codebook.get_barcode_count()))
+
+    def update(self) -> None:
+        updated = False
+        filterTask = self._taskDict['filter_task']
+
+        for i in range(filterTask.fragment_count()):
+            if not self.completeFragments[i] and filterTask.is_complete(i):
+                self.completeFragments[i] = True
+
+                barcodes = filterTask.get_barcode_database().get_barcodes(
+                    i, columnList=['barcode_id'])
+
+                self.barcodeCounts += np.histogram(
+                    barcodes['barcode_id'],
+                    bins=np.arange(len(self.barcodeCounts)))
+
+                updated = True
+
+        if updated:
+            self._save_numpy_metadata(self.completeFragments,
+                                      'complete_fragments')
+            self._save_numpy_metadata(self.barcodeCounts, 'barcode_counts')
 
     def is_complete(self) -> bool:
         return all(self.completeFragments)

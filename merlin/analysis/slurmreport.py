@@ -80,7 +80,7 @@ class SlurmReport(analysistask.AnalysisTask):
             outputDF['Timelimit'].apply(reformat_timedelta), unit='s'))
         outputDF = outputDF.assign(Queued=pandas.to_timedelta(
             pandas.to_datetime(outputDF['Start']) -
-            pandas.to_datetime(outputDF['Submit']), unit='s') )
+            pandas.to_datetime(outputDF['Submit']), unit='s'))
 
         return outputDF.reindex()
 
@@ -98,7 +98,7 @@ class SlurmReport(analysistask.AnalysisTask):
                      slurmDF['Elapsed'] / np.timedelta64(1, 'm'),
                      slurmDF['Timelimit'] / np.timedelta64(1, 'm')],
                     widths=0.5)
-        plt.xticks([1, 2, 3], ['Queued','Elapsed', 'Requested'])
+        plt.xticks([1, 2, 3], ['Queued', 'Elapsed', 'Requested'])
         plt.ylabel('Time (min)')
         plt.title('Run time')
         plt.subplot(1, 4, 3)
@@ -122,9 +122,8 @@ class SlurmReport(analysistask.AnalysisTask):
             for element in ['boxes', 'whiskers', 'fliers', 'means', 'medians',
                             'caps']:
                 plt.setp(bPlot[element], color=c)
-        
-        # Plot memory requested and used for each task
 
+        # Plot memory requested and used for each task
         fig = plt.figure(figsize=(15, 12))
 
         bp = plt.boxplot([d['MaxRSS'].str[:-1].astype(float)
@@ -155,7 +154,6 @@ class SlurmReport(analysistask.AnalysisTask):
         self.dataSet.save_figure(self, fig, 'memory_summary')
 
         # Plot time requested, queued and used for each task
-        
         fig = plt.figure(figsize=(15, 12))
         bp = plt.boxplot([d['Elapsed'] / np.timedelta64(1, 'm')
                          for d in reportDict.values()],
@@ -178,7 +176,7 @@ class SlurmReport(analysistask.AnalysisTask):
         hB, = plt.plot([1, 1], 'b-')
         hR, = plt.plot([1, 1], 'r-')
         hG, = plt.plot([1, 1], 'g-')
-        plt.legend((hB, hR, hG), ('Requested', 'Used','Queued'))
+        plt.legend((hB, hR, hG), ('Requested', 'Used', 'Queued'))
         hB.set_visible(False)
         hR.set_visible(False)
         hG.set_visible(False)

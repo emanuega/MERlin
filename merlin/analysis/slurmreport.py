@@ -47,7 +47,7 @@ class SlurmReport(analysistask.AnalysisTask):
         queryResult = subprocess.run(
             ['sacct', '--format=AssocID,Account,Cluster,User,JobID,JobName,'
              + 'NodeList,AveCPU,AveCPUFreq,MaxPages,MaxDiskRead,MaxDiskWrite,'
-             + 'MaxRSS,ReqMem,CPUTime,Elapsed,Start,End,Timelimit',
+             + 'MaxRSS,ReqMem,CPUTime,Elapsed,Submit,Start,End,Timelimit',
              '--units=M', '-P', '-j', ','.join(idList)], stdout=subprocess.PIPE)
 
         slurmJobDF = pandas.read_csv(
@@ -78,6 +78,9 @@ class SlurmReport(analysistask.AnalysisTask):
             outputDF['Elapsed'].apply(reformat_timedelta), unit='s'))
         outputDF = outputDF.assign(Timelimit=pandas.to_timedelta(
             outputDF['Timelimit'].apply(reformat_timedelta), unit='s'))
+        outputDF = outputDF.assign(Queued=pandas.to_timedelta(
+            pandas.to_datetime(outputDF['Start']) -
+            pandas.to_datetime(outputDF['Submit']), unit='s'))
 
         return outputDF.reindex()
 
@@ -91,10 +94,11 @@ class SlurmReport(analysistask.AnalysisTask):
         plt.ylabel('Memory (mb)')
         plt.title('RAM')
         plt.subplot(1, 4, 2)
-        plt.boxplot([slurmDF['Elapsed'] / np.timedelta64(1, 'm'),
+        plt.boxplot([slurmDF['Queued'] / np.timedelta64(1, 'm'),
+                     slurmDF['Elapsed'] / np.timedelta64(1, 'm'),
                      slurmDF['Timelimit'] / np.timedelta64(1, 'm')],
                     widths=0.5)
-        plt.xticks([1, 2], ['Elapsed', 'Requested'])
+        plt.xticks([1, 2, 3], ['Queued', 'Elapsed', 'Requested'])
         plt.ylabel('Time (min)')
         plt.title('Run time')
         plt.subplot(1, 4, 3)
@@ -119,7 +123,9 @@ class SlurmReport(analysistask.AnalysisTask):
                             'caps']:
                 plt.setp(bPlot[element], color=c)
 
+        # Plot memory requested and used for each task
         fig = plt.figure(figsize=(15, 12))
+
         bp = plt.boxplot([d['MaxRSS'].str[:-1].astype(float)
                          for d in reportDict.values()],
                          positions=np.arange(len(reportDict))-0.15,
@@ -147,6 +153,7 @@ class SlurmReport(analysistask.AnalysisTask):
         plt.tight_layout(pad=1)
         self.dataSet.save_figure(self, fig, 'memory_summary')
 
+        # Plot time requested, queued and used for each task
         fig = plt.figure(figsize=(15, 12))
         bp = plt.boxplot([d['Elapsed'] / np.timedelta64(1, 'm')
                          for d in reportDict.values()],
@@ -158,14 +165,21 @@ class SlurmReport(analysistask.AnalysisTask):
                          positions=np.arange(len(reportDict))+0.15,
                          widths=0.25)
         setBoxColors(bp, 'b')
+        bp = plt.boxplot([d['Queued'] / np.timedelta64(1, 'm')
+                         for d in reportDict.values()],
+                         positions=np.arange(len(reportDict))+0.15,
+                         widths=0.25)
+        setBoxColors(bp, 'g')
         plt.xticks(np.arange(len(reportDict)), list(reportDict.keys()),
                    rotation='vertical')
         plt.yscale('log')
         hB, = plt.plot([1, 1], 'b-')
         hR, = plt.plot([1, 1], 'r-')
-        plt.legend((hB, hR), ('Requested', 'Used'))
+        hG, = plt.plot([1, 1], 'g-')
+        plt.legend((hB, hR, hG), ('Requested', 'Used', 'Queued'))
         hB.set_visible(False)
         hR.set_visible(False)
+        hG.set_visible(False)
         plt.ylabel('Time per job (min)')
         plt.title('Time summary')
         plt.xlim([-0.5, len(reportDict)+0.5])

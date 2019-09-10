@@ -111,7 +111,8 @@ class AbstractPlot(ABC):
         Returns: True if this plot has been generated and otherwise false.
         """
         return self._analysisTask.dataSet.figure_exists(
-            self._analysisTask, self.figure_name(), type(self).__module__)
+            self._analysisTask, self.figure_name(), 
+            type(self).__module__.split('.')[-1])
 
     def plot(self, inputTasks: Dict[str, analysistask.AnalysisTask],
              inputMetadata: Dict[str, 'PlotMetadata']) -> None:
@@ -131,6 +132,7 @@ class AbstractPlot(ABC):
         if not self.is_relevant(inputTasks):
             return
         f = self._generate_plot(inputTasks, inputMetadata)
+        f.tight_layout(pad=1)
         self._analysisTask.dataSet.save_figure(
                 self._analysisTask, f, self.figure_name(), 
                 type(self).__module__.split('.')[-1])
@@ -154,7 +156,7 @@ class PlotMetadata(ABC):
 
     @classmethod
     def metadata_name(cls) -> str:
-        return cls.__module__.split('.')[-1] + '.' + cls.__name__
+        return cls.__module__.split('.')[-1] + '/' + cls.__name__
 
     def _load_numpy_metadata(self, resultName: str,
                              defaultValue: np.ndarray=None) -> np.ndarray:

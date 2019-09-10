@@ -18,7 +18,7 @@ class MinimumDistanceDistributionPlot(AbstractPlot):
 
     def _generate_plot(self, inputTasks, inputMetadata):
         decodeMetadata = inputMetadata[
-            'decodeplots.DecodedBarcodesMetadata']
+            'decodeplots/DecodedBarcodesMetadata']
 
         distanceX = decodeMetadata.distanceBins[:-1]
         shift = (distanceX[0] + distanceX[1]) / 2
@@ -29,7 +29,6 @@ class MinimumDistanceDistributionPlot(AbstractPlot):
         plt.xlabel('Barcode distance')
         plt.ylabel('Count')
         plt.title('Distance distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
 
         return fig
 
@@ -47,17 +46,17 @@ class AreaDistributionPlot(AbstractPlot):
 
     def _generate_plot(self, inputTasks, inputMetadata):
         decodeMetadata = inputMetadata[
-            'decodeplots.DecodedBarcodesMetadata']
+            'decodeplots/DecodedBarcodesMetadata']
         areaX = decodeMetadata.areaBins[:-1]
         shift = (areaX[0] + areaX[1]) / 2
         areaX = [x + shift for x in areaX]
 
         fig = plt.figure(figsize=(4, 4))
-        plt.bar(areaX, decodeMetadata.areaCounts)
+        plt.bar(areaX, decodeMetadata.areaCounts,
+                width=2*shift)
         plt.xlabel('Barcode area (pixels)')
         plt.ylabel('Count')
         plt.title('Area distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
 
         return fig
 
@@ -75,17 +74,17 @@ class MeanIntensityDistributionPlot(AbstractPlot):
 
     def _generate_plot(self, inputTasks, inputMetadata):
         decodeMetadata = inputMetadata[
-            'decodeplots.DecodedBarcodesMetadata']
+            'decodeplots/DecodedBarcodesMetadata']
         intensityX = decodeMetadata.intensityBins[:-1]
         shift = (intensityX[0] + intensityX[1]) / 2
         intensityX = [x + shift for x in intensityX]
 
         fig = plt.figure(figsize=(4, 4))
-        plt.bar(intensityX, decodeMetadata.intensityCounts)
+        plt.bar(intensityX, decodeMetadata.intensityCounts,
+                width=2*shift)
         plt.xlabel('Mean intensity ($log_{10}$)')
         plt.ylabel('Count')
         plt.title('Intensity distribution for all barcodes')
-        plt.tight_layout(pad=0.2)
 
         return fig
 
@@ -105,7 +104,7 @@ class DecodedBarcodeAbundancePlot(AbstractPlot):
         decodeTask = inputTasks['decode_task']
         codebook = decodeTask.get_codebook()
         decodeMetadata = inputMetadata[
-            'decodeplots.DecodedBarcodesMetadata']
+            'decodeplots/DecodedBarcodesMetadata']
 
         barcodeCounts = decodeMetadata.barcodeCounts
         countDF = pandas.DataFrame(decodeMetadata.barcodeCounts,
@@ -126,7 +125,6 @@ class DecodedBarcodeAbundancePlot(AbstractPlot):
         plt.ylabel('Count (log10)')
         plt.title('Barcode abundances')
         plt.legend(['Coding', 'Blank'])
-        plt.tight_layout(pad=0.2)
 
         return fig
 

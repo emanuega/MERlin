@@ -37,11 +37,11 @@ class CodingBarcodeSpatialDistribution(AbstractPlot):
                       np.ceil(maxX - minX) / 5, np.ceil(maxY - minY) / 5),
                       cmap=plt.get_cmap('Greys'))
         cbar = plt.colorbar(h[3], ax=ax)
-        cbar.set_label('Spot count', rotation=270)
+        cbar.set_label('Barcode count', rotation=270)
         ax.set_aspect('equal', 'datalim')
         plt.xlabel('X position (microns)')
         plt.ylabel('Y position (microns)')
-        plt.title('Spatial distribution of identified barcodes')
+        plt.title('Spatial distribution of identified coding barcodes')
 
         return fig
 
@@ -77,11 +77,11 @@ class BlankBarcodeSpatialDistribution(AbstractPlot):
                       np.ceil(maxX - minX) / 5, np.ceil(maxY - minY) / 5),
                       cmap=plt.get_cmap('Greys'))
         cbar = plt.colorbar(h[3], ax=ax)
-        cbar.set_label('Spot count', rotation=270)
+        cbar.set_label('Barcode count', rotation=270)
         ax.set_aspect('equal', 'datalim')
         plt.xlabel('X position (microns)')
         plt.ylabel('Y position (microns)')
-        plt.title('Spatial distribution of identified barcodes')
+        plt.title('Spatial distribution of identified blank barcodes')
 
         return fig
 
@@ -101,7 +101,7 @@ class BarcodeRadialDensityPlot(AbstractPlot):
         fig = plt.figure(figsize=(7, 7))
 
         spatialMetadata = inputMetadata[
-            'filterplots.FOVSpatialDistributionMetadata']
+            'filterplots/FOVSpatialDistributionMetadata']
         singleColorCounts = spatialMetadata.singleColorCounts
         plt.plot(spatialMetadata.radialBins[:-1],
                  singleColorCounts/np.sum(singleColorCounts))
@@ -128,14 +128,20 @@ class CodingBarcodeFOVDistributionPlot(AbstractPlot):
 
     def _generate_plot(self, inputTasks, inputMetadata):
         fig = plt.figure(figsize=(7, 7))
+        ax = fig.add_subplot(111)
 
         spatialMetadata = inputMetadata[
-            'filterplots.FOVSpatialDistributionMetadata']
+            'filterplots/FOVSpatialDistributionMetadata']
         plt.imshow(spatialMetadata.spatialCodingCounts,
-                   extent=spatialMetadata.get_spatial_extents())
+                   extent=spatialMetadata.get_spatial_extents(),
+                   cmap=plt.get_cmap('Greys'))
         plt.xlabel('X position (pixels)')
         plt.ylabel('Y position (pixels)')
         plt.title('Spatial distribution of coding barcodes within FOV')
+        cbar = plt.colorbar(ax=ax)
+        cbar.set_label('Barcode count', rotation=270)
+
+        plt.tight_layout(pad=1)
 
         return fig
 
@@ -155,7 +161,7 @@ class BlankBarcodeFOVDistributionPlot(AbstractPlot):
         fig = plt.figure(figsize=(7, 7))
 
         spatialMetadata = inputMetadata[
-            'filterplots.FOVSpatialDistributionMetadata']
+            'filterplots/FOVSpatialDistributionMetadata']
         plt.imshow(spatialMetadata.spatialBlankCounts,
                    extent=spatialMetadata.get_spatial_extents())
         plt.xlabel('X position (pixels)')
@@ -180,7 +186,7 @@ class FilteredBarcodeAbundancePlot(AbstractPlot):
         filterTask = inputTasks['filter_task']
         codebook = filterTask.get_codebook()
         decodeMetadata = inputMetadata[
-            'decodeplots.DecodedBarcodesMetadata']
+            'filterplots/FilteredBarcodesMetadata']
 
         barcodeCounts = decodeMetadata.barcodeCounts
         countDF = pandas.DataFrame(decodeMetadata.barcodeCounts,
@@ -215,7 +221,7 @@ class FOVSpatialDistributionMetadata(PlotMetadata):
         dataSet = self._analysisTask.dataSet
         self._width = dataSet.get_image_dimensions()[0]
         self._height = dataSet.get_image_dimensions()[1]
-        imageSize = np.sqrt(self._height**2 + self._width**2)
+        imageSize = max(self._height, self._width)
         self.radialBins = self._load_numpy_metadata(
             'radial_bins', np.arange(0, 0.5*imageSize, (0.5*imageSize)/200))
         self.spatialXBins = self._load_numpy_metadata(
@@ -244,7 +250,7 @@ class FOVSpatialDistributionMetadata(PlotMetadata):
 
     def get_spatial_extents(self) -> List[float]:
         return [self.spatialXBins[0], self.spatialXBins[-1],
-                self.spatialYBins[0], self.spatialYBins[1]]
+                self.spatialYBins[0], self.spatialYBins[-1]]
 
     def _radial_distance(self, x: float, y: float) -> float:
         return np.sqrt((x - 0.5 * self._width) ** 2

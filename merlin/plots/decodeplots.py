@@ -3,6 +3,7 @@ import numpy as np
 import pandas
 
 from merlin.plots._base import AbstractPlot, PlotMetadata
+from merlin.analysis import filterbarcodes
 
 
 class MinimumDistanceDistributionPlot(AbstractPlot):
@@ -125,6 +126,64 @@ class DecodedBarcodeAbundancePlot(AbstractPlot):
         plt.ylabel('Count (log10)')
         plt.title('Barcode abundances')
         plt.legend(['Coding', 'Blank'])
+
+        return fig
+
+
+class AreaIntensityViolinPlot(AbstractPlot):
+
+    def __init__(self, analysisTask):
+        super().__init__(analysisTask)
+
+    def get_required_tasks(self):
+        return {'decode_task': 'all'}
+
+    def get_required_metadata(self):
+        return [DecodedBarcodesMetadata]
+
+    def _generate_plot(self, inputTasks, inputMetadata):
+        decodeTask = inputTasks['decode_task']
+        decodeMetadata = inputMetadata[
+            'decodeplots/DecodedBarcodesMetadata']
+
+        bins = decodeMetadata.intensityBins[:-1]
+        def distribution_dict(countList):
+            if np.max(countList) > 0:
+                return {'coords': bins,
+                   'vals': countList,
+                   'mean': np.average(bins, weights=countList),
+                   'median': np.average(bins, weights=countList),
+                   'min': bins[np.nonzero(countList)[0]],
+                   'max': bins[np.nonzero(countList)[-1]]}
+            else:
+                return {'coords': bins,
+                   'vals': countList,
+                   'mean': 0,
+                   'median': 0,
+                   'min': 0,
+                   'max': 0}
+        vpstats = [distribution_dict(x) for x in 
+                   decodeMetadata.intensityCountsByArea]
+
+        fig = plt.figure(figsize=(15, 5))
+        ax = plt.subplot(1,1,1)
+        ax.violin(vpstats, positions=decodeMetadata.areaBins[:-1], 
+                  showmeans=True, showextrema=False)
+
+        if 'filter_task' in inputTasks and isinstance(
+                inputTasks['filter_task'], 
+                filterbarcodes.FilterBarcodes):
+            plt.axvline(
+                x=inputTasks['filter_task'].parameters['area_threshold'] - 0.5,
+                color='green', linestyle=':')
+            plt.axhline(y=np.log10(
+                inputTasks['filter_task'].parameters['intensity_threshold']),
+                color='green', linestyle=':')
+
+        plt.xlabel('Barcode area (pixels)')
+        plt.ylabel('Mean intensity ($log_{10}$)')
+        plt.title('Intensity distribution by barcode area')
+        plt.xlim([0, 17])
 
         return fig
 

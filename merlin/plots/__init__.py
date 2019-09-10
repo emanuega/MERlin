@@ -42,7 +42,7 @@ class PlotEngine:
 
         requiredMetadata = \
             {m for p in self.plotList for m in p.get_required_metadata()}
-        self.metadataDict = {x.metadata_name(): x(self, taskDict)
+        self.metadataDict = {x.metadata_name(): x(plotTask, taskDict)
                              for x in requiredMetadata}
 
     def get_plots(self) -> List[AbstractPlot]:
@@ -60,9 +60,6 @@ class PlotEngine:
         """
 
         incompletePlots = [p for p in self.plotList if not p.is_complete()]
-        print(get_available_plots())
-        print(self.plotList)
-        print(incompletePlots)
         if len(incompletePlots) == 0:
             return True
 

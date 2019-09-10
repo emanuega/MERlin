@@ -131,9 +131,10 @@ class AbstractPlot(ABC):
         if not self.is_relevant(inputTasks):
             return
         f = self._generate_plot(inputTasks, inputMetadata)
-        self._analysisTask.dataSet.save_figure(self._analysisTask, f,
-                                               self.figure_name(),
-                                               type(self).__module__)
+        self._analysisTask.dataSet.save_figure(
+                self._analysisTask, f, self.figure_name(), 
+                type(self).__module__.split('.')[-1])
+        plt.close(f)
 
 
 class PlotMetadata(ABC):
@@ -167,7 +168,7 @@ class PlotMetadata(ABC):
             raised while reading the metadata
         """
         try:
-            self._analysisTask.dataSet.load_numpy_analysis_result(
+            return self._analysisTask.dataSet.load_numpy_analysis_result(
                 resultName, self._analysisTask,
                 subdirectory=self.metadata_name())
         except IOError:

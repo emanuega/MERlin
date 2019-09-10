@@ -76,7 +76,7 @@ class MeanIntensityDistributionPlot(AbstractPlot):
     def _generate_plot(self, inputTasks, inputMetadata):
         decodeMetadata = inputMetadata[
             'decodeplots.DecodedBarcodesMetadata']
-        intensityX = decodeMetadata.intensityBins
+        intensityX = decodeMetadata.intensityBins[:-1]
         shift = (intensityX[0] + intensityX[1]) / 2
         intensityX = [x + shift for x in intensityX]
 
@@ -109,12 +109,12 @@ class DecodedBarcodeAbundancePlot(AbstractPlot):
 
         barcodeCounts = decodeMetadata.barcodeCounts
         countDF = pandas.DataFrame(decodeMetadata.barcodeCounts,
-                                   index=np.arange(barcodeCounts),
+                                   index=np.arange(len(barcodeCounts)),
                                    columns=['counts'])
 
-        codingDF = countDF[countDF.index.isin(codebook.get_coding_indexes)]\
+        codingDF = countDF[countDF.index.isin(codebook.get_coding_indexes())]\
             .sort_values(by='counts', ascending=False)
-        blankDF = countDF[countDF.index.isin(codebook.get_blank_indexes)]\
+        blankDF = countDF[countDF.index.isin(codebook.get_blank_indexes())]\
             .sort_values(by='counts', ascending=False)
 
         fig = plt.figure(figsize=(10, 5))
@@ -142,21 +142,21 @@ class DecodedBarcodesMetadata(PlotMetadata):
             'complete_fragments', [False]*self.decodeTask.fragment_count())
         self.areaBins = np.arange(25)
         self.areaCounts = self._load_numpy_metadata(
-            'area_counts', np.zeros(len(self.areaBins)))
+            'area_counts', np.zeros(len(self.areaBins)-1))
 
         self.barcodeCounts = self._load_numpy_metadata(
             'barcode_counts', np.zeros(codebook.get_barcode_count()))
-        if np.sum(self.completeFragments >= min(
-                20, self.decodeTask.fragment_count())):
+        if np.sum(self.completeFragments) >= min(
+                20, self.decodeTask.fragment_count()):
             self.intensityBins = self._load_numpy_metadata('intensity_bins')
             self.intensityCounts = self._load_numpy_metadata(
-                'intensity_counts', np.zeros(len(self.intensityBins)))
+                'intensity_counts', np.zeros(len(self.intensityBins)-1))
             self.distanceBins = self._load_numpy_metadata('distance_bins')
             self.distanceCounts = self._load_numpy_metadata(
-                'distance_counts', np.zeros(len(self.distanceBins)))
+                'distance_counts', np.zeros(len(self.distanceBins)-1))
             self.intensityCountsByArea = self._load_numpy_metadata(
                 'intensity_by_area',
-                np.zeros(len(self.areaBins), len(self.intensityBins)))
+                np.zeros((len(self.areaBins)-1, len(self.intensityBins)-1)))
             self.binsDetermined = True
 
         self.binsDetermined = False
@@ -173,9 +173,9 @@ class DecodedBarcodesMetadata(PlotMetadata):
         self.distanceBins = np.linspace(minDistance, maxDistance, 100)
 
         self.intensityCountsByArea = \
-            np.zeros(len(self.areaBins), len(self.intensityBins))
-        self.distanceCounts = np.zeros(len(self.distanceBins))
-        self.intensityCounts = np.zeros(len(self.intensityBins))
+            np.zeros((len(self.areaBins)-1, len(self.intensityBins)-1))
+        self.distanceCounts = np.zeros(len(self.distanceBins)-1)
+        self.intensityCounts = np.zeros(len(self.intensityBins)-1)
 
         self._save_numpy_metadata(self.intensityBins, 'intensity_bins')
         self._save_numpy_metadata(self.distanceBins, 'distance_bins')
@@ -184,7 +184,8 @@ class DecodedBarcodesMetadata(PlotMetadata):
 
     def _extract_from_barcodes(self, barcodes):
         self.barcodeCounts += np.histogram(
-            barcodes['barcode_id'], bins=np.arange(len(self.barcodeCounts)))
+            barcodes['barcode_id'], 
+            bins=np.arange(len(self.barcodeCounts)+1))[0]
 
         self.areaCounts += np.histogram(barcodes['area'],
                                         bins=self.areaBins)[0]
@@ -193,9 +194,10 @@ class DecodedBarcodesMetadata(PlotMetadata):
         self.distanceCounts += np.histogram(
             np.log10(barcodes['min_distance']), bins=self.distanceBins)[0]
 
-        for i, currentArea in enumerate(self.areaBins):
+        for i, currentArea in enumerate(self.areaBins[:-1]):
             self.intensityCountsByArea[i, :] += np.histogram(
-                np.log10(barcodes['mean_intensity']),
+                np.log10(barcodes[barcodes['area']==currentArea][
+                    'mean_intensity']),
                 bins=self.intensityBins)[0]
 
     def update(self) -> None:

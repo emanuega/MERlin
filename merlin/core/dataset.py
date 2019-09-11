@@ -93,7 +93,7 @@ class DataSet(object):
         return os.sep.join([self.analysisPath, 'snakemake'])
 
     def save_figure(self, analysisTask: TaskOrName, figure: plt.Figure,
-                    figureName: str) -> None:
+                    figureName: str, subdirectory: str = 'figures') -> None:
         """Save the figure into the analysis results for this DataSet
 
         This function will save the figure in both png and pdf formats.
@@ -103,13 +103,35 @@ class DataSet(object):
             figure: the figure handle for the figure to save
             figureName: the name of the file to store the figure in, excluding
                     extension
+            subdirectory: the name of the subdirectory within the specified
+                    analysis task to save the figures.
         """
         savePath = os.sep.join(
-                [self.get_analysis_subdirectory(analysisTask, 'figures'),
+                [self.get_analysis_subdirectory(analysisTask, subdirectory),
                     figureName])
 
         figure.savefig(savePath + '.png', pad_inches=0)
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
+
+    def figure_exists(self, analysisTask: TaskOrName, figureName: str,
+                      subdirectory: str = 'figures') -> bool:
+        """Determine if a figure with the specified name has been
+        saved within the results for the specified analysis task.
+
+        This function only checks for the png formats.
+
+        Args:
+            analysisTask: the analysis task that generated this figure.
+            figureName: the name of the file to store the figure in, excluding
+                    extension
+            subdirectory: the name of the subdirectory within the specified
+                    analysis task to save the figures.
+        """
+        savePath = os.sep.join(
+            [self.get_analysis_subdirectory(analysisTask, subdirectory),
+             figureName]) + '.png'
+
+        return os.path.exists(savePath)
 
     def get_analysis_image_set(
             self, analysisTask: TaskOrName, imageBaseName: str,

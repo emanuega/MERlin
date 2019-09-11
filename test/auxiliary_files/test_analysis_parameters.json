@@ -61,7 +61,6 @@
         {
             "task": "FilterBarcodes",
             "module": "merlin.analysis.filterbarcodes",
-            "analysis_name": "StrictFilterBarcodes",
             "parameters": {
                 "decode_task": "Decode",
                 "area_threshold": 5,
@@ -69,19 +68,21 @@
             }
         },
         {
-            "task": "WatershedSegment",
-            "module": "merlin.analysis.segment",
+            "task": "ExportBarcodes",
+            "module": "merlin.analysis.exportbarcodes",
             "parameters": {
-                "warp_task": "FiducialCorrelationWarp",
-                "global_align_task": "SimpleGlobalAlignment"
+                "filter_task": "FilterBarcodes"
             }
         },
         {
-            "task": "ExportBarcodes",
-            "module": "merlin.analysis.exportbarcodes",
-            "analysis_name": "StrictExportBarcodes",
+            "task": "PlotPerformance",
+            "module": "merlin.analysis.plotperformance",
             "parameters": {
-                "filter_task": "StrictFilterBarcodes"
+                "preprocess_task": "DeconvolutionPreprocess",
+                "optimize_task": "Optimize2",
+                "decode_task": "Decode",
+                "filter_task": "FilterBarcodes",
+                "global_align_task": "SimpleGlobalAlignment"
             }
         }
     ]

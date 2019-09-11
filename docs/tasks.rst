@@ -135,3 +135,18 @@ Description: An analysis task that generates reports on previously completed ana
 Parameters:
 
 * run\_after\_task -- the task to wait for before generating the Slurm report
+
+plotperformance.PlotPerformance
+-------------------------------
+
+Description: Create quality control plots of the analysis tasks as soon as the analysis results become avaliable.
+
+Parameters:
+
+* decode\_task 
+* filter\_task
+* optimize\_task
+* segment\_task
+* sum\_task
+* partition\_task  
+* global\_align\_task  

@@ -18,7 +18,7 @@ class TestPlot(AbstractPlot):
 
     def _generate_plot(self, inputTasks, inputMetadata):
         fig = plt.figure(figsize=(10, 10))
-        plt.plot(inputMetadata['testplots.TestPlotMetadata'].get_mean_values(),
+        plt.plot(inputMetadata['testplots/TestPlotMetadata'].get_mean_values(),
                  'x')
         return fig
 

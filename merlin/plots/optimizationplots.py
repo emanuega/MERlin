@@ -10,7 +10,7 @@ class OptimizationScaleFactorsPlot(AbstractPlot):
         super().__init__(analysisTask)
 
     def get_required_tasks(self):
-        return {'optimization_task': 'all'}
+        return {'optimize_task': 'all'}
 
     def get_required_metadata(self):
         return []
@@ -18,7 +18,7 @@ class OptimizationScaleFactorsPlot(AbstractPlot):
     def _generate_plot(self, inputTasks, inputMetadata):
         fig = plt.figure(figsize=(5, 5))
         seaborn.heatmap(
-            inputTasks['optimization_task'].get_scale_factor_history())
+            inputTasks['optimize_task'].get_scale_factor_history())
         plt.xlabel('Bit index')
         plt.ylabel('Iteration number')
         plt.title('Scale factor optimization history')
@@ -31,7 +31,7 @@ class OptimizationBarcodeCountsPlot(AbstractPlot):
         super().__init__(analysisTask)
 
     def get_required_tasks(self):
-        return {'optimization_task': 'all'}
+        return {'optimize_task': 'all'}
 
     def get_required_metadata(self):
         return []
@@ -39,7 +39,7 @@ class OptimizationBarcodeCountsPlot(AbstractPlot):
     def _generate_plot(self, inputTasks, inputMetadata):
         fig = plt.figure(figsize=(5, 5))
         seaborn.heatmap(
-            inputTasks['optimization_task'].get_barcode_count_history())
+            inputTasks['optimize_task'].get_barcode_count_history())
         plt.xlabel('Barcode index')
         plt.ylabel('Iteration number')
         plt.title('Barcode counts optimization history')

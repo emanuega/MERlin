@@ -12,36 +12,26 @@ class CodingBarcodeSpatialDistribution(AbstractPlot):
         super().__init__(analysisTask)
 
     def get_required_tasks(self):
-        return {'filter_task': 'all'}
+        return {'filter_task': 'all',
+                'global_align_task': 'all'}
 
     def get_required_metadata(self):
-        return []
+        return [GlobalSpatialDistributionMetadata]
 
     def _generate_plot(self, inputTasks, inputMetadata):
-        codebook = inputTasks['filter_task'].get_codebook()
-        bc = inputTasks['filter_task']\
-            .get_barcode_database().get_barcodes(
-                columnList=['barcode_id', 'global_x', 'global_y'])
-        minX = np.min(bc['global_x'])
-        minY = np.min(bc['global_y'])
-        maxX = np.max(bc['global_x'])
-        maxY = np.max(bc['global_y'])
-
-        codingIDs = codebook.get_coding_indexes()
-        codingBC = bc[bc['barcode_id'].isin(codingIDs)]
-
-        fig = plt.figure(figsize=(10, 10))
+        fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111)
-        h = ax.hist2d(codingBC['global_x'], codingBC['global_y'],
-                      bins=(
-                      np.ceil(maxX - minX) / 5, np.ceil(maxY - minY) / 5),
-                      cmap=plt.get_cmap('Greys'))
-        cbar = plt.colorbar(h[3], ax=ax)
+
+        spatialMetadata = inputMetadata[
+            'filterplots/GlobalSpatialDistributionMetadata']
+        plt.imshow(spatialMetadata.spatialCodingCounts,
+                   extent=spatialMetadata.get_spatial_extents(),
+                   cmap=plt.get_cmap('Greys'))
+        plt.xlabel('X position (pixels)')
+        plt.ylabel('Y position (pixels)')
+        plt.title('Spatial distribution of coding barcodes')
+        cbar = plt.colorbar(ax=ax)
         cbar.set_label('Barcode count', rotation=270)
-        ax.set_aspect('equal', 'datalim')
-        plt.xlabel('X position (microns)')
-        plt.ylabel('Y position (microns)')
-        plt.title('Spatial distribution of identified coding barcodes')
 
         return fig
 
@@ -52,36 +42,26 @@ class BlankBarcodeSpatialDistribution(AbstractPlot):
         super().__init__(analysisTask)
 
     def get_required_tasks(self):
-        return {'filter_task': 'all'}
+        return {'filter_task': 'all',
+                'global_align_task': 'all'}
 
     def get_required_metadata(self):
-        return []
+        return [GlobalSpatialDistributionMetadata]
 
     def _generate_plot(self, inputTasks, inputMetadata):
-        codebook = inputTasks['filter_task'].get_codebook()
-        bc = inputTasks['filter_task']\
-            .get_barcode_database().get_barcodes(
-                columnList=['barcode_id', 'global_x', 'global_y'])
-        minX = np.min(bc['global_x'])
-        minY = np.min(bc['global_y'])
-        maxX = np.max(bc['global_x'])
-        maxY = np.max(bc['global_y'])
-
-        blankIDs = codebook.get_blank_indexes()
-        codingBC = bc[bc['barcode_id'].isin(blankIDs)]
-
-        fig = plt.figure(figsize=(10, 10))
+        fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111)
-        h = ax.hist2d(codingBC['global_x'], codingBC['global_y'],
-                      bins=(
-                      np.ceil(maxX - minX) / 5, np.ceil(maxY - minY) / 5),
-                      cmap=plt.get_cmap('Greys'))
-        cbar = plt.colorbar(h[3], ax=ax)
+
+        spatialMetadata = inputMetadata[
+            'filterplots/GlobalSpatialDistributionMetadata']
+        plt.imshow(spatialMetadata.spatialBlankCounts,
+                   extent=spatialMetadata.get_spatial_extents(),
+                   cmap=plt.get_cmap('Greys'))
+        plt.xlabel('X position (pixels)')
+        plt.ylabel('Y position (pixels)')
+        plt.title('Spatial distribution of blank barcodes')
+        cbar = plt.colorbar(ax=ax)
         cbar.set_label('Barcode count', rotation=270)
-        ax.set_aspect('equal', 'datalim')
-        plt.xlabel('X position (microns)')
-        plt.ylabel('Y position (microns)')
-        plt.title('Spatial distribution of identified blank barcodes')
 
         return fig
 
@@ -140,8 +120,6 @@ class CodingBarcodeFOVDistributionPlot(AbstractPlot):
         plt.title('Spatial distribution of coding barcodes within FOV')
         cbar = plt.colorbar(ax=ax)
         cbar.set_label('Barcode count', rotation=270)
-
-        plt.tight_layout(pad=1)
 
         return fig
 
@@ -348,3 +326,75 @@ class FilteredBarcodesMetadata(PlotMetadata):
 
     def is_complete(self) -> bool:
         return all(self.completeFragments)
+
+
+class GlobalSpatialDistributionMetadata(PlotMetadata):
+
+    def __init__(self, analysisTask, taskDict):
+        super().__init__(analysisTask, taskDict)
+        filterTask = self._taskDict['filter_task']
+        globalTask = self._taskDict['global_align_task']
+        minX, minY, maxX, maxY = globalTask.get_global_extent()
+        xStep = (maxX - minX)/1000
+        yStep = (maxX - minX)/1000
+        codebook = filterTask.get_codebook()
+
+        self.completeFragments = self._load_numpy_metadata(
+            'complete_fragments', [False]*filterTask.fragment_count())
+        self.barcodeCounts = self._load_numpy_metadata(
+            'barcode_counts', np.zeros(codebook.get_barcode_count()))
+        self.spatialXBins = self._load_numpy_metadata(
+            'spatial_x_bins', np.arange(minX, maxX, xStep))
+        self.spatialYBins = self._load_numpy_metadata(
+            'spatial_y_bins', np.arange(minY, maxY, yStep))
+        self.spatialCodingCounts = self._load_numpy_metadata(
+            'spatial_coding_counts',
+            np.zeros((len(self.spatialXBins)-1, len(self.spatialYBins)-1)))
+        self.spatialBlankCounts = self._load_numpy_metadata(
+            'spatial_blank_counts',
+            np.zeros((len(self.spatialXBins)-1, len(self.spatialYBins)-1)))
+
+    def _spatial_distribution(self, inputBarcodes, barcodeIDs):
+        selectBarcodes = inputBarcodes[
+                inputBarcodes['barcode_id'].isin(barcodeIDs)]
+        if len(selectBarcodes) > 1:
+            return np.histogram2d(
+                    selectBarcodes['global_x'], selectBarcodes['global_y'], 
+                    bins=(self.spatialXBins, self.spatialYBins))[0]
+        else:
+            return 0
+
+    def get_spatial_extents(self) -> List[float]:
+        globalTask = self._taskDict['global_align_task']
+        minX, minY, maxX, maxY = globalTask.get_global_extent()
+        return [minX, maxX, minY, maxY]
+
+    def update(self) -> None:
+        updated = False
+        filterTask = self._taskDict['filter_task']
+        codebook = filterTask.get_codebook()
+
+        for i in range(filterTask.fragment_count()):
+            if not self.completeFragments[i] and filterTask.is_complete(i):
+                self.completeFragments[i] = True
+
+                barcodes = filterTask.get_barcode_database().get_barcodes(
+                    i, columnList=['barcode_id', 'global_x', 'global_y'])
+
+                self.spatialCodingCounts += self._spatial_distribution(
+                    barcodes, codebook.get_coding_indexes())
+                self.spatialBlankCounts += self._spatial_distribution(
+                    barcodes, codebook.get_blank_indexes())
+                updated = True
+
+        if updated:
+            self._save_numpy_metadata(self.completeFragments,
+                                      'complete_fragments')
+            self._save_numpy_metadata(self.spatialCodingCounts, 
+                    'spatial_coding_counts')
+            self._save_numpy_metadata(self.spatialBlankCounts, 
+                    'spatial_blank_counts')
+
+    def is_complete(self) -> bool:
+        return all(self.completeFragments)
+

@@ -230,4 +230,3 @@ class SlurmReport(analysistask.AnalysisTask):
                           timeout=10)
         except requests.exceptions.RequestException:
             pass
-

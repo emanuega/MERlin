@@ -48,4 +48,3 @@ class PlotPerformance(analysistask.AnalysisTask):
         plotEngine = plots.PlotEngine(self, taskDict)
         while not plotEngine.take_step():
             pass
-

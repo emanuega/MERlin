@@ -93,7 +93,7 @@ class DataSet(object):
         return os.sep.join([self.analysisPath, 'snakemake'])
 
     def save_figure(self, analysisTask: TaskOrName, figure: plt.Figure,
-                    figureName: str, subdirectory: str='figures') -> None:
+                    figureName: str, subdirectory: str = 'figures') -> None:
         """Save the figure into the analysis results for this DataSet
 
         This function will save the figure in both png and pdf formats.
@@ -114,7 +114,7 @@ class DataSet(object):
         figure.savefig(savePath + '.pdf', transparent=True, pad_inches=0)
 
     def figure_exists(self, analysisTask: TaskOrName, figureName: str,
-                      subdirectory: str='figures') -> bool:
+                      subdirectory: str = 'figures') -> bool:
         """Determine if a figure with the specified name has been
         saved within the results for the specified analysis task.
 
@@ -1090,4 +1090,3 @@ class MERFISHDataSet(ImageDataSet):
 
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
-

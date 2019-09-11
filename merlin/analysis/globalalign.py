@@ -221,4 +221,3 @@ class CorrelationGlobalAlignment(GlobalAlignment):
         fov2 = self.dataSet.get_fiducial_image(0, 1)
 
         return fov1, fov2
-

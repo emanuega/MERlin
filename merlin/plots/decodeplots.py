@@ -147,31 +147,33 @@ class AreaIntensityViolinPlot(AbstractPlot):
             'decodeplots/DecodedBarcodesMetadata']
 
         bins = decodeMetadata.intensityBins[:-1]
+
         def distribution_dict(countList):
             if np.max(countList) > 0:
                 return {'coords': bins,
-                   'vals': countList,
-                   'mean': np.average(bins, weights=countList),
-                   'median': np.average(bins, weights=countList),
-                   'min': bins[np.nonzero(countList)[0]],
-                   'max': bins[np.nonzero(countList)[-1]]}
+                        'vals': countList,
+                        'mean': np.average(bins, weights=countList),
+                        'median': np.average(bins, weights=countList),
+                        'min': bins[np.nonzero(countList)[0]],
+                        'max': bins[np.nonzero(countList)[-1]]}
             else:
                 return {'coords': bins,
-                   'vals': countList,
-                   'mean': 0,
-                   'median': 0,
-                   'min': 0,
-                   'max': 0}
+                        'vals': countList,
+                        'mean': 0,
+                        'median': 0,
+                        'min': 0,
+                        'max': 0}
+
         vpstats = [distribution_dict(x) for x in 
                    decodeMetadata.intensityCountsByArea]
 
         fig = plt.figure(figsize=(15, 5))
-        ax = plt.subplot(1,1,1)
-        ax.violin(vpstats, positions=decodeMetadata.areaBins[:-1], 
+        ax = plt.subplot(1, 1, 1)
+        ax.violin(vpstats, positions=decodeMetadata.areaBins[:-1],
                   showmeans=True, showextrema=False)
 
         if 'filter_task' in inputTasks and isinstance(
-                inputTasks['filter_task'], 
+                inputTasks['filter_task'],
                 filterbarcodes.FilterBarcodes):
             plt.axvline(
                 x=inputTasks['filter_task'].parameters['area_threshold'] - 0.5,
@@ -241,7 +243,7 @@ class DecodedBarcodesMetadata(PlotMetadata):
 
     def _extract_from_barcodes(self, barcodes):
         self.barcodeCounts += np.histogram(
-            barcodes['barcode_id'], 
+            barcodes['barcode_id'],
             bins=np.arange(len(self.barcodeCounts)+1))[0]
 
         self.areaCounts += np.histogram(barcodes['area'],
@@ -253,7 +255,7 @@ class DecodedBarcodesMetadata(PlotMetadata):
 
         for i, currentArea in enumerate(self.areaBins[:-1]):
             self.intensityCountsByArea[i, :] += np.histogram(
-                np.log10(barcodes[barcodes['area']==currentArea][
+                np.log10(barcodes[barcodes['area'] == currentArea][
                     'mean_intensity']),
                 bins=self.intensityBins)[0]
 

@@ -246,7 +246,7 @@ class FOVSpatialDistributionMetadata(PlotMetadata):
                 inputBarcodes['barcode_id'].isin(barcodeIDs)]
         if len(selectBarcodes) > 1:
             return np.histogram2d(
-                    selectBarcodes['x'], selectBarcodes['y'], 
+                    selectBarcodes['x'], selectBarcodes['y'],
                     bins=(self.spatialXBins, self.spatialYBins))[0]
         else:
             return 0
@@ -359,7 +359,7 @@ class GlobalSpatialDistributionMetadata(PlotMetadata):
                 inputBarcodes['barcode_id'].isin(barcodeIDs)]
         if len(selectBarcodes) > 1:
             return np.histogram2d(
-                    selectBarcodes['global_x'], selectBarcodes['global_y'], 
+                    selectBarcodes['global_x'], selectBarcodes['global_y'],
                     bins=(self.spatialXBins, self.spatialYBins))[0]
         else:
             return 0
@@ -390,11 +390,10 @@ class GlobalSpatialDistributionMetadata(PlotMetadata):
         if updated:
             self._save_numpy_metadata(self.completeFragments,
                                       'complete_fragments')
-            self._save_numpy_metadata(self.spatialCodingCounts, 
-                    'spatial_coding_counts')
-            self._save_numpy_metadata(self.spatialBlankCounts, 
-                    'spatial_blank_counts')
+            self._save_numpy_metadata(self.spatialCodingCounts,
+                                      'spatial_coding_counts')
+            self._save_numpy_metadata(self.spatialBlankCounts,
+                                      'spatial_blank_counts')
 
     def is_complete(self) -> bool:
         return all(self.completeFragments)
-

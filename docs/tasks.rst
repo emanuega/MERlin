@@ -136,7 +136,17 @@ Parameters:
 
 * run\_after\_task -- the task to wait for before generating the Slurm report
 
-plotperformance.StreamingPlotPerformance
+plotperformance.PlotPerformance
 -------------------------------
 
-Description: Create QC plots of decoding, filtering, optimization, and segmentation as soon as such data is ready.
+Description: Create quality control plots of the analysis tasks as soon as the analysis results become avaliable.
+
+Parameters:
+
+* decode\_task 
+* filter\_task
+* optimize\_task
+* segment\_task
+* sum\_task
+* partition\_task  
+* global\_align\_task  

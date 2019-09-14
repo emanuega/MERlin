@@ -298,6 +298,11 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
                 self.parameters['decode_task']]
 
     def get_adaptive_thresholds(self):
+        """ Get the adaptive thresholds used for filtering barcodes. 
+
+        Returns: The GenerateaAdaptiveThershold task using for this 
+            adaptive filter.
+        """
         return self.dataSet.load_analysis_task(
             self.parameters['adaptive_task'])
 

@@ -4,6 +4,7 @@ import pandas
 from typing import List
 
 from merlin.plots._base import AbstractPlot, PlotMetadata
+from merlin.analysis import filterbarcodes
 
 
 class CodingBarcodeSpatialDistribution(AbstractPlot):
@@ -186,6 +187,76 @@ class FilteredBarcodeAbundancePlot(AbstractPlot):
         plt.title('Barcode abundances')
         plt.legend(['Coding', 'Blank'])
         plt.tight_layout(pad=0.2)
+
+        return fig
+
+
+class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
+
+    def __init__(self, analysisTask):
+        super().__init__(analysisTask)
+
+    def get_required_tasks(self):
+        return {'filter_task': filterbarcodes.AdaptiveFilterBarcodes}
+
+    def get_required_metadata(self):
+        return []
+
+    def _generate_plot(self, inputTasks, inputMetadata):
+        filterTask = inputTasks['filter_task']
+        adaptiveTask = inputTasks['filter_task'].get_adaptive_thresholds()
+        blankHistogram = adaptiveTask.get_blank_count_histogram()
+        codingHistogram = adaptiveTask.get_coding_count_histogram()
+        blankFraction = adaptiveTask.get_blank_fraction_histogram()
+        threshold = adaptiveTask.calculate_threshold_for_misidentification_rate(
+            filterTask.parameters['misidentification_rate'])
+        areaBins = adaptiveTask.get_area_bins()
+        intensityBins = adaptiveTask.get_intensity_bins()
+        distanceBins = adaptiveTask.get_distance_bins()
+        plotExtent = (distanceBins[0], distanceBins[-1],
+                      intensityBins[0], intensityBins[-1])
+
+        fig = plt.figure(figsize=(20, 30))
+        for i in range(min(len(areaBins), 6)):
+            plt.subplot(6, 4, 4*i+1)
+            plt.imshow(blankHistogram[:, :, i].T + codingHistogram[:, :, i].T,
+                       extent=plotExtent, origin='lower', aspect='auto', 
+                       cmap='OrRd')
+            cbar = plt.colorbar()
+            cbar.set_label('Barcode count', rotation=270, labelpad=8)
+            plt.ylabel('Area=%i\nMean intensity (log10)' % areaBins[i])
+            plt.xlabel('Minimum distance')
+            if i==0:
+                plt.title('Distribution of all barcodes')
+
+            plt.subplot(6, 4, 4*i+2)
+            plt.imshow(blankHistogram[:, :, i].T, extent=plotExtent, 
+                       origin='lower', aspect='auto', cmap='OrRd')
+            cbar = plt.colorbar()
+            cbar.set_label('Blank count', rotation=270, labelpad=8)
+            plt.ylabel('Mean intensity (log10)')
+            plt.xlabel('Minimum distance')
+            if i==0:
+                plt.title('Distribution of blank barcodes')
+
+            plt.subplot(6, 4, 4*i+3)
+            plt.imshow(blankFraction[:, :, i].T, extent=plotExtent, 
+                       origin='lower', aspect='auto', cmap='OrRd',
+                       vmax = 1.0)
+            cbar = plt.colorbar()
+            cbar.set_label('Blank fraction', rotation=270, labelpad=8)
+            plt.ylabel('Mean intensity (log10)')
+            plt.xlabel('Minimum distance')
+            if i==0:
+                plt.title('Distribution of normalized blank fraction')
+
+            plt.subplot(6, 4, 4*i+4)
+            plt.imshow(blankFraction[:, :, i].T < threshold, extent=plotExtent, 
+                       origin='lower', aspect='auto', cmap='OrRd')
+            plt.ylabel('Mean intensity (log10)')
+            plt.xlabel('Minimum distance')
+            if i==0:
+                plt.title('Accepted pixels')
 
         return fig
 

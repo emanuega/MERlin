@@ -105,7 +105,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         blankHistogram = self.get_blank_count_histogram()
         totalHistogram = self.get_coding_count_histogram()
         blankFraction = blankHistogram / totalHistogram
-        blankFraction[totalHistogram == 0] = 0
+        blankFraction[totalHistogram == 0] = np.finfo(blankFraction.dtype).max 
         decodeTask = self.dataSet.load_analysis_task(
             self.parameters['decode_task'])
         codebook = decodeTask.get_codebook()

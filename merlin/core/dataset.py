@@ -803,12 +803,16 @@ class ImageDataSet(DataSet):
         self._load_microscope_parameters()
 
     def get_image_file_names(self):
-        return sorted(
-                [os.sep.join([self.rawDataPath, currentFile])
-                    for currentFile in os.listdir(self.rawDataPath)
-                if currentFile.endswith('.dax')
-                or currentFile.endswith('.tif')
-                or currentFile.endswith('.tiff')])
+        if self.rawDataPath.startswith('s3://'):
+            t = parse.urlparse(self.rawDataPath)
+            allFiles = ['s3://%s/%s' % (t.hostname, f.key)
+                        for f in boto3.resource('s3').Bucket(t.hostname)
+                        .objects.filter(Prefix=t.path.strip('/'))]
+        else:
+            allFiles = [os.sep.join([self.rawDataPath, currentFile])
+                        for currentFile in os.listdir(self.rawDataPath)]
+        return sorted([f for f in allFiles if f.endswith('.dax')
+                       or f.endswith('.tif') or f.endswith('.tiff')])
 
     def load_image(self, imagePath, frameIndex):
         with datareader.infer_reader(imagePath) as reader:

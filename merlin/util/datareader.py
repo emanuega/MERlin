@@ -221,6 +221,10 @@ class DaxReader(Reader):
         scalemax_re = re.compile(r'scalemax = ([\d.\-]+)')
         scalemin_re = re.compile(r'scalemin = ([\d.\-]+)')
 
+        # defaults
+        self.image_height = None
+        self.image_width = None
+
         for line in inf_lines:
             m = size_re.match(line)
             if m:
@@ -251,6 +255,13 @@ class DaxReader(Reader):
             if m:
                 self.scalemin = int(m.group(1))
 
+        # set defaults, probably correct, but warn the user
+        # that they couldn't be determined from the inf file.
+        if not self.image_height:
+            print("Could not determine image size, assuming 256x256.")
+            self.image_height = 256
+            self.image_width = 256
+
     def load_frame(self, frame_number):
         """
         Load a frame & return it as a np array.
@@ -274,8 +285,6 @@ class S3DaxReader(DaxReader):
     """
 
     def __init__(self, filename, verbose=False):
-        super().__init__(filename, verbose=verbose)
-
         parsedPath = parse.urlparse(filename)
         path = parsedPath.path
 
@@ -285,19 +294,9 @@ class S3DaxReader(DaxReader):
         self.inf_filename = dirname + os.path.splitext(
             os.path.basename(path))[0] + ".inf"
 
-        # defaults
-        self.image_height = None
-        self.image_width = None
-
-        with open(self.inf_filename, 'r') as inf_file:
-            self._parse_inf(inf_file.read().splitlines())
-
-        # set defaults, probably correct, but warn the user
-        # that they couldn't be determined from the inf file.
-        if not self.image_height:
-            print("Could not determine image size, assuming 256x256.")
-            self.image_height = 256
-            self.image_width = 256
+        self._parse_inf(boto3.resource('s3').Object(
+            parsedPath.netloc, self.inf_filename.strip('/')
+            ).get()['Body'].read().decode('utf-8').splitlines())
 
         # open the dax file
         self.fileptr = boto3.resource('s3').Object(
@@ -312,8 +311,8 @@ class S3DaxReader(DaxReader):
         startByte = frame_number * self.image_height * self.image_width * 2
         endByte = startByte + 2*(self.image_height * self.image_width) - 1
         image_data = np.frombuffer(self.fileptr.get(
-            Range='bytes=%i-%i' % (startByte, endByte)), dtype='uint16',
-            count=self.image_height * self.image_width)
+            Range='bytes=%i-%i' % (startByte, endByte))['Body'].read(),
+            dtype='uint16')
         image_data = np.reshape(image_data,
                                 [self.image_height, self.image_width])
         if self.bigendian:

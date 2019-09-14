@@ -260,6 +260,45 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
 
         return fig
 
+class AdaptiveFilterMisidentificationVsAbundance(AbstractPlot):
+
+    def __init__(self, analysisTask):
+        super().__init__(analysisTask)
+
+    def get_required_tasks(self):
+        return {'filter_task': filterbarcodes.AdaptiveFilterBarcodes}
+
+    def get_required_metadata(self):
+        return []
+
+    def _generate_plot(self, inputTasks, inputMetadata):
+        filterTask = inputTasks['filter_task']
+        adaptiveTask = inputTasks['filter_task'].get_adaptive_thresholds()
+
+        fig = plt.figure(figsize=(7, 7))
+        sampleThresholds = np.arange(0.01, 0.5, 0.01)
+        barcodeCounts = [
+                adaptiveTask.calculate_barcode_count_for_threshold(x)
+                for x in sampleThresholds]
+        misidentificationRates = [
+                adaptiveTask.calculate_misidentification_rate_for_threshold(x)
+                for x in sampleThresholds]
+        plt.plot(misidentificationRates, barcodeCounts, '.')
+
+        selectMisidentification = filterTask.parameters[
+                'misidentification_rate']
+        selectThreshold = \
+                adaptiveTask.calculate_threshold_for_misidentification_rate(
+                        selectMisidentification)
+        selectCount = adaptiveTask.calculate_barcode_count_for_threshold(
+                selectThreshold)
+        plt.scatter([selectMisidentification], [selectCount], s=20,
+                facecolors='none', edgecolors='r')
+        plt.ylabel('Barcode count')
+        plt.xlabel('Misidentification rate')
+        plt.title('Abundance vs misidentification rate')
+
+        return fig
 
 class FOVSpatialDistributionMetadata(PlotMetadata):
 

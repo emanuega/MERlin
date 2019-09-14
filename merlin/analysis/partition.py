@@ -71,7 +71,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
         for cell in currentCells:
             contained = cell.contains_positions(currentFOVBarcodes.loc[:,
                                                 ['global_x', 'global_y',
-                                                 'global_z']].values)
+                                                 'z']].values)
             count = currentFOVBarcodes[contained].groupby('barcode_id').size()
             count = count.reindex(range(barcodeCount), fill_value=0)
             countsDF.loc[cell.get_feature_id(), :] = count.values.tolist()

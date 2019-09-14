@@ -39,7 +39,7 @@ Position list
 
 The position list is a csv file containing a list of positions for each imaged region. The i'th row in the file should be coordinates of the i'th field of view. Each position is specified by the x position and the y position, separated by a comma. 
 
-This file is expected to contain 'positions' in the file name and should be present either in the raw data directory or the parent directory. Alternatively, the name of a position csv file that is located in POSITION\_HOME can be provided. 
+The name of a position csv file that within the POSITION\_HOME directory can be provided, otherwise the positions are extracted from the image metadata xml.
 
 Microscope parameters
 -----------------------

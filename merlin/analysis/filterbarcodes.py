@@ -115,6 +115,33 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                 blankBarcodeCount + codingBarcodeCount)
         return blankFraction
 
+    def calculate_misidentification_rate_for_threshold(
+            self, threshold: float) -> float:
+        """ Calculate the misidentification rate for a specified blank
+        fraction threshold.
+
+        Args:
+            threshold: the blank fraction threshold
+        Returns: The estimated misidentification rate, estimated as the
+            number of blank barcodes per blank barcode divided
+            by the number of coding barcodes per coding barcode.
+        """
+        decodeTask = self.dataSet.load_analysis_task(
+            self.parameters['decode_task'])
+        codebook = decodeTask.get_codebook()
+        blankBarcodeCount = len(codebook.get_blank_indexes())
+        codingBarcodeCount = len(codebook.get_coding_indexes())
+        blankHistogram = self.get_blank_count_histogram()
+        codingHistogram = self.get_coding_count_histogram()
+        blankFraction = self.get_blank_fraction_histogram()
+
+        selectBins = blankFraction < threshold
+        codingCounts = np.sum(codingHistogram[selectBins])
+        blankCounts = np.sum(blankHistogram[selectBins])
+
+        return ((blankCounts/blankBarcodeCount) /
+                (codingCounts/codingBarcodeCount))
+
     def calculate_threshold_for_misidentification_rate(
             self, targetMisidentificationRate: float) -> float:
         """ Calculate the blank fraction threshold that achieves a specified
@@ -125,26 +152,26 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         Returns: the blank fraction threshold that achieves
             targetMisidentificationRate
         """
-        decodeTask = self.dataSet.load_analysis_task(
-            self.parameters['decode_task'])
-        codebook = decodeTask.get_codebook()
-        blankBarcodeCount = len(codebook.get_blank_indexes())
-        codingBarcodeCount = len(codebook.get_coding_indexes())
-
-        blankHistogram = self.get_blank_count_histogram()
-        codingHistogram = self.get_coding_count_histogram()
-        blankFraction = self.get_blank_fraction_histogram()
-
         def misidentification_rate_error_for_threshold(x, targetError):
-            selectBins = blankFraction < x
-            codingCounts = np.sum(codingHistogram[selectBins])
-            blankCounts = np.sum(blankHistogram[selectBins])
-
-            return ((blankCounts/blankBarcodeCount) /
-                    (codingCounts/codingBarcodeCount)) - targetError
+            return self.calculate_misidentification_rate_for_threshold(x) \
+                - targetError
         return optimize.newton(
             misidentification_rate_error_for_threshold, 0.2,
             args=[targetMisidentificationRate], tol=0.001, x1=0.3)
+
+    def calculate_barcode_count_for_threshold(self, threshold: float) -> float:
+        """ Calculate the number of barcodes remaining after applying
+        the specified blank fraction threshold.
+
+        Args:
+            threshold: the blank fraction threshold
+        Returns: The number of barcodes passing the threshold.
+        """
+        blankHistogram = self.get_blank_count_histogram()
+        codingHistogram = self.get_coding_count_histogram()
+        blankFraction = self.get_blank_fraction_histogram()
+        return np.sum(blankHistogram[blankFraction < threshold]) \
+                + np.sum(codingHistogram[blankFraction < threshold])
 
     def extract_barcodes_with_threshold(self, blankThreshold: float,
                                         barcodeSet: pandas.DataFrame

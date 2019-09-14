@@ -18,6 +18,9 @@ from typing import Dict
 from typing import Optional
 import h5py
 import tables
+from urllib import parse
+import xmltodict
+import boto3
 
 from merlin.util import datareader
 import merlin
@@ -873,6 +876,24 @@ class ImageDataSet(DataSet):
         """
         return self.imageDimensions
 
+    def get_image_xml_metadata(self, imagePath: str) -> Dict:
+        """ Get the xml metadata stored for the specified image.
+
+        Args:
+            imagePath: the path to the image file (.dax or .tif)
+        Returns: the metadata from the associated xml file
+        """
+        xmlPath = os.path.splitext(imagePath)[0] + '.xml'
+
+        if xmlPath.startswith('s3://'):
+            t = parse.urlparse(xmlPath)
+            xmlString = boto3.resource('s3').Object(
+                t.netloc, t.path.strip('/')).read().decode('utf-8')
+        else:
+            with open(xmlPath, 'r') as xmlFile:
+                xmlString = xmlFile.read()
+        return xmltodict.parse(xmlString)
+
 
 class MERFISHDataSet(ImageDataSet):
 
@@ -909,20 +930,17 @@ class MERFISHDataSet(ImageDataSet):
         super().__init__(dataDirectoryName, dataHome, analysisHome,
                          microscopeParametersName)
 
-        # TODO: it is possible to also extract positions from the images. This
-        # should be implemented
-        if positionFileName is not None:
-            self._import_positions(positionFileName)
-        self._load_positions()
-
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
         if codebookNames:
-            print(codebookNames)
             self.codebooks = [codebook.Codebook(self, name, i)
                               for i, name in enumerate(codebookNames)]
         else:
             self.codebooks = self.load_codebooks()
+
+        if positionFileName is not None:
+            self._import_positions(positionFileName)
+        self._load_positions()
 
     def save_codebook(self, codebook: codebook.Codebook) -> None:
         """ Store the specified codebook in this dataset.
@@ -1085,25 +1103,24 @@ class MERFISHDataSet(ImageDataSet):
                 self.dataOrganization.get_fiducial_filename(dataChannel, fov),
                 self.dataOrganization.get_fiducial_frame_index(dataChannel))
 
+    def _import_positions_from_metadata(self):
+        positionData = []
+        for f in self.get_fovs():
+            metadata = self.get_image_xml_metadata(
+                self.dataOrganization.get_image_filename(0, f))
+            currentPositions = \
+                metadata['settings']['acquisition']['stage_position'] \
+                    .split(',')
+            positionData.append([[float(x) for x in currentPositions]])
+        positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
+        np.savetxt(positionPath, np.array(positionData), delimiter=',')
+
     def _load_positions(self):
         positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
-        #TODO - this is messy searching for the position file
-        #TODO - I should check to make sure the number of positions 
-        # matches the number of FOVs
         if not os.path.exists(positionPath):
-            for f in os.listdir(self.rawDataPath):
-                if fnmatch.fnmatch(f, '*position*'):
-                    shutil.copyfile(
-                            os.sep.join([self.rawDataPath, f]), positionPath)
-        
-        if not os.path.exists(positionPath):
-            for f in os.listdir(os.sep.join([self.rawDataPath, '..'])):
-                if fnmatch.fnmatch(f, '*position*'):
-                    shutil.copyfile(
-                            os.sep.join([self.rawDataPath, '..', f]), 
-                            positionPath)
-        self.positions = pandas.read_csv(positionPath, header=None,
-                names=['X','Y'])
+            self._import_positions_from_metadata()
+        self.positions = pandas.read_csv(
+            positionPath, header=None, names=['X', 'Y'])
 
     def _import_positions(self, positionFileName):
         sourcePath = os.sep.join([merlin.POSITION_HOME, positionFileName])

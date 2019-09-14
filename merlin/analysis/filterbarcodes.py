@@ -111,7 +111,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         codebook = decodeTask.get_codebook()
         blankBarcodeCount = len(codebook.get_blank_indexes())
         codingBarcodeCount = len(codebook.get_coding_indexes())
-        blankFraction /= (blankBarcodeCount)/(
+        blankFraction /= blankBarcodeCount/(
                 blankBarcodeCount + codingBarcodeCount)
         return blankFraction
 
@@ -171,7 +171,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         codingHistogram = self.get_coding_count_histogram()
         blankFraction = self.get_blank_fraction_histogram()
         return np.sum(blankHistogram[blankFraction < threshold]) \
-                + np.sum(codingHistogram[blankFraction < threshold])
+            + np.sum(codingHistogram[blankFraction < threshold])
 
     def extract_barcodes_with_threshold(self, blankThreshold: float,
                                         barcodeSet: pandas.DataFrame
@@ -183,9 +183,9 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
 
         barcodeBins = np.array(
             (np.digitize(selectData[:, 0], self.get_intensity_bins(),
-                              right=True),
+                         right=True),
              np.digitize(selectData[:, 1], self.get_distance_bins(),
-                              right=True),
+                         right=True),
              np.digitize(selectData[:, 2], self.get_area_bins()))) - 1
         barcodeBins[0, :] = np.clip(
             barcodeBins[0, :], 0, blankFractionHistogram.shape[0]-1)
@@ -251,7 +251,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                         return inputData.min(), inputData.max()
                     sampledFragments = np.random.choice(
                             [i for i, p in enumerate(pendingFragments) if p],
-                            size=(20))
+                            size=20)
                     intensityExtremes = [
                         extreme_values(barcodeDB.get_barcodes(
                             i, columnList=['mean_intensity'])['mean_intensity'])

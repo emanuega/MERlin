@@ -226,7 +226,7 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
             cbar.set_label('Barcode count', rotation=270, labelpad=8)
             plt.ylabel('Area=%i\nMean intensity (log10)' % areaBins[i])
             plt.xlabel('Minimum distance')
-            if i==0:
+            if i == 0:
                 plt.title('Distribution of all barcodes')
 
             plt.subplot(6, 4, 4*i+2)
@@ -236,18 +236,18 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
             cbar.set_label('Blank count', rotation=270, labelpad=8)
             plt.ylabel('Mean intensity (log10)')
             plt.xlabel('Minimum distance')
-            if i==0:
+            if i == 0:
                 plt.title('Distribution of blank barcodes')
 
             plt.subplot(6, 4, 4*i+3)
             plt.imshow(blankFraction[:, :, i].T, extent=plotExtent, 
                        origin='lower', aspect='auto', cmap='OrRd',
-                       vmax = 1.0)
+                       vmax=1.0)
             cbar = plt.colorbar()
             cbar.set_label('Blank fraction', rotation=270, labelpad=8)
             plt.ylabel('Mean intensity (log10)')
             plt.xlabel('Minimum distance')
-            if i==0:
+            if i == 0:
                 plt.title('Distribution of normalized blank fraction')
 
             plt.subplot(6, 4, 4*i+4)
@@ -255,10 +255,11 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
                        origin='lower', aspect='auto', cmap='OrRd')
             plt.ylabel('Mean intensity (log10)')
             plt.xlabel('Minimum distance')
-            if i==0:
+            if i == 0:
                 plt.title('Accepted pixels')
 
         return fig
+
 
 class AdaptiveFilterMisidentificationVsAbundance(AbstractPlot):
 
@@ -281,24 +282,25 @@ class AdaptiveFilterMisidentificationVsAbundance(AbstractPlot):
                 adaptiveTask.calculate_barcode_count_for_threshold(x)
                 for x in sampleThresholds]
         misidentificationRates = [
-                adaptiveTask.calculate_misidentification_rate_for_threshold(x)
-                for x in sampleThresholds]
+            adaptiveTask.calculate_misidentification_rate_for_threshold(x)
+            for x in sampleThresholds]
         plt.plot(misidentificationRates, barcodeCounts, '.')
 
         selectMisidentification = filterTask.parameters[
                 'misidentification_rate']
         selectThreshold = \
-                adaptiveTask.calculate_threshold_for_misidentification_rate(
-                        selectMisidentification)
+            adaptiveTask.calculate_threshold_for_misidentification_rate(
+                selectMisidentification)
         selectCount = adaptiveTask.calculate_barcode_count_for_threshold(
                 selectThreshold)
         plt.scatter([selectMisidentification], [selectCount], s=20,
-                facecolors='none', edgecolors='r')
+                    facecolors='none', edgecolors='r')
         plt.ylabel('Barcode count')
         plt.xlabel('Misidentification rate')
         plt.title('Abundance vs misidentification rate')
 
         return fig
+
 
 class FOVSpatialDistributionMetadata(PlotMetadata):
 

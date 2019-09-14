@@ -1,8 +1,11 @@
 import hashlib
-import numpy
+import numpy as np
 import os
 import re
 import tifffile
+import boto3
+from urllib import parse
+from typing import List
 
 # The following  code is adopted from github.com/ZhuangLab/storm-analysis and
 # is subject to the following license:
@@ -30,20 +33,24 @@ import tifffile
 # THE SOFTWARE.
 
 
-def infer_reader(filename, verbose=False):
+def infer_reader(filename: str, verbose: bool=False):
     """
     Given a file name this will try to return the appropriate
     reader based on the file extension.
     """
     ext = os.path.splitext(filename)[1]
-    if ext == ".dax":
-        return DaxReader(filename, verbose=verbose)
-    elif ext == ".tif" or ext == ".tiff":
-        return TifReader(filename, verbose=verbose)
+    s3 = filename.startswith('s3://')
+    if s3:
+        if ext == ".dax":
+            return S3DaxReader(filename, verbose=verbose)
     else:
-        print(ext, "is not a recognized file type")
-        raise IOError(
-            "only .dax, .spe and .tif are supported (case sensitive..)")
+        if ext == ".dax":
+            return DaxReader(filename, verbose=verbose)
+        elif ext == ".tif" or ext == ".tiff":
+            return TifReader(filename, verbose=verbose)
+    print(ext, "is not a recognized file type")
+    raise IOError(
+        "only .dax, .spe and .tif are supported (case sensitive..)")
 
 
 class Reader(object):
@@ -56,7 +63,7 @@ class Reader(object):
         various key bits of meta-data such as the size in XY
         and the length of the movie.
      2. loadAFrame(self, frame_number)
-        Load the requested frame and return it as numpy array.
+        Load the requested frame and return it as np array.
     """
 
     def __init__(self, filename, verbose=False):
@@ -84,8 +91,8 @@ class Reader(object):
         Average multiple frames in a movie.
         """
         length = 0
-        average = numpy.zeros((self.image_height, self.image_width),
-                              numpy.float)
+        average = np.zeros((self.image_height, self.image_width),
+                           np.float)
         for [i, frame] in self.frame_iterator(start, end):
             if self.verbose and ((i % 10) == 0):
                 print(" processing frame:", i, " of", self.number_frames)
@@ -187,7 +194,24 @@ class DaxReader(Reader):
         self.image_height = None
         self.image_width = None
 
-        # extract the movie information from the associated inf file
+        with open(self.inf_filename, 'r') as inf_file:
+            self._parse_inf(inf_file.read().splitlines())
+
+        # set defaults, probably correct, but warn the user
+        # that they couldn't be determined from the inf file.
+        if not self.image_height:
+            print("Could not determine image size, assuming 256x256.")
+            self.image_height = 256
+            self.image_width = 256
+
+        # open the dax file
+        if os.path.exists(filename):
+            self.fileptr = open(filename, "rb")
+        else:
+            if self.verbose:
+                print("dax data not found", filename)
+
+    def _parse_inf(self, inf_lines: List[str]) -> None:
         size_re = re.compile(r'frame dimensions = ([\d]+) x ([\d]+)')
         length_re = re.compile(r'number of frames = ([\d]+)')
         endian_re = re.compile(r' (big|little) endian')
@@ -197,11 +221,7 @@ class DaxReader(Reader):
         scalemax_re = re.compile(r'scalemax = ([\d.\-]+)')
         scalemin_re = re.compile(r'scalemin = ([\d.\-]+)')
 
-        inf_file = open(self.inf_filename, "r")
-        while 1:
-            line = inf_file.readline()
-            if not line:
-                break
+        for line in inf_lines:
             m = size_re.match(line)
             if m:
                 self.image_height = int(m.group(2))
@@ -231,7 +251,46 @@ class DaxReader(Reader):
             if m:
                 self.scalemin = int(m.group(1))
 
-        inf_file.close()
+    def load_frame(self, frame_number):
+        """
+        Load a frame & return it as a np array.
+        """
+        super(DaxReader, self).load_frame(frame_number)
+
+        self.fileptr.seek(
+            frame_number * self.image_height * self.image_width * 2)
+        image_data = np.fromfile(self.fileptr, dtype='uint16',
+                                 count=self.image_height * self.image_width)
+        image_data = np.reshape(image_data,
+                                [self.image_height, self.image_width])
+        if self.bigendian:
+            image_data.byteswap(True)
+        return image_data
+
+
+class S3DaxReader(DaxReader):
+    """
+    Dax reader class for dax files stored on AWS S3.
+    """
+
+    def __init__(self, filename, verbose=False):
+        super().__init__(filename, verbose=verbose)
+
+        parsedPath = parse.urlparse(filename)
+        path = parsedPath.path
+
+        dirname = os.path.dirname(path)
+        if len(dirname) > 0:
+            dirname = dirname + "/"
+        self.inf_filename = dirname + os.path.splitext(
+            os.path.basename(path))[0] + ".inf"
+
+        # defaults
+        self.image_height = None
+        self.image_width = None
+
+        with open(self.inf_filename, 'r') as inf_file:
+            self._parse_inf(inf_file.read().splitlines())
 
         # set defaults, probably correct, but warn the user
         # that they couldn't be determined from the inf file.
@@ -241,24 +300,22 @@ class DaxReader(Reader):
             self.image_width = 256
 
         # open the dax file
-        if os.path.exists(filename):
-            self.fileptr = open(filename, "rb")
-        else:
-            if self.verbose:
-                print("dax data not found", filename)
+        self.fileptr = boto3.resource('s3').Object(
+            parsedPath.netloc, parsedPath.path.strip('/'))
 
     def load_frame(self, frame_number):
         """
-        Load a frame & return it as a numpy array.
+        Load a frame & return it as a np array.
         """
         super(DaxReader, self).load_frame(frame_number)
 
-        self.fileptr.seek(
-            frame_number * self.image_height * self.image_width * 2)
-        image_data = numpy.fromfile(self.fileptr, dtype='uint16',
-                                    count=self.image_height * self.image_width)
-        image_data = numpy.reshape(image_data,
-                                   [self.image_height, self.image_width])
+        startByte = frame_number * self.image_height * self.image_width * 2
+        endByte = startByte + 2*(self.image_height * self.image_width) - 1
+        image_data = np.frombuffer(self.fileptr.get(
+            Range='bytes=%i-%i' % (startByte, endByte)), dtype='uint16',
+            count=self.image_height * self.image_width)
+        image_data = np.reshape(image_data,
+                                [self.image_height, self.image_width])
         if self.bigendian:
             image_data.byteswap(True)
         return image_data
@@ -373,6 +430,6 @@ class TifReader(Reader):
             image_data.shape)
 
         if cast_to_int16:
-            image_data = image_data.astype(numpy.uint16)
+            image_data = image_data.astype(np.uint16)
 
         return image_data

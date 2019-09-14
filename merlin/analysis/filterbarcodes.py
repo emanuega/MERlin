@@ -97,7 +97,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         return self.dataSet.load_numpy_analysis_result(
             'distance_bins', self)
 
-    def get_intensity_bins(self) ->np.ndarray:
+    def get_intensity_bins(self) -> np.ndarray:
         return self.dataSet.load_numpy_analysis_result(
             'intensity_bins', self, None)
 
@@ -105,7 +105,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         blankHistogram = self.get_blank_count_histogram()
         totalHistogram = self.get_coding_count_histogram()
         blankFraction = blankHistogram / totalHistogram
-        blankFraction[totalHistogram == 0] = np.finfo(blankFraction.dtype).max 
+        blankFraction[totalHistogram == 0] = np.finfo(blankFraction.dtype).max
         decodeTask = self.dataSet.load_analysis_task(
             self.parameters['decode_task'])
         codebook = decodeTask.get_codebook()
@@ -325,9 +325,9 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
                 self.parameters['decode_task']]
 
     def get_adaptive_thresholds(self):
-        """ Get the adaptive thresholds used for filtering barcodes. 
+        """ Get the adaptive thresholds used for filtering barcodes.
 
-        Returns: The GenerateaAdaptiveThershold task using for this 
+        Returns: The GenerateaAdaptiveThershold task using for this
             adaptive filter.
         """
         return self.dataSet.load_analysis_task(

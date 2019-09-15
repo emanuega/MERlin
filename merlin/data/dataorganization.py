@@ -316,16 +316,19 @@ class DataOrganization(object):
                         (channelInfo['imageType'], fov,
                          channelInfo['imagingRound']))
 
-                if not os.path.exists(imagePath):
-                    print('{0}'.format(dataChannel))
+                if not imagePath.startswith('s3://') \
+                        and not os.path.exists(imagePath):
                     raise InputDataError(
                         ('Image data for channel {0} and fov {1} not found. '
                          'Expected at {2}')
                         .format(dataChannel, fov, imagePath))
+                if imagePath.startswith('s3://'):
+                    # TODO check if file exists in s3
+                    pass
 
                 try:
                     imageSize = self._dataSet.image_stack_size(imagePath)
-                except Exception:
+                except Exception as e:
                     raise InputDataError(
                         ('Unable to determine image stack size for fov {0} from'
                          ' data channel {1} at {2}')

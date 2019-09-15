@@ -833,7 +833,8 @@ class ImageDataSet(DataSet):
             a three element list with [width, height, frameCount] or None
                     if the file does not exist
         """
-        if not os.path.exists(imagePath):
+        if not imagePath.startswith('s3://') and not os.path.exists(imagePath):
+            # TODO update for s3
             return None
 
         with datareader.infer_reader(imagePath) as reader:
@@ -892,7 +893,7 @@ class ImageDataSet(DataSet):
         if xmlPath.startswith('s3://'):
             t = parse.urlparse(xmlPath)
             xmlString = boto3.resource('s3').Object(
-                t.netloc, t.path.strip('/')).read().decode('utf-8')
+                t.netloc, t.path.strip('/')).get()['Body'].read().decode('utf-8')
         else:
             with open(xmlPath, 'r') as xmlFile:
                 xmlString = xmlFile.read()
@@ -1113,9 +1114,9 @@ class MERFISHDataSet(ImageDataSet):
             metadata = self.get_image_xml_metadata(
                 self.dataOrganization.get_image_filename(0, f))
             currentPositions = \
-                metadata['settings']['acquisition']['stage_position'] \
+                metadata['settings']['acquisition']['stage_position']['#text'] \
                     .split(',')
-            positionData.append([[float(x) for x in currentPositions]])
+            positionData.append([float(x) for x in currentPositions])
         positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
         np.savetxt(positionPath, np.array(positionData), delimiter=',')
 

@@ -309,6 +309,9 @@ class S3DaxReader(DaxReader):
             image_data.byteswap(True)
         return image_data
 
+    def close(self):
+        self.fileptr = None
+
 
 class TifReader(Reader):
     """

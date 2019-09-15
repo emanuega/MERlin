@@ -62,11 +62,14 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
 
     """
     An analysis task that generates a three-dimension mean intenisty,
-    area, minimum distance hisogram for barcodes as they are decoded.
+    area, minimum distance histogram for barcodes as they are decoded.
     """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
+
+        # ensure decode_task is specified
+        decodeTask = self.parameters['decode_task']
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -78,7 +81,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         return 1800
 
     def get_dependencies(self):
-        return [self.parameters['decode_task']]
+        return [self.parameters['run_after_task']]
 
     def get_blank_count_histogram(self) -> np.ndarray:
         return self.dataSet.load_numpy_analysis_result('blank_counts', self)

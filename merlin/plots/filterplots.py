@@ -220,7 +220,7 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
         for i in range(min(len(areaBins), 6)):
             plt.subplot(6, 4, 4*i+1)
             plt.imshow(blankHistogram[:, :, i].T + codingHistogram[:, :, i].T,
-                       extent=plotExtent, origin='lower', aspect='auto', 
+                       extent=plotExtent, origin='lower', aspect='auto',
                        cmap='OrRd')
             cbar = plt.colorbar()
             cbar.set_label('Barcode count', rotation=270, labelpad=8)
@@ -230,7 +230,7 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
                 plt.title('Distribution of all barcodes')
 
             plt.subplot(6, 4, 4*i+2)
-            plt.imshow(blankHistogram[:, :, i].T, extent=plotExtent, 
+            plt.imshow(blankHistogram[:, :, i].T, extent=plotExtent,
                        origin='lower', aspect='auto', cmap='OrRd')
             cbar = plt.colorbar()
             cbar.set_label('Blank count', rotation=270, labelpad=8)
@@ -240,7 +240,7 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
                 plt.title('Distribution of blank barcodes')
 
             plt.subplot(6, 4, 4*i+3)
-            plt.imshow(blankFraction[:, :, i].T, extent=plotExtent, 
+            plt.imshow(blankFraction[:, :, i].T, extent=plotExtent,
                        origin='lower', aspect='auto', cmap='OrRd',
                        vmax=1.0)
             cbar = plt.colorbar()
@@ -251,7 +251,7 @@ class AdaptiveFilterBarcodeDistributionPlots(AbstractPlot):
                 plt.title('Distribution of normalized blank fraction')
 
             plt.subplot(6, 4, 4*i+4)
-            plt.imshow(blankFraction[:, :, i].T < threshold, extent=plotExtent, 
+            plt.imshow(blankFraction[:, :, i].T < threshold, extent=plotExtent,
                        origin='lower', aspect='auto', cmap='OrRd')
             plt.ylabel('Mean intensity (log10)')
             plt.xlabel('Minimum distance')

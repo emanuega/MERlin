@@ -74,6 +74,10 @@ filterbarcodes.GenerateAdaptiveThreshold
 
 Description: Generate the barcode parameter histograms for the mean intensity, minimimum distance, and area for filtering barcodes with an adaptive threshold. This is run concurrently with decoding in order to minimize the required time.
 
+Parameters:
+
+* run\_after\_task -- The task to start generating the adaptive threshold after. To run concurrently with decode, this can be specified as the preprocess task, otherwise it can be specified as the decode task.
+
 filterbarcodes.AdaptiveFilterBarcodes
 ----------------------------------------
 

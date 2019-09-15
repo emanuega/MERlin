@@ -33,7 +33,7 @@ from typing import List
 # THE SOFTWARE.
 
 
-def infer_reader(filename: str, verbose: bool=False):
+def infer_reader(filename: str, verbose: bool = False):
     """
     Given a file name this will try to return the appropriate
     reader based on the file extension.

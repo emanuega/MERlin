@@ -6,13 +6,39 @@ import rtree
 from shapely import geometry
 from typing import List, Dict
 from scipy.spatial import cKDTree
+
+from merlin.core import dataset
 from merlin.core import analysistask
 from merlin.util import spatialfeature
 from merlin.util import watershed
 import pandas
 
 
-class WatershedSegment(analysistask.ParallelAnalysisTask):
+class FeatureSavingAnalysisTask(analysistask.ParallelAnalysisTask):
+
+    """
+    An abstract analysis class that saves features into a spatial feature
+    database.
+    """
+
+    def __init__(self, dataSet: dataset.DataSet, parameters=None,
+                 analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+    def _reset_analysis(self, fragmentIndex: int=None) -> None:
+        super()._reset_analysis(fragmentIndex)
+        self.get_feature_database().empty_database(fragmentIndex)
+
+    def get_feature_database(self) -> spatialfeature.SpatialFeatureDB:
+        """ Get the spatial feature database this analysis task saves
+        features into.
+
+        Returns: The spatial feature database reference.
+        """
+        return spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+
+
+class WatershedSegment(FeatureSavingAnalysisTask):
 
     """
     An analysis task that determines the boundaries of features in the
@@ -47,7 +73,7 @@ class WatershedSegment(analysistask.ParallelAnalysisTask):
                 self.parameters['global_align_task']]
 
     def get_cell_boundaries(self) -> List[spatialfeature.SpatialFeature]:
-        featureDB = spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+        featureDB = self.get_feature_database()
         return featureDB.read_features()
 
     def _run_analysis(self, fragmentIndex):
@@ -78,7 +104,7 @@ class WatershedSegment(analysistask.ParallelAnalysisTask):
             globalTask.fov_to_global_transform(fragmentIndex))
             for i in np.unique(watershedOutput) if i != 0]
 
-        featureDB = spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+        featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
 
     def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
@@ -91,11 +117,8 @@ class WatershedSegment(analysistask.ParallelAnalysisTask):
             (filterSize, filterSize), filterSigma)
             for z in range(len(self.dataSet.get_z_positions()))])
 
-    def get_feature_database(self):
-        return spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
 
-
-class AssignCellFOV(analysistask.AnalysisTask):
+class AssignCellFOV(FeatureSavingAnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
@@ -104,6 +127,9 @@ class AssignCellFOV(analysistask.AnalysisTask):
             self.parameters['segment_task'])
         self.alignTask = self.dataSet.load_analysis_task(
             self.parameters['global_align_task'])
+
+    def fragment_count(self):
+        return 1
 
     def get_estimated_memory(self):
         return 2048
@@ -157,12 +183,9 @@ class AssignCellFOV(analysistask.AnalysisTask):
             tree.insert(idToNum[element.get_feature_id()],
                         element.get_bounding_box(), obj=element.get_fov())
 
-    def get_feature_database(self):
-        return spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+    def _run_analysis(self, fragmentIndex):
 
-    def _run_analysis(self):
-
-        featureDB = spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+        featureDB = self.get_feature_database()
 
         spatialIndex = rtree.index.Index()
         allFOVs = self.dataSet.get_fovs()

@@ -112,7 +112,7 @@ class AnalysisTask(ABC):
             raise e
 
     def _reset_analysis(self) -> None:
-        """Remove all files created by this analysis task and remove markers
+        """Remove files created by this analysis task and remove markers
         indicating that this analysis has been started, or has completed.
 
         This function should be overridden by subclasses so that they
@@ -317,7 +317,7 @@ class ParallelAnalysisTask(AnalysisTask):
                 raise e
 
     def _reset_analysis(self, fragmentIndex: int=None) -> None:
-        """Remove all files created by this analysis task and remove markers
+        """Remove files created by this analysis task and remove markers
         indicating that this analysis has been started, or has completed.
         """
         if fragmentIndex is None:

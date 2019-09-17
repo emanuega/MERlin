@@ -10,13 +10,35 @@ from merlin.util import barcodedb
 from merlin.data.codebook import Codebook
 
 
-class Decode(analysistask.ParallelAnalysisTask):
+class BarcodeSavingParallelAnalysisTask(analysistask.ParallelAnalysisTask):
+
+    """
+    An abstract analysis class that saves barcodes into a barcode database.
+    """
+
+    def __init__(self, dataSet: dataset.DataSet, parameters=None,
+                 analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+    def _reset_analysis(self, fragmentIndex: int=None) -> None:
+        super()._reset_analysis(fragmentIndex)
+        self.get_barcode_database().empty_database(fragmentIndex)
+
+    def get_barcode_database(self) -> barcodedb.BarcodeDB:
+        """ Get the barcode database this analysis task saves barcodes into.
+
+        Returns: The barcode database reference.
+        """
+        return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
+
+
+class Decode(BarcodeSavingParallelAnalysisTask):
 
     """
     An analysis task that extracts barcodes from images.
     """
 
-    def __init__(self, dataSet: dataset.ImageDataSet,
+    def __init__(self, dataSet: dataset.MERFISHDataSet,
                  parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
@@ -51,9 +73,6 @@ class Decode(analysistask.ParallelAnalysisTask):
         dependencies = [self.parameters['preprocess_task'],
                         self.parameters['optimize_task'],
                         self.parameters['global_align_task']]
-
-        if 'segment_task' in self.parameters:
-            dependencies += [self.parameters['segment_task']]
 
         return dependencies
 
@@ -158,9 +177,6 @@ class Decode(analysistask.ParallelAnalysisTask):
 
         return di, pm, d
 
-    def get_barcode_database(self) -> barcodedb.BarcodeDB:
-        return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
-
     def _save_decoded_images(self, fov: int, zPositionCount: int,
                              decodedImages: np.ndarray,
                              magnitudeImages: np.ndarray,
@@ -188,16 +204,11 @@ class Decode(analysistask.ParallelAnalysisTask):
         globalTask = self.dataSet.load_analysis_task(
             self.parameters['global_align_task'])
 
-        segmentTask = None
-        if 'segment_task' in self.parameters:
-            segmentTask = self.dataSet.load_analysis_task(
-                self.parameters['segment_task'])
-
         minimumArea = self.parameters['minimum_area']
 
         self.get_barcode_database().write_barcodes(
             pandas.concat([decoder.extract_barcodes_with_index(
                 i, decodedImage, pixelMagnitudes, pixelTraces, distances, fov,
-                self.cropWidth, zIndex, globalTask, segmentTask, minimumArea)
+                self.cropWidth, zIndex, globalTask, None, minimumArea)
                 for i in range(self.get_codebook().get_barcode_count())]),
             fov=fov)

@@ -169,12 +169,10 @@ class PlotMetadata(ABC):
         Returns: a numpy array with the result or defaultValue if an IOError is
             raised while reading the metadata
         """
-        try:
-            return self._analysisTask.dataSet.load_numpy_analysis_result(
-                resultName, self._analysisTask,
+        return self._analysisTask.dataSet\
+            .load_numpy_analysis_result_if_available(
+                resultName, self._analysisTask, defaultValue,
                 subdirectory=self.metadata_name())
-        except IOError:
-            return defaultValue
 
     def _save_numpy_metadata(self, result: np.ndarray, resultName: str) -> None:
         """ Convenience method for saving a result created by this metadata

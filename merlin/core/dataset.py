@@ -443,6 +443,29 @@ class DataSet(object):
                 resultName, analysisName, resultIndex, subdirectory, '.npy')
         return np.load(savePath, allow_pickle=True)
 
+    def load_numpy_analysis_result_if_available(
+            self, resultName: str, analysisName: str, defaultValue,
+            resultIndex: int = None, subdirectory: str = None) -> np.array:
+        """ Load the specified analysis result or return the specified default
+        value if the analysis result does not exist.
+
+        Args:
+            resultName: The name of the analysis result
+            analysisName: The name of the analysis task the result is saved in
+            defaultValue: The value to return if the specified analysis result
+                does not exist
+            resultIndex: The index of the analysi result
+            subdirectory: The subdirectory within the analysis task that the
+                result is saved in
+        Returns: The analysis result or defaultValue if the analysis result
+            doesn't exist.
+        """
+        try:
+            return self.load_numpy_analysis_result(
+                resultName, analysisName, resultIndex, subdirectory)
+        except IOError:
+            return defaultValue
+
     def get_analysis_subdirectory(
             self, analysisTask: TaskOrName, subdirectory: str = None,
             create: bool = True) -> str:

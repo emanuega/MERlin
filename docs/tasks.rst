@@ -58,6 +58,7 @@ Parameters:
 * write_decoded\_images -- Flag indicating if the decoded and intensity images should be written.
 * minimum\_area -- The area threshold, below which decoded barcodes are ignored.
 * lowpass\_sigma -- The standard deviation for the low pass filter prior to decoding.
+* restart\_safely -- Clear existing barcode database for current fov prior to writing barcodes
 
 filterbarcodes.FilterBarcodes
 ------------------------------
@@ -68,6 +69,7 @@ Parameters:
 
 * area\_threshold -- Barcodes with areas below the specified area\_threshold are removed.
 * intensity\_threshold -- Barcodes with intensities below this threshold are removed.  
+* restart\_safely -- Clear existing barcode database for current fov prior to writing barcodes
 
 segment.SegmentCells
 ----------------------

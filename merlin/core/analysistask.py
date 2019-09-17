@@ -257,6 +257,10 @@ class InternallyParallelAnalysisTask(AnalysisTask):
 
 class ParallelAnalysisTask(AnalysisTask):
 
+    # TODO - this can be restructured so that AnalysisTask is instead a subclass
+    # of ParallelAnalysisTask where fragment count is set to 1. This could
+    # help remove some of the redundant code
+
     """
     An abstract class for analysis that can be run in multiple parts 
     independently. Subclasses should implement the analysis to perform in 

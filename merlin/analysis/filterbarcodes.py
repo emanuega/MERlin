@@ -105,6 +105,21 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
             'intensity_bins', self, None)
 
     def get_blank_fraction_histogram(self) -> np.ndarray:
+        """ Get the normalized blank fraction histogram indicating the
+        normalized blank fraction for each intensity, distance, and area
+        bin.
+
+        Returns: The normalized blank fraction histogram. The histogram
+            has three dimensions: mean intensity, minimum distance, and area.
+            The bins in each dimension are defined by the bins returned by
+            get_area_bins, get_distance_bins, and get_area_bins, respectively.
+            Each entry indicates the number of blank barcodes divided by the
+            number of coding barcodes within the corresponding bin
+            normalized by the fraction of blank barcodes in the codebook.
+            With this normalization, when all (both blank and coding) barcodes
+            are selected with equal probability, the blank fraction is
+            expected to be 1.
+        """
         blankHistogram = self.get_blank_count_histogram()
         totalHistogram = self.get_coding_count_histogram()
         blankFraction = blankHistogram / totalHistogram
@@ -124,7 +139,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         fraction threshold.
 
         Args:
-            threshold: the blank fraction threshold
+            threshold: the normalized blank fraction threshold
         Returns: The estimated misidentification rate, estimated as the
             number of blank barcodes per blank barcode divided
             by the number of coding barcodes per coding barcode.
@@ -147,12 +162,12 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
 
     def calculate_threshold_for_misidentification_rate(
             self, targetMisidentificationRate: float) -> float:
-        """ Calculate the blank fraction threshold that achieves a specified
-        misidentification rate.
+        """ Calculate the normalized blank fraction threshold that achieves
+        a specified misidentification rate.
 
         Args:
             targetMisidentificationRate: the target misidentification rate
-        Returns: the blank fraction threshold that achieves
+        Returns: the normalized blank fraction threshold that achieves
             targetMisidentificationRate
         """
         def misidentification_rate_error_for_threshold(x, targetError):
@@ -164,10 +179,10 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
 
     def calculate_barcode_count_for_threshold(self, threshold: float) -> float:
         """ Calculate the number of barcodes remaining after applying
-        the specified blank fraction threshold.
+        the specified normalized blank fraction threshold.
 
         Args:
-            threshold: the blank fraction threshold
+            threshold: the normalized blank fraction threshold
         Returns: The number of barcodes passing the threshold.
         """
         blankHistogram = self.get_blank_count_histogram()

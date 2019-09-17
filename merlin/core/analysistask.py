@@ -15,6 +15,10 @@ class AnalysisAlreadyExistsException(Exception):
     pass
 
 
+class InvalidParameterException(Exception):
+    pass
+
+
 class AnalysisTask(ABC):
 
     """

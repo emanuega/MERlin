@@ -302,6 +302,43 @@ class AdaptiveFilterMisidentificationVsAbundance(AbstractPlot):
         return fig
 
 
+class AdaptiveFilterCountsPerArea(AbstractPlot):
+
+    def __init__(self, analysisTask):
+        super().__init__(analysisTask)
+
+    def get_required_tasks(self):
+        return {'filter_task': filterbarcodes.AdaptiveFilterBarcodes}
+
+    def get_required_metadata(self):
+        return []
+
+    def _generate_plot(self, inputTasks, inputMetadata):
+        filterTask = inputTasks['filter_task']
+        adaptiveTask = inputTasks['filter_task'].get_adaptive_thresholds()
+
+        threshold = adaptiveTask.calculate_threshold_for_misidentification_rate(
+            filterTask.parameters['misidentification_rate'])
+        blankHistogram = adaptiveTask.get_blank_count_histogram()
+        codingHistogram = adaptiveTask.get_coding_count_histogram()
+        blankFraction = adaptiveTask.get_blank_fraction_histogram()
+        areaBins = adaptiveTask.get_area_bins()
+        allCountsPerArea = np.sum(blankHistogram + codingHistogram, axis=(0, 1))
+        blankHistogram[blankFraction >= threshold] = 0
+        codingHistogram[codingHistogram >= threshold] = 0
+        countsPerArea = np.sum(blankHistogram + codingHistogram, axis=(0, 1))
+
+        fig = plt.figure(figsize=(15, 7))
+        plt.bar(areaBins[:-1], np.log10(allCountsPerArea), width=1)
+        plt.bar(areaBins[:-1], np.log10(countsPerArea), width=1)
+        plt.legend(['All barcodes', 'Filtered barcodes'])
+        plt.ylabel('Barcode count (log10)')
+        plt.xlabel('Area')
+        plt.title('Abundance vs area')
+
+        return fig
+
+
 class FOVSpatialDistributionMetadata(PlotMetadata):
 
     def __init__(self, analysisTask, taskDict):

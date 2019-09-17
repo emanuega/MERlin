@@ -34,6 +34,8 @@ class Decode(analysistask.ParallelAnalysisTask):
             self.parameters['decode_3d'] = False
         if 'memory_map' not in self.parameters:
             self.parameters['memory_map'] = False
+        if 'restart_safely' not in self.parameters:
+            self.parameters['restart_safely'] = False
 
         self.cropWidth = self.parameters['crop_width']
         self.imageSize = dataSet.get_image_dimensions()
@@ -66,6 +68,10 @@ class Decode(analysistask.ParallelAnalysisTask):
         """This function decodes the barcodes in a fov and saves them to the
         barcode database.
         """
+        if self.parameters['restart_safely']:
+            barcodeDB = self.get_barcode_database()
+            barcodeDB.empty_database(fov=fragmentIndex)
+
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
         optimizeTask = self.dataSet.load_analysis_task(

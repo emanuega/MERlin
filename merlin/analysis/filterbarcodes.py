@@ -22,6 +22,8 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
             self.parameters['intensity_threshold'] = 200
         if 'distance_threshold' not in self.parameters:
             self.parameters['distance_threshold'] = 1e6
+        if 'restart_safely' not in self.parameters:
+            self.parameters['restart_safely'] = False
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -44,6 +46,10 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
         return decodeTask.get_codebook()
 
     def _run_analysis(self, fragmentIndex):
+        if self.parameters['restart_safely']:
+            barcodeDB = self.get_barcode_database()
+            barcodeDB.empty_database(fov=fragmentIndex)
+
         decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])
         areaThreshold = self.parameters['area_threshold']

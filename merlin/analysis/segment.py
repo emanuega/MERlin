@@ -185,7 +185,7 @@ class AssignCellFOV(FeatureSavingAnalysisTask):
 
     def _run_analysis(self, fragmentIndex):
 
-        featureDB = spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
+        featureDB = self.get_feature_database()
 
         spatialIndex = rtree.index.Index()
         allFOVs = self.dataSet.get_fovs()

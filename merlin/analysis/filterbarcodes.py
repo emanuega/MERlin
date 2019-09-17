@@ -307,6 +307,8 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
 
                 if updated:
                     self.dataSet.save_numpy_analysis_result(
+                        completeFragments, 'complete_fragments', self)
+                    self.dataSet.save_numpy_analysis_result(
                         blankCounts, 'blank_counts', self)
                     self.dataSet.save_numpy_analysis_result(
                         codingCounts, 'coding_counts', self)

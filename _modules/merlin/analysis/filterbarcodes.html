@@ -150,14 +150,15 @@
             
   <h1>Source code for merlin.analysis.filterbarcodes</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">optimize</span>
 
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
-<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">barcodedb</span>
 <span class="kn">from</span> <span class="nn">merlin.data.codebook</span> <span class="k">import</span> <span class="n">Codebook</span>
+<span class="kn">from</span> <span class="nn">merlin.analysis</span> <span class="k">import</span> <span class="n">decode</span>
 
 
-<div class="viewcode-block" id="FilterBarcodes"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.FilterBarcodes">[docs]</a><span class="k">class</span> <span class="nc">FilterBarcodes</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
+<div class="viewcode-block" id="FilterBarcodes"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.FilterBarcodes">[docs]</a><span class="k">class</span> <span class="nc">FilterBarcodes</span><span class="p">(</span><span class="n">decode</span><span class="o">.</span><span class="n">BarcodeSavingParallelAnalysisTask</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An analysis task that filters barcodes based on area and mean</span>
@@ -176,9 +177,6 @@
 
 <div class="viewcode-block" id="FilterBarcodes.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.FilterBarcodes.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span></div>
-
-<div class="viewcode-block" id="FilterBarcodes.get_barcode_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.FilterBarcodes.get_barcode_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">PyTablesBarcodeDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="FilterBarcodes.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.FilterBarcodes.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="mi">1000</span></div>
@@ -208,7 +206,263 @@
         <span class="n">barcodeDB</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span><span class="n">currentBC</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="AdaptiveFilterBarcodes"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes">[docs]</a><span class="k">class</span> <span class="nc">AdaptiveFilterBarcodes</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">):</span>
+<div class="viewcode-block" id="GenerateAdaptiveThreshold"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold">[docs]</a><span class="k">class</span> <span class="nc">GenerateAdaptiveThreshold</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An analysis task that generates a three-dimension mean intenisty,</span>
+<span class="sd">    area, minimum distance histogram for barcodes as they are decoded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+        <span class="c1"># ensure decode_task is specified</span>
+        <span class="n">decodeTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">5000</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_estimated_time"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_estimated_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1800</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;run_after_task&#39;</span><span class="p">]]</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_blank_count_histogram"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_blank_count_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">get_blank_count_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span><span class="s1">&#39;blank_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_coding_count_histogram"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_coding_count_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">get_coding_count_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span><span class="s1">&#39;coding_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_total_count_histogram"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_total_count_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">get_total_count_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blank_count_histogram</span><span class="p">()</span> \
+               <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_coding_count_histogram</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_area_bins"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_area_bins">[docs]</a>    <span class="k">def</span> <span class="nf">get_area_bins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span><span class="s1">&#39;area_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_distance_bins"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_distance_bins">[docs]</a>    <span class="k">def</span> <span class="nf">get_distance_bins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+            <span class="s1">&#39;distance_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_intensity_bins"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_intensity_bins">[docs]</a>    <span class="k">def</span> <span class="nf">get_intensity_bins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
+            <span class="s1">&#39;intensity_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.get_blank_fraction_histogram"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_blank_fraction_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">get_blank_fraction_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get the normalized blank fraction histogram indicating the</span>
+<span class="sd">        normalized blank fraction for each intensity, distance, and area</span>
+<span class="sd">        bin.</span>
+
+<span class="sd">        Returns: The normalized blank fraction histogram. The histogram</span>
+<span class="sd">            has three dimensions: mean intensity, minimum distance, and area.</span>
+<span class="sd">            The bins in each dimension are defined by the bins returned by</span>
+<span class="sd">            get_area_bins, get_distance_bins, and get_area_bins, respectively.</span>
+<span class="sd">            Each entry indicates the number of blank barcodes divided by the</span>
+<span class="sd">            number of coding barcodes within the corresponding bin</span>
+<span class="sd">            normalized by the fraction of blank barcodes in the codebook.</span>
+<span class="sd">            With this normalization, when all (both blank and coding) barcodes</span>
+<span class="sd">            are selected with equal probability, the blank fraction is</span>
+<span class="sd">            expected to be 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">blankHistogram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blank_count_histogram</span><span class="p">()</span>
+        <span class="n">totalHistogram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_coding_count_histogram</span><span class="p">()</span>
+        <span class="n">blankFraction</span> <span class="o">=</span> <span class="n">blankHistogram</span> <span class="o">/</span> <span class="n">totalHistogram</span>
+        <span class="n">blankFraction</span><span class="p">[</span><span class="n">totalHistogram</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">blankFraction</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">max</span>
+        <span class="n">decodeTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">])</span>
+        <span class="n">codebook</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+        <span class="n">blankBarcodeCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">())</span>
+        <span class="n">codingBarcodeCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_coding_indexes</span><span class="p">())</span>
+        <span class="n">blankFraction</span> <span class="o">/=</span> <span class="n">blankBarcodeCount</span><span class="o">/</span><span class="p">(</span>
+                <span class="n">blankBarcodeCount</span> <span class="o">+</span> <span class="n">codingBarcodeCount</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">blankFraction</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.calculate_misidentification_rate_for_threshold"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_misidentification_rate_for_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_misidentification_rate_for_threshold</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Calculate the misidentification rate for a specified blank</span>
+<span class="sd">        fraction threshold.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            threshold: the normalized blank fraction threshold</span>
+<span class="sd">        Returns: The estimated misidentification rate, estimated as the</span>
+<span class="sd">            number of blank barcodes per blank barcode divided</span>
+<span class="sd">            by the number of coding barcodes per coding barcode.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">decodeTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">])</span>
+        <span class="n">codebook</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+        <span class="n">blankBarcodeCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">())</span>
+        <span class="n">codingBarcodeCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_coding_indexes</span><span class="p">())</span>
+        <span class="n">blankHistogram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blank_count_histogram</span><span class="p">()</span>
+        <span class="n">codingHistogram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_coding_count_histogram</span><span class="p">()</span>
+        <span class="n">blankFraction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blank_fraction_histogram</span><span class="p">()</span>
+
+        <span class="n">selectBins</span> <span class="o">=</span> <span class="n">blankFraction</span> <span class="o">&lt;</span> <span class="n">threshold</span>
+        <span class="n">codingCounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">codingHistogram</span><span class="p">[</span><span class="n">selectBins</span><span class="p">])</span>
+        <span class="n">blankCounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">blankHistogram</span><span class="p">[</span><span class="n">selectBins</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">blankCounts</span><span class="o">/</span><span class="n">blankBarcodeCount</span><span class="p">)</span> <span class="o">/</span>
+                <span class="p">(</span><span class="n">codingCounts</span><span class="o">/</span><span class="n">codingBarcodeCount</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.calculate_threshold_for_misidentification_rate"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_threshold_for_misidentification_rate">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_threshold_for_misidentification_rate</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">targetMisidentificationRate</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Calculate the normalized blank fraction threshold that achieves</span>
+<span class="sd">        a specified misidentification rate.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            targetMisidentificationRate: the target misidentification rate</span>
+<span class="sd">        Returns: the normalized blank fraction threshold that achieves</span>
+<span class="sd">            targetMisidentificationRate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">misidentification_rate_error_for_threshold</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">targetError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_misidentification_rate_for_threshold</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> \
+                <span class="o">-</span> <span class="n">targetError</span>
+        <span class="k">return</span> <span class="n">optimize</span><span class="o">.</span><span class="n">newton</span><span class="p">(</span>
+            <span class="n">misidentification_rate_error_for_threshold</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">targetMisidentificationRate</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">x1</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.calculate_barcode_count_for_threshold"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_barcode_count_for_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_barcode_count_for_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Calculate the number of barcodes remaining after applying</span>
+<span class="sd">        the specified normalized blank fraction threshold.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            threshold: the normalized blank fraction threshold</span>
+<span class="sd">        Returns: The number of barcodes passing the threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">blankHistogram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blank_count_histogram</span><span class="p">()</span>
+        <span class="n">codingHistogram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_coding_count_histogram</span><span class="p">()</span>
+        <span class="n">blankFraction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blank_fraction_histogram</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">blankHistogram</span><span class="p">[</span><span class="n">blankFraction</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">])</span> \
+            <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">codingHistogram</span><span class="p">[</span><span class="n">blankFraction</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="GenerateAdaptiveThreshold.extract_barcodes_with_threshold"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.extract_barcodes_with_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">extract_barcodes_with_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blankThreshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                                        <span class="n">barcodeSet</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span>
+                                        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">selectData</span> <span class="o">=</span> <span class="n">barcodeSet</span><span class="p">[</span>
+            <span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">,</span> <span class="s1">&#39;min_distance&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">selectData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">blankFractionHistogram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blank_fraction_histogram</span><span class="p">()</span>
+
+        <span class="n">barcodeBins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_intensity_bins</span><span class="p">(),</span>
+                         <span class="n">right</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+             <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_distance_bins</span><span class="p">(),</span>
+                         <span class="n">right</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+             <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_area_bins</span><span class="p">())))</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">barcodeBins</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+            <span class="n">barcodeBins</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">blankFractionHistogram</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">barcodeBins</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+            <span class="n">barcodeBins</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">blankFractionHistogram</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">barcodeBins</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+            <span class="n">barcodeBins</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">blankFractionHistogram</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">raveledIndexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel_multi_index</span><span class="p">(</span>
+            <span class="n">barcodeBins</span><span class="p">[:,</span> <span class="p">:],</span> <span class="n">blankFractionHistogram</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">thresholdedBlankFraction</span> <span class="o">=</span> <span class="n">blankFractionHistogram</span> <span class="o">&lt;</span> <span class="n">blankThreshold</span>
+        <span class="k">return</span> <span class="n">barcodeSet</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">thresholdedBlankFraction</span><span class="p">,</span> <span class="n">raveledIndexes</span><span class="p">)]</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_counts</span><span class="p">(</span><span class="n">barcodes</span><span class="p">,</span> <span class="n">intensityBins</span><span class="p">,</span> <span class="n">distanceBins</span><span class="p">,</span> <span class="n">areaBins</span><span class="p">):</span>
+        <span class="n">barcodeData</span> <span class="o">=</span> <span class="n">barcodes</span><span class="p">[</span>
+            <span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">,</span> <span class="s1">&#39;min_distance&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">barcodeData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">barcodeData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">histogramdd</span><span class="p">(</span>
+            <span class="n">barcodeData</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="p">(</span><span class="n">intensityBins</span><span class="p">,</span> <span class="n">distanceBins</span><span class="p">,</span> <span class="n">areaBins</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">decodeTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">])</span>
+        <span class="n">codebook</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+        <span class="n">barcodeDB</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span>
+
+        <span class="n">completeFragments</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result_if_available</span><span class="p">(</span>
+                <span class="s1">&#39;complete_fragments&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fragment_count</span><span class="p">())</span>
+        <span class="n">pendingFragments</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">decodeTask</span><span class="o">.</span><span class="n">is_complete</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">completeFragments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fragment_count</span><span class="p">())]</span>
+
+        <span class="n">areaBins</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result_if_available</span><span class="p">(</span>
+            <span class="s1">&#39;area_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">35</span><span class="p">))</span>
+        <span class="n">distanceBins</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result_if_available</span><span class="p">(</span>
+            <span class="s1">&#39;distance_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;distance_threshold&#39;</span><span class="p">]</span><span class="o">+</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">))</span>
+        <span class="n">intensityBins</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result_if_available</span><span class="p">(</span>
+            <span class="s1">&#39;intensity_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">blankCounts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result_if_available</span><span class="p">(</span>
+            <span class="s1">&#39;blank_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">codingCounts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result_if_available</span><span class="p">(</span>
+            <span class="s1">&#39;coding_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">areaBins</span><span class="p">,</span> <span class="s1">&#39;area_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+            <span class="n">distanceBins</span><span class="p">,</span> <span class="s1">&#39;distance_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">updated</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">completeFragments</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">intensityBins</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fragment_count</span><span class="p">()):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">pendingFragments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">is_complete</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+                        <span class="n">pendingFragments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">is_complete</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">pendingFragments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">min</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fragment_count</span><span class="p">()):</span>
+                    <span class="k">def</span> <span class="nf">extreme_values</span><span class="p">(</span><span class="n">inputData</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">inputData</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">inputData</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+                    <span class="n">sampledFragments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pendingFragments</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="p">],</span>
+                            <span class="n">size</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+                    <span class="n">intensityExtremes</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">extreme_values</span><span class="p">(</span><span class="n">barcodeDB</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span>
+                            <span class="n">i</span><span class="p">,</span> <span class="n">columnList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">])[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">])</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sampledFragments</span><span class="p">]</span>
+                    <span class="n">maxIntensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">intensityExtremes</span><span class="p">]))</span>
+                    <span class="n">intensityBins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">maxIntensity</span><span class="p">,</span>
+                                              <span class="n">maxIntensity</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+                        <span class="n">intensityBins</span><span class="p">,</span> <span class="s1">&#39;intensity_bins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+                    <span class="n">blankCounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">intensityBins</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                            <span class="nb">len</span><span class="p">(</span><span class="n">distanceBins</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                            <span class="nb">len</span><span class="p">(</span><span class="n">areaBins</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                    <span class="n">codingCounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">intensityBins</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                            <span class="nb">len</span><span class="p">(</span><span class="n">distanceBins</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                            <span class="nb">len</span><span class="p">(</span><span class="n">areaBins</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fragment_count</span><span class="p">()):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">completeFragments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">is_complete</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+                        <span class="n">barcodes</span> <span class="o">=</span> <span class="n">barcodeDB</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span>
+                            <span class="n">i</span><span class="p">,</span> <span class="n">columnList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">,</span> <span class="s1">&#39;mean_intensity&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;min_distance&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">])</span>
+                        <span class="n">blankCounts</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_counts</span><span class="p">(</span>
+                            <span class="n">barcodes</span><span class="p">[</span><span class="n">barcodes</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+                                <span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">())],</span>
+                            <span class="n">intensityBins</span><span class="p">,</span> <span class="n">distanceBins</span><span class="p">,</span> <span class="n">areaBins</span><span class="p">)</span>
+                        <span class="n">codingCounts</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_counts</span><span class="p">(</span>
+                            <span class="n">barcodes</span><span class="p">[</span><span class="n">barcodes</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+                                <span class="n">codebook</span><span class="o">.</span><span class="n">get_coding_indexes</span><span class="p">())],</span>
+                            <span class="n">intensityBins</span><span class="p">,</span> <span class="n">distanceBins</span><span class="p">,</span> <span class="n">areaBins</span><span class="p">)</span>
+                        <span class="n">updated</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">completeFragments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="k">if</span> <span class="n">updated</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+                        <span class="n">completeFragments</span><span class="p">,</span> <span class="s1">&#39;complete_fragments&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+                        <span class="n">blankCounts</span><span class="p">,</span> <span class="s1">&#39;blank_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">save_numpy_analysis_result</span><span class="p">(</span>
+                        <span class="n">codingCounts</span><span class="p">,</span> <span class="s1">&#39;coding_counts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AdaptiveFilterBarcodes"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes">[docs]</a><span class="k">class</span> <span class="nc">AdaptiveFilterBarcodes</span><span class="p">(</span><span class="n">decode</span><span class="o">.</span><span class="n">BarcodeSavingParallelAnalysisTask</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An analysis task that filters barcodes based on a mean intensity threshold</span>
@@ -225,9 +479,6 @@
 <div class="viewcode-block" id="AdaptiveFilterBarcodes.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="AdaptiveFilterBarcodes.get_barcode_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_barcode_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">PyTablesBarcodeDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
-
 <div class="viewcode-block" id="AdaptiveFilterBarcodes.get_estimated_memory"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_estimated_memory">[docs]</a>    <span class="k">def</span> <span class="nf">get_estimated_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="mi">1000</span></div>
 
@@ -235,94 +486,38 @@
         <span class="k">return</span> <span class="mi">30</span></div>
 
 <div class="viewcode-block" id="AdaptiveFilterBarcodes.get_dependencies"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">get_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">]]</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;adaptive_task&#39;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">]]</span></div>
 
 <div class="viewcode-block" id="AdaptiveFilterBarcodes.get_adaptive_thresholds"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_adaptive_thresholds">[docs]</a>    <span class="k">def</span> <span class="nf">get_adaptive_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_numpy_analysis_result</span><span class="p">(</span>
-            <span class="s1">&#39;adaptive_thresholds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+        <span class="sd">&quot;&quot;&quot; Get the adaptive thresholds used for filtering barcodes.</span>
+
+<span class="sd">        Returns: The GenerateaAdaptiveThershold task using for this</span>
+<span class="sd">            adaptive filter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;adaptive_task&#39;</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="AdaptiveFilterBarcodes.get_codebook"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_codebook">[docs]</a>    <span class="k">def</span> <span class="nf">get_codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Codebook</span><span class="p">:</span>
         <span class="n">decodeTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span></div>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_extract_barcodes_with_threshold</span><span class="p">(</span>
-            <span class="n">blankThreshold</span><span class="p">,</span> <span class="n">barcodeSet</span><span class="p">,</span> <span class="n">blankFractionHistogram</span><span class="p">,</span> <span class="n">histogramBins</span><span class="p">):</span>
-        <span class="n">selectData</span> <span class="o">=</span> <span class="n">barcodeSet</span><span class="p">[</span>
-            <span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">,</span> <span class="s1">&#39;min_distance&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
-        <span class="n">selectData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
-
-        <span class="n">selectData</span><span class="p">[</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">33</span>
-
-        <span class="n">barcodeBins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">histogramBins</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">right</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-             <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">histogramBins</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">right</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-             <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">selectData</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">histogramBins</span><span class="p">[</span><span class="mi">2</span><span class="p">])))</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">raveledIndexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel_multi_index</span><span class="p">(</span><span class="n">barcodeBins</span><span class="p">[:,</span> <span class="p">:],</span>
-                                              <span class="n">blankFractionHistogram</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="n">thresholdedBlankFraction</span> <span class="o">=</span> <span class="n">blankFractionHistogram</span> <span class="o">&lt;</span> <span class="n">blankThreshold</span>
-        <span class="k">return</span> <span class="n">barcodeSet</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">thresholdedBlankFraction</span><span class="p">,</span> <span class="n">raveledIndexes</span><span class="p">)]</span>
-
-    <span class="k">def</span> <span class="nf">_calculate_error_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">barcodeSet</span><span class="p">):</span>
-        <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
-        <span class="n">blankFraction</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
-            <span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">())</span> <span class="o">/</span> <span class="n">codebook</span><span class="o">.</span><span class="n">get_barcode_count</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">barcodeSet</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
-            <span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">()))</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">barcodeSet</span><span class="p">)</span> <span class="o">*</span> <span class="n">blankFraction</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">):</span>
+        <span class="n">adaptiveTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;adaptive_task&#39;</span><span class="p">])</span>
         <span class="n">decodeTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_task&#39;</span><span class="p">])</span>
-        <span class="n">codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
 
-        <span class="n">allBarcodes</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span>
-            <span class="n">columnList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">,</span> <span class="s1">&#39;mean_intensity&#39;</span><span class="p">,</span> <span class="s1">&#39;min_distance&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">])</span>
-        <span class="n">allBarcodes</span> <span class="o">=</span> <span class="n">allBarcodes</span><span class="p">[(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-                                  <span class="o">&amp;</span> <span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;min_distance&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.61</span><span class="p">)]</span>
-
-        <span class="n">blankBarcodes</span> <span class="o">=</span> <span class="n">allBarcodes</span><span class="p">[</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
-            <span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">())]</span>
-        <span class="n">maxIntensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">]))</span>
-        <span class="n">maxDistance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">allBarcodes</span><span class="p">[</span><span class="s1">&#39;min_distance&#39;</span><span class="p">])</span>
-
-        <span class="n">blankData</span> <span class="o">=</span> <span class="n">blankBarcodes</span><span class="p">[</span>
-            <span class="p">[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">,</span> <span class="s1">&#39;min_distance&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
-        <span class="n">blankData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">blankData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
-        <span class="n">intensityBins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.021</span> <span class="o">*</span> <span class="n">maxIntensity</span><span class="p">,</span> <span class="n">maxIntensity</span> <span class="o">/</span> <span class="mi">50</span><span class="p">)</span>
-        <span class="n">distanceBins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxDistance</span><span class="o">+</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
-        <span class="n">blankHistogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogramdd</span><span class="p">(</span>
-            <span class="n">blankData</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="p">(</span><span class="n">intensityBins</span><span class="p">,</span> <span class="n">distanceBins</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">35</span><span class="p">)))</span>
-
-        <span class="n">allData</span> <span class="o">=</span> <span class="n">allBarcodes</span><span class="p">[[</span><span class="s1">&#39;mean_intensity&#39;</span><span class="p">,</span> <span class="s1">&#39;min_distance&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
-        <span class="n">allData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">allData</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
-        <span class="n">allHistogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogramdd</span><span class="p">(</span>
-            <span class="n">allData</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="p">(</span><span class="n">intensityBins</span><span class="p">,</span> <span class="n">distanceBins</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">35</span><span class="p">)))</span>
-
-        <span class="n">blankFraction</span> <span class="o">=</span> <span class="n">blankHistogram</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">allHistogram</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">blankFraction</span><span class="p">[</span><span class="n">allHistogram</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">blankFraction</span> <span class="o">=</span> <span class="n">blankFraction</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">codebook</span><span class="o">.</span><span class="n">get_blank_indexes</span><span class="p">())</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">codebook</span><span class="o">.</span><span class="n">get_coding_indexes</span><span class="p">())))</span>
-
-        <span class="k">def</span> <span class="nf">misidentification_rate_error_for_threshold</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">targetError</span><span class="p">):</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_error_rate</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_extract_barcodes_with_threshold</span><span class="p">(</span>
-                    <span class="n">x</span><span class="p">,</span> <span class="n">allBarcodes</span><span class="p">,</span> <span class="n">blankFraction</span><span class="p">,</span> <span class="n">allHistogram</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> \
-                     <span class="o">-</span> <span class="n">targetError</span>
-            <span class="k">return</span> <span class="n">result</span>
-
-        <span class="n">threshold</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">newton</span><span class="p">(</span><span class="n">misidentification_rate_error_for_threshold</span><span class="p">,</span>
-                                    <span class="mf">0.2</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="mf">0.05</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">x1</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">adaptiveTask</span><span class="o">.</span><span class="n">calculate_threshold_for_misidentification_rate</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;misidentification_rate&#39;</span><span class="p">])</span>
 
         <span class="n">bcDatabase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">get_fovs</span><span class="p">():</span>
-            <span class="n">currentBarcodes</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span><span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="n">currentBarcodes</span> <span class="o">=</span> <span class="n">currentBarcodes</span><span class="p">[(</span><span class="n">currentBarcodes</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
-                        <span class="n">currentBarcodes</span><span class="p">[</span><span class="s1">&#39;min_distance&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.61</span><span class="p">)]</span>
-            <span class="n">bcDatabase</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_barcodes_with_threshold</span><span class="p">(</span>
-                    <span class="n">threshold</span><span class="p">,</span> <span class="n">currentBarcodes</span><span class="p">),</span> <span class="n">fov</span><span class="o">=</span><span class="n">f</span><span class="p">)</span></div>
+        <span class="n">currentBarcodes</span> <span class="o">=</span> <span class="n">decodeTask</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span>\
+            <span class="o">.</span><span class="n">get_barcodes</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="n">bcDatabase</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span>
+            <span class="n">adaptiveTask</span><span class="o">.</span><span class="n">extract_barcodes_with_threshold</span><span class="p">(</span>
+                <span class="n">threshold</span><span class="p">,</span> <span class="n">currentBarcodes</span><span class="p">),</span> <span class="n">fov</span><span class="o">=</span><span class="n">fragmentIndex</span><span class="p">)</span></div>
 </pre></div>
 
            </div>

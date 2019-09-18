@@ -189,7 +189,11 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span> <span class="o">=</span> <span class="n">dataSet</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_analysisTask</span> <span class="o">=</span> <span class="n">analysisTask</span>
-
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analysisTask</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_codebook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span>
+            
     <span class="k">def</span> <span class="nf">_get_bc_column_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">columnInformation</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;barcode_id&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span>
                              <span class="s1">&#39;fov&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span>
@@ -206,7 +210,7 @@
                              <span class="s1">&#39;global_z&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
                              <span class="s1">&#39;cell_index&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">}</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataSet</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_codebook</span><span class="o">.</span><span class="n">get_bit_count</span><span class="p">()):</span>
             <span class="n">columnInformation</span><span class="p">[</span><span class="s1">&#39;intensity_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
 
         <span class="k">return</span> <span class="n">columnInformation</span>
@@ -360,7 +364,16 @@
                                                    <span class="n">columns</span><span class="o">=</span><span class="n">columnList</span><span class="p">)</span>
 
             <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+                <span class="n">barcodes</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="c1"># if no barcodes are present make sure the dataframe still has the</span>
+        <span class="c1"># correct columns</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">barcodes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">columnList</span><span class="p">:</span>
+                <span class="n">barcodes</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">columnList</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">barcodes</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                    <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_bc_column_types</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">barcodes</span></div>
 

@@ -151,6 +151,8 @@
   <h1>Source code for merlin.analysis.decode</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
 
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">dataset</span>
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
@@ -159,13 +161,35 @@
 <span class="kn">from</span> <span class="nn">merlin.data.codebook</span> <span class="k">import</span> <span class="n">Codebook</span>
 
 
-<div class="viewcode-block" id="Decode"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode">[docs]</a><span class="k">class</span> <span class="nc">Decode</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
+<div class="viewcode-block" id="BarcodeSavingParallelAnalysisTask"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask">[docs]</a><span class="k">class</span> <span class="nc">BarcodeSavingParallelAnalysisTask</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An abstract analysis class that saves barcodes into a barcode database.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">DataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_reset_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_reset_analysis</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span><span class="o">.</span><span class="n">empty_database</span><span class="p">(</span><span class="n">fragmentIndex</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BarcodeSavingParallelAnalysisTask.get_barcode_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask.get_barcode_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_database</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">BarcodeDB</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get the barcode database this analysis task saves barcodes into.</span>
+
+<span class="sd">        Returns: The barcode database reference.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">PyTablesBarcodeDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Decode"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode">[docs]</a><span class="k">class</span> <span class="nc">Decode</span><span class="p">(</span><span class="n">BarcodeSavingParallelAnalysisTask</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An analysis task that extracts barcodes from images.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">ImageDataSet</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">MERFISHDataSet</span><span class="p">,</span>
                  <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysisName</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataSet</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">analysisName</span><span class="p">)</span>
 
@@ -181,6 +205,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;lowpass_sigma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="s1">&#39;decode_3d&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;decode_3d&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;memory_map&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;memory_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;crop_width&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">imageSize</span> <span class="o">=</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">get_image_dimensions</span><span class="p">()</span>
@@ -198,9 +224,6 @@
         <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;preprocess_task&#39;</span><span class="p">],</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;optimize_task&#39;</span><span class="p">],</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">]]</span>
-
-        <span class="k">if</span> <span class="s1">&#39;segment_task&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-            <span class="n">dependencies</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">]]</span>
 
         <span class="k">return</span> <span class="n">dependencies</span></div>
 
@@ -237,53 +260,73 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">decode3d</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">zIndex</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zPositionCount</span><span class="p">):</span>
-                <span class="n">imageSet</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span>
-                        <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">)</span>
-                <span class="n">imageSet</span> <span class="o">=</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-                    <span class="p">(</span><span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
-
-                <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode_pixels</span><span class="p">(</span>
-                    <span class="n">imageSet</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">,</span> <span class="n">backgrounds</span><span class="p">,</span>
-                    <span class="n">lowPassSigma</span><span class="o">=</span><span class="n">lowPassSigma</span><span class="p">,</span>
-                    <span class="n">distanceThreshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;distance_threshold&#39;</span><span class="p">])</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_extract_and_save_barcodes</span><span class="p">(</span>
-                        <span class="n">decoder</span><span class="p">,</span> <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">)</span>
+                <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_independent_z_slice</span><span class="p">(</span>
+                    <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">,</span>
+                    <span class="n">backgrounds</span><span class="p">,</span> <span class="n">preprocessTask</span><span class="p">,</span> <span class="n">decoder</span>
+                <span class="p">)</span>
 
                 <span class="n">decodedImages</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">di</span>
                 <span class="n">magnitudeImages</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">pm</span>
                 <span class="n">distances</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">d</span>
 
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">normalizedPixelTraces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-                <span class="p">(</span><span class="n">zPositionCount</span><span class="p">,</span> <span class="n">bitCount</span><span class="p">,</span> <span class="o">*</span><span class="n">imageShape</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tempDirectory</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;memory_map&#39;</span><span class="p">]:</span>
+                    <span class="n">normalizedPixelTraces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tempDirectory</span><span class="p">,</span> <span class="s1">&#39;pixel_traces.dat&#39;</span><span class="p">),</span>
+                        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w+&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">zPositionCount</span><span class="p">,</span> <span class="n">bitCount</span><span class="p">,</span> <span class="o">*</span><span class="n">imageShape</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">normalizedPixelTraces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">zPositionCount</span><span class="p">,</span> <span class="n">bitCount</span><span class="p">,</span> <span class="o">*</span><span class="n">imageShape</span><span class="p">),</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">zIndex</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zPositionCount</span><span class="p">):</span>
-                <span class="n">imageSet</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span>
-                    <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">)</span>
-                <span class="n">imageSet</span> <span class="o">=</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-                    <span class="p">(</span><span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="k">for</span> <span class="n">zIndex</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zPositionCount</span><span class="p">):</span>
+                    <span class="n">imageSet</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span>
+                        <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">)</span>
+                    <span class="n">imageSet</span> <span class="o">=</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                         <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
 
-                <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode_pixels</span><span class="p">(</span>
-                    <span class="n">imageSet</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">,</span> <span class="n">backgrounds</span><span class="p">,</span>
-                    <span class="n">lowPassSigma</span><span class="o">=</span><span class="n">lowPassSigma</span><span class="p">,</span>
-                    <span class="n">distanceThreshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;distance_threshold&#39;</span><span class="p">])</span>
+                    <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode_pixels</span><span class="p">(</span>
+                        <span class="n">imageSet</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">,</span> <span class="n">backgrounds</span><span class="p">,</span>
+                        <span class="n">lowPassSigma</span><span class="o">=</span><span class="n">lowPassSigma</span><span class="p">,</span>
+                        <span class="n">distanceThreshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;distance_threshold&#39;</span><span class="p">])</span>
 
-                <span class="n">normalizedPixelTraces</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">npt</span>
-                <span class="n">decodedImages</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">di</span>
-                <span class="n">magnitudeImages</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">pm</span>
-                <span class="n">distances</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">d</span>
+                    <span class="n">normalizedPixelTraces</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">npt</span>
+                    <span class="n">decodedImages</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">di</span>
+                    <span class="n">magnitudeImages</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">pm</span>
+                    <span class="n">distances</span><span class="p">[</span><span class="n">zIndex</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">d</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_extract_and_save_barcodes</span><span class="p">(</span>
-                <span class="n">decoder</span><span class="p">,</span> <span class="n">decodedImages</span><span class="p">,</span> <span class="n">magnitudeImages</span><span class="p">,</span> <span class="n">normalizedPixelTraces</span><span class="p">,</span>
-                <span class="n">distances</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_extract_and_save_barcodes</span><span class="p">(</span>
+                    <span class="n">decoder</span><span class="p">,</span> <span class="n">decodedImages</span><span class="p">,</span> <span class="n">magnitudeImages</span><span class="p">,</span>
+                    <span class="n">normalizedPixelTraces</span><span class="p">,</span>
+                    <span class="n">distances</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
+
+                <span class="k">del</span> <span class="n">normalizedPixelTraces</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;write_decoded_images&#39;</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_save_decoded_images</span><span class="p">(</span>
                 <span class="n">fragmentIndex</span><span class="p">,</span> <span class="n">zPositionCount</span><span class="p">,</span> <span class="n">decodedImages</span><span class="p">,</span> <span class="n">magnitudeImages</span><span class="p">,</span>
                 <span class="n">distances</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Decode.get_barcode_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.decode.Decode.get_barcode_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_database</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">BarcodeDB</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">PyTablesBarcodeDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">_process_independent_z_slice</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">,</span>
+            <span class="n">backgrounds</span><span class="p">,</span> <span class="n">preprocessTask</span><span class="p">,</span> <span class="n">decoder</span><span class="p">):</span>
+
+        <span class="n">imageSet</span> <span class="o">=</span> <span class="n">preprocessTask</span><span class="o">.</span><span class="n">get_processed_image_set</span><span class="p">(</span>
+            <span class="n">fov</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">chromaticCorrector</span><span class="p">)</span>
+        <span class="n">imageSet</span> <span class="o">=</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">imageSet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode_pixels</span><span class="p">(</span>
+            <span class="n">imageSet</span><span class="p">,</span> <span class="n">scaleFactors</span><span class="p">,</span> <span class="n">backgrounds</span><span class="p">,</span>
+            <span class="n">lowPassSigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;lowpass_sigma&#39;</span><span class="p">],</span>
+            <span class="n">distanceThreshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;distance_threshold&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_and_save_barcodes</span><span class="p">(</span>
+            <span class="n">decoder</span><span class="p">,</span> <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">di</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">d</span>
 
     <span class="k">def</span> <span class="nf">_save_decoded_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fov</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">zPositionCount</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                              <span class="n">decodedImages</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -312,17 +355,12 @@
         <span class="n">globalTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;global_align_task&#39;</span><span class="p">])</span>
 
-        <span class="n">segmentTask</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="s1">&#39;segment_task&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-            <span class="n">segmentTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;segment_task&#39;</span><span class="p">])</span>
-
         <span class="n">minimumArea</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;minimum_area&#39;</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">get_barcode_database</span><span class="p">()</span><span class="o">.</span><span class="n">write_barcodes</span><span class="p">(</span>
             <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">decoder</span><span class="o">.</span><span class="n">extract_barcodes_with_index</span><span class="p">(</span>
                 <span class="n">i</span><span class="p">,</span> <span class="n">decodedImage</span><span class="p">,</span> <span class="n">pixelMagnitudes</span><span class="p">,</span> <span class="n">pixelTraces</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">globalTask</span><span class="p">,</span> <span class="n">segmentTask</span><span class="p">,</span> <span class="n">minimumArea</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cropWidth</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span> <span class="n">globalTask</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">minimumArea</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_codebook</span><span class="p">()</span><span class="o">.</span><span class="n">get_barcode_count</span><span class="p">())]),</span>
             <span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">)</span></div>
 </pre></div>

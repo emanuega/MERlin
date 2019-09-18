@@ -17,32 +17,34 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -151,38 +153,1174 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="merlin-analysis-decode-module">
-<h2>merlin.analysis.decode module<a class="headerlink" href="#merlin-analysis-decode-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.decode">
+<span id="merlin-analysis-decode-module"></span><h2>merlin.analysis.decode module<a class="headerlink" href="#module-merlin.analysis.decode" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.decode.BarcodeSavingParallelAnalysisTask">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.decode.</code><code class="sig-name descname">BarcodeSavingParallelAnalysisTask</code><span class="sig-paren">(</span><em class="sig-param">dataSet: merlin.core.dataset.DataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/decode.html#BarcodeSavingParallelAnalysisTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.ParallelAnalysisTask" title="merlin.core.analysistask.ParallelAnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.ParallelAnalysisTask</span></code></a></p>
+<p>An abstract analysis class that saves barcodes into a barcode database.</p>
+<dl class="method">
+<dt id="merlin.analysis.decode.BarcodeSavingParallelAnalysisTask.get_barcode_database">
+<code class="sig-name descname">get_barcode_database</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; merlin.util.barcodedb.BarcodeDB<a class="reference internal" href="merlin/analysis/decode.html#BarcodeSavingParallelAnalysisTask.get_barcode_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask.get_barcode_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the barcode database this analysis task saves barcodes into.</p>
+<p>Returns: The barcode database reference.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.analysis.decode.Decode">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.decode.</code><code class="sig-name descname">Decode</code><span class="sig-paren">(</span><em class="sig-param">dataSet: merlin.core.dataset.MERFISHDataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/decode.html#Decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.Decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask" title="merlin.analysis.decode.BarcodeSavingParallelAnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.decode.BarcodeSavingParallelAnalysisTask</span></code></a></p>
+<p>An analysis task that extracts barcodes from images.</p>
+<dl class="method">
+<dt id="merlin.analysis.decode.Decode.fragment_count">
+<code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/decode.html#Decode.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.Decode.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.decode.Decode.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/decode.html#Decode.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.Decode.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.decode.Decode.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/decode.html#Decode.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.Decode.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.decode.Decode.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/decode.html#Decode.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.Decode.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.decode.Decode.get_codebook">
+<code class="sig-name descname">get_codebook</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; merlin.data.codebook.Codebook<a class="reference internal" href="merlin/analysis/decode.html#Decode.get_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.decode.Decode.get_codebook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-analysis-exportbarcodes-module">
-<h2>merlin.analysis.exportbarcodes module<a class="headerlink" href="#merlin-analysis-exportbarcodes-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.exportbarcodes">
+<span id="merlin-analysis-exportbarcodes-module"></span><h2>merlin.analysis.exportbarcodes module<a class="headerlink" href="#module-merlin.analysis.exportbarcodes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.exportbarcodes.ExportBarcodes">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.exportbarcodes.</code><code class="sig-name descname">ExportBarcodes</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/exportbarcodes.html#ExportBarcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.exportbarcodes.ExportBarcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.AnalysisTask" title="merlin.core.analysistask.AnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.AnalysisTask</span></code></a></p>
+<p>An analysis task that filters barcodes based on area and mean
+intensity.</p>
+<dl class="method">
+<dt id="merlin.analysis.exportbarcodes.ExportBarcodes.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/exportbarcodes.html#ExportBarcodes.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.exportbarcodes.ExportBarcodes.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.exportbarcodes.ExportBarcodes.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/exportbarcodes.html#ExportBarcodes.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.exportbarcodes.ExportBarcodes.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.exportbarcodes.ExportBarcodes.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/exportbarcodes.html#ExportBarcodes.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.exportbarcodes.ExportBarcodes.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-analysis-filterbarcodes-module">
-<h2>merlin.analysis.filterbarcodes module<a class="headerlink" href="#merlin-analysis-filterbarcodes-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.filterbarcodes">
+<span id="merlin-analysis-filterbarcodes-module"></span><h2>merlin.analysis.filterbarcodes module<a class="headerlink" href="#module-merlin.analysis.filterbarcodes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.filterbarcodes.FilterBarcodes">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.filterbarcodes.</code><code class="sig-name descname">FilterBarcodes</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#FilterBarcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.FilterBarcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask" title="merlin.analysis.decode.BarcodeSavingParallelAnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.decode.BarcodeSavingParallelAnalysisTask</span></code></a></p>
+<p>An analysis task that filters barcodes based on area and mean
+intensity.</p>
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.FilterBarcodes.fragment_count">
+<code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#FilterBarcodes.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.FilterBarcodes.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.FilterBarcodes.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#FilterBarcodes.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.FilterBarcodes.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.FilterBarcodes.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#FilterBarcodes.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.FilterBarcodes.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.FilterBarcodes.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#FilterBarcodes.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.FilterBarcodes.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.FilterBarcodes.get_codebook">
+<code class="sig-name descname">get_codebook</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#FilterBarcodes.get_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.FilterBarcodes.get_codebook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.filterbarcodes.</code><code class="sig-name descname">GenerateAdaptiveThreshold</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.AnalysisTask" title="merlin.core.analysistask.AnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.AnalysisTask</span></code></a></p>
+<p>An analysis task that generates a three-dimension mean intenisty,
+area, minimum distance histogram for barcodes as they are decoded.</p>
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.fragment_count">
+<code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_blank_count_histogram">
+<code class="sig-name descname">get_blank_count_histogram</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_blank_count_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_blank_count_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_coding_count_histogram">
+<code class="sig-name descname">get_coding_count_histogram</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_coding_count_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_coding_count_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_total_count_histogram">
+<code class="sig-name descname">get_total_count_histogram</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_total_count_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_total_count_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_area_bins">
+<code class="sig-name descname">get_area_bins</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_area_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_area_bins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_distance_bins">
+<code class="sig-name descname">get_distance_bins</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_distance_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_distance_bins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_intensity_bins">
+<code class="sig-name descname">get_intensity_bins</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_intensity_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_intensity_bins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_blank_fraction_histogram">
+<code class="sig-name descname">get_blank_fraction_histogram</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.get_blank_fraction_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.get_blank_fraction_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the normalized blank fraction histogram indicating the
+normalized blank fraction for each intensity, distance, and area
+bin.</p>
+<dl class="simple">
+<dt>Returns: The normalized blank fraction histogram. The histogram</dt><dd><p>has three dimensions: mean intensity, minimum distance, and area.
+The bins in each dimension are defined by the bins returned by
+get_area_bins, get_distance_bins, and get_area_bins, respectively.
+Each entry indicates the number of blank barcodes divided by the
+number of coding barcodes within the corresponding bin
+normalized by the fraction of blank barcodes in the codebook.
+With this normalization, when all (both blank and coding) barcodes
+are selected with equal probability, the blank fraction is
+expected to be 1.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_misidentification_rate_for_threshold">
+<code class="sig-name descname">calculate_misidentification_rate_for_threshold</code><span class="sig-paren">(</span><em class="sig-param">threshold: float</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.calculate_misidentification_rate_for_threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_misidentification_rate_for_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the misidentification rate for a specified blank
+fraction threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>threshold</strong> – the normalized blank fraction threshold</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns: The estimated misidentification rate, estimated as the</dt><dd><p>number of blank barcodes per blank barcode divided
+by the number of coding barcodes per coding barcode.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_threshold_for_misidentification_rate">
+<code class="sig-name descname">calculate_threshold_for_misidentification_rate</code><span class="sig-paren">(</span><em class="sig-param">targetMisidentificationRate: float</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.calculate_threshold_for_misidentification_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_threshold_for_misidentification_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the normalized blank fraction threshold that achieves
+a specified misidentification rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>targetMisidentificationRate</strong> – the target misidentification rate</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns: the normalized blank fraction threshold that achieves</dt><dd><p>targetMisidentificationRate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_barcode_count_for_threshold">
+<code class="sig-name descname">calculate_barcode_count_for_threshold</code><span class="sig-paren">(</span><em class="sig-param">threshold: float</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.calculate_barcode_count_for_threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.calculate_barcode_count_for_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the number of barcodes remaining after applying
+the specified normalized blank fraction threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>threshold</strong> – the normalized blank fraction threshold</p>
+</dd>
+</dl>
+<p>Returns: The number of barcodes passing the threshold.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.extract_barcodes_with_threshold">
+<code class="sig-name descname">extract_barcodes_with_threshold</code><span class="sig-paren">(</span><em class="sig-param">blankThreshold: float</em>, <em class="sig-param">barcodeSet: pandas.core.frame.DataFrame</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="merlin/analysis/filterbarcodes.html#GenerateAdaptiveThreshold.extract_barcodes_with_threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.GenerateAdaptiveThreshold.extract_barcodes_with_threshold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.filterbarcodes.</code><code class="sig-name descname">AdaptiveFilterBarcodes</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#AdaptiveFilterBarcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask" title="merlin.analysis.decode.BarcodeSavingParallelAnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.decode.BarcodeSavingParallelAnalysisTask</span></code></a></p>
+<p>An analysis task that filters barcodes based on a mean intensity threshold
+for each area based on the abundance of blank barcodes. The threshold
+is selected to achieve a specified misidentification rate.</p>
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.fragment_count">
+<code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#AdaptiveFilterBarcodes.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#AdaptiveFilterBarcodes.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#AdaptiveFilterBarcodes.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#AdaptiveFilterBarcodes.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_adaptive_thresholds">
+<code class="sig-name descname">get_adaptive_thresholds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/filterbarcodes.html#AdaptiveFilterBarcodes.get_adaptive_thresholds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_adaptive_thresholds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the adaptive thresholds used for filtering barcodes.</p>
+<dl class="simple">
+<dt>Returns: The GenerateaAdaptiveThershold task using for this</dt><dd><p>adaptive filter.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_codebook">
+<code class="sig-name descname">get_codebook</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; merlin.data.codebook.Codebook<a class="reference internal" href="merlin/analysis/filterbarcodes.html#AdaptiveFilterBarcodes.get_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.filterbarcodes.AdaptiveFilterBarcodes.get_codebook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-analysis-generatemosaic-module">
-<h2>merlin.analysis.generatemosaic module<a class="headerlink" href="#merlin-analysis-generatemosaic-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.generatemosaic">
+<span id="merlin-analysis-generatemosaic-module"></span><h2>merlin.analysis.generatemosaic module<a class="headerlink" href="#module-merlin.analysis.generatemosaic" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.generatemosaic.GenerateMosaic">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.generatemosaic.</code><code class="sig-name descname">GenerateMosaic</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/generatemosaic.html#GenerateMosaic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.generatemosaic.GenerateMosaic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.AnalysisTask" title="merlin.core.analysistask.AnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.AnalysisTask</span></code></a></p>
+<p>An analysis task that generates mosaic images by compiling different
+field of views.</p>
+<dl class="method">
+<dt id="merlin.analysis.generatemosaic.GenerateMosaic.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/generatemosaic.html#GenerateMosaic.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.generatemosaic.GenerateMosaic.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.generatemosaic.GenerateMosaic.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/generatemosaic.html#GenerateMosaic.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.generatemosaic.GenerateMosaic.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.generatemosaic.GenerateMosaic.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/generatemosaic.html#GenerateMosaic.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.generatemosaic.GenerateMosaic.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.generatemosaic.GenerateMosaic.get_mosaic">
+<code class="sig-name descname">get_mosaic</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/generatemosaic.html#GenerateMosaic.get_mosaic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.generatemosaic.GenerateMosaic.get_mosaic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the mosaic generated by this analysis task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a 5-dimensional array containing the mosaic. The images are arranged
+as [channel, zIndex, 1, x, y]. The order of the channels is as
+specified in the provided parameters file or in the data
+organization if no data channels are specified.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-analysis-globalalign-module">
-<h2>merlin.analysis.globalalign module<a class="headerlink" href="#merlin-analysis-globalalign-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.globalalign">
+<span id="merlin-analysis-globalalign-module"></span><h2>merlin.analysis.globalalign module<a class="headerlink" href="#module-merlin.analysis.globalalign" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.globalalign.GlobalAlignment">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.globalalign.</code><code class="sig-name descname">GlobalAlignment</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#GlobalAlignment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.GlobalAlignment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.AnalysisTask" title="merlin.core.analysistask.AnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.AnalysisTask</span></code></a></p>
+<p>An abstract analysis task that determines the relative position of
+different field of views relative to each other in order to construct
+a global alignment.</p>
+<dl class="method">
+<dt id="merlin.analysis.globalalign.GlobalAlignment.fov_coordinates_to_global">
+<em class="property">abstract </em><code class="sig-name descname">fov_coordinates_to_global</code><span class="sig-paren">(</span><em class="sig-param">fov: int, fovCoordinates: Tuple[float, float]</em><span class="sig-paren">)</span> &#x2192; Tuple[float, float]<a class="reference internal" href="merlin/analysis/globalalign.html#GlobalAlignment.fov_coordinates_to_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.GlobalAlignment.fov_coordinates_to_global" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the global coordinates based on the local coordinates
+in the specified field of view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – the fov where the coordinates are measured</p></li>
+<li><p><strong>fovCoordinates</strong> – a tuple containing the x and y coordinates
+or z, x, and y coordinates (in pixels) in the specified fov.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tuple containing the global x and y coordinates or
+z, x, and y coordinates (in microns)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.GlobalAlignment.global_coordinates_to_fov">
+<em class="property">abstract </em><code class="sig-name descname">global_coordinates_to_fov</code><span class="sig-paren">(</span><em class="sig-param">fov: int, globalCoordinates: List[Tuple[float, float]]</em><span class="sig-paren">)</span> &#x2192; List[Tuple[float, float]]<a class="reference internal" href="merlin/analysis/globalalign.html#GlobalAlignment.global_coordinates_to_fov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.GlobalAlignment.global_coordinates_to_fov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the fov pixel coordinates for a list of global coordinates
+in the specified field of view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – the fov where the coordinates are measured</p></li>
+<li><p><strong>globalCoordinates</strong> – a list of tuples containing the x and
+y coordinates (in pixels) in the specified fov.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of tuples containing the global x and y coordinates
+(in microns)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.GlobalAlignment.fov_to_global_transform">
+<em class="property">abstract </em><code class="sig-name descname">fov_to_global_transform</code><span class="sig-paren">(</span><em class="sig-param">fov: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/globalalign.html#GlobalAlignment.fov_to_global_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.GlobalAlignment.fov_to_global_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the transformation matrix for an affine transformation
+that transforms the fov coordinates to global coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fov</strong> – the fov to calculate the transformation</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a numpy array containing the transformation matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.GlobalAlignment.get_global_extent">
+<em class="property">abstract </em><code class="sig-name descname">get_global_extent</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Tuple[float, float, float, float]<a class="reference internal" href="merlin/analysis/globalalign.html#GlobalAlignment.get_global_extent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.GlobalAlignment.get_global_extent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the extent of the global coordinate system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a tuple where the first two indexes correspond to the minimum
+and x and y extents and the last two indexes correspond to the
+maximum x and y extents. All are in units of microns.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.globalalign.</code><code class="sig-name descname">SimpleGlobalAlignment</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.globalalign.GlobalAlignment" title="merlin.analysis.globalalign.GlobalAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.globalalign.GlobalAlignment</span></code></a></p>
+<p>A global alignment that uses the theoretical stage positions in
+order to determine the relative positions of each field of view.</p>
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.fov_coordinates_to_global">
+<code class="sig-name descname">fov_coordinates_to_global</code><span class="sig-paren">(</span><em class="sig-param">fov</em>, <em class="sig-param">fovCoordinates</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.fov_coordinates_to_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.fov_coordinates_to_global" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the global coordinates based on the local coordinates
+in the specified field of view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – the fov where the coordinates are measured</p></li>
+<li><p><strong>fovCoordinates</strong> – a tuple containing the x and y coordinates
+or z, x, and y coordinates (in pixels) in the specified fov.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tuple containing the global x and y coordinates or
+z, x, and y coordinates (in microns)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.fov_global_extent">
+<code class="sig-name descname">fov_global_extent</code><span class="sig-paren">(</span><em class="sig-param">fov: int</em><span class="sig-paren">)</span> &#x2192; List[float]<a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.fov_global_extent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.fov_global_extent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the global extent of an fov, output interleaved as
+xmin, ymin, xmax, ymax</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fov</strong> – the fov of interest</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a list of four floats, representing the xmin, xmax, ymin, ymax</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.global_coordinates_to_fov">
+<code class="sig-name descname">global_coordinates_to_fov</code><span class="sig-paren">(</span><em class="sig-param">fov</em>, <em class="sig-param">globalCoordinates</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.global_coordinates_to_fov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.global_coordinates_to_fov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the fov pixel coordinates for a list of global coordinates
+in the specified field of view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – the fov where the coordinates are measured</p></li>
+<li><p><strong>globalCoordinates</strong> – a list of tuples containing the x and
+y coordinates (in pixels) in the specified fov.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of tuples containing the global x and y coordinates
+(in microns)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.fov_to_global_transform">
+<code class="sig-name descname">fov_to_global_transform</code><span class="sig-paren">(</span><em class="sig-param">fov</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.fov_to_global_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.fov_to_global_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the transformation matrix for an affine transformation
+that transforms the fov coordinates to global coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fov</strong> – the fov to calculate the transformation</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a numpy array containing the transformation matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.SimpleGlobalAlignment.get_global_extent">
+<code class="sig-name descname">get_global_extent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#SimpleGlobalAlignment.get_global_extent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.SimpleGlobalAlignment.get_global_extent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the extent of the global coordinate system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a tuple where the first two indexes correspond to the minimum
+and x and y extents and the last two indexes correspond to the
+maximum x and y extents. All are in units of microns.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.analysis.globalalign.CorrelationGlobalAlignment">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.globalalign.</code><code class="sig-name descname">CorrelationGlobalAlignment</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#CorrelationGlobalAlignment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.CorrelationGlobalAlignment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.globalalign.GlobalAlignment" title="merlin.analysis.globalalign.GlobalAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.globalalign.GlobalAlignment</span></code></a></p>
+<p>A global alignment that uses the cross-correlation between
+overlapping regions in order to determine the relative positions
+of each field of view.</p>
+<dl class="method">
+<dt id="merlin.analysis.globalalign.CorrelationGlobalAlignment.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#CorrelationGlobalAlignment.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.CorrelationGlobalAlignment.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.CorrelationGlobalAlignment.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#CorrelationGlobalAlignment.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.CorrelationGlobalAlignment.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.CorrelationGlobalAlignment.fov_coordinates_to_global">
+<code class="sig-name descname">fov_coordinates_to_global</code><span class="sig-paren">(</span><em class="sig-param">fov</em>, <em class="sig-param">fovCoordinates</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#CorrelationGlobalAlignment.fov_coordinates_to_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.CorrelationGlobalAlignment.fov_coordinates_to_global" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the global coordinates based on the local coordinates
+in the specified field of view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – the fov where the coordinates are measured</p></li>
+<li><p><strong>fovCoordinates</strong> – a tuple containing the x and y coordinates
+or z, x, and y coordinates (in pixels) in the specified fov.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tuple containing the global x and y coordinates or
+z, x, and y coordinates (in microns)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.CorrelationGlobalAlignment.fov_to_global_transform">
+<code class="sig-name descname">fov_to_global_transform</code><span class="sig-paren">(</span><em class="sig-param">fov</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#CorrelationGlobalAlignment.fov_to_global_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.CorrelationGlobalAlignment.fov_to_global_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the transformation matrix for an affine transformation
+that transforms the fov coordinates to global coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fov</strong> – the fov to calculate the transformation</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a numpy array containing the transformation matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.globalalign.CorrelationGlobalAlignment.get_global_extent">
+<code class="sig-name descname">get_global_extent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/globalalign.html#CorrelationGlobalAlignment.get_global_extent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.globalalign.CorrelationGlobalAlignment.get_global_extent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the extent of the global coordinate system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a tuple where the first two indexes correspond to the minimum
+and x and y extents and the last two indexes correspond to the
+maximum x and y extents. All are in units of microns.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-analysis-optimize-module">
-<h2>merlin.analysis.optimize module<a class="headerlink" href="#merlin-analysis-optimize-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.optimize">
+<span id="merlin-analysis-optimize-module"></span><h2>merlin.analysis.optimize module<a class="headerlink" href="#module-merlin.analysis.optimize" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.optimize.OptimizeIteration">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.optimize.</code><code class="sig-name descname">OptimizeIteration</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.decode.BarcodeSavingParallelAnalysisTask" title="merlin.analysis.decode.BarcodeSavingParallelAnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.decode.BarcodeSavingParallelAnalysisTask</span></code></a></p>
+<p>An analysis task for performing a single iteration of scale factor
+optimization.</p>
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.fragment_count">
+<code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_codebook">
+<code class="sig-name descname">get_codebook</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; merlin.data.codebook.Codebook<a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_codebook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_reference_color">
+<code class="sig-name descname">get_reference_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_reference_color"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_reference_color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_chromatic_corrector">
+<code class="sig-name descname">get_chromatic_corrector</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; merlin.util.aberration.ChromaticCorrector<a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_chromatic_corrector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_chromatic_corrector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the chromatic corrector estimated from this optimization
+iteration</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The chromatic corrector.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_scale_factors">
+<code class="sig-name descname">get_scale_factors</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_scale_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_scale_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the final, optimized scale factors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a one-dimensional numpy array where the i’th entry is the
+scale factor corresponding to the i’th bit.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_backgrounds">
+<code class="sig-name descname">get_backgrounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_backgrounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_backgrounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_scale_factor_history">
+<code class="sig-name descname">get_scale_factor_history</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_scale_factor_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_scale_factor_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the scale factors cached for each iteration of the optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a two-dimensional numpy array where the i,j’th entry is the
+scale factor corresponding to the i’th bit in the j’th
+iteration.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.optimize.OptimizeIteration.get_barcode_count_history">
+<code class="sig-name descname">get_barcode_count_history</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/optimize.html#OptimizeIteration.get_barcode_count_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.optimize.OptimizeIteration.get_barcode_count_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the set of barcode counts for each iteration of the
+optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a two-dimensional numpy array where the i,j’th entry is the
+barcode count corresponding to the i’th barcode in the j’th
+iteration.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-analysis-plotperformance-module">
-<h2>merlin.analysis.plotperformance module<a class="headerlink" href="#merlin-analysis-plotperformance-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.plotperformance">
+<span id="merlin-analysis-plotperformance-module"></span><h2>merlin.analysis.plotperformance module<a class="headerlink" href="#module-merlin.analysis.plotperformance" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.plotperformance.PlotPerformance">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.plotperformance.</code><code class="sig-name descname">PlotPerformance</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/plotperformance.html#PlotPerformance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.plotperformance.PlotPerformance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.AnalysisTask" title="merlin.core.analysistask.AnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.AnalysisTask</span></code></a></p>
+<p>An analysis task that generates plots depicting metrics of the MERFISH
+decoding.</p>
+<dl class="method">
+<dt id="merlin.analysis.plotperformance.PlotPerformance.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/plotperformance.html#PlotPerformance.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.plotperformance.PlotPerformance.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.plotperformance.PlotPerformance.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/plotperformance.html#PlotPerformance.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.plotperformance.PlotPerformance.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.plotperformance.PlotPerformance.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/plotperformance.html#PlotPerformance.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.plotperformance.PlotPerformance.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="merlin-analysis-preprocess-module">
-<h2>merlin.analysis.preprocess module<a class="headerlink" href="#merlin-analysis-preprocess-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.preprocess">
+<span id="merlin-analysis-preprocess-module"></span><h2>merlin.analysis.preprocess module<a class="headerlink" href="#module-merlin.analysis.preprocess" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.preprocess.Preprocess">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.preprocess.</code><code class="sig-name descname">Preprocess</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/preprocess.html#Preprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.Preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.ParallelAnalysisTask" title="merlin.core.analysistask.ParallelAnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.ParallelAnalysisTask</span></code></a></p>
+<p>An abstract class for preparing data for barcode calling.</p>
+<dl class="method">
+<dt id="merlin.analysis.preprocess.Preprocess.get_pixel_histogram">
+<code class="sig-name descname">get_pixel_histogram</code><span class="sig-paren">(</span><em class="sig-param">fov=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/preprocess.html#Preprocess.get_pixel_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.Preprocess.get_pixel_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.preprocess.</code><code class="sig-name descname">DeconvolutionPreprocess</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.preprocess.Preprocess" title="merlin.analysis.preprocess.Preprocess"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.preprocess.Preprocess</span></code></a></p>
+<dl class="method">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess.fragment_count">
+<code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess.get_codebook">
+<code class="sig-name descname">get_codebook</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; merlin.data.codebook.Codebook<a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess.get_codebook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess.get_codebook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess.get_processed_image_set">
+<code class="sig-name descname">get_processed_image_set</code><span class="sig-paren">(</span><em class="sig-param">fov</em>, <em class="sig-param">zIndex: int = None</em>, <em class="sig-param">chromaticCorrector: merlin.util.aberration.ChromaticCorrector = None</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess.get_processed_image_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess.get_processed_image_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.preprocess.DeconvolutionPreprocess.get_processed_image">
+<code class="sig-name descname">get_processed_image</code><span class="sig-paren">(</span><em class="sig-param">fov: int</em>, <em class="sig-param">dataChannel: int</em>, <em class="sig-param">zIndex: int</em>, <em class="sig-param">chromaticCorrector: merlin.util.aberration.ChromaticCorrector = None</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/preprocess.html#DeconvolutionPreprocess.get_processed_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.preprocess.DeconvolutionPreprocess.get_processed_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="merlin-analysis-segment-module">
 <h2>merlin.analysis.segment module<a class="headerlink" href="#merlin-analysis-segment-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="merlin-analysis-warp-module">
-<h2>merlin.analysis.warp module<a class="headerlink" href="#merlin-analysis-warp-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis.warp">
+<span id="merlin-analysis-warp-module"></span><h2>merlin.analysis.warp module<a class="headerlink" href="#module-merlin.analysis.warp" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="merlin.analysis.warp.Warp">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.warp.</code><code class="sig-name descname">Warp</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/warp.html#Warp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.Warp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="merlin.core.html#merlin.core.analysistask.ParallelAnalysisTask" title="merlin.core.analysistask.ParallelAnalysisTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.core.analysistask.ParallelAnalysisTask</span></code></a></p>
+<p>An abstract class for warping a set of images so that the corresponding
+pixels align between images taken in different imaging rounds.</p>
+<dl class="method">
+<dt id="merlin.analysis.warp.Warp.get_aligned_image_set">
+<code class="sig-name descname">get_aligned_image_set</code><span class="sig-paren">(</span><em class="sig-param">fov: int</em>, <em class="sig-param">chromaticCorrector: merlin.util.aberration.ChromaticCorrector = None</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/warp.html#Warp.get_aligned_image_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.Warp.get_aligned_image_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the set of transformed images for the specified fov.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – index of the field of view</p></li>
+<li><p><strong>chromaticCorrector</strong> – the ChromaticCorrector to use to chromatically
+correct the images. If not supplied, no correction is
+performed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>a 4-dimensional numpy array containing the aligned images. The</dt><dd><p>images are arranged as [channel, zIndex, x, y]</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.warp.Warp.get_aligned_image">
+<code class="sig-name descname">get_aligned_image</code><span class="sig-paren">(</span><em class="sig-param">fov: int</em>, <em class="sig-param">dataChannel: int</em>, <em class="sig-param">zIndex: int</em>, <em class="sig-param">chromaticCorrector: merlin.util.aberration.ChromaticCorrector = None</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="merlin/analysis/warp.html#Warp.get_aligned_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.Warp.get_aligned_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the specified transformed image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – index of the field of view</p></li>
+<li><p><strong>dataChannel</strong> – index of the data channel</p></li>
+<li><p><strong>zIndex</strong> – index of the z position</p></li>
+<li><p><strong>chromaticCorrector</strong> – the ChromaticCorrector to use to chromatically
+correct the images. If not supplied, no correction is
+performed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a 2-dimensional numpy array containing the specified image</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.warp.Warp.get_transformation">
+<code class="sig-name descname">get_transformation</code><span class="sig-paren">(</span><em class="sig-param">fov: int</em>, <em class="sig-param">dataChannel: int = None</em><span class="sig-paren">)</span> &#x2192; Union[skimage.transform._geometric.EuclideanTransform, List[skimage.transform._geometric.EuclideanTransform]]<a class="reference internal" href="merlin/analysis/warp.html#Warp.get_transformation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.Warp.get_transformation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the transformations for aligning images for the specified field
+of view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fov</strong> – the fov to get the transformations for.</p></li>
+<li><p><strong>dataChannel</strong> – the index of the data channel to get the transformation
+for. If None, then all data channels are returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>a EuclideanTransform if dataChannel is specified or a list of</dt><dd><p>EuclideanTransforms for all dataChannels if dataChannel is
+not specified.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="merlin.analysis.warp.FiducialCorrelationWarp">
+<em class="property">class </em><code class="sig-prename descclassname">merlin.analysis.warp.</code><code class="sig-name descname">FiducialCorrelationWarp</code><span class="sig-paren">(</span><em class="sig-param">dataSet</em>, <em class="sig-param">parameters=None</em>, <em class="sig-param">analysisName=None</em><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/warp.html#FiducialCorrelationWarp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.FiducialCorrelationWarp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#merlin.analysis.warp.Warp" title="merlin.analysis.warp.Warp"><code class="xref py py-class docutils literal notranslate"><span class="pre">merlin.analysis.warp.Warp</span></code></a></p>
+<p>An analysis task that warps a set of images taken in different imaging
+rounds based on the crosscorrelation between fiducial images.</p>
+<dl class="method">
+<dt id="merlin.analysis.warp.FiducialCorrelationWarp.fragment_count">
+<code class="sig-name descname">fragment_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/warp.html#FiducialCorrelationWarp.fragment_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.FiducialCorrelationWarp.fragment_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.warp.FiducialCorrelationWarp.get_estimated_memory">
+<code class="sig-name descname">get_estimated_memory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/warp.html#FiducialCorrelationWarp.get_estimated_memory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.FiducialCorrelationWarp.get_estimated_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate of how much memory is required for this
+AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a memory estimate in megabytes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.warp.FiducialCorrelationWarp.get_estimated_time">
+<code class="sig-name descname">get_estimated_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/warp.html#FiducialCorrelationWarp.get_estimated_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.FiducialCorrelationWarp.get_estimated_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an estimate for the amount of time required to complete
+this AnalysisTask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a time estimate in minutes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="merlin.analysis.warp.FiducialCorrelationWarp.get_dependencies">
+<code class="sig-name descname">get_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="merlin/analysis/warp.html#FiducialCorrelationWarp.get_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#merlin.analysis.warp.FiducialCorrelationWarp.get_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the analysis tasks that must be completed before this
+analysis task can proceed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>a list containing the names of the analysis tasks that</dt><dd><p>this analysis task depends on. If there are no dependencies,
+an empty list is returned.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-merlin.analysis">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-merlin.analysis" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -214,35 +1352,16 @@
   
 
 
-  
-
-    
-    
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'../',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

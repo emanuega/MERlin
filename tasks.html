@@ -17,34 +17,36 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Contributing to MERlin" href="contributing.html" />
     <link rel="prev" title="Usage" href="usage.html" /> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -88,6 +90,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#optimize-optimize">optimize.Optimize</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#decode-decode">decode.Decode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#filterbarcodes-filterbarcodes">filterbarcodes.FilterBarcodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filterbarcodes-generateadaptivethreshold">filterbarcodes.GenerateAdaptiveThreshold</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filterbarcodes-adaptivefilterbarcodes">filterbarcodes.AdaptiveFilterBarcodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#segment-segmentcells">segment.SegmentCells</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#segment-assigncellfov">segment.AssignCellFOV</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#segment-exportcellmetadata">segment.ExportCellMetadata</a></li>
@@ -97,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#partition-partitionbarcodes">partition.PartitionBarcodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#partition-exportpartitionedbarcodes">partition.ExportPartitionedBarcodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#slurmreport-slurmreport">slurmreport.SlurmReport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plotperformance-plotperformance">plotperformance.PlotPerformance</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to MERlin</a></li>
@@ -172,10 +177,10 @@
 <p>Description: Aligns image stacks by fitting fiducial spots to Gaussians.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>write_fiducial_images – Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.</li>
-<li>initial_sigma – initial spot Gaussian standard deviation for the spot  fitting algorithm.</li>
-<li>intensity_threshold – minimum spot intensity for spot fitting.</li>
-<li>significance_threshold –  minimum fit significance for spot fitting.</li>
+<li><p>write_fiducial_images – Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.</p></li>
+<li><p>initial_sigma – initial spot Gaussian standard deviation for the spot  fitting algorithm.</p></li>
+<li><p>intensity_threshold – minimum spot intensity for spot fitting.</p></li>
+<li><p>significance_threshold –  minimum fit significance for spot fitting.</p></li>
 </ul>
 </div>
 <div class="section" id="warp-fiducialcorrelationwarp">
@@ -183,7 +188,7 @@
 <p>Description: Aligns image stacks by maximizing the cross-correlation between fiducial images.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>write_fiducial_images – Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.</li>
+<li><p>write_fiducial_images – Flag indicating whether the aligned fiducial images should be saved. These images are helpful for visually verifying the quality of the image alignment.</p></li>
 </ul>
 </div>
 <div class="section" id="preprocess-deconvolutionpreprocess">
@@ -191,11 +196,11 @@
 <p>Description: High-pass filters and deconvolves the image data in preparation for bit-calling.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>warp_task – The name of the warp task that provides the aligned image stacks.</li>
-<li>highpass_pass – The standard deviation to use for the high pass filter.</li>
-<li>decon_sigma – The standard deviation to use for the Lucy-Richardson deconvolution.</li>
-<li>decon_iterations – The number of Lucy-Richardson deconvolution iterations to perform on each image.</li>
-<li>decon_filter_size – The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.</li>
+<li><p>warp_task – The name of the warp task that provides the aligned image stacks.</p></li>
+<li><p>highpass_pass – The standard deviation to use for the high pass filter.</p></li>
+<li><p>decon_sigma – The standard deviation to use for the Lucy-Richardson deconvolution.</p></li>
+<li><p>decon_iterations – The number of Lucy-Richardson deconvolution iterations to perform on each image.</p></li>
+<li><p>decon_filter_size – The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.</p></li>
 </ul>
 </div>
 <div class="section" id="optimize-optimize">
@@ -203,30 +208,46 @@
 <p>Description: Determines the optimal per-bit scale factors for barcode decoding.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>iteration_count – The number of iterations to perform for the optimization.</li>
-<li>fov_per_iteration – The number of fields of view to decode in each round of optimization.</li>
-<li>estimate_initial_scale_factors_from_cdf – Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.</li>
-<li>area_threshold – The minimum barcode area for barcodes to be used in the calculation of the scale factors.</li>
+<li><p>iteration_count – The number of iterations to perform for the optimization.</p></li>
+<li><p>fov_per_iteration – The number of fields of view to decode in each round of optimization.</p></li>
+<li><p>estimate_initial_scale_factors_from_cdf – Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.</p></li>
+<li><p>area_threshold – The minimum barcode area for barcodes to be used in the calculation of the scale factors.</p></li>
 </ul>
 </div>
 <div class="section" id="decode-decode">
 <h2>decode.Decode<a class="headerlink" href="#decode-decode" title="Permalink to this headline">¶</a></h2>
-<p>Description: Extract barcodes from all field of views.</p>
+<p>Description: Extract barcodes from all field of views using a pixel-based decoding algorithm. This decoding strategy was originally presented in Moffitt*, Hao*, Wang*, et al, PNAS, 2016.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>crop_width – The number of pixels from each edge of the image to exclude from decoding.</li>
-<li>write_decoded_images – Flag indicating if the decoded and intensity images should be written.</li>
-<li>minimum_area – The area threshold, below which decoded barcodes are ignored.</li>
-<li>lowpass_sigma – The standard deviation for the low pass filter prior to decoding.</li>
+<li><p>crop_width – The number of pixels from each edge of the image to exclude from decoding.</p></li>
+<li><p>write_decoded_images – Flag indicating if the decoded and intensity images should be written.</p></li>
+<li><p>minimum_area – The area threshold, below which decoded barcodes are ignored.</p></li>
+<li><p>lowpass_sigma – The standard deviation for the low pass filter prior to decoding.</p></li>
 </ul>
 </div>
 <div class="section" id="filterbarcodes-filterbarcodes">
 <h2>filterbarcodes.FilterBarcodes<a class="headerlink" href="#filterbarcodes-filterbarcodes" title="Permalink to this headline">¶</a></h2>
-<p>Description: Filters the decoded barcodes based on area and intensity</p>
+<p>Description: Filters the decoded barcodes based on area and intensity. This filtering strategy was originally presented in Moffitt*, Hao*, Wang*, et al, PNAS, 2016.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>area_threshold – Barcodes with areas below the specified area_threshold are removed.</li>
-<li>intensity_threshold – Barcodes with intensities below this threshold are removed.</li>
+<li><p>area_threshold – Barcodes with areas below the specified area_threshold are removed.</p></li>
+<li><p>intensity_threshold – Barcodes with intensities below this threshold are removed.</p></li>
+</ul>
+</div>
+<div class="section" id="filterbarcodes-generateadaptivethreshold">
+<h2>filterbarcodes.GenerateAdaptiveThreshold<a class="headerlink" href="#filterbarcodes-generateadaptivethreshold" title="Permalink to this headline">¶</a></h2>
+<p>Description: Generate the barcode parameter histograms for the mean intensity, minimimum distance, and area for filtering barcodes with an adaptive threshold. This is run concurrently with decoding in order to minimize the required time.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>run_after_task – The task to start generating the adaptive threshold after. To run concurrently with decode, this can be specified as the preprocess task, otherwise it can be specified as the decode task.</p></li>
+</ul>
+</div>
+<div class="section" id="filterbarcodes-adaptivefilterbarcodes">
+<h2>filterbarcodes.AdaptiveFilterBarcodes<a class="headerlink" href="#filterbarcodes-adaptivefilterbarcodes" title="Permalink to this headline">¶</a></h2>
+<p>Description: Use an adaptive barcode to enrich the decode barcodes for the correct barcodes. The adaptive filter selects bins from the three dimension mean intensity, minimum distance, area histogram based on the fraction of blanks within each bin in order to achieve a specified misidentification rate. This filtering strategy was originally presented in Xia*, Fan*, Emanuel*, et al, PNAS, 2019.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>misidentification_rate – The target misidentification rate, calculated as the number of blank barcodes per blank barcode divided by the number of coding barcodes per coding barcode.</p></li>
 </ul>
 </div>
 <div class="section" id="segment-segmentcells">
@@ -234,8 +255,8 @@
 <p>Description: Determines cell boundaries using a watershed algorithm with the seeds determined from a nuclear stain and the watershed performed on a cell stain.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>seed_channel_name – The name of the data channel to use to find seeds</li>
-<li>watershed_channel_name – The name of the data channel to use as the watershed image.W</li>
+<li><p>seed_channel_name – The name of the data channel to use to find seeds</p></li>
+<li><p>watershed_channel_name – The name of the data channel to use as the watershed image.W</p></li>
 </ul>
 </div>
 <div class="section" id="segment-assigncellfov">
@@ -251,10 +272,10 @@
 <p>Description: Assembles the images from each field of view into a low resolution mosaic.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>microns_per_pixel – The number of microns to correspond with a pixel in the mosaic. If set to “full_resolution”, the mosaic is generated with the same resolution as the input images.</li>
-<li>data_channels – The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.</li>
-<li>z_indexes – The z index to export. If not provided all z indexes are exported.</li>
-<li>fov_crop_width – The number of pixels to remove from each edge of each fov before inserting it into the mosaic.</li>
+<li><p>microns_per_pixel – The number of microns to correspond with a pixel in the mosaic. If set to “full_resolution”, the mosaic is generated with the same resolution as the input images.</p></li>
+<li><p>data_channels – The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.</p></li>
+<li><p>z_indexes – The z index to export. If not provided all z indexes are exported.</p></li>
+<li><p>fov_crop_width – The number of pixels to remove from each edge of each fov before inserting it into the mosaic.</p></li>
 </ul>
 </div>
 <div class="section" id="sequential-sumsignal">
@@ -262,9 +283,9 @@
 <p>Description: Calculates the total intensity within segementation boundaries.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>z_index – the z index of the image stack to use for the summation</li>
-<li>apply_highpass – flag indicating if a highpass filter should be applied to the image prior to summing.</li>
-<li>highpass_sigma – the standard deviation to use for the high pass filter</li>
+<li><p>z_index – the z index of the image stack to use for the summation</p></li>
+<li><p>apply_highpass – flag indicating if a highpass filter should be applied to the image prior to summing.</p></li>
+<li><p>highpass_sigma – the standard deviation to use for the high pass filter</p></li>
 </ul>
 </div>
 <div class="section" id="sequential-exportsumsignals">
@@ -284,7 +305,21 @@
 <p>Description: An analysis task that generates reports on previously completed analysis tasks using Slurm. This analysis task only works when Merlin is run through Slurm with every analysis task fragment run as a separate job. This task uploads the Slurm report to a central repository to track Merlin’s performance.</p>
 <p>Parameters:</p>
 <ul class="simple">
-<li>run_after_task – the task to wait for before generating the Slurm report</li>
+<li><p>run_after_task – the task to wait for before generating the Slurm report</p></li>
+</ul>
+</div>
+<div class="section" id="plotperformance-plotperformance">
+<h2>plotperformance.PlotPerformance<a class="headerlink" href="#plotperformance-plotperformance" title="Permalink to this headline">¶</a></h2>
+<p>Description: Create quality control plots of the analysis tasks as soon as the analysis results become avaliable.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>decode_task</p></li>
+<li><p>filter_task</p></li>
+<li><p>optimize_task</p></li>
+<li><p>segment_task</p></li>
+<li><p>sum_task</p></li>
+<li><p>partition_task</p></li>
+<li><p>global_align_task</p></li>
 </ul>
 </div>
 </div>
@@ -300,7 +335,7 @@
         <a href="contributing.html" class="btn btn-neutral float-right" title="Contributing to MERlin" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="usage.html" class="btn btn-neutral" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -326,35 +361,16 @@
   
 
 
-  
-
-    
-    
-      <script type="text/javascript">
-          var DOCUMENTATION_OPTIONS = {
-              URL_ROOT:'./',
-              VERSION:'',
-              LANGUAGE:'None',
-              COLLAPSE_INDEX:false,
-              FILE_SUFFIX:'.html',
-              HAS_SOURCE:  true,
-              SOURCELINK_SUFFIX: '.txt'
-          };
-      </script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-    
-
-  
-
-  <script type="text/javascript" src="_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

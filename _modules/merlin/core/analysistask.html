@@ -166,6 +166,10 @@
     <span class="k">pass</span></div>
 
 
+<div class="viewcode-block" id="InvalidParameterException"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.analysistask.InvalidParameterException">[docs]</a><span class="k">class</span> <span class="nc">InvalidParameterException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
 <div class="viewcode-block" id="AnalysisTask"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.analysistask.AnalysisTask">[docs]</a><span class="k">class</span> <span class="nc">AnalysisTask</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
@@ -258,12 +262,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">close_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runTimer</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">record_analysis_error</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">close_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">e</span></div>
 
     <span class="k">def</span> <span class="nf">_reset_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Remove all files created by this analysis task and remove markers</span>
+        <span class="sd">&quot;&quot;&quot;Remove files created by this analysis task and remove markers</span>
 <span class="sd">        indicating that this analysis has been started, or has completed.</span>
 
 <span class="sd">        This function should be overridden by subclasses so that they</span>
@@ -408,6 +413,10 @@
 
 <div class="viewcode-block" id="ParallelAnalysisTask"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.analysistask.ParallelAnalysisTask">[docs]</a><span class="k">class</span> <span class="nc">ParallelAnalysisTask</span><span class="p">(</span><span class="n">AnalysisTask</span><span class="p">):</span>
 
+    <span class="c1"># TODO - this can be restructured so that AnalysisTask is instead a subclass</span>
+    <span class="c1"># of ParallelAnalysisTask where fragment count is set to 1. This could</span>
+    <span class="c1"># help remove some of the redundant code</span>
+
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An abstract class for analysis that can be run in multiple parts </span>
 <span class="sd">    independently. Subclasses should implement the analysis to perform in </span>
@@ -463,12 +472,13 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">close_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">runTimer</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">record_analysis_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">close_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="n">e</span></div>
 
     <span class="k">def</span> <span class="nf">_reset_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Remove all files created by this analysis task and remove markers</span>
+        <span class="sd">&quot;&quot;&quot;Remove files created by this analysis task and remove markers</span>
 <span class="sd">        indicating that this analysis has been started, or has completed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">fragmentIndex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

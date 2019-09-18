@@ -50,7 +50,7 @@ Parameters:
 decode.Decode
 ---------------
 
-Description: Extract barcodes from all field of views.
+Description: Extract barcodes from all field of views using a pixel-based decoding algorithm. This decoding strategy was originally presented in Moffitt*, Hao*, Wang*, et al, PNAS, 2016.
 
 Parameters:
 
@@ -62,12 +62,30 @@ Parameters:
 filterbarcodes.FilterBarcodes
 ------------------------------
 
-Description: Filters the decoded barcodes based on area and intensity
+Description: Filters the decoded barcodes based on area and intensity. This filtering strategy was originally presented in Moffitt*, Hao*, Wang*, et al, PNAS, 2016.
 
 Parameters:
 
 * area\_threshold -- Barcodes with areas below the specified area\_threshold are removed.
-* intensity\_threshold -- Barcodes with intensities below this threshold are removed.  
+* intensity\_threshold -- Barcodes with intensities below this threshold are removed.
+
+filterbarcodes.GenerateAdaptiveThreshold
+-------------------------------------------
+
+Description: Generate the barcode parameter histograms for the mean intensity, minimimum distance, and area for filtering barcodes with an adaptive threshold. This is run concurrently with decoding in order to minimize the required time.
+
+Parameters:
+
+* run\_after\_task -- The task to start generating the adaptive threshold after. To run concurrently with decode, this can be specified as the preprocess task, otherwise it can be specified as the decode task.
+
+filterbarcodes.AdaptiveFilterBarcodes
+----------------------------------------
+
+Description: Use an adaptive barcode to enrich the decode barcodes for the correct barcodes. The adaptive filter selects bins from the three dimension mean intensity, minimum distance, area histogram based on the fraction of blanks within each bin in order to achieve a specified misidentification rate. This filtering strategy was originally presented in Xia*, Fan*, Emanuel*, et al, PNAS, 2019.
+
+Parameters:
+
+* misidentification_rate -- The target misidentification rate, calculated as the number of blank barcodes per blank barcode divided by the number of coding barcodes per coding barcode.
 
 segment.SegmentCells
 ----------------------
@@ -135,3 +153,18 @@ Description: An analysis task that generates reports on previously completed ana
 Parameters:
 
 * run\_after\_task -- the task to wait for before generating the Slurm report
+
+plotperformance.PlotPerformance
+-------------------------------
+
+Description: Create quality control plots of the analysis tasks as soon as the analysis results become avaliable.
+
+Parameters:
+
+* decode\_task 
+* filter\_task
+* optimize\_task
+* segment\_task
+* sum\_task
+* partition\_task  
+* global\_align\_task  

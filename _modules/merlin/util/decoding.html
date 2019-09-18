@@ -319,7 +319,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">properties</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">regionprops</span><span class="p">(</span>
                 <span class="n">measure</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">decodedImage</span> <span class="o">==</span> <span class="n">barcodeIndex</span><span class="p">),</span>
-                <span class="n">intensity_image</span><span class="o">=</span><span class="n">pixelMagnitudes</span><span class="p">)</span>
+                <span class="n">intensity_image</span><span class="o">=</span><span class="n">pixelMagnitudes</span><span class="p">,</span>
+                <span class="n">cache</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">dList</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_bc_properties_to_dict</span><span class="p">(</span>
             <span class="n">p</span><span class="p">,</span> <span class="n">barcodeIndex</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">pixelTraces</span><span class="p">,</span> <span class="n">zIndex</span><span class="p">,</span>
             <span class="n">globalAligner</span><span class="p">,</span> <span class="n">segmenter</span>

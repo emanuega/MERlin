@@ -156,15 +156,14 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 
-<span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
+<span class="kn">from</span> <span class="nn">merlin.analysis</span> <span class="k">import</span> <span class="n">decode</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">decoding</span>
-<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">barcodedb</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">registration</span>
 <span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">aberration</span>
 <span class="kn">from</span> <span class="nn">merlin.data.codebook</span> <span class="k">import</span> <span class="n">Codebook</span>
 
 
-<div class="viewcode-block" id="OptimizeIteration"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration">[docs]</a><span class="k">class</span> <span class="nc">OptimizeIteration</span><span class="p">(</span><span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
+<div class="viewcode-block" id="OptimizeIteration"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration">[docs]</a><span class="k">class</span> <span class="nc">OptimizeIteration</span><span class="p">(</span><span class="n">decode</span><span class="o">.</span><span class="n">BarcodeSavingParallelAnalysisTask</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An analysis task for performing a single iteration of scale factor</span>
@@ -198,9 +197,6 @@
 
 <div class="viewcode-block" id="OptimizeIteration.fragment_count"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.fragment_count">[docs]</a>    <span class="k">def</span> <span class="nf">fragment_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;fov_per_iteration&#39;</span><span class="p">]</span></div>
-
-<div class="viewcode-block" id="OptimizeIteration.get_barcode_database"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_barcode_database">[docs]</a>    <span class="k">def</span> <span class="nf">get_barcode_database</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">BarcodeDB</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">barcodedb</span><span class="o">.</span><span class="n">PyTablesBarcodeDB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="OptimizeIteration.get_codebook"><a class="viewcode-back" href="../../merlin.analysis.html#merlin.analysis.optimize.OptimizeIteration.get_codebook">[docs]</a>    <span class="k">def</span> <span class="nf">get_codebook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Codebook</span><span class="p">:</span>
         <span class="n">preprocessTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>

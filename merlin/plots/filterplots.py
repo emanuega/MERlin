@@ -142,10 +142,13 @@ class BlankBarcodeFOVDistributionPlot(AbstractPlot):
         spatialMetadata = inputMetadata[
             'filterplots/FOVSpatialDistributionMetadata']
         plt.imshow(spatialMetadata.spatialBlankCounts,
-                   extent=spatialMetadata.get_spatial_extents())
+                   extent=spatialMetadata.get_spatial_extents(),
+                   cmap=plt.get_cmap('Greys'))
         plt.xlabel('X position (pixels)')
         plt.ylabel('Y position (pixels)')
         plt.title('Spatial distribution of blank barcodes within FOV')
+        cbar = plt.colorbar(ax=ax)
+        cbar.set_label('Barcode count', rotation=270)
 
         return fig
 

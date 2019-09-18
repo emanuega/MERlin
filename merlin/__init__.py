@@ -1,5 +1,11 @@
 import dotenv
 import os
+import glob
+import json
+import importlib
+from typing import List
+
+from merlin.core import dataset
 
 envPath = os.path.join(os.path.expanduser('~'), '.merlinenv')
 
@@ -43,3 +49,28 @@ def store_env(dataHome, analysisHome, parametersHome):
 def version():
     import pkg_resources
     return pkg_resources.require("merlin")[0].version
+
+
+def get_analysis_datasets(maxDepth=2) -> List[dataset.DataSet]:
+    """ Get a list of all datasets currently stored in analysis home.
+
+    Args:
+        maxDepth: the directory depth to search for datasets.
+    Returns: A list of the dataset objects currently within analysis home.
+    """
+    metadataFiles = []
+    for d in range(1, maxDepth+1):
+        metadataFiles += glob.glob(os.path.join(
+            ANALYSIS_HOME, *['*']*d, 'dataset.json'))
+
+    def load_dataset(jsonPath) -> dataset.DataSet:
+        with open(jsonPath, 'r') as f:
+            metadata = json.load(f)
+            analysisModule = importlib.import_module(metadata['module'])
+            analysisTask = getattr(analysisModule, metadata['class'])
+            return analysisTask(metadata['dataset_name'])
+
+    return [load_dataset(m) for m in metadataFiles]
+
+
+

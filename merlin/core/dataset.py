@@ -73,6 +73,15 @@ class DataSet(object):
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
         os.makedirs(self.logPath, exist_ok=True)
 
+    def _store_dataset_metadata(self) -> None:
+        metadata = {
+            'merlin_version': merlin.version(),
+            'module': type(self).__module__,
+            'class': type(self).__name__,
+            'dataset_name': self.dataSetName
+        }
+        self.save_json_analysis_result(metadata, 'dataset')
+
     def save_workflow(self, workflowString: str) -> str:
         """ Save a snakemake workflow for analysis of this dataset.
 
@@ -919,7 +928,6 @@ class MERFISHDataSet(ImageDataSet):
                     file that specifies properties of the microscope used
                     to acquire the images represented by this ImageDataSet
         """
-
         super().__init__(dataDirectoryName, dataHome, analysisHome,
                          microscopeParametersName)
 

@@ -111,6 +111,7 @@ class AnalysisTask(ABC):
             self.dataSet.close_logger(self)
         except Exception as e:
             logger.exception(e)
+            self.runTimer.cancel()
             self.dataSet.record_analysis_error(self)
             self.dataSet.close_logger(self)
             raise e
@@ -320,6 +321,7 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.close_logger(self, fragmentIndex)
             except Exception as e:
                 logger.exception(e)
+                self.runTimer.cancel()
                 self.dataSet.record_analysis_error(self, fragmentIndex)
                 self.dataSet.close_logger(self, fragmentIndex)
                 raise e

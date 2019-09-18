@@ -684,6 +684,7 @@ class DataSet(object):
 
     def record_analysis_error(self, analysisTask: analysistask.AnalysisTask,
                               fragmentIndex: int = None) -> None:
+        self._reset_analysis_event(analysisTask, 'run', fragmentIndex)
         self._record_analysis_event(analysisTask, 'error', fragmentIndex)
 
     def get_analysis_start_time(self, analysisTask: analysistask.AnalysisTask,

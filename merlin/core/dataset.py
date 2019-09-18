@@ -67,6 +67,8 @@ class DataSet(object):
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
         os.makedirs(self.logPath, exist_ok=True)
 
+        self._store_dataset_metadata()
+
     def _store_dataset_metadata(self) -> None:
         metadata = {
             'merlin_version': merlin.version(),

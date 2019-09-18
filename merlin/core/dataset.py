@@ -76,7 +76,7 @@ class DataSet(object):
             'class': type(self).__name__,
             'dataset_name': self.dataSetName
         }
-        self.save_json_analysis_result(metadata, 'dataset')
+        self.save_json_analysis_result(metadata, 'dataset', None)
 
     def save_workflow(self, workflowString: str) -> str:
         """ Save a snakemake workflow for analysis of this dataset.

@@ -4,6 +4,7 @@ import os
 import re
 import tifffile
 import boto3
+from botocore import client
 from urllib import parse
 from typing import List
 
@@ -251,7 +252,6 @@ class DaxReader(Reader):
             self.image_height = 256
             self.image_width = 256
 
-
     def load_frame(self, frame_number):
         """
         Load a frame & return it as a np array.
@@ -284,12 +284,14 @@ class S3DaxReader(DaxReader):
         self.inf_filename = dirname + os.path.splitext(
             os.path.basename(path))[0] + ".inf"
 
-        self._parse_inf(boto3.resource('s3').Object(
-            parsedPath.netloc, self.inf_filename.strip('/')
-            ).get()['Body'].read().decode('utf-8').splitlines())
+        config = client.Config(read_timeout=600, retries={'max_attempts': 10})
+        s3 = boto3.resource('s3', config=config)
+        self._parse_inf(
+            s3.Object(parsedPath.netloc, self.inf_filename.strip('/'))
+            .get()['Body'].read().decode('utf-8').splitlines())
 
         # open the dax file
-        self.fileptr = boto3.resource('s3').Object(
+        self.fileptr = s3.Object(
             parsedPath.netloc, parsedPath.path.strip('/'))
 
     def load_frame(self, frame_number):

@@ -21,7 +21,7 @@ class SpatialFeature(object):
     """
 
     def __init__(self, boundaryList: List[List[geometry.Polygon]], fov: int,
-                 zCoordinates: np.ndarray = None, uniqueID: int = None,
+                 zCoordinates: np.array = None, uniqueID: int = None,
                  label: int = -1) -> None:
         """Create a new feature specified by a list of pixels
 
@@ -176,13 +176,17 @@ class SpatialFeature(object):
             slice is present for the feature, the z height is taken as 1.
         """
         boundaries = self.get_boundaries()
-        totalVolume = 0
 
-        if len(boundaries) > 1:
-            for b, deltaZ in zip(boundaries[:1], np.diff(self._zCoordinates)):
-                totalVolume += deltaZ*np.sum([x.area for x in b])
+        zPos = np.array(self._zCoordinates)
+        if len(zPos) > 1:
+            zDiff = np.diff(zPos)
+            zNum = np.array([[x, x + 1] for x in range(len(zPos) - 1)])
+            areas = np.array([np.sum([y.area for y in x]) if len(x) > 0
+                              else 0 for x in boundaries])
+            totalVolume = np.sum([np.mean(areas[zNum[x]]) * zDiff[x]
+                                  for x in range(zNum.shape[0])])
         else:
-            totalVolume = np.sum([x.area for x in boundaries[0]])
+            totalVolume = np.sum([y.area for x in boundaries for y in x])
 
         return totalVolume
 
@@ -441,7 +445,8 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
                 featureGroup = f.require_group('featuredata')
                 featureGroup.attrs['version'] = merlin.version()
                 for currentFeature in features:
-                    self._save_feature_to_hdf5_group(featureGroup, currentFeature,
+                    self._save_feature_to_hdf5_group(featureGroup,
+                                                     currentFeature,
                                                      fov)
 
     def read_features(self, fov: int = None) -> List[SpatialFeature]:

@@ -172,17 +172,21 @@ class SpatialFeature(object):
         """Get the volume enclosed by this feature.
 
         Returns:
-            the volume represented in global coordinates.
+            the volume represented in global coordinates. If only one z
+            slice is present for the feature, the z height is taken as 1.
         """
         boundaries = self.get_boundaries()
 
         zPos = np.array(self._zCoordinates)
-        zDiff = np.diff(zPos)
-        zNum = np.array([[x, x + 1] for x in list(range(len(zPos) - 1))])
-        areas = np.array([np.sum([y.area for y in x]) if len(x) > 0
-                          else 0 for x in boundaries])
-        totalVolume = np.sum([np.mean(areas[zNum[x]]) * zDiff[x]
-                              for x in range(zNum.shape[0])])
+        if len(zPos) > 1:
+            zDiff = np.diff(zPos)
+            zNum = np.array([[x, x + 1] for x in range(len(zPos) - 1)])
+            areas = np.array([np.sum([y.area for y in x]) if len(x) > 0
+                              else 0 for x in boundaries])
+            totalVolume = np.sum([np.mean(areas[zNum[x]]) * zDiff[x]
+                                  for x in range(zNum.shape[0])])
+        else:
+            totalVolume = np.sum([y.area for x in boundaries for y in x])
 
         return totalVolume
 

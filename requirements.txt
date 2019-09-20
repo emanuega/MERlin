@@ -26,3 +26,4 @@ requests>=2.4.2
 tables
 boto3
 xmltodict
+google-cloud-storage

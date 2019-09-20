@@ -4,6 +4,7 @@ import os
 import re
 import tifffile
 import boto3
+from google.cloud import storage
 from urllib import parse
 from typing import List
 
@@ -40,9 +41,13 @@ def infer_reader(filename: str, verbose: bool = False):
     """
     ext = os.path.splitext(filename)[1]
     s3 = filename.startswith('s3://')
+    gc = filename.startswith('gc://')
     if s3:
         if ext == ".dax":
             return S3DaxReader(filename, verbose=verbose)
+    elif gc:
+        if ext == ".dax":
+            return GCloudDaxReader(filename, verbose=verbose)
     else:
         if ext == ".dax":
             return DaxReader(filename, verbose=verbose)
@@ -303,6 +308,49 @@ class S3DaxReader(DaxReader):
         image_data = np.frombuffer(self.fileptr.get(
             Range='bytes=%i-%i' % (startByte, endByte))['Body'].read(),
             dtype='uint16')
+        image_data = np.reshape(image_data,
+                                [self.image_height, self.image_width])
+        if self.bigendian:
+            image_data.byteswap(True)
+        return image_data
+
+    def close(self):
+        self.fileptr = None
+
+
+class GCloudDaxReader(DaxReader):
+    """
+    Dax reader class for dax files stored on AWS S3.
+    """
+
+    def __init__(self, filename, verbose=False):
+        parsedPath = parse.urlparse(filename)
+        path = parsedPath.path
+
+        dirname = os.path.dirname(path)
+        if len(dirname) > 0:
+            dirname = dirname + "/"
+        self.inf_filename = dirname + os.path.splitext(
+            os.path.basename(path))[0] + ".inf"
+
+        bucket = storage.Client().get_bucket(parsedPath.netloc)
+        infBlob = bucket.get_blob(self.inf_filename.strip('/'))
+        self._parse_inf(
+            infBlob.download_as_string().decode('utf-8').splitlines())
+
+        # open the dax file
+        self.fileptr = bucket.get_blob(parsedPath.path.strip('/'))
+
+    def load_frame(self, frame_number):
+        """
+        Load a frame & return it as a np array.
+        """
+        super(DaxReader, self).load_frame(frame_number)
+
+        startByte = frame_number * self.image_height * self.image_width * 2
+        endByte = startByte + 2*(self.image_height * self.image_width) - 1
+        image_data = np.frombuffer(self.fileptr.download_as_string(
+            start=startByte, end=endByte), dtype='uint16')
         image_data = np.reshape(image_data,
                                 [self.image_height, self.image_width])
         if self.bigendian:

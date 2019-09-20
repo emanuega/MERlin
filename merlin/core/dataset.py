@@ -3,7 +3,6 @@ import json
 import shutil
 import pandas
 import numpy as np
-import fnmatch
 import tifffile
 import importlib
 import time
@@ -21,6 +20,7 @@ import tables
 from urllib import parse
 import xmltodict
 import boto3
+from google.cloud import storage
 
 from merlin.util import datareader
 import merlin
@@ -808,6 +808,11 @@ class ImageDataSet(DataSet):
             allFiles = ['s3://%s/%s' % (t.hostname, f.key)
                         for f in boto3.resource('s3').Bucket(t.hostname)
                         .objects.filter(Prefix=t.path.strip('/'))]
+        elif self.rawDataPath.startswith('gc://'):
+            t = parse.urlparse(self.rawDataPath)
+            allFiles = ['gc://%s/%s' % (t.hostname, f.name)
+                        for f in storage.Client().list_blobs(
+                            t.hostname, prefix=t.path.strip('/'))]
         else:
             allFiles = [os.sep.join([self.rawDataPath, currentFile])
                         for currentFile in os.listdir(self.rawDataPath)]
@@ -833,8 +838,10 @@ class ImageDataSet(DataSet):
             a three element list with [width, height, frameCount] or None
                     if the file does not exist
         """
-        if not imagePath.startswith('s3://') and not os.path.exists(imagePath):
-            # TODO update for s3
+        if not imagePath.startswith('s3://') \
+                and not imagePath.startswith('gc://')\
+                and not os.path.exists(imagePath):
+            # TODO update for s3 and google cloud
             return None
 
         with datareader.infer_reader(imagePath) as reader:
@@ -893,7 +900,13 @@ class ImageDataSet(DataSet):
         if xmlPath.startswith('s3://'):
             t = parse.urlparse(xmlPath)
             xmlString = boto3.resource('s3').Object(
-                t.netloc, t.path.strip('/')).get()['Body'].read().decode('utf-8')
+                t.netloc, t.path.strip('/')).get()['Body'].read().decode(
+                    'utf-8')
+        elif xmlPath.startswith('gc://'):
+            t = parse.urlparse(xmlPath)
+            bucket = storage.Client().get_bucket(t.netloc)
+            xmlString = bucket.get_blob(t.path.strip('/')).download_as_string()\
+                .decode('utf-8')
         else:
             with open(xmlPath, 'r') as xmlFile:
                 xmlString = xmlFile.read()

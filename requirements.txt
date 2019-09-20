@@ -22,7 +22,7 @@ h5py>=1.8.15
 numexpr>=2.6.2
 cython>=0.21
 snakemake
-requests>=2.4.2
+requests>=2.18.0
 tables
 boto3
 xmltodict

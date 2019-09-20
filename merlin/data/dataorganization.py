@@ -317,13 +317,14 @@ class DataOrganization(object):
                          channelInfo['imagingRound']))
 
                 if not imagePath.startswith('s3://') \
+                        and not imagePath.startswith('gc://') \
                         and not os.path.exists(imagePath):
                     raise InputDataError(
                         ('Image data for channel {0} and fov {1} not found. '
                          'Expected at {2}')
                         .format(dataChannel, fov, imagePath))
                 if imagePath.startswith('s3://'):
-                    # TODO check if file exists in s3
+                    # TODO check if file exists in s3 and gcloud
                     pass
 
                 try:

@@ -79,7 +79,8 @@ class WatershedSegment(analysistask.ParallelAnalysisTask):
             for i in np.unique(watershedOutput) if i != 0]
 
         featureDB = spatialfeature.HDF5SpatialFeatureDB(self.dataSet, self)
-        featureDB.write_features(featureList, fragmentIndex)
+        featureDB.write_features(featureList, fragmentIndex, 
+            np.array(self.dataSet.get_data_organization().get_z_positions()))
 
     def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
                                      filterSigma: float) -> np.ndarray:

@@ -21,7 +21,7 @@ class SpatialFeature(object):
     """
 
     def __init__(self, boundaryList: List[List[geometry.Polygon]], fov: int,
-                 zCoordinates: np.ndarray = None, uniqueID: int = None,
+                 zCoordinates: np.array = None, uniqueID: int = None,
                  label: int = -1) -> None:
         """Create a new feature specified by a list of pixels
 
@@ -172,17 +172,17 @@ class SpatialFeature(object):
         """Get the volume enclosed by this feature.
 
         Returns:
-            the volume represented in global coordinates. If only one z
-            slice is present for the feature, the z height is taken as 1.
+            the volume represented in global coordinates.
         """
         boundaries = self.get_boundaries()
-        totalVolume = 0
 
-        if len(boundaries) > 1:
-            for b, deltaZ in zip(boundaries[:1], np.diff(self._zCoordinates)):
-                totalVolume += deltaZ*np.sum([x.area for x in b])
-        else:
-            totalVolume = np.sum([x.area for x in boundaries[0]])
+        zPos = np.array(self._zCoordinates)
+        zDiff = np.diff(zPos)
+        zNum = np.array([[x,x+1] for x in list(range(len(zPos)-1))])
+        areas = np.array([np.sum([y.area for y in x]) if len(x) > 0 
+            else 0 for x in boundaries])
+        totalVolume = np.sum([np.mean(areas[zNum[x]]) * zDiff[x] 
+            for x in range(zNum.shape[0])])
 
         return totalVolume
 

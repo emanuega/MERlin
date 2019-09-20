@@ -178,11 +178,11 @@ class SpatialFeature(object):
 
         zPos = np.array(self._zCoordinates)
         zDiff = np.diff(zPos)
-        zNum = np.array([[x,x+1] for x in list(range(len(zPos)-1))])
-        areas = np.array([np.sum([y.area for y in x]) if len(x) > 0 
-            else 0 for x in boundaries])
-        totalVolume = np.sum([np.mean(areas[zNum[x]]) * zDiff[x] 
-            for x in range(zNum.shape[0])])
+        zNum = np.array([[x, x + 1] for x in list(range(len(zPos) - 1))])
+        areas = np.array([np.sum([y.area for y in x]) if len(x) > 0
+                          else 0 for x in boundaries])
+        totalVolume = np.sum([np.mean(areas[zNum[x]]) * zDiff[x]
+                              for x in range(zNum.shape[0])])
 
         return totalVolume
 
@@ -441,7 +441,8 @@ class HDF5SpatialFeatureDB(SpatialFeatureDB):
                 featureGroup = f.require_group('featuredata')
                 featureGroup.attrs['version'] = merlin.version()
                 for currentFeature in features:
-                    self._save_feature_to_hdf5_group(featureGroup, currentFeature,
+                    self._save_feature_to_hdf5_group(featureGroup,
+                                                     currentFeature,
                                                      fov)
 
     def read_features(self, fov: int = None) -> List[SpatialFeature]:

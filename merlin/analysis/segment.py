@@ -105,8 +105,8 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             for i in np.unique(watershedOutput) if i != 0]
 
         featureDB = self.get_feature_database()
-        featureDB.write_features(featureList, fragmentIndex, 
-            np.array(self.dataSet.get_data_organization().get_z_positions()))
+        zPos = np.array(self.dataSet.get_data_organization().get_z_positions())
+        featureDB.write_features(featureList, fragmentIndex, zPos)
 
     def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
                                      filterSigma: float) -> np.ndarray:

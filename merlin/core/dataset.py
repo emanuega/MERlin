@@ -22,7 +22,7 @@ import xmltodict
 import boto3
 from google.cloud import storage
 
-from merlin.util import datareader
+from merlin.util import imagereader
 import merlin
 from merlin.core import analysistask
 from merlin.data import dataorganization
@@ -820,7 +820,7 @@ class ImageDataSet(DataSet):
                        or f.endswith('.tif') or f.endswith('.tiff')])
 
     def load_image(self, imagePath, frameIndex):
-        with datareader.infer_reader(imagePath) as reader:
+        with imagereader.infer_reader(imagePath) as reader:
             imageIn = reader.load_frame(int(frameIndex))
             if self.transpose:
                 imageIn = np.transpose(imageIn)
@@ -844,7 +844,7 @@ class ImageDataSet(DataSet):
             # TODO update for s3 and google cloud
             return None
 
-        with datareader.infer_reader(imagePath) as reader:
+        with imagereader.infer_reader(imagePath) as reader:
             return reader.film_size()
 
     def _import_microscope_parameters(self, microscopeParametersName):

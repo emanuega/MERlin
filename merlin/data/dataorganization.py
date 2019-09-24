@@ -6,6 +6,7 @@ import pandas
 import numpy as np
 
 import merlin
+from merlin.core import dataset
 
 
 def _parse_list(inputString: str, dtype=float):
@@ -268,11 +269,15 @@ class DataOrganization(object):
             uniqueIndexes = uniqueEntries.index.values.tolist()
 
             fileNames = self._dataSet.get_image_file_names()
+            if len(fileNames) == 0:
+                raise dataset.DataFormatException(
+                    'No image files found at %s.' % self._dataSet.rawDataPath)
             fileData = []
             for currentType, currentIndex in zip(uniqueTypes, uniqueIndexes):
                 matchRE = re.compile(
                         self.data.imageRegExp[currentIndex])
 
+                matchingFiles = False
                 for currentFile in fileNames:
                     matchedName = matchRE.match(os.path.split(currentFile)[-1])
                     if matchedName is not None:
@@ -281,7 +286,15 @@ class DataOrganization(object):
                             if 'imagingRound' not in transformedName:
                                 transformedName['imagingRound'] = -1
                             transformedName['imagePath'] = currentFile
+                            matchingFiles = True
                             fileData.append(transformedName)
+
+                if not matchingFiles:
+                    raise dataset.DataFormatException(
+                        'Unable to identify image files matching regular '
+                        + 'expression %s for image type %s.'
+                        % (self.data.imageRegExp[currentIndex],
+                           currentType))
 
             self.fileMap = pandas.DataFrame(fileData)
             self.fileMap[['imagingRound', 'fov']] = \

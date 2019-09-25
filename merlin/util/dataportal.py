@@ -19,9 +19,24 @@ class DataPortal(ABC):
 
         self._basePath = basePath
 
+    @staticmethod
+    def create_portal(basePath: str) -> 'DataPortal':
+        """ Create a new portal capable of reading from the specified basePath.
+
+        Args:
+            basePath: the base path of the data portal
+        Returns: a new DataPortal for reading from basePath
+        """
+        if basePath.startswith('s3://'):
+            return S3DataPortal(basePath)
+        elif basePath.startswith('gc://'):
+            return GCloudDataPortal(basePath)
+        else:
+            return LocalDataPortal(basePath)
+
     @abstractmethod
     def is_available(self) -> bool:
-        """ Determine if the basePath reperesented by this DataPortal is
+        """ Determine if the basePath represented by this DataPortal is
         currently accessible.
 
         Returns: True if the basePath is available, otherwise False.
@@ -73,7 +88,10 @@ class LocalDataPortal(DataPortal):
         return os.path.exists(self._basePath)
 
     def open_file(self, fileName):
-        return LocalFilePortal(os.path.join(self._basePath, fileName))
+        if os.path.abspath(self._basePath) in os.path.abspath(fileName):
+            return LocalFilePortal(fileName)
+        else:
+            return LocalFilePortal(os.path.join(self._basePath, fileName))
 
     def list_files(self, extensionList=None):
         allFiles = [os.path.join(self._basePath, currentFile)
@@ -101,7 +119,11 @@ class S3DataPortal(DataPortal):
         return len(objects) > 0
 
     def open_file(self, fileName):
-        return S3FilePortal('/'.join([self._basePath, fileName]), s3=self._s3)
+        if self._basePath in fileName:
+            fullPath = fileName
+        else:
+            fullPath = '/'.join([self._basePath, fileName])
+        return S3FilePortal(fullPath, s3=self._s3)
 
     def list_files(self, extensionList=None):
         allFiles = ['s3://%s/%s' % (self._bucketName, f.key)
@@ -130,8 +152,11 @@ class GCloudDataPortal(DataPortal):
         return len(blobList) > 0
 
     def open_file(self, fileName):
-        return GCloudFilePortal('/'.join([self._basePath, fileName]),
-                                self._client)
+        if self._basePath in fileName:
+            fullPath = fileName
+        else:
+            fullPath = '/'.join([self._basePath, fileName])
+        return GCloudFilePortal(fullPath, self._client)
 
     def list_files(self, extensionList=None):
         allFiles = ['gc://%s/%s' % (self._bucketName, f.name)
@@ -150,6 +175,15 @@ class FilePortal(ABC):
         super().__init__()
         self._fileName = fileName
 
+    def __del__(self):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, value, traceback):
+        self.close()
+
     def get_file_name(self) -> str:
         """ Get the name of the file accessed by this file portal.
 
@@ -157,6 +191,17 @@ class FilePortal(ABC):
         """
         return self._fileName
 
+    def get_file_extension(self) -> str:
+        """ Get the extension of the file accessed by this file portal.
+
+        Returns: The file extension
+        """
+        return os.path.splitext(self._fileName)[1]
+
+    def _exchange_extension(self, newExtension: str) -> str:
+        return ''.join([os.path.splitext(self._fileName)[0], newExtension])
+
+    @abstractmethod
     def get_sibling_with_extension(self, newExtension: str) -> 'FilePortal':
         """ Open the file with the same base name as this file but with the
         specified extension.
@@ -165,7 +210,6 @@ class FilePortal(ABC):
             newExtension: the new extension
         Returns: A reference to the file with the extension exchanged.
         """
-        # TODO
         pass
 
     @abstractmethod
@@ -204,6 +248,9 @@ class LocalFilePortal(FilePortal):
         super().__init__(fileName)
         self._fileHandle = open(fileName, 'rb')
 
+    def get_sibling_with_extension(self, newExtension: str):
+        return LocalFilePortal(self._exchange_extension(newExtension))
+
     def read_as_text(self):
         self._fileHandle.seek(0)
         return self._fileHandle.read().decode('utf-8')
@@ -222,14 +269,20 @@ class S3FilePortal(FilePortal):
     A file portal for accessing a file from s3.
     """
 
-    def __init__(self, fileName: str, s3):
+    def __init__(self, fileName: str, s3=None):
         super().__init__(fileName)
         t = parse.urlparse(fileName)
         self._bucketName = t.netloc
         self._prefix = t.path.strip('/')
-        self._s3 = s3
+        if s3 is None:
+            self._s3 = boto3.resource('s3')
+        else:
+            self._s3 = s3
 
         self._fileHandle = self._s3.Object(self._bucketName, self._prefix)
+
+    def get_sibling_with_extension(self, newExtension: str):
+        return S3FilePortal(self._exchange_extension(newExtension), self._s3)
 
     def read_as_text(self):
         return self._fileHandle.get()['Body'].read().decode('utf-8')
@@ -248,15 +301,22 @@ class GCloudFilePortal(FilePortal):
     A file portal for accessing a file from Google Cloud.
     """
 
-    def __init__(self, fileName: str, client):
+    def __init__(self, fileName: str, client=None):
         super().__init__(fileName)
-        self._client = client
+        if client is None:
+            self._client = storage.Client()
+        else:
+            self._client = client
         t = parse.urlparse(fileName)
         self._bucketName = t.netloc
         self._prefix = t.path.strip('/')
         self._bucket = self._client.get_bucket(self._bucketName)
 
         self._fileHandle = self._bucket.get_blob(self._prefix)
+
+    def get_sibling_with_extension(self, newExtension: str):
+        return GCloudFilePortal(
+            self._exchange_extension(newExtension), self._client)
 
     def read_as_text(self):
         return self._fileHandle.download_as_string().decode('utf-8')

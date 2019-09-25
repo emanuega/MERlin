@@ -68,3 +68,14 @@ def test_portal_read(data_portal):
             data_portal.open_file('test.bin').read_file_bytes(2, 4),
             dtype='uint16'),
         np.array([1], dtype='uint16'))
+
+
+def test_exchange_extension(data_portal):
+    textFile = data_portal.open_file('test.txt')
+    assert textFile.get_file_extension() == '.txt'
+    assert textFile.read_as_text() == 'MERlin test file'
+    binFile = textFile.get_sibling_with_extension('.bin')
+    assert binFile.get_file_extension() == '.bin'
+    assert np.array_equal(
+        np.frombuffer(binFile.read_file_bytes(0, 6), dtype='uint16'),
+        np.array([0, 1, 2], dtype='uint16'))

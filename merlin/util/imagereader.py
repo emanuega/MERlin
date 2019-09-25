@@ -1,12 +1,10 @@
 import hashlib
 import numpy as np
-import os
 import re
 import tifffile
-import boto3
-from google.cloud import storage
-from urllib import parse
 from typing import List
+
+from merlin.util import dataportal
 
 # The following  code is adopted from github.com/ZhuangLab/storm-analysis and
 # is subject to the following license:
@@ -34,28 +32,24 @@ from typing import List
 # THE SOFTWARE.
 
 
-def infer_reader(filename: str, verbose: bool = False):
+def infer_reader(filePortal: dataportal.FilePortal, verbose: bool = False):
     """
     Given a file name this will try to return the appropriate
     reader based on the file extension.
     """
-    ext = os.path.splitext(filename)[1]
-    s3 = filename.startswith('s3://')
-    gc = filename.startswith('gc://')
-    if s3:
-        if ext == ".dax":
-            return S3DaxReader(filename, verbose=verbose)
-    elif gc:
-        if ext == ".dax":
-            return GCloudDaxReader(filename, verbose=verbose)
-    else:
-        if ext == ".dax":
-            return DaxReader(filename, verbose=verbose)
-        elif ext == ".tif" or ext == ".tiff":
-            return TifReader(filename, verbose=verbose)
-    print(ext, "is not a recognized file type")
+    ext = filePortal.get_file_extension()
+
+    if ext == '.dax':
+        return DaxReader(filePortal, verbose=verbose)
+    elif ext == ".tif" or ext == ".tiff":
+        if isinstance(filePortal, dataportal.LocalFilePortal):
+            # TODO implement tif reading from s3/gcloud
+            return TifReader(filePortal._fileName, verbose=verbose)
+        else:
+            raise IOError('Loading tiff files from %s is not yet implemented'
+                          % type(filePortal))
     raise IOError(
-        "only .dax, .spe and .tif are supported (case sensitive..)")
+        "only .dax and .tif are supported (case sensitive..)")
 
 
 class Reader(object):
@@ -185,25 +179,16 @@ class DaxReader(Reader):
     Dax reader class. This is a Zhuang lab custom format.
     """
 
-    def __init__(self, filename, verbose=False):
-        super(DaxReader, self).__init__(filename, verbose=verbose)
+    def __init__(self, filePortal: dataportal.FilePortal, verbose: bool=False):
+        super(DaxReader, self).__init__(
+            filePortal.get_file_name(), verbose=verbose)
 
-        # save the filenames
-        dirname = os.path.dirname(filename)
-        if len(dirname) > 0:
-            dirname = dirname + "/"
-        self.inf_filename = dirname + os.path.splitext(
-            os.path.basename(filename))[0] + ".inf"
+        self._filePortal = filePortal
+        infFile = filePortal.get_sibling_with_extension('.inf')
+        self._parse_inf(infFile.read_as_text().splitlines())
 
-        with open(self.inf_filename, 'r') as inf_file:
-            self._parse_inf(inf_file.read().splitlines())
-
-        # open the dax file
-        if os.path.exists(filename):
-            self.fileptr = open(filename, "rb")
-        else:
-            if self.verbose:
-                print("dax data not found", filename)
+    def close(self):
+        self._filePortal.close()
 
     def _parse_inf(self, inf_lines: List[str]) -> None:
         size_re = re.compile(r'frame dimensions = ([\d]+) x ([\d]+)')
@@ -256,47 +241,6 @@ class DaxReader(Reader):
             self.image_height = 256
             self.image_width = 256
 
-
-    def load_frame(self, frame_number):
-        """
-        Load a frame & return it as a np array.
-        """
-        super(DaxReader, self).load_frame(frame_number)
-
-        self.fileptr.seek(
-            frame_number * self.image_height * self.image_width * 2)
-        image_data = np.fromfile(self.fileptr, dtype='uint16',
-                                 count=self.image_height * self.image_width)
-        image_data = np.reshape(image_data,
-                                [self.image_height, self.image_width])
-        if self.bigendian:
-            image_data.byteswap(True)
-        return image_data
-
-
-class S3DaxReader(DaxReader):
-    """
-    Dax reader class for dax files stored on AWS S3.
-    """
-
-    def __init__(self, filename, verbose=False):
-        parsedPath = parse.urlparse(filename)
-        path = parsedPath.path
-
-        dirname = os.path.dirname(path)
-        if len(dirname) > 0:
-            dirname = dirname + "/"
-        self.inf_filename = dirname + os.path.splitext(
-            os.path.basename(path))[0] + ".inf"
-
-        self._parse_inf(boto3.resource('s3').Object(
-            parsedPath.netloc, self.inf_filename.strip('/')
-            ).get()['Body'].read().decode('utf-8').splitlines())
-
-        # open the dax file
-        self.fileptr = boto3.resource('s3').Object(
-            parsedPath.netloc, parsedPath.path.strip('/'))
-
     def load_frame(self, frame_number):
         """
         Load a frame & return it as a np array.
@@ -304,61 +248,18 @@ class S3DaxReader(DaxReader):
         super(DaxReader, self).load_frame(frame_number)
 
         startByte = frame_number * self.image_height * self.image_width * 2
-        endByte = startByte + 2*(self.image_height * self.image_width) - 1
-        image_data = np.frombuffer(self.fileptr.get(
-            Range='bytes=%i-%i' % (startByte, endByte))['Body'].read(),
-            dtype='uint16')
+        endByte = startByte + 2*(self.image_height * self.image_width)
+
+        dataFormat = np.dtype('uint16')
+        if self.bigendian:
+            dataFormat = dataFormat.newbyteorder('>')
+
+        image_data = np.frombuffer(
+            self._filePortal.read_file_bytes(startByte, endByte),
+            dtype=dataFormat)
         image_data = np.reshape(image_data,
                                 [self.image_height, self.image_width])
-        if self.bigendian:
-            image_data.byteswap(True)
         return image_data
-
-    def close(self):
-        self.fileptr = None
-
-
-class GCloudDaxReader(DaxReader):
-    """
-    Dax reader class for dax files stored on AWS S3.
-    """
-
-    def __init__(self, filename, verbose=False):
-        parsedPath = parse.urlparse(filename)
-        path = parsedPath.path
-
-        dirname = os.path.dirname(path)
-        if len(dirname) > 0:
-            dirname = dirname + "/"
-        self.inf_filename = dirname + os.path.splitext(
-            os.path.basename(path))[0] + ".inf"
-
-        bucket = storage.Client().get_bucket(parsedPath.netloc)
-        infBlob = bucket.get_blob(self.inf_filename.strip('/'))
-        self._parse_inf(
-            infBlob.download_as_string().decode('utf-8').splitlines())
-
-        # open the dax file
-        self.fileptr = bucket.get_blob(parsedPath.path.strip('/'))
-
-    def load_frame(self, frame_number):
-        """
-        Load a frame & return it as a np array.
-        """
-        super(DaxReader, self).load_frame(frame_number)
-
-        startByte = frame_number * self.image_height * self.image_width * 2
-        endByte = startByte + 2*(self.image_height * self.image_width) - 1
-        image_data = np.frombuffer(self.fileptr.download_as_string(
-            start=startByte, end=endByte), dtype='uint16')
-        image_data = np.reshape(image_data,
-                                [self.image_height, self.image_width])
-        if self.bigendian:
-            image_data.byteswap(True)
-        return image_data
-
-    def close(self):
-        self.fileptr = None
 
 
 class TifReader(Reader):

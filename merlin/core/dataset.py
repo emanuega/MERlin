@@ -17,19 +17,21 @@ from typing import Dict
 from typing import Optional
 import h5py
 import tables
-from urllib import parse
 import xmltodict
-import boto3
-from google.cloud import storage
 
 from merlin.util import imagereader
 import merlin
 from merlin.core import analysistask
 from merlin.data import dataorganization
 from merlin.data import codebook
+from merlin.util import dataportal
 
 
 TaskOrName = Union[analysistask.AnalysisTask, str]
+
+
+class DataFormatException(Exception):
+    pass
 
 
 class DataSet(object):
@@ -59,8 +61,11 @@ class DataSet(object):
         self.analysisHome = analysisHome
 
         self.rawDataPath = os.sep.join([dataHome, dataDirectoryName])
-        if not os.path.isdir(self.rawDataPath):
-            print('Cannot find raw data path: {}'.format(self.rawDataPath))
+        self.rawDataPortal = dataportal.DataPortal.create_portal(
+            self.rawDataPath)
+        if not self.rawDataPortal.is_available():
+            print('The raw data is not available at %s'.format(
+                self.rawDataPath))
 
         self.analysisPath = os.sep.join([analysisHome, dataDirectoryName])
         os.makedirs(self.analysisPath, exist_ok=True)
@@ -803,24 +808,12 @@ class ImageDataSet(DataSet):
         self._load_microscope_parameters()
 
     def get_image_file_names(self):
-        if self.rawDataPath.startswith('s3://'):
-            t = parse.urlparse(self.rawDataPath)
-            allFiles = ['s3://%s/%s' % (t.hostname, f.key)
-                        for f in boto3.resource('s3').Bucket(t.hostname)
-                        .objects.filter(Prefix=t.path.strip('/'))]
-        elif self.rawDataPath.startswith('gc://'):
-            t = parse.urlparse(self.rawDataPath)
-            allFiles = ['gc://%s/%s' % (t.hostname, f.name)
-                        for f in storage.Client().list_blobs(
-                            t.hostname, prefix=t.path.strip('/'))]
-        else:
-            allFiles = [os.sep.join([self.rawDataPath, currentFile])
-                        for currentFile in os.listdir(self.rawDataPath)]
-        return sorted([f for f in allFiles if f.endswith('.dax')
-                       or f.endswith('.tif') or f.endswith('.tiff')])
+        return sorted(self.rawDataPortal.list_files(
+            extensionList=['.dax', '.tif', '.tiff']))
 
     def load_image(self, imagePath, frameIndex):
-        with imagereader.infer_reader(imagePath) as reader:
+        with imagereader.infer_reader(
+                self.rawDataPortal.open_file(imagePath)) as reader:
             imageIn = reader.load_frame(int(frameIndex))
             if self.transpose:
                 imageIn = np.transpose(imageIn)
@@ -895,22 +888,9 @@ class ImageDataSet(DataSet):
             imagePath: the path to the image file (.dax or .tif)
         Returns: the metadata from the associated xml file
         """
-        xmlPath = os.path.splitext(imagePath)[0] + '.xml'
-
-        if xmlPath.startswith('s3://'):
-            t = parse.urlparse(xmlPath)
-            xmlString = boto3.resource('s3').Object(
-                t.netloc, t.path.strip('/')).get()['Body'].read().decode(
-                    'utf-8')
-        elif xmlPath.startswith('gc://'):
-            t = parse.urlparse(xmlPath)
-            bucket = storage.Client().get_bucket(t.netloc)
-            xmlString = bucket.get_blob(t.path.strip('/')).download_as_string()\
-                .decode('utf-8')
-        else:
-            with open(xmlPath, 'r') as xmlFile:
-                xmlString = xmlFile.read()
-        return xmltodict.parse(xmlString)
+        filePortal = self.rawDataPortal.open_file(
+            imagePath).get_sibling_with_extension('.xml')
+        return xmltodict.parse(filePortal.read_as_text())
 
 
 class MERFISHDataSet(ImageDataSet):

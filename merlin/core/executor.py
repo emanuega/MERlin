@@ -13,7 +13,6 @@ class Executor(object):
     
     @abstractmethod
     def run(self, task: analysistask.AnalysisTask, index: int=None,
-            callback: Callable=None, join: bool=False,
             rerunCompleted: bool=False) -> None:
         """Run an analysis task.
 
@@ -24,10 +23,6 @@ class Executor(object):
         Args:
             task: the analysis task to run.
             index: index of the analysis to run for a parallel analysis task.
-            callback: function ta call upon completion of the analysis.
-            join: flag indicating if the execution threads should be joined to
-                the current thread. If True, this function doesn't return
-                until the analysis is complete.
             rerunCompleted: flag indicating if previous analysis should be
                 run again even if it has previously completed. If overwrite
                 is True, analysis will be run on the task regardless of its
@@ -49,53 +44,12 @@ class LocalExecutor(Executor):
             self.coreCount = coreCount
 
     def run(self, task: analysistask.AnalysisTask, index: int=None,
-            callback: Callable=None, join: bool=False,
             rerunCompleted: bool=False) -> None:
         if task.is_complete() and not rerunCompleted:
             return
 
-        if join and index is not None:
+        if index is not None:
             task.run(index)
-
         else:
-            pool = None
-            thread = None
-            if isinstance(task, analysistask.ParallelAnalysisTask):
-                if index is None:
-                    pool = multiprocessing.Pool(processes=self.coreCount)
-                    fragmentsToRun = [x for x in range(task.fragment_count())
-                                      if not task.is_running(x)
-                                      and not (task.is_complete(x)
-                                               and not rerunCompleted)]
-                else:
-                    pool = multiprocessing.Pool(processes=1)
-                    fragmentsToRun = [index]
-
-                # prevent exceptions from killing a whole process
-                def absorb_exception(e):
-                    print(e)
-
-                pool.map_async(task.run, fragmentsToRun, callback=callback,
-                               error_callback=absorb_exception)
-
-            elif isinstance(task, analysistask.InternallyParallelAnalysisTask):
-                if task.is_running():
-                    return
-                task.set_core_count(self.coreCount)
-                thread = threading.Thread(target=task.run)
-                thread.daemon = True
-                thread.start()
-
-            else:
-                if task.is_running():
-                    return
-                pool = multiprocessing.Pool(processes=1)
-                pool.apply_async(task.run, callback=callback)
-
-            if join:
-                if pool:
-                    pool.close()
-                    pool.join()
-                if thread:
-                    thread.join()
+            task.run()
 

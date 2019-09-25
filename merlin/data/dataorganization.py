@@ -6,6 +6,7 @@ import pandas
 import numpy as np
 
 import merlin
+from merlin.core import dataset
 
 
 def _parse_list(inputString: str, dtype=float):
@@ -30,7 +31,7 @@ class DataOrganization(object):
     image files.
     """
 
-    def __init__(self, dataSet, filePath=None):
+    def __init__(self, dataSet, filePath: str = None):
         """
         Create a new DataOrganization for the data in the specified data set.
 
@@ -268,11 +269,15 @@ class DataOrganization(object):
             uniqueIndexes = uniqueEntries.index.values.tolist()
 
             fileNames = self._dataSet.get_image_file_names()
+            if len(fileNames) == 0:
+                raise dataset.DataFormatException(
+                    'No image files found at %s.' % self._dataSet.rawDataPath)
             fileData = []
             for currentType, currentIndex in zip(uniqueTypes, uniqueIndexes):
                 matchRE = re.compile(
                         self.data.imageRegExp[currentIndex])
 
+                matchingFiles = False
                 for currentFile in fileNames:
                     matchedName = matchRE.match(os.path.split(currentFile)[-1])
                     if matchedName is not None:
@@ -281,7 +286,15 @@ class DataOrganization(object):
                             if 'imagingRound' not in transformedName:
                                 transformedName['imagingRound'] = -1
                             transformedName['imagePath'] = currentFile
+                            matchingFiles = True
                             fileData.append(transformedName)
+
+                if not matchingFiles:
+                    raise dataset.DataFormatException(
+                        'Unable to identify image files matching regular '
+                        + 'expression %s for image type %s.'
+                        % (self.data.imageRegExp[currentIndex],
+                           currentType))
 
             self.fileMap = pandas.DataFrame(fileData)
             self.fileMap[['imagingRound', 'fov']] = \
@@ -316,8 +329,8 @@ class DataOrganization(object):
                         (channelInfo['imageType'], fov,
                          channelInfo['imagingRound']))
 
-                if not os.path.exists(imagePath):
-                    print('{0}'.format(dataChannel))
+                if not self._dataSet.rawDataPortal.open_file(
+                        imagePath).exists():
                     raise InputDataError(
                         ('Image data for channel {0} and fov {1} not found. '
                          'Expected at {2}')
@@ -325,7 +338,7 @@ class DataOrganization(object):
 
                 try:
                     imageSize = self._dataSet.image_stack_size(imagePath)
-                except Exception:
+                except Exception as e:
                     raise InputDataError(
                         ('Unable to determine image stack size for fov {0} from'
                          ' data channel {1} at {2}')

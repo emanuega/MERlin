@@ -3,11 +3,11 @@ import pandas
 from scipy import optimize
 
 from merlin.core import analysistask
-from merlin.util import barcodedb
 from merlin.data.codebook import Codebook
+from merlin.analysis import decode
 
 
-class FilterBarcodes(analysistask.ParallelAnalysisTask):
+class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
 
     """
     An analysis task that filters barcodes based on area and mean
@@ -26,9 +26,6 @@ class FilterBarcodes(analysistask.ParallelAnalysisTask):
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
-
-    def get_barcode_database(self):
-        return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
 
     def get_estimated_memory(self):
         return 1000
@@ -314,7 +311,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                         codingCounts, 'coding_counts', self)
 
 
-class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
+class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
 
     """
     An analysis task that filters barcodes based on a mean intensity threshold
@@ -330,9 +327,6 @@ class AdaptiveFilterBarcodes(analysistask.ParallelAnalysisTask):
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
-
-    def get_barcode_database(self):
-        return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
 
     def get_estimated_memory(self):
         return 1000

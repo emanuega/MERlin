@@ -3,7 +3,6 @@ import json
 import shutil
 import pandas
 import numpy as np
-import fnmatch
 import tifffile
 import importlib
 import time
@@ -18,15 +17,21 @@ from typing import Dict
 from typing import Optional
 import h5py
 import tables
+import xmltodict
 
-from merlin.util import datareader
+from merlin.util import imagereader
 import merlin
 from merlin.core import analysistask
 from merlin.data import dataorganization
 from merlin.data import codebook
+from merlin.util import dataportal
 
 
 TaskOrName = Union[analysistask.AnalysisTask, str]
+
+
+class DataFormatException(Exception):
+    pass
 
 
 class DataSet(object):
@@ -56,8 +61,11 @@ class DataSet(object):
         self.analysisHome = analysisHome
 
         self.rawDataPath = os.sep.join([dataHome, dataDirectoryName])
-        if not os.path.isdir(self.rawDataPath):
-            print('Cannot find raw data path: {}'.format(self.rawDataPath))
+        self.rawDataPortal = dataportal.DataPortal.create_portal(
+            self.rawDataPath)
+        if not self.rawDataPortal.is_available():
+            print('The raw data is not available at %s'.format(
+                self.rawDataPath))
 
         self.analysisPath = os.sep.join([analysisHome, dataDirectoryName])
         os.makedirs(self.analysisPath, exist_ok=True)
@@ -800,15 +808,12 @@ class ImageDataSet(DataSet):
         self._load_microscope_parameters()
 
     def get_image_file_names(self):
-        return sorted(
-                [os.sep.join([self.rawDataPath, currentFile])
-                    for currentFile in os.listdir(self.rawDataPath)
-                if currentFile.endswith('.dax')
-                or currentFile.endswith('.tif')
-                or currentFile.endswith('.tiff')])
+        return sorted(self.rawDataPortal.list_files(
+            extensionList=['.dax', '.tif', '.tiff']))
 
     def load_image(self, imagePath, frameIndex):
-        with datareader.infer_reader(imagePath) as reader:
+        with imagereader.infer_reader(
+                self.rawDataPortal.open_file(imagePath)) as reader:
             imageIn = reader.load_frame(int(frameIndex))
             if self.transpose:
                 imageIn = np.transpose(imageIn)
@@ -826,10 +831,8 @@ class ImageDataSet(DataSet):
             a three element list with [width, height, frameCount] or None
                     if the file does not exist
         """
-        if not os.path.exists(imagePath):
-            return None
-
-        with datareader.infer_reader(imagePath) as reader:
+        with imagereader.infer_reader(self.rawDataPortal.open_file(imagePath)
+                                      ) as reader:
             return reader.film_size()
 
     def _import_microscope_parameters(self, microscopeParametersName):
@@ -873,6 +876,17 @@ class ImageDataSet(DataSet):
         """
         return self.imageDimensions
 
+    def get_image_xml_metadata(self, imagePath: str) -> Dict:
+        """ Get the xml metadata stored for the specified image.
+
+        Args:
+            imagePath: the path to the image file (.dax or .tif)
+        Returns: the metadata from the associated xml file
+        """
+        filePortal = self.rawDataPortal.open_file(
+            imagePath).get_sibling_with_extension('.xml')
+        return xmltodict.parse(filePortal.read_as_text())
+
 
 class MERFISHDataSet(ImageDataSet):
 
@@ -909,20 +923,17 @@ class MERFISHDataSet(ImageDataSet):
         super().__init__(dataDirectoryName, dataHome, analysisHome,
                          microscopeParametersName)
 
-        # TODO: it is possible to also extract positions from the images. This
-        # should be implemented
-        if positionFileName is not None:
-            self._import_positions(positionFileName)
-        self._load_positions()
-
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
         if codebookNames:
-            print(codebookNames)
             self.codebooks = [codebook.Codebook(self, name, i)
                               for i, name in enumerate(codebookNames)]
         else:
             self.codebooks = self.load_codebooks()
+
+        if positionFileName is not None:
+            self._import_positions(positionFileName)
+        self._load_positions()
 
     def save_codebook(self, codebook: codebook.Codebook) -> None:
         """ Store the specified codebook in this dataset.
@@ -1085,25 +1096,24 @@ class MERFISHDataSet(ImageDataSet):
                 self.dataOrganization.get_fiducial_filename(dataChannel, fov),
                 self.dataOrganization.get_fiducial_frame_index(dataChannel))
 
+    def _import_positions_from_metadata(self):
+        positionData = []
+        for f in self.get_fovs():
+            metadata = self.get_image_xml_metadata(
+                self.dataOrganization.get_image_filename(0, f))
+            currentPositions = \
+                metadata['settings']['acquisition']['stage_position']['#text'] \
+                .split(',')
+            positionData.append([float(x) for x in currentPositions])
+        positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
+        np.savetxt(positionPath, np.array(positionData), delimiter=',')
+
     def _load_positions(self):
         positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
-        #TODO - this is messy searching for the position file
-        #TODO - I should check to make sure the number of positions 
-        # matches the number of FOVs
         if not os.path.exists(positionPath):
-            for f in os.listdir(self.rawDataPath):
-                if fnmatch.fnmatch(f, '*position*'):
-                    shutil.copyfile(
-                            os.sep.join([self.rawDataPath, f]), positionPath)
-        
-        if not os.path.exists(positionPath):
-            for f in os.listdir(os.sep.join([self.rawDataPath, '..'])):
-                if fnmatch.fnmatch(f, '*position*'):
-                    shutil.copyfile(
-                            os.sep.join([self.rawDataPath, '..', f]), 
-                            positionPath)
-        self.positions = pandas.read_csv(positionPath, header=None,
-                names=['X','Y'])
+            self._import_positions_from_metadata()
+        self.positions = pandas.read_csv(
+            positionPath, header=None, names=['X', 'Y'])
 
     def _import_positions(self, positionFileName):
         sourcePath = os.sep.join([merlin.POSITION_HOME, positionFileName])

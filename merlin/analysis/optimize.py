@@ -5,15 +5,14 @@ from typing import Dict
 from typing import List
 import pandas
 
-from merlin.core import analysistask
+from merlin.analysis import decode
 from merlin.util import decoding
-from merlin.util import barcodedb
 from merlin.util import registration
 from merlin.util import aberration
 from merlin.data.codebook import Codebook
 
 
-class OptimizeIteration(analysistask.ParallelAnalysisTask):
+class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
 
     """
     An analysis task for performing a single iteration of scale factor
@@ -47,9 +46,6 @@ class OptimizeIteration(analysistask.ParallelAnalysisTask):
 
     def fragment_count(self):
         return self.parameters['fov_per_iteration']
-
-    def get_barcode_database(self) -> barcodedb.BarcodeDB:
-        return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
 
     def get_codebook(self) -> Codebook:
         preprocessTask = self.dataSet.load_analysis_task(

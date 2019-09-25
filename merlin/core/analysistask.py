@@ -15,6 +15,10 @@ class AnalysisAlreadyExistsException(Exception):
     pass
 
 
+class InvalidParameterException(Exception):
+    pass
+
+
 class AnalysisTask(ABC):
 
     """
@@ -112,7 +116,7 @@ class AnalysisTask(ABC):
             raise e
 
     def _reset_analysis(self) -> None:
-        """Remove all files created by this analysis task and remove markers
+        """Remove files created by this analysis task and remove markers
         indicating that this analysis has been started, or has completed.
 
         This function should be overridden by subclasses so that they
@@ -257,6 +261,10 @@ class InternallyParallelAnalysisTask(AnalysisTask):
 
 class ParallelAnalysisTask(AnalysisTask):
 
+    # TODO - this can be restructured so that AnalysisTask is instead a subclass
+    # of ParallelAnalysisTask where fragment count is set to 1. This could
+    # help remove some of the redundant code
+
     """
     An abstract class for analysis that can be run in multiple parts 
     independently. Subclasses should implement the analysis to perform in 
@@ -317,7 +325,7 @@ class ParallelAnalysisTask(AnalysisTask):
                 raise e
 
     def _reset_analysis(self, fragmentIndex: int=None) -> None:
-        """Remove all files created by this analysis task and remove markers
+        """Remove files created by this analysis task and remove markers
         indicating that this analysis has been started, or has completed.
         """
         if fragmentIndex is None:

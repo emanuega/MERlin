@@ -24,6 +24,14 @@ class SumSignal(analysistask.ParallelAnalysisTask):
             self.parameters['apply_highpass'] = True
         if 'highpass_sigma' not in self.parameters:
             self.parameters['highpass_sigma'] = 5
+        if 'z_index' not in self.parameters:
+            self.parameters['z_index'] = 0
+
+        if self.parameters['z_index'] >= len(self.dataSet.get_z_positions()):
+            raise analysistask.InvalidParameterException(
+                'Invalid z_index specified for %s. (%i > %i)'
+                % (self.analysisName, self.parameters['z_index'],
+                   self.dataSet.get_z_positions()))
 
         self.highpass = str(self.parameters['apply_highpass']).upper() == 'TRUE'
         self.alignTask = self.dataSet.load_analysis_task(

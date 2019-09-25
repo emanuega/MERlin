@@ -63,7 +63,7 @@ class DataPortal(ABC):
             [f.endswith(x) for x in extensionList])]
 
     @abstractmethod
-    def list_files(self, extensionList: List[str]=None) -> List[str]:
+    def list_files(self, extensionList: List[str] = None) -> List[str]:
         """ List all the files within the base path represented by this
         DataReader.
 

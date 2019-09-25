@@ -1103,7 +1103,7 @@ class MERFISHDataSet(ImageDataSet):
                 self.dataOrganization.get_image_filename(0, f))
             currentPositions = \
                 metadata['settings']['acquisition']['stage_position']['#text'] \
-                    .split(',')
+                .split(',')
             positionData.append([float(x) for x in currentPositions])
         positionPath = os.sep.join([self.analysisPath, 'positions.csv'])
         np.savetxt(positionPath, np.array(positionData), delimiter=',')

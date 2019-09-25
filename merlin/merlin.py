@@ -70,7 +70,7 @@ def _get_input_path(prompt):
     while True:
         pathString = str(input(prompt))
         if not pathString.startswith('s3://') \
-            and not os.path.exists(os.path.expanduser(pathString)):
+                and not os.path.exists(os.path.expanduser(pathString)):
             print('Directory %s does not exist. Please enter a valid path.'
                   % pathString)
         else:

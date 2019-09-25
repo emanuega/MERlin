@@ -179,7 +179,8 @@ class DaxReader(Reader):
     Dax reader class. This is a Zhuang lab custom format.
     """
 
-    def __init__(self, filePortal: dataportal.FilePortal, verbose: bool=False):
+    def __init__(self, filePortal: dataportal.FilePortal,
+                 verbose: bool = False):
         super(DaxReader, self).__init__(
             filePortal.get_file_name(), verbose=verbose)
 

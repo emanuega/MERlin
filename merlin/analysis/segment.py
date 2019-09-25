@@ -25,7 +25,7 @@ class FeatureSavingAnalysisTask(analysistask.ParallelAnalysisTask):
                  analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-    def _reset_analysis(self, fragmentIndex: int=None) -> None:
+    def _reset_analysis(self, fragmentIndex: int = None) -> None:
         super()._reset_analysis(fragmentIndex)
         self.get_feature_database().empty_database(fragmentIndex)
 

@@ -123,7 +123,7 @@ def merlin():
         if args.analysis_task:
             print('Running %s' % args.analysis_task)
             e.run(dataSet.load_analysis_task(args.analysis_task),
-                  index=args.fragment_index, join=True)
+                  index=args.fragment_index)
         elif snakefilePath:
             snakemakeParameters = {}
             if args.snakemake_parameters:

@@ -4,7 +4,7 @@ python-dotenv>=0.8.2
 pandas>=0.23.4
 tifffile>=0.14.0
 opencv-python>=3
-scikit-image>=0.14.0
+scikit-image>=0.15.0
 scikit-learn>=0.19.0
 numpy>1.16.0
 scipy>=1.2

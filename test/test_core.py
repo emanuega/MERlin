@@ -62,7 +62,7 @@ def test_task_run_with_executor(simple_task):
     assert not task1.is_running()
     assert not task1.is_error()
     e = executor.LocalExecutor()
-    e.run(task1, join=True)
+    e.run(task1)
     assert task1.is_started()
     assert not task1.is_running()
     assert not task1.is_error()

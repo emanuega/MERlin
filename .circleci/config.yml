@@ -20,6 +20,7 @@ jobs:
             conda config --set always_yes true
             conda config --set quiet true
             source activate merlin_env
+            touch /opt/conda/envs/merlin_env/lib/python3.6/site-packages/easy-install.pth
             conda install rtree pytables snakemake
             cd ~
             printf 'DATA_HOME=~\nANALYSIS_HOME=~\nPARAMETERS_HOME=~\n' >.merlinenv

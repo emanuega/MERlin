@@ -47,7 +47,7 @@ def extract_seeds(seedImageStackIn: np.ndarray) -> np.ndarray:
 
     seedImages[seedMask] = 0
 
-    seeds = matlab.imregionalmax(seedImages, seedMask)
+    seeds = morphology.local_maxima(seedImages, allow_borders=False)
 
     seeds = ndimage.morphology.binary_dilation(
         seeds, structure=ndimage.morphology.generate_binary_structure(3, 1))

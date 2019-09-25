@@ -31,7 +31,7 @@ class DataOrganization(object):
     image files.
     """
 
-    def __init__(self, dataSet, filePath=None):
+    def __init__(self, dataSet, filePath: str=None):
         """
         Create a new DataOrganization for the data in the specified data set.
 
@@ -329,16 +329,12 @@ class DataOrganization(object):
                         (channelInfo['imageType'], fov,
                          channelInfo['imagingRound']))
 
-                if not imagePath.startswith('s3://') \
-                        and not imagePath.startswith('gc://') \
-                        and not os.path.exists(imagePath):
+                if not self._dataSet.rawDataPortal.open_file(
+                        imagePath).exists():
                     raise InputDataError(
                         ('Image data for channel {0} and fov {1} not found. '
                          'Expected at {2}')
                         .format(dataChannel, fov, imagePath))
-                if imagePath.startswith('s3://'):
-                    # TODO check if file exists in s3 and gcloud
-                    pass
 
                 try:
                     imageSize = self._dataSet.image_stack_size(imagePath)

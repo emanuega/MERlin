@@ -202,6 +202,14 @@ class FilePortal(ABC):
         return ''.join([os.path.splitext(self._fileName)[0], newExtension])
 
     @abstractmethod
+    def exists(self) -> bool:
+        """ Determine if this file exists within the dataset.
+
+        Returns: Flag indicating whether or not the file exists
+        """
+        pass
+
+    @abstractmethod
     def get_sibling_with_extension(self, newExtension: str) -> 'FilePortal':
         """ Open the file with the same base name as this file but with the
         specified extension.
@@ -251,6 +259,9 @@ class LocalFilePortal(FilePortal):
     def get_sibling_with_extension(self, newExtension: str):
         return LocalFilePortal(self._exchange_extension(newExtension))
 
+    def exists(self):
+        return os.path.exists(self._fileName)
+
     def read_as_text(self):
         self._fileHandle.seek(0)
         return self._fileHandle.read().decode('utf-8')
@@ -280,6 +291,14 @@ class S3FilePortal(FilePortal):
             self._s3 = s3
 
         self._fileHandle = self._s3.Object(self._bucketName, self._prefix)
+
+    def exists(self):
+        try:
+            self._fileHandle.load()
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return False
+        return True
 
     def get_sibling_with_extension(self, newExtension: str):
         return S3FilePortal(self._exchange_extension(newExtension), self._s3)
@@ -313,6 +332,9 @@ class GCloudFilePortal(FilePortal):
         self._bucket = self._client.get_bucket(self._bucketName)
 
         self._fileHandle = self._bucket.get_blob(self._prefix)
+
+    def exists(self):
+        return self._fileHandle.exists()
 
     def get_sibling_with_extension(self, newExtension: str):
         return GCloudFilePortal(

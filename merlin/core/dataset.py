@@ -831,13 +831,8 @@ class ImageDataSet(DataSet):
             a three element list with [width, height, frameCount] or None
                     if the file does not exist
         """
-        if not imagePath.startswith('s3://') \
-                and not imagePath.startswith('gc://')\
-                and not os.path.exists(imagePath):
-            # TODO update for s3 and google cloud
-            return None
-
-        with imagereader.infer_reader(imagePath) as reader:
+        with imagereader.infer_reader(self.rawDataPortal.open_file(imagePath)
+                                      ) as reader:
             return reader.film_size()
 
     def _import_microscope_parameters(self, microscopeParametersName):

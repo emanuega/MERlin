@@ -51,22 +51,21 @@ def test_portal_list_files(data_portal):
     assert filteredList[0].endswith('test.txt')
 
 
-def test_portal_avaialable(data_portal):
+def test_portal_available(data_portal):
     assert data_portal.is_available()
 
 
 def test_portal_read(data_portal):
-    assert data_portal.open_file('test.txt').read_as_text() \
-           == 'MERlin test file'
+    textFile = data_portal.open_file('test.txt')
+    binFile = data_portal.open_file('test.bin')
+    assert textFile.exists()
+    assert binFile.exists()
+    assert textFile.read_as_text() == 'MERlin test file'
     assert np.array_equal(
-        np.frombuffer(
-            data_portal.open_file('test.bin').read_file_bytes(0, 6),
-            dtype='uint16'),
+        np.frombuffer(binFile.read_file_bytes(0, 6), dtype='uint16'),
         np.array([0, 1, 2], dtype='uint16'))
     assert np.array_equal(
-        np.frombuffer(
-            data_portal.open_file('test.bin').read_file_bytes(2, 4),
-            dtype='uint16'),
+        np.frombuffer(binFile.read_file_bytes(2, 4), dtype='uint16'),
         np.array([1], dtype='uint16'))
 
 

@@ -1,5 +1,7 @@
 # Python CircleCI 2.0 configuration file
 version: 2
+orbs:
+  codecov: codecov/codecov@1.0.2
 jobs:
   build:
     docker:
@@ -41,7 +43,10 @@ jobs:
             source activate merlin_env
             cd ~/MERlin/test
             mkdir ~/test-reports
-            pytest -v --cov --junitxml=~/test-reports/junit.xml
+            pytest -v --cov=~/test-reports/ --junitxml=~/test-reports/junit.xml
+
+      - codecov/upload:
+          file: ~/test-reports/.coverage
 
       - store_test_results:
           path: ~/test-reports

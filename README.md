@@ -1,3 +1,6 @@
+[![CircleCI](https://circleci.com/gh/emanuega/MERlin/tree/master.svg?style=svg)](https://circleci.com/gh/emanuega/MERlin/tree/master)
+[![codecov](https://codecov.io/gh/emanuega/MERlin/branch/master/graph/badge.svg)](https://codecov.io/gh/emanuega/MERlin)
+
 # MERlin - Extensible pipeline for scalable data analysis
 
 MERlin is an extensible data analysis pipeline for reproducible and scalable analysis of large 

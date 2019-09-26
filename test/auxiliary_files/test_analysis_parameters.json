@@ -68,7 +68,7 @@
             }
         },
         {
-            "task": "GenerateAdaptiveFilter",
+            "task": "GenerateAdaptiveThreshold",
             "module": "merlin.analysis.filterbarcodes",
             "parameters": {
                 "decode_task": "Decode",

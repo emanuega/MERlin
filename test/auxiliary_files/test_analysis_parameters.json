@@ -68,6 +68,22 @@
             }
         },
         {
+            "task": "GenerateAdaptiveFilter",
+            "module": "merlin.analysis.filterbarcodes",
+            "parameters": {
+                "decode_task": "Decode",
+                "run_after_task": "Decode"
+            }
+        },
+        {
+            "task": "AdaptiveFilterBarcodes",
+            "module": "merlin.analysis.filterbarcodes",
+            "parameters": {
+                "decode_task": "Decode",
+                "adaptive_task": "GenerateAdaptiveThreshold"
+            }
+        },
+        {
             "task": "ExportBarcodes",
             "module": "merlin.analysis.exportbarcodes",
             "parameters": {
@@ -81,7 +97,7 @@
                 "preprocess_task": "DeconvolutionPreprocess",
                 "optimize_task": "Optimize2",
                 "decode_task": "Decode",
-                "filter_task": "FilterBarcodes",
+                "filter_task": "AdaptiveFilterBarcodes",
                 "global_align_task": "SimpleGlobalAlignment"
             }
         }

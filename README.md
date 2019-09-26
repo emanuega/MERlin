@@ -1,4 +1,5 @@
 # MERlin
+![Image of MERlin](docs/_static/merlin_headline.png "MERlin - the MERFISH decoding software")
 
 MERlin decodes MERFISH datasets.
 

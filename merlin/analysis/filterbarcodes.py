@@ -261,7 +261,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                     if not pendingFragments[i] and decodeTask.is_complete(i):
                         pendingFragments[i] = decodeTask.is_complete(i)
 
-                if np.sum(pendingFragments) > min(20, self.fragment_count()):
+                if np.sum(pendingFragments) >= min(20, self.fragment_count()):
                     def extreme_values(inputData: pandas.Series):
                         return inputData.min(), inputData.max()
                     sampledFragments = np.random.choice(

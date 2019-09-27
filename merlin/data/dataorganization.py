@@ -65,6 +65,9 @@ class DataOrganization(object):
                 'dataorganization',
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
 
+        stringColumns = ['readoutName', 'channelName', 'imageType',
+                         'imageRegExp', 'fiducialImageType', 'fiducialRegExp']
+        self.data[stringColumns] = self.data[stringColumns].astype('str')
         self._map_image_files()
 
     def get_data_channels(self) -> np.array:

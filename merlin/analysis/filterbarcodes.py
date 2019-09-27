@@ -172,7 +172,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                 - targetError
         return optimize.newton(
             misidentification_rate_error_for_threshold, 0.2,
-            args=[targetMisidentificationRate], tol=0.001, x1=0.3)
+            args=[targetMisidentificationRate], tol=0.001, x1=0.3, disp=False)
 
     def calculate_barcode_count_for_threshold(self, threshold: float) -> float:
         """ Calculate the number of barcodes remaining after applying

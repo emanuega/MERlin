@@ -196,7 +196,7 @@ class PyTablesBarcodeDB(BarcodeDB):
         if fov is None:
             barcodes = pandas.concat(
                 [self.get_barcodes(fov=x, columnList=columnList)
-                 for x in self._dataSet.get_fovs()], sort=True)
+                 for x in self._dataSet.get_fovs()], sort=False)
         else:
             try:
                 with self._dataSet.open_pandas_hdfstore(

@@ -28,20 +28,20 @@ def barcode_db_with_barcodes(barcode_db):
 
 def generate_random_barcode(fov):
     randomBarcode = {'barcode': random.getrandbits(32),
-        'barcode_id': random.randint(0, 200),
-        'fov': fov,
-        'mean_intensity': random.uniform(5, 15),
-        'max_intensity': random.uniform(5, 15),
-        'area': random.randint(0, 10),
-        'mean_distance': random.random(),
-        'min_distance': random.random(),
-        'x': random.uniform(0, 2048),
-        'y': random.uniform(0, 2048),
-        'z': random.uniform(0, 5),
-        'global_x': random.uniform(0, 200000),
-        'global_y': random.uniform(0, 200000),
-        'global_z': random.uniform(0, 5),
-        'cell_index': random.randint(0, 5000)}
+                     'barcode_id': random.randint(0, 200),
+                     'fov': fov,
+                     'mean_intensity': random.uniform(5, 15),
+                     'max_intensity': random.uniform(5, 15),
+                     'area': random.randint(0, 10),
+                     'mean_distance': random.random(),
+                     'min_distance': random.random(),
+                     'x': random.uniform(0, 2048),
+                     'y': random.uniform(0, 2048),
+                     'z': random.uniform(0, 5),
+                     'global_x': random.uniform(0, 200000),
+                     'global_y': random.uniform(0, 200000),
+                     'global_z': random.uniform(0, 5),
+                     'cell_index': random.randint(0, 5000)}
 
     for i in range(16):
         randomBarcode['intensity_' + str(i)] = random.uniform(5, 15)
@@ -190,7 +190,7 @@ def test_read_select_columns(barcode_db_with_barcodes):
             columnList=['mean_intensity', 'x', 'intensity_0'])
     assert np.isclose(
             barcodesInDB[['mean_intensity', 'x', 'intensity_0']].values, 
-            readBarcodes.values).all()
+            readBarcodes[['mean_intensity', 'x', 'intensity_0']].values).all()
 
 
 def test_read_filtered_barcodes(barcode_db_with_barcodes):
@@ -208,9 +208,9 @@ def test_read_filtered_barcodes(barcode_db_with_barcodes):
                         by=list(readBarcodes.columns)[1:], inplace=True)
                 selectBarcodes = selectBarcodes.sort_values(
                         by=list(selectBarcodes.columns)[1:], inplace=False)
-                print(str(area) + ' ' + str(intensity))
                 assert np.isclose(
-                        readBarcodes.values, selectBarcodes.values).all()
+                    readBarcodes.values,
+                    selectBarcodes[readBarcodes.columns].values).all()
 
 
 def test_get_barcode_intensities_with_area(barcode_db_with_barcodes):

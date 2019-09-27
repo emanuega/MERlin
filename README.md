@@ -28,7 +28,7 @@ For more information on installation and usage, please see the [documentation](h
 
 ## Authors
 
-* [**George Emanuel**](emanuega0@gmail.com) - *Initial work* 
+* [**George Emanuel**](mailto:emanuega0@gmail.com) - *Initial work* 
 * **Stephen Eichhorn**
 * **Leonardo Sepulveda**
 

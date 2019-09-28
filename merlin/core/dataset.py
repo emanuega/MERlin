@@ -76,13 +76,24 @@ class DataSet(object):
         self._store_dataset_metadata()
 
     def _store_dataset_metadata(self) -> None:
-        metadata = {
-            'merlin_version': merlin.version(),
-            'module': type(self).__module__,
-            'class': type(self).__name__,
-            'dataset_name': self.dataSetName
-        }
-        self.save_json_analysis_result(metadata, 'dataset')
+        try:
+            oldMetadata = self.load_json_analysis_result('dataset', None)
+            if not merlin.is_compatible(oldMetadata['merlin_version']):
+                raise merlin.IncompatibleVersionException(
+                    ('Analysis was performed on dataset %s with MERlin '
+                     + 'version %s, which is not compatible with the current '
+                     + 'MERlin version %s')
+                    % (self.dataSetName, oldMetadata['version'],
+                       merlin.version()))
+        except FileNotFoundError:
+            newMetadata = {
+                'merlin_version': merlin.version(),
+                'module': type(self).__module__,
+                'class': type(self).__name__,
+                'dataset_name': self.dataSetName,
+                'creation_date': str(datetime.datetime.now())
+            }
+            self.save_json_analysis_result(newMetadata, 'dataset', None)
 
     def save_workflow(self, workflowString: str) -> str:
         """ Save a snakemake workflow for analysis of this dataset.

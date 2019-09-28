@@ -46,9 +46,29 @@ def store_env(dataHome, analysisHome, parametersHome):
         f.write('PARAMETERS_HOME=%s\n' % parametersHome)
 
 
+class IncompatibleVersionException(Exception):
+    pass
+
+
 def version():
     import pkg_resources
     return pkg_resources.require("merlin")[0].version
+
+
+def is_compatible(testVersion: str, baseVersion: str = None) -> bool:
+    """ Determine if testVersion is compatible with baseVersion
+
+    Args:
+        testVersion: the version identifier to test, as the string 'x.y.z'
+            where x is the major version, y is the minor version,
+            and z is the patch.
+        baseVersion: the version to check testVersion's compatibility. If  not
+            specified then the current MERlin version is used as baseVersion.
+    Returns: True if testVersion are compatible, otherwise false.
+    """
+    if baseVersion is None:
+        baseVersion = version()
+    return testVersion.split('.')[0] == baseVersion.split('.')[0]
 
 
 def get_analysis_datasets(maxDepth=2) -> List[dataset.DataSet]:

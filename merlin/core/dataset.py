@@ -540,8 +540,23 @@ class DataSet(object):
             existingTask = self.load_analysis_task(
                 analysisTask.get_analysis_name())
 
-            if not overwrite and not existingTask.get_parameters() \
-                    == analysisTask.get_parameters():
+            existingParameters = existingTask.get_parameters().copy()
+            existingVersion = existingParameters['merlin_version']
+            newParameters = analysisTask.get_parameters().copy()
+            newVersion = newParameters['merlin_version']
+
+            if not merlin.is_compatible(existingVersion, newVersion):
+                raise merlin.IncompatibleVersionException(
+                    ('Analysis task with name %s has been previously created '
+                     + 'with MERlin version %s, which is incompatible with '
+                     + 'the current MERlin version, %s. Please remove the '
+                     + 'old analysis folder to continue.')
+                    % (analysisTask.analysisName, existingVersion, newVersion))
+
+            existingParameters.pop('merlin_version')
+            newParameters.pop('merlin_version')
+
+            if not overwrite and not existingParameters == newParameters:
                 raise analysistask.AnalysisAlreadyExistsException(
                     ('Analysis task with name %s already exists in this ' +
                      'data set with different parameters.')

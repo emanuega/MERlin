@@ -2,7 +2,10 @@
     "analysis_tasks": [
         {
             "task": "FiducialCorrelationWarp",
-            "module": "merlin.analysis.warp"
+            "module": "merlin.analysis.warp",
+            "parameters": {
+                "write_aligned_images": true
+            }
         },
         {
             "task": "DeconvolutionPreprocess",
@@ -100,7 +103,65 @@
                 "filter_task": "AdaptiveFilterBarcodes",
                 "global_align_task": "SimpleGlobalAlignment"
             }
+        },
+        {
+            "task": "WatershedSegment",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "warp_task": "FiducialCorrelationWarp",
+                "global_align_task": "SimpleGlobalAlignment"
+            }
+        },
+        {
+            "task": "AssignCellFOV",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "segment_task": "WatershedSegment",
+                "global_align_task": "SimpleGlobalAlignment"
+            }
+        },
+        {
+            "task": "PartitionBarcodes",
+            "module": "merlin.analysis.partition",
+            "parameters": {
+                "filter_task": "AdaptiveFilterBarcodes",
+                "assignment_task": "AssignCellFOV"
+            }
+        },
+        {
+            "task": "ExportPartitionedBarcodes",
+            "module": "merlin.analysis.partition",
+            "parameters": {
+                "partition_task": "PartitionBarcodes"
+            }
+        },
+        {
+            "task": "ExportCellMetadata",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "segment_task": "AssignCellFOV"
+            }
+        },
+        {
+            "task": "SumSignal",
+            "module": "merlin.analysis.sequential",
+            "parameters": {
+                "z_index": 0,
+                "apply_highpass": true,
+                "warp_task": "FiducialCorrelationWarp",
+                "highpass_sigma": 5,
+                "segment_task": "AssignCellFOV",
+                "global_align_task": "SimpleGlobalAlignment"
+            }
+        },
+        {
+            "task": "ExportSumSignals",
+            "module": "merlin.analysis.sequential",
+            "parameters": {
+                "sequential_task": "SumSignal"
+            }
         }
+
     ]
 
 }

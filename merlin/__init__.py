@@ -91,6 +91,3 @@ def get_analysis_datasets(maxDepth=2) -> List[dataset.DataSet]:
             return analysisTask(metadata['dataset_name'])
 
     return [load_dataset(m) for m in metadataFiles]
-
-
-

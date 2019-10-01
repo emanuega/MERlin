@@ -322,6 +322,11 @@ class ExportCellMetadata(analysistask.AnalysisTask):
     def get_dependencies(self):
         return [self.parameters['segment_task']]
 
+    def return_exported_data(self):
+        kwargs = {'index_col': 0}
+        return self.dataSet.load_dataframe_from_csv(
+            'feature_metadata', analysisTask=self.analysisName, **kwargs)
+
     def _run_analysis(self):
         df = self.segmentTask.get_feature_database().read_feature_metadata()
 

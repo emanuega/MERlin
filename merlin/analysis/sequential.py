@@ -151,6 +151,11 @@ class ExportSumSignals(analysistask.AnalysisTask):
     def get_dependencies(self):
         return [self.parameters['sequential_task']]
 
+    def return_exported_data(self):
+        kwargs = {'index_col': 0}
+        return self.dataSet.load_dataframe_from_csv(
+            'sequential_sum_signals', analysisTask=self.analysisName, **kwargs)
+
     def _run_analysis(self):
         sTask = self.dataSet.load_analysis_task(
                     self.parameters['sequential_task'])

@@ -1,11 +1,17 @@
 import numpy as np
+import os
 
+import merlin
 from merlin.util import imagereader
 from merlin.util import dataportal
 
+root = os.path.join(os.path.dirname(merlin.__file__), '..', 'test')
+
 
 def test_read_dax():
-    dataPortal = dataportal.LocalDataPortal('./auxiliary_files')
+    print(root)
+    dataPortal = dataportal.LocalDataPortal(
+        os.path.join(root, 'auxiliary_files'))
     daxPortal = dataPortal.open_file('test.dax')
     daxReader = imagereader.infer_reader(daxPortal)
     frame0 = daxReader.load_frame(0)

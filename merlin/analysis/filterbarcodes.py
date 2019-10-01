@@ -172,7 +172,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                 - targetError
         return optimize.newton(
             misidentification_rate_error_for_threshold, 0.2,
-            args=[targetMisidentificationRate], tol=0.001, x1=0.3)
+            args=[targetMisidentificationRate], tol=0.001, x1=0.3, disp=False)
 
     def calculate_barcode_count_for_threshold(self, threshold: float) -> float:
         """ Calculate the number of barcodes remaining after applying
@@ -261,7 +261,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                     if not pendingFragments[i] and decodeTask.is_complete(i):
                         pendingFragments[i] = decodeTask.is_complete(i)
 
-                if np.sum(pendingFragments) > min(20, self.fragment_count()):
+                if np.sum(pendingFragments) >= min(20, self.fragment_count()):
                     def extreme_values(inputData: pandas.Series):
                         return inputData.min(), inputData.max()
                     sampledFragments = np.random.choice(

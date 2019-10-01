@@ -1,5 +1,5 @@
-# Python CircleCI 2.0 configuration file
-version: 2
+# Python CircleCI 2.1 configuration file
+version: 2.1
 jobs:
   build:
     docker:
@@ -12,14 +12,10 @@ jobs:
       - checkout
       # Step 2: create virtual env and install dependencies
       - run:
-          name: install dependencies
+          name: Install Dependencies
           command: |
             wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
             bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda
-            #touch ~/.bashrc
-            #echo ".  $HOME/miniconda/etc/profile.d/conda.sh" >> ~/.bashrc
-            #echo "conda activate" >> ~/.bashrc
-            #source ~/.bashrc
             source ~/miniconda/bin/activate root
             conda activate base
             conda config --set always_yes true
@@ -34,17 +30,20 @@ jobs:
             cd ~/MERlin
       # Step 3: run linter and tests
       - run:
-          name: run tests
+          name: Run Tests
           command: |
             source ~/miniconda/bin/activate root
             conda activate base
             source activate merlin_env
-            cd ~/MERlin/test
+            cd ~/MERlin
             mkdir ~/test-reports
-            pytest -v --cov --junitxml=~/test-reports/junit.xml
+            pytest --cov --cov-report=xml
 
-      - store_test_results:
-          path: ~/test-reports
-
+      - run:
+          name: Upload Coverage to Codecov
+          command: |
+              source ~/miniconda/bin/activate root
+              cd ~/MERlin
+              pip install codecov && codecov 
       - store_artifacts:
-          path: ~/test-reports
+          path: ~/MERlin/coverage.xml

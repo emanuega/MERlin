@@ -132,6 +132,10 @@ class AssignCellFOV(FeatureSavingAnalysisTask):
     def fragment_count(self):
         return 1
 
+    def _reset_analysis(self, fragmentIndex: int = None) -> None:
+        super()._reset_analysis(fragmentIndex)
+        self.get_feature_database().empty_database()
+
     def get_estimated_memory(self):
         return 2048
 

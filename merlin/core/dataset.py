@@ -73,6 +73,28 @@ class DataSet(object):
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
         os.makedirs(self.logPath, exist_ok=True)
 
+        self._store_dataset_metadata()
+
+    def _store_dataset_metadata(self) -> None:
+        try:
+            oldMetadata = self.load_json_analysis_result('dataset', None)
+            if not merlin.is_compatible(oldMetadata['merlin_version']):
+                raise merlin.IncompatibleVersionException(
+                    ('Analysis was performed on dataset %s with MERlin '
+                     + 'version %s, which is not compatible with the current '
+                     + 'MERlin version %s')
+                    % (self.dataSetName, oldMetadata['version'],
+                       merlin.version()))
+        except FileNotFoundError:
+            newMetadata = {
+                'merlin_version': merlin.version(),
+                'module': type(self).__module__,
+                'class': type(self).__name__,
+                'dataset_name': self.dataSetName,
+                'creation_date': str(datetime.datetime.now())
+            }
+            self.save_json_analysis_result(newMetadata, 'dataset', None)
+
     def save_workflow(self, workflowString: str) -> str:
         """ Save a snakemake workflow for analysis of this dataset.
 
@@ -518,8 +540,23 @@ class DataSet(object):
             existingTask = self.load_analysis_task(
                 analysisTask.get_analysis_name())
 
-            if not overwrite and not existingTask.get_parameters() \
-                    == analysisTask.get_parameters():
+            existingParameters = existingTask.get_parameters().copy()
+            existingVersion = existingParameters['merlin_version']
+            newParameters = analysisTask.get_parameters().copy()
+            newVersion = newParameters['merlin_version']
+
+            if not merlin.is_compatible(existingVersion, newVersion):
+                raise merlin.IncompatibleVersionException(
+                    ('Analysis task with name %s has been previously created '
+                     + 'with MERlin version %s, which is incompatible with '
+                     + 'the current MERlin version, %s. Please remove the '
+                     + 'old analysis folder to continue.')
+                    % (analysisTask.analysisName, existingVersion, newVersion))
+
+            existingParameters.pop('merlin_version')
+            newParameters.pop('merlin_version')
+
+            if not overwrite and not existingParameters == newParameters:
                 raise analysistask.AnalysisAlreadyExistsException(
                     ('Analysis task with name %s already exists in this ' +
                      'data set with different parameters.')
@@ -919,7 +956,6 @@ class MERFISHDataSet(ImageDataSet):
                     file that specifies properties of the microscope used
                     to acquire the images represented by this ImageDataSet
         """
-
         super().__init__(dataDirectoryName, dataHome, analysisHome,
                          microscopeParametersName)
 

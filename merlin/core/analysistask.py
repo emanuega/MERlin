@@ -51,6 +51,14 @@ class AnalysisTask(ABC):
 
         if 'merlin_version' not in self.parameters:
             self.parameters['merlin_version'] = merlin.version()
+        else:
+            if not merlin.is_compatible(self.parameters['merlin_version']):
+                raise merlin.IncompatibleVersionException(
+                    ('Analysis task %s has already been created by MERlin ' +
+                     'version %s, which is incompatible with the current ' +
+                     'MERlin version, %s')
+                    % (self.analysisName, self.parameters['merlin_version'],
+                       merlin.version()))
 
         self.parameters['module'] = type(self).__module__
         self.parameters['class'] = type(self).__name__

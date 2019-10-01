@@ -6,6 +6,8 @@ from merlin.core import dataset
 from merlin.analysis import testtask
 import merlin
 
+
+root = os.path.join(os.path.dirname(merlin.__file__), '..', 'test')
 merlin.DATA_HOME = os.path.abspath('test_data')
 merlin.ANALYSIS_HOME = os.path.abspath('test_analysis')
 merlin.ANALYSIS_PARAMETERS_HOME = os.path.abspath('test_analysis_parameters')
@@ -32,32 +34,32 @@ def base_files():
 
     shutil.copyfile(
         os.sep.join(
-            ['.', 'auxiliary_files', 'test_data_organization.csv']),
+            [root, 'auxiliary_files', 'test_data_organization.csv']),
         os.sep.join(
             [merlin.DATA_ORGANIZATION_HOME, 'test_data_organization.csv']))
     shutil.copyfile(
         os.sep.join(
-            ['.', 'auxiliary_files', 'test_codebook.csv']),
+            [root, 'auxiliary_files', 'test_codebook.csv']),
         os.sep.join(
             [merlin.CODEBOOK_HOME, 'test_codebook.csv']))
     shutil.copyfile(
         os.sep.join(
-            ['.', 'auxiliary_files', 'test_codebook2.csv']),
+            [root, 'auxiliary_files', 'test_codebook2.csv']),
         os.sep.join(
             [merlin.CODEBOOK_HOME, 'test_codebook2.csv']))
     shutil.copyfile(
         os.sep.join(
-            ['.', 'auxiliary_files', 'test_positions.csv']),
+            [root, 'auxiliary_files', 'test_positions.csv']),
         os.sep.join(
             [merlin.POSITION_HOME, 'test_positions.csv']))
     shutil.copyfile(
         os.sep.join(
-            ['.', 'auxiliary_files', 'test_analysis_parameters.json']),
+            [root, 'auxiliary_files', 'test_analysis_parameters.json']),
         os.sep.join(
             [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_parameters.json']))
     shutil.copyfile(
         os.sep.join(
-            ['.', 'auxiliary_files', 'test_microscope_parameters.json']),
+            [root, 'auxiliary_files', 'test_microscope_parameters.json']),
         os.sep.join(
             [merlin.MICROSCOPE_PARAMETERS_HOME,
              'test_microscope_parameters.json']))
@@ -73,7 +75,7 @@ def merfish_files(base_files):
     os.mkdir(merfishDataDirectory)
 
     for imageFile in glob.iglob(
-            os.sep.join(['.', 'auxiliary_files', '*.tif'])):
+            os.sep.join([root, 'auxiliary_files', '*.tif'])):
         if os.path.isfile(imageFile):
             shutil.copy(imageFile, merfishDataDirectory)
 
@@ -110,7 +112,8 @@ def two_codebook_merfish_data(merfish_files):
             dataOrganizationName='test_data_organization.csv',
             codebookNames=['test_codebook2.csv', 'test_codebook.csv'],
             positionFileName='test_positions.csv',
-            analysisHome=os.sep.join(['.', 'test_analysis_two_codebook']),
+            analysisHome=os.path.join(merlin.ANALYSIS_HOME, '..',
+                                      'test_analysis_two_codebook'),
             microscopeParametersName='test_microscope_parameters.json')
     yield testMERFISHData
 

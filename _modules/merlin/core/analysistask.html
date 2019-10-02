@@ -202,6 +202,14 @@
 
         <span class="k">if</span> <span class="s1">&#39;merlin_version&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">merlin</span><span class="o">.</span><span class="n">version</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">merlin</span><span class="o">.</span><span class="n">is_compatible</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="n">merlin</span><span class="o">.</span><span class="n">IncompatibleVersionException</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s1">&#39;Analysis task </span><span class="si">%s</span><span class="s1"> has already been created by MERlin &#39;</span> <span class="o">+</span>
+                     <span class="s1">&#39;version </span><span class="si">%s</span><span class="s1">, which is incompatible with the current &#39;</span> <span class="o">+</span>
+                     <span class="s1">&#39;MERlin version, </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">],</span>
+                       <span class="n">merlin</span><span class="o">.</span><span class="n">version</span><span class="p">()))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;module&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>

@@ -52,6 +52,9 @@ MERlin can be installed by cloning the repository and installing with pip:
 
     pip install -e MERlin
 
+
+.. _specifying-paths:
+
 Specifying paths with a .env file
 ==================================
 
@@ -69,6 +72,9 @@ The PARAMETERS_HOME directory should contain the following folders:
 * microscope - Contains the microscope parameters json files.
 * fpkm - Contains the fpkm csv files.
 * snakemake - Contains the snakemake arguments json files.
+
+An example PARAMETERS_HOME directory with typical files can be found in the
+`merlin-parameters-example <https://github.com/emanuega/merlin-parameters-example>`_ repository.
 
 The contents of an example .env file are below:
 

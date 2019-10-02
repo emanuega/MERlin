@@ -196,7 +196,7 @@
 </div>
 </div>
 <div class="section" id="specifying-paths-with-a-env-file">
-<h2>Specifying paths with a .env file<a class="headerlink" href="#specifying-paths-with-a-env-file" title="Permalink to this headline">¶</a></h2>
+<span id="specifying-paths"></span><h2>Specifying paths with a .env file<a class="headerlink" href="#specifying-paths-with-a-env-file" title="Permalink to this headline">¶</a></h2>
 <p>A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the user home directory (~.env on linux or C:usersUserName.env on Windows):</p>
 <ul class="simple">
 <li><p>DATA_HOME - The path of the root directory to the raw data.</p></li>
@@ -211,6 +211,8 @@
 * microscope - Contains the microscope parameters json files.
 * fpkm - Contains the fpkm csv files.
 * snakemake - Contains the snakemake arguments json files.</p>
+<p>An example PARAMETERS_HOME directory with typical files can be found in the
+<a class="reference external" href="https://github.com/emanuega/merlin-parameters-example">merlin-parameters-example</a> repository.</p>
 <p>The contents of an example .env file are below:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>DATA_HOME=D:/data
 ANALYSIS_HOME=D:/analysis

@@ -224,6 +224,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">logPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="s1">&#39;logs&#39;</span><span class="p">])</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logPath</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_dataset_metadata</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_store_dataset_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">oldMetadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_json_analysis_result</span><span class="p">(</span><span class="s1">&#39;dataset&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">merlin</span><span class="o">.</span><span class="n">is_compatible</span><span class="p">(</span><span class="n">oldMetadata</span><span class="p">[</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="n">merlin</span><span class="o">.</span><span class="n">IncompatibleVersionException</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s1">&#39;Analysis was performed on dataset </span><span class="si">%s</span><span class="s1"> with MERlin &#39;</span>
+                     <span class="o">+</span> <span class="s1">&#39;version </span><span class="si">%s</span><span class="s1">, which is not compatible with the current &#39;</span>
+                     <span class="o">+</span> <span class="s1">&#39;MERlin version </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataSetName</span><span class="p">,</span> <span class="n">oldMetadata</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">],</span>
+                       <span class="n">merlin</span><span class="o">.</span><span class="n">version</span><span class="p">()))</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">newMetadata</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;merlin_version&#39;</span><span class="p">:</span> <span class="n">merlin</span><span class="o">.</span><span class="n">version</span><span class="p">(),</span>
+                <span class="s1">&#39;module&#39;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;dataset_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSetName</span><span class="p">,</span>
+                <span class="s1">&#39;creation_date&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+            <span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_json_analysis_result</span><span class="p">(</span><span class="n">newMetadata</span><span class="p">,</span> <span class="s1">&#39;dataset&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
 <div class="viewcode-block" id="DataSet.save_workflow"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">save_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflowString</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot; Save a snakemake workflow for analysis of this dataset.</span>
 
@@ -669,8 +691,23 @@
             <span class="n">existingTask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_analysis_task</span><span class="p">(</span>
                 <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_analysis_name</span><span class="p">())</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">existingTask</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span> \
-                    <span class="o">==</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">():</span>
+            <span class="n">existingParameters</span> <span class="o">=</span> <span class="n">existingTask</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">existingVersion</span> <span class="o">=</span> <span class="n">existingParameters</span><span class="p">[</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">]</span>
+            <span class="n">newParameters</span> <span class="o">=</span> <span class="n">analysisTask</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">newVersion</span> <span class="o">=</span> <span class="n">newParameters</span><span class="p">[</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">merlin</span><span class="o">.</span><span class="n">is_compatible</span><span class="p">(</span><span class="n">existingVersion</span><span class="p">,</span> <span class="n">newVersion</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">merlin</span><span class="o">.</span><span class="n">IncompatibleVersionException</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s1">&#39;Analysis task with name </span><span class="si">%s</span><span class="s1"> has been previously created &#39;</span>
+                     <span class="o">+</span> <span class="s1">&#39;with MERlin version </span><span class="si">%s</span><span class="s1">, which is incompatible with &#39;</span>
+                     <span class="o">+</span> <span class="s1">&#39;the current MERlin version, </span><span class="si">%s</span><span class="s1">. Please remove the &#39;</span>
+                     <span class="o">+</span> <span class="s1">&#39;old analysis folder to continue.&#39;</span><span class="p">)</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="n">analysisTask</span><span class="o">.</span><span class="n">analysisName</span><span class="p">,</span> <span class="n">existingVersion</span><span class="p">,</span> <span class="n">newVersion</span><span class="p">))</span>
+
+            <span class="n">existingParameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">)</span>
+            <span class="n">newParameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;merlin_version&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">existingParameters</span> <span class="o">==</span> <span class="n">newParameters</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisAlreadyExistsException</span><span class="p">(</span>
                     <span class="p">(</span><span class="s1">&#39;Analysis task with name </span><span class="si">%s</span><span class="s1"> already exists in this &#39;</span> <span class="o">+</span>
                      <span class="s1">&#39;data set with different parameters.&#39;</span><span class="p">)</span>
@@ -1070,7 +1107,6 @@
 <span class="sd">                    file that specifies properties of the microscope used</span>
 <span class="sd">                    to acquire the images represented by this ImageDataSet</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataDirectoryName</span><span class="p">,</span> <span class="n">dataHome</span><span class="p">,</span> <span class="n">analysisHome</span><span class="p">,</span>
                          <span class="n">microscopeParametersName</span><span class="p">)</span>
 

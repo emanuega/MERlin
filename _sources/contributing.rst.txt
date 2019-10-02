@@ -12,15 +12,15 @@ A pull request allows code to be proposed to be incorporated into MERlin. To rec
 #. Create a new branch for your edits.
 #. Make your desired edits to the code.
 #. Run the tests to ensure MERlin is still functional. Write new tests to cover your new contribution as necessary. 
-#. Submit a pull request from your edited branch to the master branch of the MERlin repository. Be sure to reference any relevant issues. 
-
+#. Submit a pull request from your edited branch to the latest vx.y.z (for example v0.1.4) branch of the MERlin repository representing the version of the next release.
+Be sure to reference any relevant issues and request at least one reviewer. Periodically the vx.y.z branch will be merged with the master branch.
 
 Code formatting
 ===============
 
-Code contributions should follow the `PEP 8 <https://www.python.org/dev/peps/pep-0008/>` style guide with the
+Code contributions should follow the `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ style guide with the
 exception that variable names should be mixedCase instead of words separated by underscores. Comments should follow
-the `Google docstring style <http://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings>`.
+the `Google docstring style <http://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings>`_.
 
 Running the tests
 =================

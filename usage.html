@@ -92,8 +92,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#executing-locally">Executing locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#executing-with-snakemake-anticipated-december-2018">Executing with Snakemake (Anticipated December 2018)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#visualizing-the-results">Visualizing the results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#executing-on-a-high-performance-cluster">Executing on a high performance cluster</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tasks.html">Analysis tasks</a></li>
@@ -165,10 +164,65 @@
             
   <div class="section" id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<p>MERlin organizes files into three folders, specified in the .merlinenv file (see <a class="reference internal" href="installation.html#specifying-paths"><span class="std std-ref">Specifying paths with a .env file</span></a>). The three folders are:</p>
+<p>DATA_HOME – base directory for raw data
+ANALYSIS_HOME – base directory for the analysis results
+PARAMETERS_HOME – base directory for parameters</p>
+<p>MERlin reads raw data, such as images, from DATA_HOME and configuration parameters from PARAMETERS_HOME and writes
+analysis results into ANALYSIS_HOME. Each separate experiment should be a separated folder within DATAHOME and MERlin
+will create a corresponding folder in ANALYSIS_HOME. For example, the images for “experiment1” should be stored in the
+folder %DATA_HOME%/experiment1. When merlin runs, it will save the output files in  %ANALYSIS_HOME%/experiment1. With
+this file system, %DATA_HOME% and %ANALYSIS_HOME% are constant for all the experiments you analyze and only the
+experiment name needs to be specified. The typical file structure for MERFISH experiments
+“experiment1” and “experiment2” could be:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%DATA_HOME%/
+├── experiment1/
+│   ├── image_000_00.tif
+│   ├── image_000_01.tif
+│   ├── ...
+│   └── image_150_10.tif
+└── experiment2/
+    ├── image_000_00.tif
+    ├── image_000_01.tif
+    ├── ...
+    └── image_150_10.tif
+%PARAMETERS_HOME%/
+├── analysis/
+│   └── analysis_parameters.json
+├── codebooks/
+│   └── codebook.csv
+├── dataorganization/
+│   └── dataorganization.csv
+├── microscope/
+│   └── microscope_parameters.json
+├── positions/
+│   └── positions.csv
+└── snakemake/
+    └── snakeconfig.json
+%ANALYSIS_HOME%/
+├── experiment1/
+│   ├── FiducialCorrelationWarp
+│   ├── DeconvolutionPreprocess
+│   ├── ...
+│   └── PlotPerformance
+└── experiment2/
+    ├── FiducialCorrelationWarp
+    ├── DeconvolutionPreprocess
+    ├── ...
+    └── PlotPerformance
+</pre></div>
+</div>
 <div class="section" id="input-specifications">
 <h2>Input specifications<a class="headerlink" href="#input-specifications" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="raw-images">
 <h3>Raw images<a class="headerlink" href="#raw-images" title="Permalink to this headline">¶</a></h3>
+<p>All raw images should be indicated in the same folder, as discussed above, and there should be a separated image
+file for each imaging round and each field of view. MERlin is able to read both tiff stacks and dax image files. The
+exact file name is specified by a regular expression in the data organization file (imageRegExp and fiducialRegExp).
+For example, you can specify the regular expression (?P&lt;imageType&gt;[w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)
+for the image filenames specified below. This indicates that the first part of the file is the imageType (the value in
+the imageType column of the data organization file), followed by the fov index, followed by imagingRound index, all
+separated by an underscore.</p>
 </div>
 <div class="section" id="data-organization">
 <h3>Data organization<a class="headerlink" href="#data-organization" title="Permalink to this headline">¶</a></h3>
@@ -178,18 +232,23 @@
 <li><p>channelName - The name of the data channel. For genes measured sequential, this can be set as the gene name.</p></li>
 <li><p>readoutName - The name of the readout sequence used to measure this channel.</p></li>
 <li><p>imageType - The base name for the image file that contains the images for this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></p></li>
-<li><p>imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are <code class="docutils literal notranslate"><span class="pre">imageType</span></code>, <code class="docutils literal notranslate"><span class="pre">fov</span></code>, and <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code>, for example: <code class="docutils literal notranslate"><span class="pre">(?P&lt;imageType&gt;[\w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">imageType</span></code> specifies the string indicated in the <code class="docutils literal notranslate"><span class="pre">imageType</span></code> column for the corresponding row, <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> specifies the designated <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> for the corresponding row, and <code class="docutils literal notranslate"><span class="pre">fov</span></code> is filled with all field of view indexes in the data set.</p></li>
-<li><p>bitNumber - The bit number corresponding to this readout.</p></li>
-<li><p>imagingRound - The round of imaging where this readout is measured, starting from zero.</p></li>
-<li><p>color - The illumination color that is used to measure this readout.</p></li>
-<li><p>frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6]</span></code></p></li>
-<li><p>zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.</p></li>
-<li><p>fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></p></li>
-<li><p>fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as <code class="docutils literal notranslate"><span class="pre">imageRegExp</span></code>.</p></li>
-<li><p>fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.</p></li>
-<li><p>fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.</p></li>
-<li><p>fiducialColor - The illumination color that is used to measure the fiducials.</p></li>
+<li><p>imageRegExp - A regular expression specifying how image file names are constructed for each field of view and</p></li>
 </ul>
+<p>each imaging round. The parameters used in the regular expression are <code class="docutils literal notranslate"><span class="pre">imageType</span></code>, <code class="docutils literal notranslate"><span class="pre">fov</span></code>, and <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code>,
+for example: <code class="docutils literal notranslate"><span class="pre">(?P&lt;imageType&gt;[\w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">imageType</span></code> specifies the
+string indicated in the <code class="docutils literal notranslate"><span class="pre">imageType</span></code> column for the corresponding row, <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> specifies the designated
+<code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> for the corresponding row, and <code class="docutils literal notranslate"><span class="pre">fov</span></code> is filled with all field of view indexes in the data set. The
+imageRegExp should not include the file extension, which will be determined automatically.
+- bitNumber - The bit number corresponding to this readout.
+- imagingRound - The round of imaging where this readout is measured, starting from zero.
+- color - The illumination color that is used to measure this readout.
+- frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6]</span></code>
+- zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.
+- fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code>
+- fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as <code class="docutils literal notranslate"><span class="pre">imageRegExp</span></code>.
+- fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.
+- fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.
+- fiducialColor - The illumination color that is used to measure the fiducials.</p>
 </div>
 <div class="section" id="codebook">
 <h3>Codebook<a class="headerlink" href="#codebook" title="Permalink to this headline">¶</a></h3>
@@ -197,8 +256,10 @@
 </div>
 <div class="section" id="position-list">
 <h3>Position list<a class="headerlink" href="#position-list" title="Permalink to this headline">¶</a></h3>
-<p>The position list is a csv file containing a list of positions for each imaged region. The i’th row in the file should be coordinates of the i’th field of view. Each position is specified by the x position and the y position, separated by a comma.</p>
-<p>The name of a position csv file that within the POSITION_HOME directory can be provided, otherwise the positions are extracted from the image metadata xml.</p>
+<p>The position list is a csv file containing a list of positions for each imaged region. The i’th row in the file should be
+coordinates of the i’th field of view. Each position is specified by the x position and the y position, separated by a comma.</p>
+<p>The name of a position csv file that within the POSITION_HOME directory can be provided, otherwise the positions are
+extracted from the image metadata xml.</p>
 </div>
 <div class="section" id="microscope-parameters">
 <h3>Microscope parameters<a class="headerlink" href="#microscope-parameters" title="Permalink to this headline">¶</a></h3>
@@ -214,19 +275,19 @@
 <div class="section" id="executing-locally">
 <h2>Executing locally<a class="headerlink" href="#executing-locally" title="Permalink to this headline">¶</a></h2>
 <p>After installation, MERlin can be run from the command line with the input parameters specified, such as:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlin -a test_analysis_parameters.json -m STORM5.json -o Culture_16bits.csv -c HAEC1E1.csv -n 5 testdata
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlin -a test_decode_and_segment.json -m microscope.json -o 7z_16bits.csv -c L26E1_codebook.csv -n 5 testdata
 </pre></div>
 </div>
-<p>Here the MERFISH images contained in the directory <cite>%DATA_HOME%/testdata/</cite> are processed using the analysis tasks listed in <cite>test_analysis_parameters.json</cite> with microscope parameters <cite>STORM5.json</cite>, data organization <cite>Culture_16bits.csv</cite>, codebook <cite>HAEC1E1</cite> using 5 cores for each process.</p>
+<p>Here the MERFISH images contained in the directory <cite>%DATA_HOME%/testdata/</cite> are processed using the analysis tasks listed in <cite>test_analysis_parameters.json</cite> with microscope parameters <cite>STORM5.json</cite>, data organization <cite>Culture_16bits.csv</cite>, codebook <cite>L26E1_codebook.csv</cite> using 5 cores for each process.</p>
 </div>
-<div class="section" id="executing-with-snakemake-anticipated-december-2018">
-<h2>Executing with Snakemake (Anticipated December 2018)<a class="headerlink" href="#executing-with-snakemake-anticipated-december-2018" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="https://snakemake.readthedocs.io/en/stable/">Snakemake</a> is a workflow management system that enables scalable analysis across a wide range of platforms. MERlin can generate a Snakemake workflow that can then be executed using Snakemake.</p>
-</div>
-<div class="section" id="visualizing-the-results">
-<h2>Visualizing the results<a class="headerlink" href="#visualizing-the-results" title="Permalink to this headline">¶</a></h2>
-<p>The MERlin analysis results can be explored using MERlinView. The analysis of the data set test_data can be explored with MERlinView from the command line as:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlinview -d test_data
+<div class="section" id="executing-on-a-high-performance-cluster">
+<h2>Executing on a high performance cluster<a class="headerlink" href="#executing-on-a-high-performance-cluster" title="Permalink to this headline">¶</a></h2>
+<p>MERlin executes tasks through <a class="reference external" href="https://snakemake.readthedocs.io/en/stable/">Snakemake</a>, a workflow management system. Each task can be distributed over a high performance
+cluster that is run by a scheduler, such as SLURM or Sge, by indicating the appropriate command to submit the job to snakemake.
+See the <a class="reference external" href="https://github.com/emanuega/merlin-parameters-example">merlin-parameters-example</a> repository for an example snakemake
+configuration file. Additional arguments can be specified as indicated in the
+<a class="reference external" href="https://snakemake.readthedocs.io/en/stable/api_reference/snakemake.html">snakemake api documentation</a>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>merlin -a test_decode_and_segment.json -m microscope.json -o 7z_16bits.csv -c L26E1_codebook.csv -k snake.json testdata
 </pre></div>
 </div>
 </div>

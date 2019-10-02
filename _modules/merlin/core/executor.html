@@ -164,7 +164,6 @@
     
 <div class="viewcode-block" id="Executor.run"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.executor.Executor.run">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">join</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">rerunCompleted</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Run an analysis task.</span>
 
@@ -175,10 +174,6 @@
 <span class="sd">        Args:</span>
 <span class="sd">            task: the analysis task to run.</span>
 <span class="sd">            index: index of the analysis to run for a parallel analysis task.</span>
-<span class="sd">            callback: function ta call upon completion of the analysis.</span>
-<span class="sd">            join: flag indicating if the execution threads should be joined to</span>
-<span class="sd">                the current thread. If True, this function doesn&#39;t return</span>
-<span class="sd">                until the analysis is complete.</span>
 <span class="sd">            rerunCompleted: flag indicating if previous analysis should be</span>
 <span class="sd">                run again even if it has previously completed. If overwrite</span>
 <span class="sd">                is True, analysis will be run on the task regardless of its</span>
@@ -200,55 +195,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">coreCount</span> <span class="o">=</span> <span class="n">coreCount</span>
 
 <div class="viewcode-block" id="LocalExecutor.run"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.executor.LocalExecutor.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">join</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">rerunCompleted</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_complete</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">rerunCompleted</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">join</span> <span class="ow">and</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
-
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">pool</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">thread</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">ParallelAnalysisTask</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coreCount</span><span class="p">)</span>
-                    <span class="n">fragmentsToRun</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">fragment_count</span><span class="p">())</span>
-                                      <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                                      <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">is_complete</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                                               <span class="ow">and</span> <span class="ow">not</span> <span class="n">rerunCompleted</span><span class="p">)]</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                    <span class="n">fragmentsToRun</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span>
-
-                <span class="c1"># prevent exceptions from killing a whole process</span>
-                <span class="k">def</span> <span class="nf">absorb_exception</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-
-                <span class="n">pool</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="n">fragmentsToRun</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
-                               <span class="n">error_callback</span><span class="o">=</span><span class="n">absorb_exception</span><span class="p">)</span>
-
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">InternallyParallelAnalysisTask</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
-                    <span class="k">return</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">set_core_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coreCount</span><span class="p">)</span>
-                <span class="n">thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
-                <span class="n">thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
-                    <span class="k">return</span>
-                <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">join</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">pool</span><span class="p">:</span>
-                    <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                    <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">thread</span><span class="p">:</span>
-                    <span class="n">thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span></div></div>
+            <span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div></div>
 
 </pre></div>
 

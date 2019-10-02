@@ -175,20 +175,20 @@
 <p>The data organization file specifies which the images correspond to each readout. The data organization file is a csv file. The first row is a header with column names and each following row designates one readout. The information provided for each readout indicates where to find the corresponding images in the raw image data and how to find the corresponding fiducial image to align the images between rounds.</p>
 <p>The columns in the data organization file are:</p>
 <ul class="simple">
-<li>channelName - The name of the data channel. For genes measured sequential, this can be set as the gene name.</li>
-<li>readoutName - The name of the readout sequence used to measure this channel.</li>
-<li>imageType - The base name for the image file that contains the images for this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></li>
-<li>imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are <code class="docutils literal notranslate"><span class="pre">imageType</span></code>, <code class="docutils literal notranslate"><span class="pre">fov</span></code>, and <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code>, for example: <code class="docutils literal notranslate"><span class="pre">(?P&lt;imageType&gt;[\w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">imageType</span></code> specifies the string indicated in the <code class="docutils literal notranslate"><span class="pre">imageType</span></code> column for the corresponding row, <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> specifies the designated <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> for the corresponding row, and <code class="docutils literal notranslate"><span class="pre">fov</span></code> is filled with all field of view indexes in the data set.</li>
-<li>bitNumber - The bit number corresponding to this readout.</li>
-<li>imagingRound - The round of imaging where this readout is measured, starting from zero.</li>
-<li>color - The illumination color that is used to measure this readout.</li>
-<li>frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6]</span></code></li>
-<li>zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.</li>
-<li>fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></li>
-<li>fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as <code class="docutils literal notranslate"><span class="pre">imageRegExp</span></code>.</li>
-<li>fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.</li>
-<li>fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.</li>
-<li>fiducialColor - The illumination color that is used to measure the fiducials.</li>
+<li><p>channelName - The name of the data channel. For genes measured sequential, this can be set as the gene name.</p></li>
+<li><p>readoutName - The name of the readout sequence used to measure this channel.</p></li>
+<li><p>imageType - The base name for the image file that contains the images for this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></p></li>
+<li><p>imageRegExp - A regular expression specifying how image file names are constructed for each field of view and each imaging round. The parameters used in the regular expression are <code class="docutils literal notranslate"><span class="pre">imageType</span></code>, <code class="docutils literal notranslate"><span class="pre">fov</span></code>, and <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code>, for example: <code class="docutils literal notranslate"><span class="pre">(?P&lt;imageType&gt;[\w|-]+)_(?P&lt;fov&gt;[0-9]+)_(?P&lt;imagingRound&gt;[0-9]+)</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">imageType</span></code> specifies the string indicated in the <code class="docutils literal notranslate"><span class="pre">imageType</span></code> column for the corresponding row, <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> specifies the designated <code class="docutils literal notranslate"><span class="pre">imagingRound</span></code> for the corresponding row, and <code class="docutils literal notranslate"><span class="pre">fov</span></code> is filled with all field of view indexes in the data set.</p></li>
+<li><p>bitNumber - The bit number corresponding to this readout.</p></li>
+<li><p>imagingRound - The round of imaging where this readout is measured, starting from zero.</p></li>
+<li><p>color - The illumination color that is used to measure this readout.</p></li>
+<li><p>frame - The zero indexed frame or frames in the image file where images corresponding to this readout can be found. For a single frame, a single integer can be provided. For multiple frames, the frames can be provided as a list as <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6]</span></code></p></li>
+<li><p>zPos - The z position for each of the frames specified in the previous column. For only a single frame, the z position should be provided as a decimal number while for multiple frames a list should be provided as for frame.</p></li>
+<li><p>fiducialImageType - The base name for the image file that contains the fiducial images for aligning images this readout, for example, <code class="docutils literal notranslate"><span class="pre">Conventional_750_650_561_488_405</span></code></p></li>
+<li><p>fiducialRegExp - A regular expression specifying how file names are constructed for the fiducial image files. This regex follows the same format as <code class="docutils literal notranslate"><span class="pre">imageRegExp</span></code>.</p></li>
+<li><p>fiducialImagingRound - The imaging round (zero indexed) corresponding to the fiducial images for aligning images for this readout.</p></li>
+<li><p>fiducialFrame - The frame index in the fiducial image file where the fiducial frame can be found.</p></li>
+<li><p>fiducialColor - The illumination color that is used to measure the fiducials.</p></li>
 </ul>
 </div>
 <div class="section" id="codebook">
@@ -204,10 +204,10 @@
 <h3>Microscope parameters<a class="headerlink" href="#microscope-parameters" title="Permalink to this headline">¶</a></h3>
 <p>Microscope parameters specify properties specific to the image acquisition. The microscope parameter file should be placed in the MICROSCOPE_PARAMETERS_HOME directory. The parameters that can be set are:</p>
 <ul class="simple">
-<li>microns_per_pixel - the number of microns corresponding to one pixel in the image.</li>
-<li>flip_horizontal - flag indicating whether the images should be flipped horizontally in order to align with neighboring images.</li>
-<li>flip_vertical - flag indicating whether the images should be flipped vertically in order to align with neighboring images.</li>
-<li>transpose - flag indicating whether the images should be transposed in order to align with neighboring images.</li>
+<li><p>microns_per_pixel - the number of microns corresponding to one pixel in the image.</p></li>
+<li><p>flip_horizontal - flag indicating whether the images should be flipped horizontally in order to align with neighboring images.</p></li>
+<li><p>flip_vertical - flag indicating whether the images should be flipped vertically in order to align with neighboring images.</p></li>
+<li><p>transpose - flag indicating whether the images should be transposed in order to align with neighboring images.</p></li>
 </ul>
 </div>
 </div>

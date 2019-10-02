@@ -168,18 +168,21 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span>
 <span class="kn">import</span> <span class="nn">h5py</span>
 <span class="kn">import</span> <span class="nn">tables</span>
-<span class="kn">from</span> <span class="nn">urllib</span> <span class="k">import</span> <span class="n">parse</span>
 <span class="kn">import</span> <span class="nn">xmltodict</span>
-<span class="kn">import</span> <span class="nn">boto3</span>
 
-<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">datareader</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">imagereader</span>
 <span class="kn">import</span> <span class="nn">merlin</span>
 <span class="kn">from</span> <span class="nn">merlin.core</span> <span class="k">import</span> <span class="n">analysistask</span>
 <span class="kn">from</span> <span class="nn">merlin.data</span> <span class="k">import</span> <span class="n">dataorganization</span>
 <span class="kn">from</span> <span class="nn">merlin.data</span> <span class="k">import</span> <span class="n">codebook</span>
+<span class="kn">from</span> <span class="nn">merlin.util</span> <span class="k">import</span> <span class="n">dataportal</span>
 
 
 <span class="n">TaskOrName</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="DataFormatException"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataFormatException">[docs]</a><span class="k">class</span> <span class="nc">DataFormatException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="DataSet"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet">[docs]</a><span class="k">class</span> <span class="nc">DataSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -209,25 +212,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">analysisHome</span> <span class="o">=</span> <span class="n">analysisHome</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">dataHome</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">])</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Cannot find raw data path: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPortal</span> <span class="o">=</span> <span class="n">dataportal</span><span class="o">.</span><span class="n">DataPortal</span><span class="o">.</span><span class="n">create_portal</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPortal</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The raw data is not available at </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">analysisHome</span><span class="p">,</span> <span class="n">dataDirectoryName</span><span class="p">])</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">logPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="s1">&#39;logs&#39;</span><span class="p">])</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logPath</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_store_dataset_metadata</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">_store_dataset_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;merlin_version&#39;</span><span class="p">:</span> <span class="n">merlin</span><span class="o">.</span><span class="n">version</span><span class="p">(),</span>
-            <span class="s1">&#39;module&#39;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
-            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-            <span class="s1">&#39;dataset_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSetName</span>
-        <span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">save_json_analysis_result</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="s1">&#39;dataset&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DataSet.save_workflow"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.save_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">save_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflowString</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot; Save a snakemake workflow for analysis of this dataset.</span>
@@ -835,7 +830,6 @@
 
 <div class="viewcode-block" id="DataSet.record_analysis_error"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.record_analysis_error">[docs]</a>    <span class="k">def</span> <span class="nf">record_analysis_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
                               <span class="n">fragmentIndex</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_record_analysis_event</span><span class="p">(</span><span class="n">analysisTask</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="n">fragmentIndex</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataSet.get_analysis_start_time"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.DataSet.get_analysis_start_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_analysis_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analysisTask</span><span class="p">:</span> <span class="n">analysistask</span><span class="o">.</span><span class="n">AnalysisTask</span><span class="p">,</span>
@@ -965,19 +959,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_load_microscope_parameters</span><span class="p">()</span>
 
 <div class="viewcode-block" id="ImageDataSet.get_image_file_names"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.ImageDataSet.get_image_file_names">[docs]</a>    <span class="k">def</span> <span class="nf">get_image_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;s3://&#39;</span><span class="p">):</span>
-            <span class="n">t</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">)</span>
-            <span class="n">allFiles</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;s3://</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">boto3</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s1">&#39;s3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">hostname</span><span class="p">)</span>
-                        <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Prefix</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">allFiles</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">,</span> <span class="n">currentFile</span><span class="p">])</span>
-                        <span class="k">for</span> <span class="n">currentFile</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPath</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">allFiles</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.dax&#39;</span><span class="p">)</span>
-                       <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tif&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tiff&#39;</span><span class="p">)])</span></div>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPortal</span><span class="o">.</span><span class="n">list_files</span><span class="p">(</span>
+            <span class="n">extensionList</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;.dax&#39;</span><span class="p">,</span> <span class="s1">&#39;.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;.tiff&#39;</span><span class="p">]))</span></div>
 
 <div class="viewcode-block" id="ImageDataSet.load_image"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.ImageDataSet.load_image">[docs]</a>    <span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imagePath</span><span class="p">,</span> <span class="n">frameIndex</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">datareader</span><span class="o">.</span><span class="n">infer_reader</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">imagereader</span><span class="o">.</span><span class="n">infer_reader</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPortal</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">imagePath</span><span class="p">))</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
             <span class="n">imageIn</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">load_frame</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">frameIndex</span><span class="p">))</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transpose</span><span class="p">:</span>
                 <span class="n">imageIn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">imageIn</span><span class="p">)</span>
@@ -995,11 +982,8 @@
 <span class="sd">            a three element list with [width, height, frameCount] or None</span>
 <span class="sd">                    if the file does not exist</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">imagePath</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;s3://&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">imagePath</span><span class="p">):</span>
-            <span class="c1"># TODO update for s3</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">with</span> <span class="n">datareader</span><span class="o">.</span><span class="n">infer_reader</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">imagereader</span><span class="o">.</span><span class="n">infer_reader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawDataPortal</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)</span>
+                                      <span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">film_size</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_import_microscope_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">microscopeParametersName</span><span class="p">):</span>
@@ -1050,16 +1034,9 @@
 <span class="sd">            imagePath: the path to the image file (.dax or .tif)</span>
 <span class="sd">        Returns: the metadata from the associated xml file</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">xmlPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">imagePath</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;.xml&#39;</span>
-
-        <span class="k">if</span> <span class="n">xmlPath</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;s3://&#39;</span><span class="p">):</span>
-            <span class="n">t</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">xmlPath</span><span class="p">)</span>
-            <span class="n">xmlString</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s1">&#39;s3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Object</span><span class="p">(</span>
-                <span class="n">t</span><span class="o">.</span><span class="n">netloc</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">get</span><span class="p">()[</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">xmlPath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">xmlFile</span><span class="p">:</span>
-                <span class="n">xmlString</span> <span class="o">=</span> <span class="n">xmlFile</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">xmltodict</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">xmlString</span><span class="p">)</span></div></div>
+        <span class="n">filePortal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawDataPortal</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span>
+            <span class="n">imagePath</span><span class="p">)</span><span class="o">.</span><span class="n">get_sibling_with_extension</span><span class="p">(</span><span class="s1">&#39;.xml&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">xmltodict</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filePortal</span><span class="o">.</span><span class="n">read_as_text</span><span class="p">())</span></div></div>
 
 
 <div class="viewcode-block" id="MERFISHDataSet"><a class="viewcode-back" href="../../merlin.core.html#merlin.core.dataset.MERFISHDataSet">[docs]</a><span class="k">class</span> <span class="nc">MERFISHDataSet</span><span class="p">(</span><span class="n">ImageDataSet</span><span class="p">):</span>
@@ -1093,6 +1070,7 @@
 <span class="sd">                    file that specifies properties of the microscope used</span>
 <span class="sd">                    to acquire the images represented by this ImageDataSet</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataDirectoryName</span><span class="p">,</span> <span class="n">dataHome</span><span class="p">,</span> <span class="n">analysisHome</span><span class="p">,</span>
                          <span class="n">microscopeParametersName</span><span class="p">)</span>
 
@@ -1276,7 +1254,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">dataOrganization</span><span class="o">.</span><span class="n">get_image_filename</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
             <span class="n">currentPositions</span> <span class="o">=</span> \
                 <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;settings&#39;</span><span class="p">][</span><span class="s1">&#39;acquisition&#39;</span><span class="p">][</span><span class="s1">&#39;stage_position&#39;</span><span class="p">][</span><span class="s1">&#39;#text&#39;</span><span class="p">]</span> \
-                    <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
             <span class="n">positionData</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">currentPositions</span><span class="p">])</span>
         <span class="n">positionPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">analysisPath</span><span class="p">,</span> <span class="s1">&#39;positions.csv&#39;</span><span class="p">])</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">positionPath</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">positionData</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>

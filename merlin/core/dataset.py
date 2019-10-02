@@ -1159,3 +1159,123 @@ class MERFISHDataSet(ImageDataSet):
 
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
+
+
+class MetaMERFISHDataSet(object):
+
+    def __init__(self, metaDataSetName: str, MERFISHDataSets: str,
+                 dataHome: str = None, analysisHome: str = None,
+                 terminalTasks: List[str] = []):
+        """Create a MetaMERFISHDataSet for the specified processed datasets.
+
+        Args:
+            MetaDataSetName: A name to use for this metadataset
+            MERFISHDataSets: the relative path to the json file containing
+                    the merfish datasets to use. The json file can be provided
+                    in the metadatasets subdirectory of analysis parameters, or
+                    a full path can be provided to another directory.
+            dataHome: the base path to the data. The data for all experiments
+                    contained in the metadataset is expected to be in dataHome.
+                    If dataHome is not specified, DATA_HOME is read from the
+                    .env file.
+            analysisHome: the base path for storing analysis results. Analysis
+                    results for this metadataset will be stored in
+                    analysisHome/MetaDataSetName. If analysisHome is not
+                    specified, ANALYSIS_HOME is read from the .env file.
+            terminalTasks: a list of one or more task names that should be
+                    aggregated into a combined file for each dataset and saved
+                    in the metadataset folder. Each task is combined into its
+                    own file.
+        """
+        if dataHome is None:
+            dataHome = merlin.DATA_HOME
+        if analysisHome is None:
+            analysisHome = merlin.ANALYSIS_HOME
+
+        self.metaDataSetName = metaDataSetName
+        self.dataHome = dataHome
+        self.analysisHome = analysisHome
+
+        self.analysisPath = os.sep.join([analysisHome, MetaDataSetName])
+        os.makedirs(self.analysisPath, exist_ok=True)
+
+        self.logPath = os.sep.join([self.analysisPath, 'logs'])
+        os.makedirs(self.logPath, exist_ok=True)
+
+        self._store_dataset_metadata()
+
+        self.dataSetDict = self._import_MERFISH_datasets()
+
+        if len(terminalTasks) >= 1:
+            for task in terminalTasks:
+                self._cache_aggregated_data(task)
+
+    def _import_MERFISH_datasets(self, MERFISHDataSets):
+        sourcePath = os.sep.join([merlin.METADATA_HOME, MERFISHDataSets])
+        destPath = os.sep.join([self.analysisPath, 'metadatasets.json'])
+        shutil.copyfile(sourcePath, destPath)
+
+        allDataSets = dict()
+        with open(MERFISHDataSets, 'r') as f:
+            mDataSets = json.load(f)['datasets']
+            for ds in mDataSets:
+                allDataSets[ds['dataset']] = ds['type']
+        return allDataSets
+
+    def _get_dataset_tasks(self,ds):
+        outDict = dict()
+        dirList = os.listdir(ds.analysisPath)
+        dirList = [x for x in dirList if
+                   os.path.isdir(os.sep.join([ds.analysisPath, x])]
+        for dir in dirList:
+            taskFile = os.sep.join([ds.analysisPath, 'tasks', 'task.json'])
+            with open(taskFile, 'r') as taskOpen:
+                loadedTask = json.load(taskOpen)
+                module = loadedTask['module']
+                cl = loadedTask['class']
+            if module in outDict:
+                outDict[module] = [outDict[module]] + [cl]
+            else:
+                outDict[module] = [cl]
+        return outDict
+
+    def _load_aggregated_data(self, analysisName: str):
+        allAnalyses = []
+        for k,v in self.dataSetDict.items():
+            ds = MERFISHDataSet(k)
+            requestedAnalyses = self._get_dataset_tasks(ds)
+            if analysisName in requestedAnalyses:
+                try:
+                    analysis = ds.load_analysis_task(analysisName)
+                    analysisResult = analysis.return_exported_data()
+                    analysisResult['dataset'] = ds.dataSetName
+                    analysisResult['sample_type'] = v
+                    analysisResult = analysisResult.iloc[:,
+                                     [-2,-1] + list(range(
+                                         analysisResult.shape[1] - 2))]
+                    allAnalyses.append(analysisResult)
+                except FileNotFoundError:
+                    print('{} result not found for dataset {}'.format(
+                        analysisName, ds.dataSetName))
+            else:
+                print('{} was not a requested analysis for dataset {}'.format(
+                    analysisName, ds.dataSetName))
+        if len(allAnalyses) == len(self.dataSetDict.items())
+            combinedAnalysis = pd.concat(allAnalyses,0)
+            return combinedAnalysis
+        else:
+            return None
+
+    def _cache_aggregated_data(self, analysisName: str, **kwargs):
+        outPath = os.sep.join([self.analysisPath, 'cached_data'])
+        os.makedirs(outPath, exist_ok=True)
+        combinedAnalysis = self._load_aggregated_data(analysisName)
+        combinedAnalysis.to_csv(os.sep.join([outPath, analysisName]),
+                                **kwargs)
+
+    def load_or_aggregate_data(self, analysisName: str, **kwargs):
+        path = os.sep.join([self.analysisPath, 'cached_data', analysisName])
+        if os.path.isfile(path):
+            return pd.read_csv(path, **kwargs)
+        else:
+            return self._load_aggregated_data(analysisName)

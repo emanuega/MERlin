@@ -1196,7 +1196,7 @@ class MetaMERFISHDataSet(object):
         self.dataHome = dataHome
         self.analysisHome = analysisHome
 
-        self.analysisPath = os.sep.join([analysisHome, MetaDataSetName])
+        self.analysisPath = os.sep.join([analysisHome, metaDataSetName])
         os.makedirs(self.analysisPath, exist_ok=True)
 
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
@@ -1204,7 +1204,7 @@ class MetaMERFISHDataSet(object):
 
         self._store_dataset_metadata()
 
-        self.dataSetDict = self._import_MERFISH_datasets()
+        self.dataSetDict = self._import_MERFISH_datasets(MERFISHDataSets)
 
         if len(terminalTasks) >= 1:
             for task in terminalTasks:

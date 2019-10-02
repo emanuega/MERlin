@@ -1202,8 +1202,6 @@ class MetaMERFISHDataSet(object):
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
         os.makedirs(self.logPath, exist_ok=True)
 
-        self._store_dataset_metadata()
-
         self.dataSetDict = self._import_MERFISH_datasets(MERFISHDataSets)
 
         if len(terminalTasks) >= 1:
@@ -1216,7 +1214,7 @@ class MetaMERFISHDataSet(object):
         shutil.copyfile(sourcePath, destPath)
 
         allDataSets = dict()
-        with open(MERFISHDataSets, 'r') as f:
+        with open(destPath, 'r') as f:
             mDataSets = json.load(f)['datasets']
             for ds in mDataSets:
                 allDataSets[ds['dataset']] = ds['type']
@@ -1226,17 +1224,19 @@ class MetaMERFISHDataSet(object):
         outDict = dict()
         dirList = os.listdir(ds.analysisPath)
         dirList = [x for x in dirList if
-                   os.path.isdir(os.sep.join([ds.analysisPath, x])]
+                   os.path.isdir(os.sep.join([ds.analysisPath, x]))]
+        dirList = [x for x in dirList if x[0].isupper()]
         for dir in dirList:
-            taskFile = os.sep.join([ds.analysisPath, 'tasks', 'task.json'])
-            with open(taskFile, 'r') as taskOpen:
-                loadedTask = json.load(taskOpen)
-                module = loadedTask['module']
-                cl = loadedTask['class']
-            if module in outDict:
-                outDict[module] = [outDict[module]] + [cl]
-            else:
-                outDict[module] = [cl]
+            taskFile = os.sep.join([ds.analysisPath, dir, 'tasks', 'task.json'])
+            if os.path.isfile(taskFile):
+                with open(taskFile, 'r') as taskOpen:
+                    loadedTask = json.load(taskOpen)
+                    module = loadedTask['module']
+                    cl = loadedTask['class']
+                if module in outDict:
+                    outDict[cl] = [outDict[cl]] + [module]
+                else:
+                    outDict[cl] = [module]
         return outDict
 
     def _load_aggregated_data(self, analysisName: str):
@@ -1260,8 +1260,8 @@ class MetaMERFISHDataSet(object):
             else:
                 print('{} was not a requested analysis for dataset {}'.format(
                     analysisName, ds.dataSetName))
-        if len(allAnalyses) == len(self.dataSetDict.items())
-            combinedAnalysis = pd.concat(allAnalyses,0)
+        if len(allAnalyses) == len(self.dataSetDict.items()):
+            combinedAnalysis = pandas.concat(allAnalyses,0)
             return combinedAnalysis
         else:
             return None
@@ -1276,6 +1276,7 @@ class MetaMERFISHDataSet(object):
     def load_or_aggregate_data(self, analysisName: str, **kwargs):
         path = os.sep.join([self.analysisPath, 'cached_data', analysisName])
         if os.path.isfile(path):
-            return pd.read_csv(path, **kwargs)
+            return pandas.read_csv(path, **kwargs)
         else:
             return self._load_aggregated_data(analysisName)
+

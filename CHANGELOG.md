@@ -9,5 +9,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Iniatialization of this CHANGELOG file to track changes as the version increments
 
 ## [0.1.1] - 2019-10-03
-### Added
+### Fixed
 - Fixed bug in sum signal

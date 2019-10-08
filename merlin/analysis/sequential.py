@@ -70,13 +70,13 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         cellIDs = [str(cells[x].get_feature_id()) for x in range(len(cells))]
         mask = np.zeros(inputImage.shape, np.uint8)
         for i, cell in enumerate(cellCoords):
-            cv2.drawContours(mask, cell, -1, i+1, -1)
+            cv2.drawContours(mask, [cell], -1, i+1, -1)
         propsDict = {x.label: x for x in regionprops(mask, inputImage)}
         propsOut = pandas.DataFrame(
             data=[(propsDict[k].intensity_image.sum(),
                    propsDict[k].filled_area)
                   if k in propsDict else (0, 0)
-                  for k in range(len(cellCoords))],
+                  for k in range(1, len(cellCoords)+1)],
             index=cellIDs,
             columns=['Intensity', 'Pixels'])
         return propsOut

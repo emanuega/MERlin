@@ -1161,7 +1161,7 @@ class MERFISHDataSet(ImageDataSet):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
 
 
-class MetaMERFISHDataSet(object):
+class MetaMERFISHDataSet(DataSet):
 
     def __init__(self, metaDataSetName: str, MERFISHDataSets: str,
                  dataHome: str = None, analysisHome: str = None,
@@ -1187,23 +1187,12 @@ class MetaMERFISHDataSet(object):
                     in the metadataset folder. Each task is combined into its
                     own file.
         """
-        if dataHome is None:
-            dataHome = merlin.DATA_HOME
-        if analysisHome is None:
-            analysisHome = merlin.ANALYSIS_HOME
+
+        super().__init__(metaDataSetName)
 
         self.metaDataSetName = metaDataSetName
-        self.dataHome = dataHome
-        self.analysisHome = analysisHome
-
-        self.analysisPath = os.sep.join([analysisHome, metaDataSetName])
-        os.makedirs(self.analysisPath, exist_ok=True)
-
-        self.logPath = os.sep.join([self.analysisPath, 'logs'])
-        os.makedirs(self.logPath, exist_ok=True)
-
         self.dataSetDict = self._import_MERFISH_datasets(MERFISHDataSets)
-
+        self.metaDataSetParameters = self._import_parameters(MERFISHDataSets)
         if len(terminalTasks) >= 1:
             for task in terminalTasks:
                 self._cache_aggregated_data(task)
@@ -1219,6 +1208,13 @@ class MetaMERFISHDataSet(object):
             for ds in mDataSets:
                 allDataSets[ds['dataset']] = ds['type']
         return allDataSets
+
+    def _import_parameters(self, MERFISHDataSets):
+        path = os.sep.join([merlin.METADATA_HOME, MERFISHDataSets])
+
+        with open(path,'r') as f:
+            return json.load(f)['metaparameters']
+
 
     def _get_dataset_tasks(self,ds):
         outDict = dict()
@@ -1267,16 +1263,32 @@ class MetaMERFISHDataSet(object):
             return None
 
     def _cache_aggregated_data(self, analysisName: str, **kwargs):
-        outPath = os.sep.join([self.analysisPath, 'cached_data'])
-        os.makedirs(outPath, exist_ok=True)
-        combinedAnalysis = self._load_aggregated_data(analysisName)
-        combinedAnalysis.to_csv(os.sep.join([outPath, analysisName]),
-                                **kwargs)
+        fullPath = os.sep.join([self.analysisPath, 'cached_data',
+                                analysisName]) + '.csv'
+        if not os.path.exists(fullPath) or self.metaDataSetParameters[
+            'overwrite_cached']:
+            outPath = os.sep.join([self.analysisPath, 'cached_data'])
+            os.makedirs(outPath, exist_ok=True)
+            combinedAnalysis = self._load_aggregated_data(analysisName)
+            combinedAnalysis.to_csv(os.sep.join([outPath, analysisName])
+                                    + '.csv', **kwargs)
 
     def load_or_aggregate_data(self, analysisName: str, **kwargs):
-        path = os.sep.join([self.analysisPath, 'cached_data', analysisName])
-        if os.path.isfile(path):
+        path = os.sep.join([self.analysisPath, 'cached_data',
+                            analysisName])  + '.csv'
+        if os.path.exists(path):
             return pandas.read_csv(path, **kwargs)
         else:
             return self._load_aggregated_data(analysisName)
 
+    def identify_multiplex_and_sequential_genes(self):
+        genes = []
+        for k,v in self.dataSetDict:
+            ds = MERFISHDataSet(k)
+            for cb in ds.codebooks:
+                missing = [x for x in cb.get_gene_names() if x not in genes]
+                genes = genes + missing
+            sequentials = ds.dataOrganization.get_sequential_rounds()[1]
+            missing = [x for x in sequentials if x not in genes]
+            genes = genes + missing
+        return genes

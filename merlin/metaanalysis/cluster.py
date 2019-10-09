@@ -254,20 +254,8 @@ class Clustering(analysistask.ParallelAnalysisTask):
 
         df = pd.DataFrame(tracking, columns=self.dataset.obs.index).T
 
-        if i not None:
-            self.metaDataSet.save_dataframe_to_csv(
-                df, 'kValue_{}_resolution_{}_type_{}_bootstrap_{}_iterations'.\
-                    format(self.kValue, int(self.resolution),
-                           self.parameters['cell_type'], i),
-                analysisTask = self.analysisName,
-                subdirectory = 'iterations')
-        else:
-            self.metaDataSet.save_dataframe_to_csv(
-                df, 'kValue_{}_resolution_{}_type_{}_iterations'.format(
-                    self.kValue, int(self.resolution),
-                    self.parameters['cell_type']),
-                analysisTask = self.analysisName,
-                subdirectory = 'iterations')
+        self._save_clustering_result(df, 'iterations')
+
         clustering = scanpy_helpers.minimum_cluster_size(
             df.iloc[:, [-1]].copy(deep = True), min_size = clusterMin)
 
@@ -278,20 +266,14 @@ class Clustering(analysistask.ParallelAnalysisTask):
             clustering['kValue_{}_resolution_{}'.format(self.kValue, int(
                     self.resolution))].unique().astype(int).max(), clusterMin))
 
-        if i not None:
-            self.metaDataSet.save_dataframe_to_csv(
-                clustering, 'kValue_{}_resolution_{}_type_{}_bootstrap_{}'.\
-                    format(self.kValue, int(self.resolution),
-                           self.parameters['cell_type'], i),
-                analysisTask = self.analysisName,
-                subdirectory = 'final_clusters')
-        else:
-            self.metaDataSet.save_dataframe_to_csv(
-                clustering, 'kValue_{}_resolution_{}_type_{}'.format(
-                    self.kValue, int(self.resolution),
-                    self.parameters['cell_type']),
-                analysisTask = self.analysisName,
-                subdirectory = 'final_clusters')
+        self._save_clustering_result(clustering, 'final_clusters')
+
+    def _save_clustering_result(self, df, subdir):
+        self.metaDataSet.save_dataframe_to_csv(
+            df, 'kValue_{}_resolution_{}_type_{}'.format(
+                self.kValue, int(self.resolution),
+                self.parameters['cell_type']), analysisTask = self.analysisName,
+            subdirectory = subdir)
 
     def return_clustering_result(self, kValue, resolution, cellType):
         data = self.metaDataSet.load_dataframe_from_csv(
@@ -333,6 +315,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         clusteringAlgorithm = self.parameters['clustering_algorithm']
         self._cluster(aData, resolution, clusterMin = clusterMin,
                       clusteringAlgorithm = clusteringAlgorithm)
+
 
 class BootstrapClustering(Clustering):
 
@@ -386,12 +369,26 @@ class BootstrapClustering(Clustering):
         downSampleAD.obs = self.dataset.obs.loc[downSampleAD.obs.index, :]
         return downSampleAD
 
+    def _save_clustering_result(self, df, subdir):
+        self.metaDataSet.save_dataframe_to_csv(
+            df, 'kValue_{}_resolution_{}_type_{}_bootstrap_{}'.format(
+                self.kValue, int(self.resolution),
+                self.parameters['cell_type'], self.i),
+            analysisTask = self.analysisName, subdirectory = subdir)
+
+    def return_clustering_result(self, kValue, resolution, cellType, i):
+        data = self.metaDataSet.load_dataframe_from_csv(
+            'kValue_{}_resolution_{}_type_{}_bootstrap_{}'.format(
+                kValue, int(resolution), cellType, i),
+            analysisTask = self.analysisName, subdirectory = 'final_clusters')
+        return data
 
     def _run_analysis(self, fragmentIndex):
         aData = self._load_data()
         aData = self._bootstrapCells(aData,
                                      self.parameters['bootstrap_fraction'])
         kValue, resolution, i = self._expand_k_and_resolution()[fragmentIndex]
+        self.i = i
         if self.parameters['cell_type'] != 'All':
             aData = self._cut_to_cell_list(aData,
                                            self.parameters['path_to_cells'])
@@ -421,3 +418,111 @@ class BootstrapClustering(Clustering):
         clusteringAlgorithm = self.parameters['clustering_algorithm']
         self._cluster(aData, resolution, clusterMin = clusterMin,
                       clusteringAlgorithm = clusteringAlgorithm, i = i)
+
+
+class ClusterStabilityAnalysis(analysistask.AnalysisTask):
+    """
+    A metaanalysis task that determines the stability of clusters based on
+    the proportion of cells originally assigned to a given cluster that
+    remain clustered when a random subest of the data is reclustered
+    """
+
+    def __init__(self, metaDataSet, parameters=None, analysisName=None):
+        super().__init__(metaDataSet, parameters, analysisName)
+
+        self.metaDataSet = metaDataSet
+
+    def get_estimated_memory(self):
+        return 10000
+
+    def get_estimated_time(self):
+        return 100
+
+    def get_dependencies(self):
+        return [self.parameters['cluster_task'],
+                self.parameters['bootstrap_cluster_task']]
+
+    def _get_cluster_and_bootstrap_params(self):
+        clTask = self.metaDataSet.load_analysis_task(
+            self.parameters['cluster_task'])
+        bootTask = self.metaDataSet.load_analysis_task(
+            self.parameters['bootstrap_cluster_task'])
+        kValues = sorted(clTask.parameters['k_value'])
+        resolutions = sorted(clTask.parameters['resolution'])
+        cellType = clTask.parameters['cell_type']
+        bootstrapIterations = bootTask.parameters['bootstrap_iterations']
+
+        return (kValues, resolutions, cellType, bootstrapIterations)
+
+    def _gather_data(self, kValue, resolution, cellType, bootstrapIterations):
+        clTask = self.metaDataSet.load_analysis_task(
+            self.parameters['cluster_task'])
+        bootTask = self.metaDataSet.load_analysis_task(
+            self.parameters['bootstrap_cluster_task'])
+
+        fullClustering = clTask.return_clustering_result(kValue,
+                                                         resolution,
+                                                         cellType)
+        for result in range(bootstrapIterations):
+            bootClustering = bootTask.return_clustering_result(kValue,
+                                                               resolution,
+                                                               cellType, result)
+            if result == 0:
+                fullBoot = bootClustering.copy(deep=True)
+            else:
+                fullBoot = pd.concat([fullBoot, bootClustering], axis = 1)
+
+        return fullClustering, fullBoot
+
+    def _determine_stability(self, fullClustering, fullBoot):
+        for boot in range(fullBoot.shape[1]):
+            tempMerge = fullClustering.merge(fullBoot, left_index = True,
+                                             right_index = True)
+            tempMerge.columns = ['Full','Boot']
+            tempMerge = tempMerge[tempMerge['Full'] != -1]
+            recovery = tempMerge.groupby(['Full','Boot']).size().unstack().\
+                max(1).div(tempMerge.groupby('Full').size())
+            if boot == 0:
+                recoveryDF = pd.DataFrame(recovery)
+            else:
+                recoveryDF = pd.concat([recoveryDF, pd.DataFrame(recovery)],
+                                        axis = 1)
+        stableClusters = recoveryDF[recoveryDF.median(1) > 0.5].index.values.tolist()
+        colName = fullClustering.columns.values.tolist()[0]
+
+        totalCells = fullClustering.shape[0]
+        recoveredCells = len(fullClustering[(fullClustering[colName].isin(
+            stableClusters)) & (fullClustering[colName] != -1)].index.
+                             values.tolist())
+
+        return (stableClusters, recoveryDF,
+                recoveredCells, totalCells)
+
+    def _run_analysis(self) -> None:
+        kValues, resolutions, cellType, bootstrapIterations =\
+            self._get_cluster_and_bootstrap_params()
+
+
+        toDF = []
+        for kValue in kValues:
+            for resolution in resolutions:
+                fullClustering, fullBoot = self._gather_data(
+                    kValue, resolution, cellType, bootstrapIterations)
+                stableClusters, recoveryDF, recoveredCells, totalCells =\
+                   self._determine_stability(fullClustering, fullBoot)
+                toDF.append([kValue, resolution, len(stableClusters),
+                             len(recoveryDF), recoveredCells, totalCells])
+        df = pd.DataFrame(toDF, columns = ['kValue','resolution',
+                                           'stable clusters', 'total clusters',
+                                           'stable cells','total cells'])
+        df['fraction stable clusters'] = df['stable clusters']\
+                                         / df['total clusters']
+
+        df['fraction stable cells'] = df['stable cells'] \
+                                         / df['total cells']
+
+        selectedKandRes= df[df['fraction stable cells'] >= 0.9].sort_values(
+            by = 'stable clusters', ascending = False).iloc[0,:]
+
+
+

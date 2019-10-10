@@ -22,7 +22,7 @@ class CreateAnnData(analysistask.AnalysisTask):
         return 100
 
     def get_dependencies(self):
-        dep = [v for k,v in self.parameters.items() if 'task' in k]
+        dep = [v for k, v in self.parameters.items() if 'task' in k]
         if len(dep) > 0:
             print('Cannot combine different file types, please combine'
                   'them ahead of time with the combineoutputs analysis task')
@@ -39,18 +39,19 @@ class CreateAnnData(analysistask.AnalysisTask):
     def _run_analysis(self) -> None:
         data = self._load_data()
         allGenes = self.metaDataSet.identify_multiplex_and_sequential_genes()
-        scData = sc.AnnData(X = data.loc[:,allGenes].values)
+        scData = sc.AnnData(X=data.loc[:, allGenes].values)
         scData.obs.index = data.index.values.tolist()
         scData.var.index = allGenes
         observationNames = [x for x in data.columns.values.tolist()
                             if x not in allGenes]
-        scData.obs = data.loc[:,observationNames]
+        scData.obs = data.loc[:, observationNames]
         self._save_h5ad(scData)
 
     def load_data(self):
         path = os.sep.join([self.analysisPath, self.analysisName, 'data.h5ad'])
         data = sc.read_h5ad(path)
         return data
+
 
 class Clustering(analysistask.ParallelAnalysisTask):
 
@@ -130,7 +131,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         Returns:
             anndata object cut to requested cells
         """
-        cellsToKeep = pd.read_csv(pathToCells).iloc[:,0].values.tolist()
+        cellsToKeep = pd.read_csv(pathToCells).iloc[:, 0].values.tolist()
         return aData[cellsToKeep, :]
 
     def _add_cell_obs(self, aData):
@@ -140,13 +141,13 @@ class Clustering(analysistask.ParallelAnalysisTask):
         n_counts as the sum of raw values for each observation
         """
         if 'n_genes' not in aData.obs:
-            mask = pd.DataFrame(data = np.where(aData.X > 0, 1, 0),
-                                index = aData.obs.index, columns = aData.var.index)
+            mask = pd.DataFrame(data=np.where(aData.X > 0, 1, 0),
+                                index=aData.obs.index, columns=aData.var.index)
             aData.obs['n_genes'] = mask.sum(1)
 
         if 'n_counts' not in aData.obs:
-            temp = pd.DataFrame(data = aData.X, index = aData.obs.index,
-                                columns = aData.var.index)
+            temp = pd.DataFrame(data=aData.X, index=aData.obs.index,
+                                columns=aData.var.index)
             if self.parameters['log_x_plus_1_performed']:
                 temp = temp.apply(lambda x: ((10 ** x) - 1))
             if self.parameters['volume_normalization_performed']:
@@ -161,12 +162,12 @@ class Clustering(analysistask.ParallelAnalysisTask):
         print('original dataset contains {} cells'.format(aData.X.shape[0]))
         currentData = aData.copy()
         if column in currentData.obs:
-            filterColumn = currentData.obs.loc[:,column]
-            minVal = filterColumn.quantile(q = minPercentile)
-            maxVal = filterColumn.quantile(q = maxPercentile)
+            filterColumn = currentData.obs.loc[:, column]
+            minVal = filterColumn.quantile(q=minPercentile)
+            maxVal = filterColumn.quantile(q=maxPercentile)
             keptObs = filterColumn[(filterColumn > minVal) &
-                                     (filterColumn < maxVal)]
-            currentData = currentData[keptObs,:].copy()
+                                   (filterColumn < maxVal)]
+            currentData = currentData[keptObs, :].copy()
         else:
             print('column \'{}\' was not found in data, skipping'
                   .format(column))
@@ -177,8 +178,8 @@ class Clustering(analysistask.ParallelAnalysisTask):
     def _filter_by_var(self, aData, minPercentile, maxPercentile):
         print('original dataset contains {} genes'.format(aData.X.shape[1]))
         currentData = aData.copy()
-        mask = pd.DataFrame(np.where(currentData.X >0, 1, 0),
-                            columns = currentData.var.index.values.tolist())
+        mask = pd.DataFrame(np.where(currentData.X > 0, 1, 0),
+                            columns=currentData.var.index.values.tolist())
         counts = mask.sum()
         minVal = counts.quantile(q=minPercentile)
         maxVal = counts.quantile(q=maxPercentile)
@@ -194,8 +195,8 @@ class Clustering(analysistask.ParallelAnalysisTask):
             pcsToCalc = maxPCs
         else:
             pcsToCalc = 100
-        sc.tl.pca(aData, svd_solver = 'arpack', n_comps = pcsToCalc)
-        randomPCs = PCA(n_components = 1, svd_solver = 'arpack')
+        sc.tl.pca(aData, svd_solver='arpack', n_comps=pcsToCalc)
+        randomPCs = PCA(n_components=1, svd_solver='arpack')
         randomVariance = [randomPCs.fit(
             scanpy_helpers.shuffler(aData.X)).explained_variance_[0]
                           for _ in range(10)]
@@ -212,10 +213,10 @@ class Clustering(analysistask.ParallelAnalysisTask):
         self.kValue = kValue
 
         if self.parameters['use_PCs']:
-            sc.pp.neighbors(aData, n_neighbors = int(kValue),
-                            n_pcs = self.pcsToUse)
+            sc.pp.neighbors(aData, n_neighbors=int(kValue),
+                            n_pcs=self.pcsToUse)
         else:
-            sc.pp.neighbors(aData, n_neighbors = int(kValue), n_pcs = 0)
+            sc.pp.neighbors(aData, n_neighbors=int(kValue), n_pcs=0)
 
         aData.uns['neighbors']['connectivities'] =\
             scanpy_helpers.neighbor_graph(
@@ -224,7 +225,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         return aData
 
     def _cluster(self, aData, resolution, clusterMin=10,
-                 clusteringAlgorithm='louvain', i = None):
+                 clusteringAlgorithm='louvain', i=None):
         self.resolution = resolution
 
         adjacency = aData.uns['neighbors']['connectivities']
@@ -240,7 +241,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         optimiser = clAlgo.Optimiser()
         tracking = []
         partition = clAlgo.RBConfigurationVertexPartition(
-            g, weights = 'weight', resolution_parameter = resolution)
+            g, weights='weight', resolution_parameter=resolution)
         partition_agg = partition.aggregate_partition()
         print(partition.summary())
 
@@ -257,7 +258,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         self._save_clustering_result(df, 'iterations')
 
         clustering = scanpy_helpers.minimum_cluster_size(
-            df.iloc[:, [-1]].copy(deep = True), min_size = clusterMin)
+            df.iloc[:, [-1]].copy(deep=True), min_size=clusterMin)
 
         clustering.columns = ['kValue_{}_resolution_{}'.format(
             self.kValue, int(self.resolution))]
@@ -272,14 +273,14 @@ class Clustering(analysistask.ParallelAnalysisTask):
         self.metaDataSet.save_dataframe_to_csv(
             df, 'kValue_{}_resolution_{}_type_{}'.format(
                 self.kValue, int(self.resolution),
-                self.parameters['cell_type']), analysisTask = self.analysisName,
-            subdirectory = subdir)
+                self.parameters['cell_type']), analysisTask=self.analysisName,
+            subdirectory=subdir)
 
     def return_clustering_result(self, kValue, resolution, cellType):
         data = self.metaDataSet.load_dataframe_from_csv(
             'kValue_{}_resolution_{}_type_{}'.format(kValue, int(resolution),
                                                      cellType),
-            analysisTask = self.analysisName, subdirectory = 'final_clusters')
+            analysisTask=self.analysisName, subdirectory='final_clusters')
         return data
 
     def _run_analysis(self, fragmentIndex):
@@ -295,7 +296,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
                     or (('n_genes' in self.parameters['filter_obs']) and
                         ('n_genes' not in aData.obs))):
                 aData = self._add_cell_obs(aData)
-            for k,v in self.parameters['filter_obs'].items()
+            for k, v in self.parameters['filter_obs'].items():
                 column = k
                 minPercentile = v['min_pct']
                 maxPercentile = v['max_pct']
@@ -313,8 +314,8 @@ class Clustering(analysistask.ParallelAnalysisTask):
 
         clusterMin = self.parameters['cluster_min_size']
         clusteringAlgorithm = self.parameters['clustering_algorithm']
-        self._cluster(aData, resolution, clusterMin = clusterMin,
-                      clusteringAlgorithm = clusteringAlgorithm)
+        self._cluster(aData, resolution, clusterMin=clusterMin,
+                      clusteringAlgorithm=clusteringAlgorithm)
 
 
 class BootstrapClustering(Clustering):
@@ -326,7 +327,6 @@ class BootstrapClustering(Clustering):
 
     def __init__(self, metaDataSet, parameters=None, analysisName=None):
         super().__init__(metaDataSet, parameters=None, analysisName=None)
-
 
         if 'bootstrap_fraction' not in self.parameters:
             self.parameters['bootstrap_fraction'] = 0.8
@@ -360,9 +360,9 @@ class BootstrapClustering(Clustering):
         return allPairs
 
     def _bootstrapCells(self, aData, bootstrapFrac):
-        sampleDF = pd.DataFrame(aData.X, index = aData.obs.index,
-                                columns = aData.var.index)
-        downSample = sampleDF.sample(frac = bootstrapFrac)
+        sampleDF = pd.DataFrame(aData.X, index=aData.obs.index,
+                                columns=aData.var.index)
+        downSample = sampleDF.sample(frac=bootstrapFrac)
         downSampleAD = sc.AnnData(downSample.values)
         downSampleAD.obs.index = downSample.index.values.tolist()
         downSampleAD.var.index = downSample.columns.values.tolist()
@@ -374,13 +374,13 @@ class BootstrapClustering(Clustering):
             df, 'kValue_{}_resolution_{}_type_{}_bootstrap_{}'.format(
                 self.kValue, int(self.resolution),
                 self.parameters['cell_type'], self.i),
-            analysisTask = self.analysisName, subdirectory = subdir)
+            analysisTask=self.analysisName, subdirectory=subdir)
 
     def return_clustering_result(self, kValue, resolution, cellType, i):
         data = self.metaDataSet.load_dataframe_from_csv(
             'kValue_{}_resolution_{}_type_{}_bootstrap_{}'.format(
                 kValue, int(resolution), cellType, i),
-            analysisTask = self.analysisName, subdirectory = 'final_clusters')
+            analysisTask=self.analysisName, subdirectory='final_clusters')
         return data
 
     def _run_analysis(self, fragmentIndex):
@@ -398,7 +398,7 @@ class BootstrapClustering(Clustering):
                     or (('n_genes' in self.parameters['filter_obs']) and
                         ('n_genes' not in aData.obs))):
                 aData = self._add_cell_obs(aData)
-            for k,v in self.parameters['filter_obs'].items()
+            for k, v in self.parameters['filter_obs'].items():
                 column = k
                 minPercentile = v['min_pct']
                 maxPercentile = v['max_pct']
@@ -416,8 +416,8 @@ class BootstrapClustering(Clustering):
 
         clusterMin = self.parameters['cluster_min_size']
         clusteringAlgorithm = self.parameters['clustering_algorithm']
-        self._cluster(aData, resolution, clusterMin = clusterMin,
-                      clusteringAlgorithm = clusteringAlgorithm, i = i)
+        self._cluster(aData, resolution, clusterMin=clusterMin,
+                      clusteringAlgorithm=clusteringAlgorithm, i=i)
 
 
 class ClusterStabilityAnalysis(analysistask.AnalysisTask):
@@ -470,24 +470,25 @@ class ClusterStabilityAnalysis(analysistask.AnalysisTask):
             if result == 0:
                 fullBoot = bootClustering.copy(deep=True)
             else:
-                fullBoot = pd.concat([fullBoot, bootClustering], axis = 1)
+                fullBoot = pd.concat([fullBoot, bootClustering], axis=1)
 
         return fullClustering, fullBoot
 
     def _determine_stability(self, fullClustering, fullBoot):
         for boot in range(fullBoot.shape[1]):
-            tempMerge = fullClustering.merge(fullBoot, left_index = True,
-                                             right_index = True)
-            tempMerge.columns = ['Full','Boot']
+            tempMerge = fullClustering.merge(fullBoot, left_index=True,
+                                             right_index=True)
+            tempMerge.columns = ['Full', 'Boot']
             tempMerge = tempMerge[tempMerge['Full'] != -1]
-            recovery = tempMerge.groupby(['Full','Boot']).size().unstack().\
+            recovery = tempMerge.groupby(['Full', 'Boot']).size().unstack().\
                 max(1).div(tempMerge.groupby('Full').size())
             if boot == 0:
                 recoveryDF = pd.DataFrame(recovery)
             else:
                 recoveryDF = pd.concat([recoveryDF, pd.DataFrame(recovery)],
-                                        axis = 1)
-        stableClusters = recoveryDF[recoveryDF.median(1) > 0.5].index.values.tolist()
+                                       axis=1)
+        stableClusters = recoveryDF[recoveryDF.median(1) > 0.5]\
+            .index.values.tolist()
         colName = fullClustering.columns.values.tolist()[0]
 
         totalCells = fullClustering.shape[0]
@@ -502,27 +503,26 @@ class ClusterStabilityAnalysis(analysistask.AnalysisTask):
         kValues, resolutions, cellType, bootstrapIterations =\
             self._get_cluster_and_bootstrap_params()
 
-
         toDF = []
         for kValue in kValues:
             for resolution in resolutions:
                 fullClustering, fullBoot = self._gather_data(
                     kValue, resolution, cellType, bootstrapIterations)
                 stableClusters, recoveryDF, recoveredCells, totalCells =\
-                   self._determine_stability(fullClustering, fullBoot)
+                    self._determine_stability(fullClustering, fullBoot)
                 toDF.append([kValue, resolution, len(stableClusters),
                              len(recoveryDF), recoveredCells, totalCells])
-        df = pd.DataFrame(toDF, columns = ['kValue','resolution',
-                                           'stable clusters', 'total clusters',
-                                           'stable cells','total cells'])
-        df['fraction stable clusters'] = df['stable clusters']\
-                                         / df['total clusters']
+        df = pd.DataFrame(toDF, columns=['kValue', 'resolution',
+                                         'stable clusters', 'total clusters',
+                                         'stable cells', 'total cells'])
+        df['fraction stable clusters'] = df['stable clusters'] /\
+                                         df['total clusters']
 
-        df['fraction stable cells'] = df['stable cells'] \
-                                         / df['total cells']
+        df['fraction stable cells'] = df['stable cells'] /\
+                                      df['total cells']
 
-        selectedKandRes= df[df['fraction stable cells'] >= 0.9].sort_values(
-            by = 'stable clusters', ascending = False).iloc[0,:]
+        selectedKandRes = df[df['fraction stable cells'] >= 0.9].sort_values(
+            by='stable clusters', ascending=False).iloc[0, :]
 
 
 

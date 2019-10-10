@@ -239,8 +239,8 @@ class DataSet(object):
 
     def _analysis_result_save_path(
             self, resultName: str, analysisTask: TaskOrName,
-            resultIndex: int=None, subdirectory: str=None,
-            fileExtension: str=None) -> str:
+            resultIndex: int = None, subdirectory: str = None,
+            fileExtension: str = None) -> str:
 
         saveName = resultName
         if resultIndex is not None:
@@ -668,7 +668,7 @@ class DataSet(object):
             fileName = analysisTask.get_analysis_name() + \
                     '_' + str(fragmentIndex) + '.' + eventName
         return os.sep.join([self.get_task_subdirectory(analysisTask),
-                fileName])
+                            fileName])
 
     def get_analysis_environment(self, analysisTask: analysistask.AnalysisTask,
                                  fragmentIndex: int = None) -> None:
@@ -744,7 +744,7 @@ class DataSet(object):
             return float(f.read())
 
     def get_analysis_elapsed_time(self, analysisTask: analysistask.AnalysisTask,
-                                  fragmentIndex: int=None) -> float:
+                                  fragmentIndex: int = None) -> float:
         """Get the time that this analysis took to complete.
 
         Returns:
@@ -874,7 +874,7 @@ class ImageDataSet(DataSet):
 
     def _import_microscope_parameters(self, microscopeParametersName):
         sourcePath = os.sep.join([merlin.MICROSCOPE_PARAMETERS_HOME,
-                microscopeParametersName])
+                                  microscopeParametersName])
         destPath = os.sep.join(
                 [self.analysisPath, 'microscope_parameters.json'])
 
@@ -1158,7 +1158,7 @@ class MERFISHDataSet(ImageDataSet):
         shutil.copyfile(sourcePath, destPath)    
 
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
-        return [castFunction(x) for x in listIn.split(delimiter) if len(x)>0]
+        return [castFunction(x) for x in listIn.split(delimiter) if len(x) > 0]
 
 
 class MetaMERFISHDataSet(DataSet):
@@ -1212,11 +1212,10 @@ class MetaMERFISHDataSet(DataSet):
     def _import_parameters(self, MERFISHDataSets):
         path = os.sep.join([merlin.METADATA_HOME, MERFISHDataSets])
 
-        with open(path,'r') as f:
+        with open(path, 'r') as f:
             return json.load(f)['metaparameters']
 
-
-    def _get_dataset_tasks(self,ds):
+    def _get_dataset_tasks(self, ds):
         outDict = dict()
         dirList = os.listdir(ds.analysisPath)
         dirList = [x for x in dirList if
@@ -1237,7 +1236,7 @@ class MetaMERFISHDataSet(DataSet):
 
     def _load_aggregated_data(self, analysisName: str):
         allAnalyses = []
-        for k,v in self.dataSetDict.items():
+        for k, v in self.dataSetDict.items():
             ds = MERFISHDataSet(k)
             requestedAnalyses = self._get_dataset_tasks(ds)
             if analysisName in requestedAnalyses:
@@ -1246,9 +1245,8 @@ class MetaMERFISHDataSet(DataSet):
                     analysisResult = analysis.return_exported_data()
                     analysisResult['dataset'] = ds.dataSetName
                     analysisResult['sample_type'] = v
-                    analysisResult = analysisResult.iloc[:,
-                                     [-2,-1] + list(range(
-                                         analysisResult.shape[1] - 2))]
+                    analysisResult = analysisResult.iloc[:, [-2, -1] + list(
+                        range(analysisResult.shape[1] - 2))]
                     allAnalyses.append(analysisResult)
                 except FileNotFoundError:
                     print('{} result not found for dataset {}'.format(
@@ -1257,7 +1255,7 @@ class MetaMERFISHDataSet(DataSet):
                 print('{} was not a requested analysis for dataset {}'.format(
                     analysisName, ds.dataSetName))
         if len(allAnalyses) == len(self.dataSetDict.items()):
-            combinedAnalysis = pandas.concat(allAnalyses,0)
+            combinedAnalysis = pandas.concat(allAnalyses, 0)
             return combinedAnalysis
         else:
             return None
@@ -1265,8 +1263,8 @@ class MetaMERFISHDataSet(DataSet):
     def _cache_aggregated_data(self, analysisName: str, **kwargs):
         fullPath = os.sep.join([self.analysisPath, 'cached_data',
                                 analysisName]) + '.csv'
-        if not os.path.exists(fullPath) or self.metaDataSetParameters[
-            'overwrite_cached']:
+        if not os.path.exists(fullPath) or\
+                self.metaDataSetParameters['overwrite_cached']:
             outPath = os.sep.join([self.analysisPath, 'cached_data'])
             os.makedirs(outPath, exist_ok=True)
             combinedAnalysis = self._load_aggregated_data(analysisName)
@@ -1275,7 +1273,7 @@ class MetaMERFISHDataSet(DataSet):
 
     def load_or_aggregate_data(self, analysisName: str, **kwargs):
         path = os.sep.join([self.analysisPath, 'cached_data',
-                            analysisName])  + '.csv'
+                            analysisName]) + '.csv'
         if os.path.exists(path):
             return pandas.read_csv(path, **kwargs)
         else:
@@ -1283,7 +1281,7 @@ class MetaMERFISHDataSet(DataSet):
 
     def identify_multiplex_and_sequential_genes(self):
         genes = []
-        for k,v in self.dataSetDict:
+        for k, v in self.dataSetDict:
             ds = MERFISHDataSet(k)
             for cb in ds.codebooks:
                 missing = [x for x in cb.get_gene_names() if x not in genes]

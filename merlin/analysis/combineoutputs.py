@@ -101,4 +101,3 @@ class CombineOutputs(analysistask.AnalysisTask):
 
         self.dataSet.save_dataframe_to_csv(cellData, 'combined_output',
                                            self.get_analysis_name())
-

@@ -56,6 +56,13 @@ def build_parser():
     parser.add_argument('--no_report',
                         help='flag indicating that the snakemake stats ' +
                         'should not be shared to improve MERlin')
+    parser.add_argument('--metadataset', action='store_true',
+                        help='flag indicating that MERlin is being used to ' +
+                        'perform analyses on a metadataset')
+    parser.add_argument('--metadataset-info', type=str,
+                        help='name of the metadataset organization file ' +
+                        'that indicates the datasets to be jointly analyzed ' +
+                        'along with metadata parameters, should be json')
 
     return parser
 
@@ -98,15 +105,21 @@ def merlin():
         configure_environment()
         return
 
-    dataSet = dataset.MERFISHDataSet(
-        args.dataset,
-        dataOrganizationName=_clean_string_arg(args.data_organization),
-        codebookNames=args.codebook,
-        microscopeParametersName=_clean_string_arg(args.microscope_parameters),
-        positionFileName=_clean_string_arg(args.positions),
-        dataHome=_clean_string_arg(args.data_home),
-        analysisHome=_clean_string_arg(args.analysis_home)
-    )
+    if not args.metadataset:
+        dataSet = dataset.MERFISHDataSet(
+            args.dataset,
+            dataOrganizationName=_clean_string_arg(args.data_organization),
+            codebookNames=args.codebook,
+            microscopeParametersName=_clean_string_arg(args.microscope_parameters),
+            positionFileName=_clean_string_arg(args.positions),
+            dataHome=_clean_string_arg(args.data_home),
+            analysisHome=_clean_string_arg(args.analysis_home)
+        )
+
+    else:
+        dataSet = dataset.MetaMERFISHDataSet(
+            args.dataset, _clean_string_arg(args.metadataset_info))
+
 
     parametersHome = m.ANALYSIS_PARAMETERS_HOME
     e = executor.LocalExecutor(coreCount=args.core_count)

@@ -1163,9 +1163,7 @@ class MERFISHDataSet(ImageDataSet):
 
 class MetaMERFISHDataSet(DataSet):
 
-    def __init__(self, metaDataSetName: str, MERFISHDataSets: str,
-                 dataHome: str = None, analysisHome: str = None,
-                 terminalTasks: List[str] = []):
+    def __init__(self, metaDataSetName: str, metaDataSetInfo: str):
         """Create a MetaMERFISHDataSet for the specified processed datasets.
 
         Args:
@@ -1174,31 +1172,22 @@ class MetaMERFISHDataSet(DataSet):
                     the merfish datasets to use. The json file can be provided
                     in the metadatasets subdirectory of analysis parameters, or
                     a full path can be provided to another directory.
-            dataHome: the base path to the data. The data for all experiments
-                    contained in the metadataset is expected to be in dataHome.
-                    If dataHome is not specified, DATA_HOME is read from the
-                    .env file.
-            analysisHome: the base path for storing analysis results. Analysis
-                    results for this metadataset will be stored in
-                    analysisHome/MetaDataSetName. If analysisHome is not
-                    specified, ANALYSIS_HOME is read from the .env file.
-            terminalTasks: a list of one or more task names that should be
-                    aggregated into a combined file for each dataset and saved
-                    in the metadataset folder. Each task is combined into its
-                    own file.
         """
 
         super().__init__(metaDataSetName)
 
         self.metaDataSetName = metaDataSetName
-        self.dataSetDict = self._import_MERFISH_datasets(MERFISHDataSets)
-        self.metaDataSetParameters = self._import_parameters(MERFISHDataSets)
-        if len(terminalTasks) >= 1:
-            for task in terminalTasks:
+        self.dataSetDict = self._import_MERFISH_datasets(metaDataSetInfo)
+        self.metaDataSetParameters = self._import_parameters(metaDataSetInfo)
+        if 'terminal_tasks' in self.metaDataSetParameters:
+            for task in self.metaDataSetParameters['terminal_tasks']:
                 self._cache_aggregated_data(task)
 
     def _import_MERFISH_datasets(self, MERFISHDataSets):
-        sourcePath = os.sep.join([merlin.METADATA_HOME, MERFISHDataSets])
+        if not os.path.isfile(MERFISHDataSets):
+            sourcePath = os.sep.join([merlin.METADATA_HOME, MERFISHDataSets])
+        else:
+            sourcePath = MERFISHDataSets
         destPath = os.sep.join([self.analysisPath, 'metadatasets.json'])
         shutil.copyfile(sourcePath, destPath)
 

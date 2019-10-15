@@ -1281,12 +1281,13 @@ class MetaMERFISHDataSet(DataSet):
 
     def identify_multiplex_and_sequential_genes(self):
         genes = []
-        for k, v in self.dataSetDict:
+        for k, v in self.dataSetDict.items():
             ds = MERFISHDataSet(k)
             for cb in ds.codebooks:
                 missing = [x for x in cb.get_gene_names() if x not in genes]
                 genes = genes + missing
             sequentials = ds.dataOrganization.get_sequential_rounds()[1]
+            sequentials = [x for x in sequentials if x not in ['DAPI','polyT']]
             missing = [x for x in sequentials if x not in genes]
             genes = genes + missing
         return genes

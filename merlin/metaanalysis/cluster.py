@@ -1,5 +1,7 @@
+import os
 import scanpy as sc
 import numpy as np
+import pandas as pd
 from sklearn.decomposition import PCA
 from merlin.core import analysistask
 from merlin.util import scanpy_helpers
@@ -13,7 +15,7 @@ class CreateAnnData(analysistask.AnalysisTask):
     def __init__(self, metaDataSet, parameters=None, analysisName=None):
         super().__init__(metaDataSet, parameters, analysisName)
 
-    self.metaDataSet = metaDataSet
+        self.metaDataSet = metaDataSet
 
     def get_estimated_memory(self):
         return 10000
@@ -23,21 +25,24 @@ class CreateAnnData(analysistask.AnalysisTask):
 
     def get_dependencies(self):
         dep = [v for k, v in self.parameters.items() if 'task' in k]
-        if len(dep) > 0:
+        if len(dep) > 1:
             print('Cannot combine different file types, please combine'
                   'them ahead of time with the combineoutputs analysis task')
         return dep
 
     def _load_data(self):
+        kwargs = {'index_col' : 0}
         requestedTask = self.get_dependencies()[0]
-        return self.metaDataSet.load_or_aggregate_data(requestedTask)
+        return self.metaDataSet.load_or_aggregate_data(requestedTask, **kwargs)
 
     def _save_h5ad(self, aData):
-        path = os.sep.join([self.analysisPath, self.analysisName, 'data.h5ad'])
+        path = os.sep.join([self.metaDataSet.analysisPath,
+                            self.analysisName, 'data.h5ad'])
         aData.write(path)
 
     def _run_analysis(self) -> None:
         data = self._load_data()
+        data = data.dropna()
         allGenes = self.metaDataSet.identify_multiplex_and_sequential_genes()
         scData = sc.AnnData(X=data.loc[:, allGenes].values)
         scData.obs.index = data.index.values.tolist()
@@ -48,7 +53,8 @@ class CreateAnnData(analysistask.AnalysisTask):
         self._save_h5ad(scData)
 
     def load_data(self):
-        path = os.sep.join([self.analysisPath, self.analysisName, 'data.h5ad'])
+        path = os.sep.join([self.metaDataSet.analysisPath,
+                            self.analysisName, 'data.h5ad'])
         data = sc.read_h5ad(path)
         return data
 
@@ -73,6 +79,8 @@ class Clustering(analysistask.ParallelAnalysisTask):
             self.parameters['log_x_plus_1_performed'] = False
         if 'volume_normalization_performed' not in self.parameters:
             self.parameters['volume_normalization_performed'] = False
+        if 'regression_keywords' not in self.parameters:
+            self.parameters['regression_keywords'] = []
         if 'use_PCs' not in self.parameters:
             self.parameters['use_PCs'] = True
         if 'cluster_min_size' not in self.parameters:
@@ -253,7 +261,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
             print(partition_agg.summary())
             diff = optimiser.move_nodes(partition_agg)
 
-        df = pd.DataFrame(tracking, columns=self.dataset.obs.index).T
+        df = pd.DataFrame(tracking, columns=aData.obs.index).T
 
         self._save_clustering_result(df, 'iterations')
 
@@ -307,6 +315,14 @@ class Clustering(analysistask.ParallelAnalysisTask):
             maxPercentile = self.parameters['filter_var']['max_pct']
             aData = self._filter_by_var(aData, minPercentile, maxPercentile)
 
+        if not self.parameters['log_x_plus_1_performed']:
+            sc.pp.log1p(aData)
+
+        if len(self.parameters['regression_keywords']) > 0:
+            sc.pp.regress_out(aData, self.parameters['regression_keywords'])
+
+        sc.pp.scale(aData, max_value=4)
+
         if self.parameters['use_PCs']:
             aData = self._select_significant_PCs(aData)
 
@@ -326,7 +342,7 @@ class BootstrapClustering(Clustering):
     """
 
     def __init__(self, metaDataSet, parameters=None, analysisName=None):
-        super().__init__(metaDataSet, parameters=None, analysisName=None)
+        super().__init__(metaDataSet, parameters, analysisName)
 
         if 'bootstrap_fraction' not in self.parameters:
             self.parameters['bootstrap_fraction'] = 0.8
@@ -366,7 +382,7 @@ class BootstrapClustering(Clustering):
         downSampleAD = sc.AnnData(downSample.values)
         downSampleAD.obs.index = downSample.index.values.tolist()
         downSampleAD.var.index = downSample.columns.values.tolist()
-        downSampleAD.obs = self.dataset.obs.loc[downSampleAD.obs.index, :]
+        downSampleAD.obs = aData.obs.loc[downSampleAD.obs.index, :]
         return downSampleAD
 
     def _save_clustering_result(self, df, subdir):
@@ -385,13 +401,7 @@ class BootstrapClustering(Clustering):
 
     def _run_analysis(self, fragmentIndex):
         aData = self._load_data()
-        aData = self._bootstrapCells(aData,
-                                     self.parameters['bootstrap_fraction'])
-        kValue, resolution, i = self._expand_k_and_resolution()[fragmentIndex]
-        self.i = i
-        if self.parameters['cell_type'] != 'All':
-            aData = self._cut_to_cell_list(aData,
-                                           self.parameters['path_to_cells'])
+
         if 'filter_obs' in self.parameters:
             if ((('n_counts' in self.parameters['filter_obs']) and
                  ('n_counts' not in aData.obs))
@@ -408,6 +418,22 @@ class BootstrapClustering(Clustering):
             minPercentile = self.parameters['filter_var']['min_pct']
             maxPercentile = self.parameters['filter_var']['max_pct']
             aData = self._filter_by_var(aData, minPercentile, maxPercentile)
+
+        aData = self._bootstrapCells(aData,
+                                     self.parameters['bootstrap_fraction'])
+        kValue, resolution, i = self._expand_k_and_resolution()[fragmentIndex]
+        self.i = i
+        if self.parameters['cell_type'] != 'All':
+            aData = self._cut_to_cell_list(aData,
+                                           self.parameters['path_to_cells'])
+
+        if not self.parameters['log_x_plus_1_performed']:
+            sc.pp.log1p(aData)
+
+        if len(self.parameters['regression_keywords']) > 0:
+            sc.pp.regress_out(aData, self.parameters['regression_keywords'])
+
+        sc.pp.scale(aData, max_value=4)
 
         if self.parameters['use_PCs']:
             aData = self._select_significant_PCs(aData)

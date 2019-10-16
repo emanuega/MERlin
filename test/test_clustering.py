@@ -11,7 +11,7 @@ def test_cluster_pipeline(simple_metamerfish_data):
     aDataTask._run_analysis()
     assert os.path.isfile(os.sep.join([simple_metamerfish_data.analysisPath,
                                        aDataTask.analysisName,
-                                       'data.h5ad']) == 1
+                                       'data.h5ad'])) == 1
 
     params = {'filecreationtask': 'CreateAnnData',
               'log_x_plus_1_performed': True,
@@ -51,8 +51,9 @@ def test_cluster_pipeline(simple_metamerfish_data):
             r2 = (k + 1) * 1000
             r1 = r2 - 1000
             correctAssignments = [x for x in cellList
-                                  if x in list(range(r1, r2)))]
+                                  if x in list(range(r1, r2))]
             assert len(correctAssignments) >= 0.9 * len(cellList)
+
 
 
     bTask = cluster.BootstrapClustering(simple_metamerfish_data,

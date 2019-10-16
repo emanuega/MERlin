@@ -15,6 +15,7 @@ merlin.CODEBOOK_HOME = os.path.abspath('test_codebooks')
 merlin.DATA_ORGANIZATION_HOME = os.path.abspath('test_dataorganization')
 merlin.POSITION_HOME = os.path.abspath('test_positions')
 merlin.MICROSCOPE_PARAMETERS_HOME = os.path.abspath('test_microcope_parameters')
+merlin.METADATA_HOME = os.path.abspath('test_metadatasets')
 
 
 dataDirectory = os.sep.join([merlin.DATA_HOME, 'test'])
@@ -26,7 +27,7 @@ def base_files():
     folderList = [merlin.DATA_HOME, merlin.ANALYSIS_HOME,
                   merlin.ANALYSIS_PARAMETERS_HOME, merlin.CODEBOOK_HOME,
                   merlin.DATA_ORGANIZATION_HOME, merlin.POSITION_HOME,
-                  merlin.MICROSCOPE_PARAMETERS_HOME]
+                  merlin.MICROSCOPE_PARAMETERS_HOME, merlin.METADATA_HOME]
     for folder in folderList:
         if os.path.exists(folder):
             shutil.rmtree(folder)
@@ -63,6 +64,11 @@ def base_files():
         os.sep.join(
             [merlin.MICROSCOPE_PARAMETERS_HOME,
              'test_microscope_parameters.json']))
+    shutil.copyfile(
+        os.sep.join(
+            [root, 'auxiliary_files', 'test_metadataset_parameters.json']),
+        os.sep.join(
+            [merlin.METADATA_HOME, 'test_metadataset_parameters.json']))
 
     yield
 
@@ -103,6 +109,25 @@ def simple_merfish_data(merfish_files):
             positionFileName='test_positions.csv',
             microscopeParametersName='test_microscope_parameters.json')
     yield testMERFISHData
+
+
+@pytest.fixture(scope='session')
+def simple_metamerfish_data(merfish_files):
+    testMetaMERFISHDataSet = dataset.MetaMERFISHDataSet(
+        'metamerfish_test', 'test_metadataset_parameters.json')
+
+    outPath = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data',
+                            'CombineOutputs']) + '.csv'
+
+    testPath = os.sep.join([root, 'auxiliary_files',
+                            'test_combine_outputs.csv'])
+
+    os.makedirs(outPath, exist_ok=True)
+    shutil.copy(testPath, outPath)
+
+    yield testMetaMERFISHDataSet
+
+    shutil.rmtree(outPath)
 
 
 @pytest.fixture(scope='session')

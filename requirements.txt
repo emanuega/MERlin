@@ -28,9 +28,4 @@ tables
 boto3
 xmltodict
 google-cloud-storage
-statsmodels
-numba
-pytables
-python-igraph
-louvain
 scanpy

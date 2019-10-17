@@ -127,8 +127,6 @@ def simple_metamerfish_data(merfish_files):
 
     yield testMetaMERFISHDataSet
 
-    shutil.rmtree(outPath)
-
 
 @pytest.fixture(scope='session')
 def two_codebook_merfish_data(merfish_files):

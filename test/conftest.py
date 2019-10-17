@@ -5,6 +5,8 @@ import glob
 from merlin.core import dataset
 from merlin.analysis import testtask
 import merlin
+import numpy as np
+import pandas as pd
 
 
 root = os.path.join(os.path.dirname(merlin.__file__), '..', 'test')
@@ -112,18 +114,25 @@ def simple_merfish_data(merfish_files):
 
 
 @pytest.fixture(scope='session')
-def simple_metamerfish_data(merfish_files):
+def simple_metamerfish_data(simple_merfish_data):
+
     testMetaMERFISHDataSet = dataset.MetaMERFISHDataSet(
         'metamerfish_test', 'test_metadataset_parameters.json')
 
-    outPath = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data',
+    outFile = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data',
                             'CombineOutputs']) + '.csv'
+    outPath = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data'])
 
-    testPath = os.sep.join([root, 'auxiliary_files',
-                            'test_combine_outputs.csv'])
-
+    allGenes = testMetaMERFISHDataSet.identify_multiplex_and_sequential_genes()
+    testCells1 = pd.DataFrame(np.random.rand(1000, len(allGenes)))
+    testCells2 = pd.DataFrame(np.random.rand(1000, len(allGenes))) + 5
+    testCells3 = pd.DataFrame(np.random.rand(1000, len(allGenes))) + 25
+    allCells = pd.concat([testCells1,
+                          testCells2,
+                          testCells3]).reset_index(drop=True)
+    allCells.columns = allGenes
     os.makedirs(outPath, exist_ok=True)
-    shutil.copy(testPath, outPath)
+    allCells.to_csv(outFile)
 
     yield testMetaMERFISHDataSet
 

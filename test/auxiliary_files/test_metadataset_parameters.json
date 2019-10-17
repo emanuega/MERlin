@@ -1,14 +1,11 @@
 {
     "datasets": [
         {
-            "dataset": "metamerfish_test_dataset",
+            "dataset": "merfish_test",
             "type": "test"
         }
             ],
     "metaparameters" : {
-        "overwrite_cached" : false,
-        "terminal_tasks" : [
-            "CombineOutputs"
-        ]
+        "overwrite_cached" : false
     }
 }

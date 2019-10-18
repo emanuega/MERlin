@@ -50,7 +50,7 @@ class CombineOutputs(analysistask.AnalysisTask):
         return cellData
 
     def return_exported_data(self):
-        kwargs = {'index_col' : 0}
+        kwargs = {'index_col': 0}
         return self.dataSet.load_dataframe_from_csv(
             'combined_output', analysisTask=self.analysisName, resultIndex=None,
             subdirectory=None, **kwargs)

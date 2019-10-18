@@ -119,8 +119,9 @@ def simple_metamerfish_data(simple_merfish_data):
     testMetaMERFISHDataSet = dataset.MetaMERFISHDataSet(
         'metamerfish_test', 'test_metadataset_parameters.json')
 
-    outFile = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data',
-                            'CombineOutputs']) + '.csv'
+    outFile = os.sep.join(
+        [testMetaMERFISHDataSet.analysisPath,
+         'cached_data','CombineOutputs'])+ '.csv'
     outPath = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data'])
 
     allGenes = testMetaMERFISHDataSet.identify_multiplex_and_sequential_genes()

@@ -8,7 +8,7 @@ scikit-image>=0.15.0
 scikit-learn>=0.19.0
 numpy>1.16.0
 scipy>=1.2
-matplotlib
+matplotlib==3.0.*
 networkx
 rtree
 shapely

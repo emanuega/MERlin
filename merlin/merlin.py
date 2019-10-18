@@ -110,7 +110,8 @@ def merlin():
             args.dataset,
             dataOrganizationName=_clean_string_arg(args.data_organization),
             codebookNames=args.codebook,
-            microscopeParametersName=_clean_string_arg(args.microscope_parameters),
+            microscopeParametersName=_clean_string_arg(
+                args.microscope_parameters),
             positionFileName=_clean_string_arg(args.positions),
             dataHome=_clean_string_arg(args.data_home),
             analysisHome=_clean_string_arg(args.analysis_home)

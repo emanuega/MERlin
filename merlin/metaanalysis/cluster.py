@@ -31,7 +31,7 @@ class CreateAnnData(analysistask.AnalysisTask):
         return dep
 
     def _load_data(self):
-        kwargs = {'index_col' : 0}
+        kwargs = {'index_col': 0}
         requestedTask = self.get_dependencies()[0]
         return self.metaDataSet.load_or_aggregate_data(requestedTask, **kwargs)
 
@@ -549,6 +549,3 @@ class ClusterStabilityAnalysis(analysistask.AnalysisTask):
 
         selectedKandRes = df[df['fraction stable cells'] >= 0.9].sort_values(
             by='stable clusters', ascending=False).iloc[0, :]
-
-
-

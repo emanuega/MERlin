@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
+
 def jaccard_kernel(sparseConnectivites):
     """
     This function is directly copied from
@@ -28,6 +29,7 @@ def jaccard_kernel(sparseConnectivites):
         j.extend(sparseConnectivites[i].indices)
     return r, j, s
 
+
 def neighbor_graph(kernel, connectivities, directed=False, prune=False):
     """
     This function is directly copied from
@@ -37,8 +39,8 @@ def neighbor_graph(kernel, connectivities, directed=False, prune=False):
     """
 
     r, j, s = kernel(connectivities)
-    graph = sp.coo_matrix((s, (r, j)), shape=(
-    connectivities.shape[0], connectivities.shape[0]))
+    graph = sp.coo_matrix(
+        (s, (r, j)), shape=(connectivities.shape[0], connectivities.shape[0]))
 
     if not directed:
         if not prune:
@@ -51,6 +53,7 @@ def neighbor_graph(kernel, connectivities, directed=False, prune=False):
         graph = sp.tril(sg, -1)
 
     return graph.tocsr()
+
 
 def minimum_cluster_size(communities, min_size=10):
     '''
@@ -66,10 +69,9 @@ def minimum_cluster_size(communities, min_size=10):
     communities['louvain'] = communities['louvain'].where(~mask, other=-1)
     return communities
 
+
 def shuffler(matrix):
     idx = [np.random.choice(matrix.shape[0], matrix.shape[0], replace=False) for
            x in range(matrix.shape[1])]
     holding = matrix[np.array(idx).T, np.arange(matrix.shape[1])]
     return holding
-
-

@@ -121,7 +121,7 @@ def simple_metamerfish_data(simple_merfish_data):
 
     outFile = os.sep.join(
         [testMetaMERFISHDataSet.analysisPath,
-         'cached_data','CombineOutputs'])+ '.csv'
+         'cached_data', 'CombineOutputs']) + '.csv'
     outPath = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data'])
 
     allGenes = testMetaMERFISHDataSet.identify_multiplex_and_sequential_genes()

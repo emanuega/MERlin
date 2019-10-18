@@ -24,6 +24,8 @@ jobs:
             source activate merlin_env
             conda install rtree
             conda install pytables
+            conda install statsmodels numba
+            conda install -c conda-forge python-igraph louvain
             cd ~
             printf 'DATA_HOME=~\nANALYSIS_HOME=~\nPARAMETERS_HOME=~\n' >.merlinenv
             pip install -e MERlin

@@ -138,6 +138,7 @@ class BlankBarcodeFOVDistributionPlot(AbstractPlot):
 
     def _generate_plot(self, inputTasks, inputMetadata):
         fig = plt.figure(figsize=(7, 7))
+        ax = fig.add_subplot(111)
 
         spatialMetadata = inputMetadata[
             'filterplots/FOVSpatialDistributionMetadata']

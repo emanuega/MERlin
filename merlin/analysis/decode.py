@@ -85,6 +85,7 @@ class Decode(BarcodeSavingParallelAnalysisTask):
         """This function decodes the barcodes in a fov and saves them to the
         barcode database.
         """
+        logger = self.dataSet.get_logger(self, fragmentIndex)
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
         optimizeTask = self.dataSet.load_analysis_task(
@@ -108,7 +109,10 @@ class Decode(BarcodeSavingParallelAnalysisTask):
         distances = np.zeros((zPositionCount, *imageShape), dtype=np.float32)
 
         if not decode3d:
+            logger.info('Starting to decode %i z independent slices for fov %i'
+                        % (zPositionCount, fragmentIndex))
             for zIndex in range(zPositionCount):
+                logger.info('Beginning z slice index %i' % zIndex)
                 di, pm, d = self._process_independent_z_slice(
                     fragmentIndex, zIndex, chromaticCorrector, scaleFactors,
                     backgrounds, preprocessTask, decoder
@@ -117,8 +121,11 @@ class Decode(BarcodeSavingParallelAnalysisTask):
                 decodedImages[zIndex, :, :] = di
                 magnitudeImages[zIndex, :, :] = pm
                 distances[zIndex, :, :] = d
+                logger.info('Completed z slice index %i' % zIndex)
 
         else:
+            logger.info('Starting to decode %i z slices for fov %i'
+                        % (zPositionCount, fragmentIndex))
             with tempfile.TemporaryDirectory() as tempDirectory:
                 if self.parameters['memory_map']:
                     normalizedPixelTraces = np.memmap(
@@ -131,6 +138,8 @@ class Decode(BarcodeSavingParallelAnalysisTask):
                         dtype=np.float32)
 
                 for zIndex in range(zPositionCount):
+                    logger.info('Finding nearest neighbors for z index %i'
+                                % zIndex)
                     imageSet = preprocessTask.get_processed_image_set(
                         fragmentIndex, zIndex, chromaticCorrector)
                     imageSet = imageSet.reshape(
@@ -146,7 +155,10 @@ class Decode(BarcodeSavingParallelAnalysisTask):
                     decodedImages[zIndex, :, :] = di
                     magnitudeImages[zIndex, :, :] = pm
                     distances[zIndex, :, :] = d
+                    logger.info('Found nearest neighbors for z index %i'
+                                % zIndex)
 
+                logger.info('Grouping pixels and saving barcodes')
                 self._extract_and_save_barcodes(
                     decoder, decodedImages, magnitudeImages,
                     normalizedPixelTraces,

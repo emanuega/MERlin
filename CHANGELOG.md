@@ -15,4 +15,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.2] - 2019-10-16
 ### Added
 - Exposed tolerance parameter in the adaptive filter barcodes method
-
+- Added plot for scale factor magnitude vs bit index

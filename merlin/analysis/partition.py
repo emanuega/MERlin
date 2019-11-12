@@ -53,11 +53,22 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
         assignmentTask = self.dataSet.load_analysis_task(
             self.parameters['assignment_task'])
 
+        tiledPos, fovBoxes = assignmentTask._get_fov_boxes()
+        fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
+                                   fovBoxes[fragmentIndex].intersects(x)])
+
         codebook = filterTask.get_codebook()
         barcodeCount = codebook.get_barcode_count()
 
         bcDB = filterTask.get_barcode_database()
-        currentFOVBarcodes = bcDB.get_barcodes(fragmentIndex)
+        for fi in fovIntersections:
+            partialBC = bcDB.get_barcodes(fi)
+            if fi == fovIntersections[0]:
+                currentFOVBarcodes = partialBC.copy(deep=True)
+            else:
+                currentFOVBarcodes = pd.concat(
+                    [currentFOVBarcodes, partialBC], 0)
+
         currentFOVBarcodes = currentFOVBarcodes.reset_index().copy(deep=True)
 
         sDB = assignmentTask.get_feature_database()

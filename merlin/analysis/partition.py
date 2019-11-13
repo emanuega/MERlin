@@ -66,7 +66,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
             if fi == fovIntersections[0]:
                 currentFOVBarcodes = partialBC.copy(deep=True)
             else:
-                currentFOVBarcodes = pd.concat(
+                currentFOVBarcodes = pandas.concat(
                     [currentFOVBarcodes, partialBC], 0)
 
         currentFOVBarcodes = currentFOVBarcodes.reset_index().copy(deep=True)

@@ -160,7 +160,7 @@
             "parameters": {
                 "sequential_task": "SumSignal"
             }
-        }
+        },
         {
             "task": "CombineOutputs",
             "module": "merlin.analysis.combineoutputs",

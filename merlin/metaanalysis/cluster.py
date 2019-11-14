@@ -108,7 +108,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         return 100
 
     def get_dependencies(self):
-        return self.parameters['filecreationtask']
+        return [self.parameters['filecreationtask']]
 
     def _load_data(self):
         requestedTask = self.get_dependencies()
@@ -370,7 +370,7 @@ class BootstrapClustering(Clustering):
         return 100
 
     def get_dependencies(self):
-        return self.parameters['filecreationtask']
+        return [self.parameters['filecreationtask']]
 
     def _expand_k_and_resolution(self):
         kValues = self.parameters['k_value']

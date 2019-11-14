@@ -24,7 +24,7 @@ class AggregateData(analysistask.AnalysisTask):
         if len(dep) > 1:
             print('This task can only aggregate one analysis task')
         else:
-            return dep[0]
+            return dep
 
     def load_aggregated_data(self, analysisName: str, **kwargs):
         return self.metaDataSet.load_dataframe_from_csv(analysisName,
@@ -32,19 +32,19 @@ class AggregateData(analysistask.AnalysisTask):
 
     def _run_analysis(self):
         allAnalyses = []
+        d = self.get_dependencies()[0]
         allDataSets = self.metaDataSet.load_datasets()
         for k,v in allDataSets.items():
             try:
                 tempData = v.load_analysis_task(
-                    self.parameters[
-                        self.get_dependencies()]).return_exported_data()
+                    self.parameters[d]).return_exported_data()
                 tempData['dataset'] = k
                 allAnalyses.append(tempData)
             except FileNotFoundError:
                 print('{} result not found for dataset {}'.format(
-                    self.get_dependencies(), k))
+                    d, k))
         if len(allAnalyses) == len(self.metaDataSet.dataSets):
             combinedAnalysis = pandas.concat(allAnalyses, 0)
             self.metaDataSet.save_dataframe_to_csv(combinedAnalysis,
-                                                   self.get_dependencies(),
+                                                   d,
                                                    self)

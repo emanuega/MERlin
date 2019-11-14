@@ -24,26 +24,38 @@ class CreateAnnData(analysistask.AnalysisTask):
         return 100
 
     def get_dependencies(self):
-        dep = [v for k, v in self.parameters.items() if 'task' in k]
-        if len(dep) > 1:
-            print('Cannot combine different file types, please combine'
-                  'them ahead of time with the combineoutputs analysis task')
-        return dep
+        return [self.parameters['aggregate_task']]
 
-    def _load_data(self):
-        kwargs = {'index_col': 0}
-        requestedTask = self.get_dependencies()[0]
-        return self.metaDataSet.load_or_aggregate_data(requestedTask, **kwargs)
+    # def _load_data(self):
+    #     kwargs = {'index_col': 0}
+    #     requestedTask = self.get_dependencies()
+    #     return self.metaDataSet.load_or_aggregate_data(requestedTask, **kwargs)
 
     def _save_h5ad(self, aData):
         path = os.sep.join([self.metaDataSet.analysisPath,
                             self.analysisName, 'data.h5ad'])
         aData.write(path)
 
+    def _identify_multiplex_and_sequential_genes(self):
+        genes = []
+        excluded = ['cellstain', 'nuclearstain', 'DAPI', 'polyT', 'polyA']
+        for k, v in self.dataSetDict.items():
+            ds = MERFISHDataSet(k)
+            for cb in ds.codebooks:
+                missing = [x for x in cb.get_gene_names() if x not in genes]
+                genes = genes + missing
+            sequentials = ds.dataOrganization.get_sequential_rounds()[1]
+            sequentials = [x for x in sequentials if x not in excluded]
+            missing = [x for x in sequentials if x not in genes]
+            genes = genes + missing
+        return genes
+
     def _run_analysis(self) -> None:
-        data = self._load_data()
+        data = self.metaDataSet.load_analysis_task(
+            self.parameters['aggregate_task']).load_aggregated_data(
+            self.parameters['combined_analysis'])
         data = data.dropna()
-        allGenes = self.metaDataSet.identify_multiplex_and_sequential_genes()
+        allGenes = self._identify_multiplex_and_sequential_genes()
         scData = sc.AnnData(X=data.loc[:, allGenes].values)
         scData.obs.index = data.index.values.tolist()
         scData.var.index = allGenes

@@ -1178,7 +1178,7 @@ class MetaMERFISHDataSet(DataSet):
         super().__init__(metaDataSetName, dataHome, analysisHome)
 
         self.metaDataSetName = metaDataSetName
-        self.dataSets = self.dataSets
+        self.dataSets = dataSets
 
     def load_datasets(self):
         dataSetDict = dict()

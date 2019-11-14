@@ -53,7 +53,7 @@ class IncompatibleVersionException(Exception):
 
 def version():
     import pkg_resources
-    return pkg_resources.require("merlin")[0].version
+    return pkg_resources.get_distribution('merlin').version
 
 
 def is_compatible(testVersion: str, baseVersion: str = None) -> bool:

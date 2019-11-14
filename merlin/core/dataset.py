@@ -1162,122 +1162,26 @@ class MERFISHDataSet(ImageDataSet):
 
 
 class MetaMERFISHDataSet(DataSet):
-
-    def __init__(self, metaDataSetName: str, metaDataSetInfo: str):
+    def __init__(self, metaDataSetName: str, dataSets: List[str],
+                 dataHome: str = None, analysisHome: str = None):
         """Create a MetaMERFISHDataSet for the specified processed datasets.
 
         Args:
-            MetaDataSetName: A name to use for this metadataset
-            MERFISHDataSets: the relative path to the json file containing
-                    the merfish datasets to use. The json file can be provided
-                    in the metadatasets subdirectory of analysis parameters, or
-                    a full path can be provided to another directory.
+            metaDataSetName: A name to use for this metadataset
+            dataSets: a list of strings, each entry specifies a merfish
+                    datasets to use. A full path can be provided, otherwise it
+                    looks in the analysisHome directory.
+            dataHome: path for raw data
+            analysisHome: path for analyzed data
         """
 
-        super().__init__(metaDataSetName)
+        super().__init__(metaDataSetName, dataHome, analysisHome)
 
         self.metaDataSetName = metaDataSetName
-        self.dataSetDict = self._import_MERFISH_datasets(metaDataSetInfo)
-        self.metaDataSetParameters = self._import_parameters(metaDataSetInfo)
-        if 'terminal_tasks' in self.metaDataSetParameters:
-            for task in self.metaDataSetParameters['terminal_tasks']:
-                self._cache_aggregated_data(task)
+        self.dataSets = self.dataSets
 
-    def _import_MERFISH_datasets(self, MERFISHDataSets):
-        if not os.path.isfile(MERFISHDataSets):
-            sourcePath = os.sep.join([merlin.METADATA_HOME, MERFISHDataSets])
-        else:
-            sourcePath = MERFISHDataSets
-        destPath = os.sep.join([self.analysisPath, 'metadatasets.json'])
-        shutil.copyfile(sourcePath, destPath)
-
-        allDataSets = dict()
-        with open(destPath, 'r') as f:
-            mDataSets = json.load(f)['datasets']
-            for ds in mDataSets:
-                allDataSets[ds['dataset']] = ds['type']
-        return allDataSets
-
-    def _import_parameters(self, MERFISHDataSets):
-        path = os.sep.join([merlin.METADATA_HOME, MERFISHDataSets])
-
-        with open(path, 'r') as f:
-            return json.load(f)['metaparameters']
-
-    def _get_dataset_tasks(self, ds):
-        outDict = dict()
-        dirList = os.listdir(ds.analysisPath)
-        dirList = [x for x in dirList if
-                   os.path.isdir(os.sep.join([ds.analysisPath, x]))]
-        dirList = [x for x in dirList if x[0].isupper()]
-        for dir in dirList:
-            taskFile = os.sep.join([ds.analysisPath, dir, 'tasks', 'task.json'])
-            if os.path.isfile(taskFile):
-                with open(taskFile, 'r') as taskOpen:
-                    loadedTask = json.load(taskOpen)
-                    module = loadedTask['module']
-                    cl = loadedTask['class']
-                if module in outDict:
-                    outDict[cl] = [outDict[cl]] + [module]
-                else:
-                    outDict[cl] = [module]
-        return outDict
-
-    def _load_aggregated_data(self, analysisName: str):
-        allAnalyses = []
-        for k, v in self.dataSetDict.items():
-            ds = MERFISHDataSet(k)
-            requestedAnalyses = self._get_dataset_tasks(ds)
-            if analysisName in requestedAnalyses:
-                try:
-                    analysis = ds.load_analysis_task(analysisName)
-                    analysisResult = analysis.return_exported_data()
-                    analysisResult['dataset'] = ds.dataSetName
-                    analysisResult['sample_type'] = v
-                    analysisResult = analysisResult.iloc[:, [-2, -1] + list(
-                        range(analysisResult.shape[1] - 2))]
-                    allAnalyses.append(analysisResult)
-                except FileNotFoundError:
-                    print('{} result not found for dataset {}'.format(
-                        analysisName, ds.dataSetName))
-            else:
-                print('{} was not a requested analysis for dataset {}'.format(
-                    analysisName, ds.dataSetName))
-        if len(allAnalyses) == len(self.dataSetDict.items()):
-            combinedAnalysis = pandas.concat(allAnalyses, 0)
-            return combinedAnalysis
-        else:
-            return None
-
-    def _cache_aggregated_data(self, analysisName: str, **kwargs):
-        fullPath = os.sep.join([self.analysisPath, 'cached_data',
-                                analysisName]) + '.csv'
-        if not os.path.exists(fullPath) or\
-                self.metaDataSetParameters['overwrite_cached']:
-            outPath = os.sep.join([self.analysisPath, 'cached_data'])
-            os.makedirs(outPath, exist_ok=True)
-            combinedAnalysis = self._load_aggregated_data(analysisName)
-            combinedAnalysis.to_csv(os.sep.join([outPath, analysisName])
-                                    + '.csv', **kwargs)
-
-    def load_or_aggregate_data(self, analysisName: str, **kwargs):
-        path = os.sep.join([self.analysisPath, 'cached_data',
-                            analysisName]) + '.csv'
-        if os.path.exists(path):
-            return pandas.read_csv(path, **kwargs)
-        else:
-            return self._load_aggregated_data(analysisName)
-
-    def identify_multiplex_and_sequential_genes(self):
-        genes = []
-        excluded = ['cellstain', 'nuclearstain', 'DAPI', 'polyT', 'polyA']
-        for k, v in self.dataSetDict.items():
-            ds = MERFISHDataSet(k)
-            for cb in ds.codebooks:
-                missing = [x for x in cb.get_gene_names() if x not in genes]
-                genes = genes + missing
-            sequentials = ds.dataOrganization.get_sequential_rounds()[1]
-            sequentials = [x for x in sequentials if x not in excluded]
-            missing = [x for x in sequentials if x not in genes]
-            genes = genes + missing
-        return genes
+    def load_datasets(self):
+        dataSetDict = dict()
+        for ds in self.dataSets:
+            dataSetDict[ds] = MERFISHDataSet(ds)
+        return dataSetDict

@@ -66,11 +66,6 @@ def base_files():
         os.sep.join(
             [merlin.MICROSCOPE_PARAMETERS_HOME,
              'test_microscope_parameters.json']))
-    shutil.copyfile(
-        os.sep.join(
-            [root, 'auxiliary_files', 'test_metadataset_parameters.json']),
-        os.sep.join(
-            [merlin.METADATA_HOME, 'test_metadataset_parameters.json']))
 
     yield
 
@@ -117,23 +112,7 @@ def simple_merfish_data(merfish_files):
 def simple_metamerfish_data(simple_merfish_data):
 
     testMetaMERFISHDataSet = dataset.MetaMERFISHDataSet(
-        'metamerfish_test', 'test_metadataset_parameters.json')
-
-    outFile = os.sep.join(
-        [testMetaMERFISHDataSet.analysisPath,
-         'cached_data', 'CombineOutputs']) + '.csv'
-    outPath = os.sep.join([testMetaMERFISHDataSet.analysisPath, 'cached_data'])
-
-    allGenes = testMetaMERFISHDataSet.identify_multiplex_and_sequential_genes()
-    testCells1 = pd.DataFrame(np.random.rand(1000, len(allGenes)))
-    testCells2 = pd.DataFrame(np.random.rand(1000, len(allGenes))) + 5
-    testCells3 = pd.DataFrame(np.random.rand(1000, len(allGenes))) + 25
-    allCells = pd.concat([testCells1,
-                          testCells2,
-                          testCells3]).reset_index(drop=True)
-    allCells.columns = allGenes
-    os.makedirs(outPath, exist_ok=True)
-    allCells.to_csv(outFile)
+        'metamerfish_test', ['merfish_test'])
 
     yield testMetaMERFISHDataSet
 

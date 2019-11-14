@@ -1,10 +1,4 @@
-import os
-import scanpy as sc
-import numpy as np
-import pandas as pd
-from sklearn.decomposition import PCA
 from merlin.core import analysistask
-from merlin.util import scanpy_helpers
 
 
 class AggregateData(analysistask.AnalysisTask):

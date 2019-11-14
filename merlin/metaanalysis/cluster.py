@@ -26,11 +26,6 @@ class CreateAnnData(analysistask.AnalysisTask):
     def get_dependencies(self):
         return [self.parameters['aggregate_task']]
 
-    # def _load_data(self):
-    #     kwargs = {'index_col': 0}
-    #     requestedTask = self.get_dependencies()
-    #     return self.metaDataSet.load_or_aggregate_data(requestedTask, **kwargs)
-
     def _save_h5ad(self, aData):
         path = os.sep.join([self.metaDataSet.analysisPath,
                             self.analysisName, 'data.h5ad'])

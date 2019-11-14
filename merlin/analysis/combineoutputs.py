@@ -101,6 +101,8 @@ class CombineOutputs(analysistask.AnalysisTask):
             cellData.loc[:,arrangedColumns] = cellData.loc[
                                               :,arrangedColumns].apply(
                 lambda x: np.log10(x+1))
+        cellData['counts'] = counts
+
 
         orderedCol = cellDataColumns + ['counts'] + arrangedColumns
         cellData = cellData.loc[:,orderedCol]

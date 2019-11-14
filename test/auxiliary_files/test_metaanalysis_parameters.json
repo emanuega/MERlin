@@ -1,0 +1,39 @@
+{
+  "analysis_tasks": [
+    {
+      "task": "AggregateData",
+      "module": "merlin.metaanalysis.aggregatedata",
+      "parameters": {
+        "combine_outputs_task": "CombineOutputs"
+      }
+    },
+    {
+      "task": "CreateAnnData",
+      "module": "merlin.metaanalysis.cluster",
+      "parameters": {
+        "combined_analysis": "CombineOutputs",
+        "aggregate_task": "AggregateData"
+      }
+    },
+    {
+      "task": "Clustering",
+      "module": "merlin.metaanalysis.cluster",
+      "parameters": {
+        "filecreationtask": "CreateAnnData",
+        "log_x_plus_1_performed": true,
+        "volume_normalization_performed": true,
+        "clustering_algorithm": "louvain"
+      }
+    },
+    {
+      "task": "BootstrapClustering",
+      "module": "merlin.metaanalysis.cluster",
+      "parameters": {
+        "filecreationtask": "CreateAnnData",
+        "log_x_plus_1_performed": true,
+        "volume_normalization_performed": true,
+        "clustering_algorithm": "louvain"
+      }
+    }
+  ]
+}

@@ -168,7 +168,7 @@
                 "segment_export_task": "ExportCellMetadata",
                 "partitioned_barcode_export_task": "ExportPartitionedBarcodes",
                 "sum_signal_export_task": "ExportSumSignals",
-                "volume_normalize": true,
+                "volume_normalize": false,
                 "calculate_counts": true,
                 "log_x_plus_1": true
             }

@@ -148,7 +148,7 @@ def merlin():
                                snakemakeParameters, not args.no_report)
 
 
-def generate_analysis_tasks_and_snakefile(dataSet: dataset.MERFISHDataSet,
+def generate_analysis_tasks_and_snakefile(dataSet,
                                           parametersFile: TextIO) -> str:
     print('Generating analysis tasks from %s' % parametersFile.name)
     analysisParameters = json.load(parametersFile)
@@ -160,7 +160,7 @@ def generate_analysis_tasks_and_snakefile(dataSet: dataset.MERFISHDataSet,
 
 
 def run_with_snakemake(
-        dataSet: dataset.MERFISHDataSet, snakefilePath: str, coreCount: int,
+        dataSet, snakefilePath: str, coreCount: int,
         snakemakeParameters: Dict = {}, report: bool = True):
     print('Running MERlin pipeline through snakemake')
     snakemake.snakemake(snakefilePath, cores=coreCount,

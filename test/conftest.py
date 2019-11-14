@@ -61,6 +61,11 @@ def base_files():
             [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_parameters.json']))
     shutil.copyfile(
         os.sep.join(
+            [root, 'auxiliary_files', 'test_metaanalysis_parameters.json']),
+        os.sep.join(
+            [merlin.ANALYSIS_PARAMETERS_HOME, 'test_metaanalysis_parameters.json']))
+    shutil.copyfile(
+        os.sep.join(
             [root, 'auxiliary_files', 'test_microscope_parameters.json']),
         os.sep.join(
             [merlin.MICROSCOPE_PARAMETERS_HOME,
@@ -68,8 +73,8 @@ def base_files():
 
     yield
 
-    for folder in folderList:
-        shutil.rmtree(folder)
+    # for folder in folderList:
+    #     shutil.rmtree(folder)
 
 
 @pytest.fixture(scope='session')
@@ -83,7 +88,7 @@ def merfish_files(base_files):
 
     yield
 
-    shutil.rmtree(merfishDataDirectory)
+    # shutil.rmtree(merfishDataDirectory)
 
 
 @pytest.fixture(scope='session')
@@ -93,7 +98,7 @@ def simple_data(base_files):
 
     yield testData
 
-    shutil.rmtree(dataDirectory)
+    # shutil.rmtree(dataDirectory)
 
 
 @pytest.fixture(scope='session')
@@ -128,7 +133,7 @@ def two_codebook_merfish_data(merfish_files):
             microscopeParametersName='test_microscope_parameters.json')
     yield testMERFISHData
 
-    shutil.rmtree('test_analysis_two_codebook')
+    # shutil.rmtree('test_analysis_two_codebook')
 
 
 @pytest.fixture(scope='function')

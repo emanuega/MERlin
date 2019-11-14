@@ -17,7 +17,6 @@ merlin.CODEBOOK_HOME = os.path.abspath('test_codebooks')
 merlin.DATA_ORGANIZATION_HOME = os.path.abspath('test_dataorganization')
 merlin.POSITION_HOME = os.path.abspath('test_positions')
 merlin.MICROSCOPE_PARAMETERS_HOME = os.path.abspath('test_microcope_parameters')
-merlin.METADATA_HOME = os.path.abspath('test_metadatasets')
 
 
 dataDirectory = os.sep.join([merlin.DATA_HOME, 'test'])
@@ -29,7 +28,7 @@ def base_files():
     folderList = [merlin.DATA_HOME, merlin.ANALYSIS_HOME,
                   merlin.ANALYSIS_PARAMETERS_HOME, merlin.CODEBOOK_HOME,
                   merlin.DATA_ORGANIZATION_HOME, merlin.POSITION_HOME,
-                  merlin.MICROSCOPE_PARAMETERS_HOME, merlin.METADATA_HOME]
+                  merlin.MICROSCOPE_PARAMETERS_HOME]
     for folder in folderList:
         if os.path.exists(folder):
             shutil.rmtree(folder)

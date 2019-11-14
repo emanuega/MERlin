@@ -29,7 +29,6 @@ if os.path.exists(envPath):
         FPKM_HOME = os.sep.join([PARAMETERS_HOME, 'fpkm'])
         SNAKEMAKE_PARAMETERS_HOME = os.sep.join(
             [PARAMETERS_HOME, 'snakemake'])
-        METADATA_HOME = os.sep.join([PARAMETERS_HOME, 'metadatasets'])
 
     except TypeError:
         print('MERlin environment appears corrupt. Please run ' +

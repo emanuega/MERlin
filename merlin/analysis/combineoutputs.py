@@ -64,22 +64,14 @@ class CombineOutputs(analysistask.AnalysisTask):
         remainingTasks = [x for x in remainingTasks if
                           x != self.parameters['segment_export_task']]
         allData = []
-        multiplexGenes = []
         for t in remainingTasks:
             loadedTask = self.dataSet.load_analysis_task(t)
             currentData = loadedTask.return_exported_data()
-            if self.parameters['calculate_counts']:
-                if t == self.parameters['calculate_counts']:
-                    counts = currentData.loc[
-                             :, ~(currentData.columns.str.contains('blank')
-                                  )].sum(1)
-
-            if self.parameters['log_x_plus_1']:
-                currentData = currentData.apply(lambda x: np.log10(x+1))
-
             allData.append(currentData)
-            if loadedTask.__class__.__name__ != 'ExportSumSignals':
-                multiplexGenes.extend(currentData.columns.values.tolist())
+        cbs = self.dataSet.get_codebooks()
+        allGenes = []
+        for cb in cbs:
+            allGenes.extend(cb.get_gene_names())
 
         if 'slice_info' in self.parameters:
             sliceDict = dict()
@@ -91,14 +83,26 @@ class CombineOutputs(analysistask.AnalysisTask):
                     sliceDict[j] = sliceNum
 
             cellData['slice_id'] = cellData['fov'].map(sliceDict)
+        cellDataColumns = cellData.columns.values.tolist()
 
-        cellData['counts'] = counts
+        arrangedColumns = []
         for d in allData:
             cellData = cellData.merge(d, left_index=True, right_index=True)
+            arrangedColumns.extend(d.columns.values.tolist())
+
+        if self.parameters['calculate_counts']:
+            counts = cellData.loc[:,allGenes].sum(1)
 
         if self.parameters['volume_normalize']:
-            cellData.loc[:, multiplexGenes] = \
-                cellData.loc[:, multiplexGenes].div(cellData['volume'], 0)
+            cellData.loc[:, allGenes] = \
+                cellData.loc[:, allGenes].div(cellData['volume'], 0)
 
+        if self.parameters['log_x_plus_1']:
+            cellData.loc[:,arrangedColumns] = cellData.loc[
+                                              :,arrangedColumns].apply(
+                lambda x: np.log10(x+1))
+
+        orderedCol = cellDataColumns + ['counts'] + arrangedColumns
+        cellData = cellData.loc[:,orderedCol]
         self.dataSet.save_dataframe_to_csv(cellData, 'combined_output',
                                            self.get_analysis_name())

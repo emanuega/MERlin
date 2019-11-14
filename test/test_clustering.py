@@ -5,7 +5,8 @@ from merlin.metaanalysis import cluster
 
 def test_cluster_pipeline(simple_metamerfish_data):
     aDataTask = cluster.CreateAnnData(simple_metamerfish_data, parameters={
-        'combine_outputs_task': 'CombineOutputs'})
+        'combined_analysis': 'CombineOutputs',
+        'aggregate_task':'AggregateData'})
 
     simple_metamerfish_data.save_analysis_task(aDataTask)
     aDataTask._run_analysis()

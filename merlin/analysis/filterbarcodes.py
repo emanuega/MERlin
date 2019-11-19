@@ -65,6 +65,8 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        if 'tolerance' not in self.parameters:
+            self.parameters['tolerance'] = 0.001
         # ensure decode_task is specified
         decodeTask = self.parameters['decode_task']
 
@@ -167,12 +169,14 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         Returns: the normalized blank fraction threshold that achieves
             targetMisidentificationRate
         """
+        tolerance = self.parameters['tolerance']
         def misidentification_rate_error_for_threshold(x, targetError):
             return self.calculate_misidentification_rate_for_threshold(x) \
                 - targetError
         return optimize.newton(
             misidentification_rate_error_for_threshold, 0.2,
-            args=[targetMisidentificationRate], tol=0.001, x1=0.3, disp=False)
+            args=[targetMisidentificationRate], tol=tolerance, x1=0.3,
+            disp=False)
 
     def calculate_barcode_count_for_threshold(self, threshold: float) -> float:
         """ Calculate the number of barcodes remaining after applying

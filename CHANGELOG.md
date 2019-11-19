@@ -11,3 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2019-10-03
 ### Fixed
 - Fixed bug in sum signal
+
+## [0.1.2] - 2019-10-16
+### Added
+- Exposed tolerance parameter in the adaptive filter barcodes method
+- Added plot for scale factor magnitude vs bit index
+- Fixed barcode partitioning to include cells from adjacent fields of view when a cell falls across fov boundaries

@@ -1,5 +1,5 @@
 from merlin.core import analysistask
-
+import pandas
 
 class AggregateData(analysistask.AnalysisTask):
     """
@@ -24,7 +24,11 @@ class AggregateData(analysistask.AnalysisTask):
         if len(dep) > 1:
             print('This task can only aggregate one analysis task')
         else:
-            return dep
+            dependencies = []
+            allDataSets = self.metaDataSet.load_datasets()
+            for k, v in allDataSets.items():
+                dependencies.append(v.load_analysis_task(dep[0]))
+        return dependencies
 
     def load_aggregated_data(self, analysisName: str, **kwargs):
         return self.metaDataSet.load_dataframe_from_csv(analysisName,
@@ -32,19 +36,19 @@ class AggregateData(analysistask.AnalysisTask):
 
     def _run_analysis(self):
         allAnalyses = []
-        d = self.get_dependencies()[0]
-        allDataSets = self.metaDataSet.load_datasets()
-        for k,v in allDataSets.items():
+        deps = self.get_dependencies()
+        for d in deps:
             try:
-                tempData = v.load_analysis_task(
-                    self.parameters[d]).return_exported_data()
-                tempData['dataset'] = k
+                tempData = d.return_exported_data()
+                tempData['dataset'] = d.dataSet.dataSetName
                 allAnalyses.append(tempData)
             except FileNotFoundError:
                 print('{} result not found for dataset {}'.format(
-                    d, k))
+                    d.analysisName, d.dataSet.dataSetName))
         if len(allAnalyses) == len(self.metaDataSet.dataSets):
             combinedAnalysis = pandas.concat(allAnalyses, 0)
             self.metaDataSet.save_dataframe_to_csv(combinedAnalysis,
-                                                   d,
+                                                   [v for k, v in
+                                                    self.parameters.items()
+                                                    if 'task' in k][0],
                                                    self)

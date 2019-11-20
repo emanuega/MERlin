@@ -20,7 +20,7 @@ def test_metamerfish_full_local(simple_metamerfish_data, simple_merfish_data):
 
     combineTask = combineoutputs.CombineOutputs(simple_merfish_data,
                                                 parameters = parameters)
-    combineTask.save()
+    combineTask.save(overwrite=True)
     cbs = simple_merfish_data.codebooks
     geneList = []
     for cb in cbs:

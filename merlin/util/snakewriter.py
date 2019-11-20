@@ -36,7 +36,7 @@ class SnakemakeRule(object):
     def _generate_input(self) -> str:
         if len(self._analysisTask.get_dependencies()) > 0:
             if isinstance(self._analysisTask.get_dependencies()[0],
-                      analysistask.AnalysisTask):
+                          analysistask.AnalysisTask):
                 inputTasks = self._analysisTask.get_dependencies()
             else:
                 inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)

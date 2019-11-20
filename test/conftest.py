@@ -5,8 +5,6 @@ import glob
 from merlin.core import dataset
 from merlin.analysis import testtask
 import merlin
-import numpy as np
-import pandas as pd
 
 
 root = os.path.join(os.path.dirname(merlin.__file__), '..', 'test')
@@ -63,7 +61,8 @@ def base_files():
         os.sep.join(
             [root, 'auxiliary_files', 'test_metaanalysis_parameters.json']),
         os.sep.join(
-            [merlin.ANALYSIS_PARAMETERS_HOME, 'test_metaanalysis_parameters.json']))
+            [merlin.ANALYSIS_PARAMETERS_HOME,
+             'test_metaanalysis_parameters.json']))
     shutil.copyfile(
         os.sep.join(
             [root, 'auxiliary_files', 'test_microscope_parameters.json']),
@@ -73,8 +72,8 @@ def base_files():
 
     yield
 
-    # for folder in folderList:
-    #     shutil.rmtree(folder)
+    for folder in folderList:
+        shutil.rmtree(folder)
 
 
 @pytest.fixture(scope='session')
@@ -88,7 +87,7 @@ def merfish_files(base_files):
 
     yield
 
-    # shutil.rmtree(merfishDataDirectory)
+    shutil.rmtree(merfishDataDirectory)
 
 
 @pytest.fixture(scope='session')
@@ -98,7 +97,7 @@ def simple_data(base_files):
 
     yield testData
 
-    # shutil.rmtree(dataDirectory)
+    shutil.rmtree(dataDirectory)
 
 
 @pytest.fixture(scope='session')
@@ -117,7 +116,6 @@ def simple_metamerfish_data(simple_merfish_data):
 
     testMetaMERFISHDataSet = dataset.MetaMERFISHDataSet(
         'metamerfish_test', ['merfish_test'])
-
     yield testMetaMERFISHDataSet
 
 
@@ -133,7 +131,7 @@ def two_codebook_merfish_data(merfish_files):
             microscopeParametersName='test_microscope_parameters.json')
     yield testMERFISHData
 
-    # shutil.rmtree('test_analysis_two_codebook')
+    shutil.rmtree('test_analysis_two_codebook')
 
 
 @pytest.fixture(scope='function')

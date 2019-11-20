@@ -91,20 +91,19 @@ class CombineOutputs(analysistask.AnalysisTask):
             arrangedColumns.extend(d.columns.values.tolist())
 
         if self.parameters['calculate_counts']:
-            counts = cellData.loc[:,allGenes].sum(1)
+            counts = cellData.loc[:, allGenes].sum(1)
 
         if self.parameters['volume_normalize']:
             cellData.loc[:, allGenes] = \
                 cellData.loc[:, allGenes].div(cellData['volume'], 0)
 
         if self.parameters['log_x_plus_1']:
-            cellData.loc[:,arrangedColumns] = cellData.loc[
-                                              :,arrangedColumns].apply(
+            cellData.loc[:, arrangedColumns] = cellData.loc[
+                                              :, arrangedColumns].apply(
                 lambda x: np.log10(x+1))
         cellData['counts'] = counts
 
-
         orderedCol = cellDataColumns + ['counts'] + arrangedColumns
-        cellData = cellData.loc[:,orderedCol]
+        cellData = cellData.loc[:, orderedCol]
         self.dataSet.save_dataframe_to_csv(cellData, 'combined_output',
                                            self.get_analysis_name())

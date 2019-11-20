@@ -34,12 +34,11 @@ class CreateAnnData(analysistask.AnalysisTask):
     def _identify_multiplex_and_sequential_genes(self):
         genes = []
         excluded = ['cellstain', 'nuclearstain', 'DAPI', 'polyT', 'polyA']
-        for k, v in self.dataSetDict.items():
-            ds = MERFISHDataSet(k)
-            for cb in ds.codebooks:
+        for k, v in self.metaDataSet.load_datasets().items():
+            for cb in v.codebooks:
                 missing = [x for x in cb.get_gene_names() if x not in genes]
                 genes = genes + missing
-            sequentials = ds.dataOrganization.get_sequential_rounds()[1]
+            sequentials = v.dataOrganization.get_sequential_rounds()[1]
             sequentials = [x for x in sequentials if x not in excluded]
             missing = [x for x in sequentials if x not in genes]
             genes = genes + missing
@@ -111,7 +110,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         return [self.parameters['filecreationtask']]
 
     def _load_data(self):
-        requestedTask = self.get_dependencies()
+        requestedTask = self.get_dependencies()[0]
         data = self.metaDataSet.load_analysis_task(requestedTask).load_data()
         data.var_names_make_unique()
         return data

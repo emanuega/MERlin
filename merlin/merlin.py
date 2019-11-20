@@ -118,7 +118,10 @@ def merlin():
 
     elif args.dataset_class == 'MetaMERFISHDataSet':
         dataSet = dataset.MetaMERFISHDataSet(
-            args.dataset, args.contained_datasets)
+            args.dataset, args.contained_datasets,
+            dataHome=_clean_string_arg(args.data_home),
+            analysisHome=_clean_string_arg(args.analysis_home)
+        )
 
 
     parametersHome = m.ANALYSIS_PARAMETERS_HOME

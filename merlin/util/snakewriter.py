@@ -20,24 +20,35 @@ class SnakemakeRule(object):
     def _clean_string(stringIn):
         return stringIn.replace('\\', '/')
 
-    def _expand_as_string(self, taskName, indexCount) -> str:
+    def _expand_as_string(self, task, indexCount) -> str:
         return 'expand(%s, g=list(range(%i)))' % (self._add_quotes(
-            self._analysisTask.dataSet.analysis_done_filename(taskName, '{g}')),
+            task.dataSet.analysis_done_filename(task, '{g}')),
             indexCount)
 
     def _generate_input_names(self, task):
         if isinstance(task, analysistask.ParallelAnalysisTask):
             return self._clean_string(self._expand_as_string(
-                task.get_analysis_name(), task.fragment_count()))
+                task, task.fragment_count()))
         else:
             return self._clean_string(self._add_quotes(
-                self._analysisTask.dataSet.analysis_done_filename(task)))
+                task.dataSet.analysis_done_filename(task)))
 
     def _generate_input(self) -> str:
-        inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
-                      for x in self._analysisTask.get_dependencies()]
-        inputString = ','.join([self._generate_input_names(x)
-                                for x in inputTasks])
+        if len(self._analysisTask.get_dependencies()) > 0:
+            if isinstance(self._analysisTask.get_dependencies()[0],
+                      analysistask.AnalysisTask):
+                inputTasks = self._analysisTask.get_dependencies()
+            else:
+                inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
+                              for x in self._analysisTask.get_dependencies()]
+            inputString = ','.join([self._generate_input_names(x)
+                                    for x in inputTasks])
+        else:
+            inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
+                          for x in self._analysisTask.get_dependencies()]
+            inputString = ','.join([self._generate_input_names(x)
+                                    for x in inputTasks])
+
         return self._clean_string(inputString)
 
     def _generate_output(self) -> str:
@@ -66,18 +77,24 @@ class SnakemakeRule(object):
             shellString = 'python '
         else:
             shellString = self._clean_string(self._pythonPath) + ' '
+        shellString += '-m merlin '
+        shellString += self._clean_string(
+            self._analysisTask.dataSet.dataSetName) + ' '
+
+
         shellString += ''.join(
-            ['-m merlin -t ',
-             self._clean_string(self._analysisTask.analysisName),
-             ' -e \"',
-             self._clean_string(self._analysisTask.dataSet.dataHome), '\"',
-             ' -s \"',
-             self._clean_string(self._analysisTask.dataSet.analysisHome),
-             '\"'])
+            ['-t ', self._clean_string(self._analysisTask.analysisName),
+             ' -e \"', self._clean_string(self._analysisTask.dataSet.dataHome),
+             '\"', ' -s \"',
+             self._clean_string(self._analysisTask.dataSet.analysisHome), '\"'])
+        if isinstance(self._analysisTask.dataSet, dataset.MetaMERFISHDataSet):
+            shellString += ' --dataset-class \"MetaMERFISHDataSet\"'
+            shellString += ' --contained-datasets '
+            containedDS = ['\"{}\"'.format(x) for x in
+                           self._analysisTask.dataSet.dataSets]
+            shellString += ' '.join(containedDS)
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
             shellString += ' -i {wildcards.i}'
-        shellString += ' ' + self._clean_string(
-            self._analysisTask.dataSet.dataSetName)
 
         return self._add_quotes(shellString)
 

@@ -1183,5 +1183,6 @@ class MetaMERFISHDataSet(DataSet):
     def load_datasets(self):
         dataSetDict = dict()
         for ds in self.dataSets:
-            dataSetDict[ds] = MERFISHDataSet(ds)
+            dataSetDict[ds] = MERFISHDataSet(ds, dataHome = self.dataHome,
+                                             analysisHome = self.analysisHome)
         return dataSetDict

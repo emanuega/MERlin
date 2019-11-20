@@ -1,6 +1,7 @@
 from merlin.core import analysistask
 import pandas
 
+
 class AggregateData(analysistask.AnalysisTask):
     """
     A metaanalysis task that aggregates data from multiple datasets

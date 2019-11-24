@@ -197,19 +197,10 @@ def run_with_snakemake(
         analysisParameters = {
             t: dataSet.load_analysis_task(t).get_parameters()
             for t in dataSet.get_analysis_tasks()}
-        datasetMeta = {
-            'image_width': dataSet.get_image_dimensions()[0],
-            'image_height': dataSet.get_image_dimensions()[1],
-            'barcode_length': dataSet.get_codebook().get_bit_count(),
-            'barcode_count': dataSet.get_codebook().get_barcode_count(),
-            'fov_count': len(dataSet.get_fovs()),
-            'z_count': len(dataSet.get_z_positions()),
-            'sequential_count': len(dataSet.get_data_organization()
-                                    .get_sequential_rounds()),
-            'dataset_name': dataSet.dataSetName,
-            'report_time': reportTime,
-            'analysis_parameters': analysisParameters
-        }
+        datasetMeta = dataSet.get_full_metadat()
+        datasetMeta['return_time'] = reportTime
+        datasetMeta['analysis_parameters'] = analysisParameters
+
         try:
             requests.post('http://merlin.georgeemanuel.com/post',
                           files={'file': ('.'.join(

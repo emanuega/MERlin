@@ -221,21 +221,9 @@ class SlurmReport(analysistask.AnalysisTask):
 
         self._plot_slurm_summary(reportDict)
 
-        datasetMeta = {
-            'image_width': self.dataSet.get_image_dimensions()[0],
-            'image_height': self.dataSet.get_image_dimensions()[1],
-            'barcode_length': self.dataSet.get_codebook(
-                self.parameters['codebook_index']).get_bit_count(),
-            'barcode_count': self.dataSet.get_codebook(
-                self.parameters['codebook_index']).get_barcode_count(),
-            'fov_count': len(self.dataSet.get_fovs()),
-            'z_count': len(self.dataSet.get_z_positions()),
-            'sequential_count': len(self.dataSet.get_data_organization()
-                                    .get_sequential_rounds()),
-            'dataset_name': self.dataSet.dataSetName,
-            'report_time': reportTime,
-            'analysis_parameters': analysisParameters
-        }
+        datasetMeta = self.dataSet.get_full_metadata()
+        datasetMeta['report_time'] = reportTime
+        datasetMeta['analysis_parameters'] = analysisParameters
         try:
             requests.post('http://merlin.georgeemanuel.com/post',
                           files={'file': ('.'.join(

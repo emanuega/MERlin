@@ -95,6 +95,12 @@ class DataSet(object):
             }
             self.save_json_analysis_result(newMetadata, 'dataset', None)
 
+    def get_stored_metadata(self) -> Dict:
+        return self.load_json_analysis_result('dataset', None)
+
+    def get_full_metadata(self) -> Dict:
+        return self.load_json_analysis_result('dataset', None)
+
     def save_workflow(self, workflowString: str) -> str:
         """ Save a snakemake workflow for analysis of this dataset.
 
@@ -1160,6 +1166,20 @@ class MERFISHDataSet(ImageDataSet):
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x) > 0]
 
+    def get_full_metadata(self):
+        datasetMeta = self.get_stored_metadata()
+        datasetMeta.update({
+            'image_width': self.get_image_dimensions()[0],
+            'image_height': self.get_image_dimensions()[1],
+            'barcode_length': self.get_codebook().get_bit_count(),
+            'barcode_count': self.get_codebook().get_barcode_count(),
+            'fov_count': len(self.get_fovs()),
+            'z_count': len(self.get_z_positions()),
+            'sequential_count': len(self.get_data_organization()
+                                    .get_sequential_rounds())
+        })
+        return datasetMeta
+
 
 class MetaMERFISHDataSet(DataSet):
     def __init__(self, metaDataSetName: str, dataSets: List[str],
@@ -1185,3 +1205,10 @@ class MetaMERFISHDataSet(DataSet):
             dataSetDict[ds] = MERFISHDataSet(ds, dataHome=self.dataHome,
                                              analysisHome=self.analysisHome)
         return dataSetDict
+
+    def get_full_metadata(self):
+        datasetMeta = self.get_stored_metadata()
+        datasetMeta.update({
+            'dataset_count': len(self.dataSets)
+        })
+        return datasetMeta

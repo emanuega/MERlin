@@ -59,7 +59,7 @@ def build_parser():
                         help='flag indicating that the snakemake stats '
                              + 'should not be shared to improve MERlin')
     parser.add_argument('--dataset-class',
-                        default="merlin.core.dataset.MERFISHDataSet",
+                        default="MERFISHDataSet",
                         help='the type of dataset to analyze '
                              + 'with merlin')
     parser.add_argument('--sample-datasets', nargs='+',

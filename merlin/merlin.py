@@ -17,7 +17,7 @@ from merlin.util import snakewriter
 
 def build_parser():
     parser = argparse.ArgumentParser(description='Decode MERFISH data.',
-                                     argument_default='')
+                                     argument_default=None)
 
     parser.add_argument('--profile', action='store_true',
                         help='enable profiling')

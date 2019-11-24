@@ -930,7 +930,7 @@ class MERFISHDataSet(ImageDataSet):
     def __init__(self, dataDirectoryName: str, codebookNames: List[str] = None,
                  dataOrganizationName: str = None, positionFileName: str = None,
                  dataHome: str = None, analysisHome: str = None,
-                 microscopeParametersName: str = None):
+                 microscopeParametersName: str = None, **kwargs):
         """Create a MERFISH dataset for the specified raw data.
 
         Args:
@@ -1163,7 +1163,7 @@ class MERFISHDataSet(ImageDataSet):
 
 class MetaMERFISHDataSet(DataSet):
     def __init__(self, metaDataSetName: str, dataSets: List[str],
-                 dataHome: str = None, analysisHome: str = None):
+                 dataHome: str = None, analysisHome: str = None, **kwargs):
         """Create a MetaMERFISHDataSet for the specified processed datasets.
 
         Args:
@@ -1174,7 +1174,6 @@ class MetaMERFISHDataSet(DataSet):
             dataHome: path for raw data
             analysisHome: path for analyzed data
         """
-
         super().__init__(metaDataSetName, dataHome, analysisHome)
 
         self.metaDataSetName = metaDataSetName

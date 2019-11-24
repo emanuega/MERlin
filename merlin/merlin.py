@@ -40,7 +40,8 @@ def build_parser():
     parser.add_argument('-p', '--positions',
                         help='name of the position file to use')
     parser.add_argument('-n', '--core-count', type=int,
-                        help='number of cores to use for the analysis')
+                        help='number of cores to use for the analysis',
+                        default=1)
     parser.add_argument(
         '-t', '--analysis-task',
         help='the name of the analysis task to execute. If no '

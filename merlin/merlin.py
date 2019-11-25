@@ -197,7 +197,7 @@ def run_with_snakemake(
         analysisParameters = {
             t: dataSet.load_analysis_task(t).get_parameters()
             for t in dataSet.get_analysis_tasks()}
-        datasetMeta = dataSet.get_full_metadat()
+        datasetMeta = dataSet.get_full_metadata()
         datasetMeta['return_time'] = reportTime
         datasetMeta['analysis_parameters'] = analysisParameters
 

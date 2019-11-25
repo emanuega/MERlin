@@ -116,7 +116,7 @@ def merlin():
         'microscopeParametersName': _clean_string_arg(
             args.microscope_parameters),
         'positionFileName': _clean_string_arg(args.positions),
-        'dataSets': args.sample_datasets
+        'dataSetNames': args.sample_datasets
     }
 
     if '.' in args.dataset_class:

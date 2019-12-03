@@ -17,3 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exposed tolerance parameter in the adaptive filter barcodes method
 - Added plot for scale factor magnitude vs bit index
 - Fixed barcode partitioning to include cells from adjacent fields of view when a cell falls across fov boundaries
+
+## [0.1.3] - 2019-12-03
+### Added
+- Added option to draw field of view labels overlaid on the mosaic

@@ -12,7 +12,8 @@ from merlin.core import analysistask
 from merlin.util import spatialfeature
 from merlin.util import watershed
 import pandas
-
+import networkx as nx
+import os
 
 class FeatureSavingAnalysisTask(analysistask.ParallelAnalysisTask):
 
@@ -118,9 +119,14 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             (filterSize, filterSize), filterSigma)
             for z in range(len(self.dataSet.get_z_positions()))])
 
-
-class AssignCellFOV(FeatureSavingAnalysisTask):
-
+class CleanCellBoundaries(analysistask.AnalysisTask):
+    '''
+    A task to construct a network graph where each cell is a node, and overlaps
+    are represented by edges. This graph is then refined to assign cells to the
+    fov they are closest to (in terms of centroid). This graph is then refined
+    to eliminate overlapping cells to leave a single cell occupying a given
+    position.
+    '''
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
@@ -128,13 +134,6 @@ class AssignCellFOV(FeatureSavingAnalysisTask):
             self.parameters['segment_task'])
         self.alignTask = self.dataSet.load_analysis_task(
             self.parameters['global_align_task'])
-
-    def fragment_count(self):
-        return 1
-
-    def _reset_analysis(self, fragmentIndex: int = None) -> None:
-        super()._reset_analysis(fragmentIndex)
-        self.get_feature_database().empty_database()
 
     def get_estimated_memory(self):
         return 2048
@@ -168,30 +167,22 @@ class AssignCellFOV(FeatureSavingAnalysisTask):
     def _intial_clean(self, currentFOV: int):
         currentCells = self.segmentTask.get_feature_database()\
             .read_features(currentFOV)
-        return [cell for cell in currentCells 
+        return [cell for cell in currentCells
                 if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
-
-    def _secondary_assignments(self, currentFOV: int,
-                               secondaryAssignmentDict: Dict):
-        currentCells = self._intial_clean(currentFOV)
-
-        secondaryAssignments = [
-            [x, secondaryAssignmentDict[currentFOV][x.get_feature_id()]]
-            for x in currentCells
-            if x.get_feature_id()
-            in secondaryAssignmentDict[currentFOV]]
-        return secondaryAssignments
 
     def _append_cells_to_spatial_tree(self, tree: rtree.index.Index,
                                       cells: List, idToNum: Dict):
         for element in cells:
             tree.insert(idToNum[element.get_feature_id()],
-                        element.get_bounding_box(), obj=element.get_fov())
+                        element.get_bounding_box(), obj=element)
 
-    def _run_analysis(self, fragmentIndex):
+    def _return_overlapping_cells(self, currentCell, cells: List):
+        areas = [currentCell.intersection(x) for x in cells]
+        overlapping = [cells[i] for i,x in enumerate(areas) if x > 0]
+        return overlapping
 
-        featureDB = self.get_feature_database()
-
+    def _construct_graph(self):
+        G = nx.Graph()
         spatialIndex = rtree.index.Index()
         allFOVs = self.dataSet.get_fovs()
         tiledPositions, allFOVBoxes = self._get_fov_boxes()
@@ -207,7 +198,6 @@ class AssignCellFOV(FeatureSavingAnalysisTask):
             self._append_cells_to_spatial_tree(
                 spatialIndex, currentUnassigned, idToNum)
 
-        newFOVAssignments = {f: dict() for f in allFOVs}
         for currentFOV in allFOVs:
             fovIntersections = sorted([i for i, x in enumerate(allFOVBoxes) if
                                        allFOVBoxes[currentFOV].intersects(x)])
@@ -216,90 +206,125 @@ class AssignCellFOV(FeatureSavingAnalysisTask):
             for cell in currentCells:
                 overlappingCells = spatialIndex.intersection(
                     cell.get_bounding_box(), objects=True)
-                toCheck = []
-                for c in overlappingCells:
-                    xmin, ymin, xmax, ymax = c.bbox
-                    toCheck.append([numToID[c.id],
-                                    c.object,
-                                    xmin, ymin, xmax, ymax])
-                if len(toCheck) == 0:
+                toCheck = [x.object for x in overlappingCells]
+                toCheck = [x for x in toCheck if x.get_feature_id()
+                           not in droppedCells]
+                cellsToConsider = self._return_overlapping_cells(cell, toCheck)
+
+                if len(cellsToConsider) == 0:
                     raise Exception(('Missing {} from spatial tree. Spatial ' +
                                      'tree must be malformed.').format(
                         cell.get_feature_id()))
+
                 else:
-                    # If a cell does not overlap another cell,
-                    # keep it and assign it to an fov based on the fov centroid
-                    # it's closest to
-                    if len(toCheck) == 1 and \
-                            cell.get_feature_id() == toCheck[0][0]:
-                        xCenter = (toCheck[0][2] + toCheck[0][4]) / 2
-                        yCenter = (toCheck[0][3] + toCheck[0][5]) / 2
+                    for cellToConsider in cellsToConsider:
+                        xmin, ymin, xmax, ymax =\
+                            cellToConsider.get_bounding_box()
+                        xCenter = (xmin + xmax) / 2
+                        yCenter = (ymin + ymax) / 2
                         [d, i] = fovTree.query(np.array([xCenter, yCenter]))
                         assignedFOV = tiledPositions \
                             .loc[fovIntersections, :] \
                             .index.values.tolist()[i]
-                        newFOVAssignments[currentFOV][toCheck[0][0]] = \
-                            assignedFOV
-                    # I dont know if this case will come up but want to guard
-                    # against this, it implies there was an error
-                    # in the original tree construction
-                    elif len(toCheck) == 1 and not \
-                            cell.get_feature_id() == toCheck[0][0]:
-                        print('encountered unexpected overlap between {} and {}'
-                              .format(cell.get_feature_id(), toCheck[0][0]))
-                    # If a cell overlaps at least one other cell first check if
-                    # all cells are closest to a particular FOV centroid,
-                    # then if a cell boundary was determined from that fov
-                    # keep it, else choose a cell at random. If overlapping
-                    # cells are closest to different fov centroids,
-                    # again keep one at random
-                    elif len(toCheck) >= 2:
-                        toCheckDF = pandas.DataFrame(toCheck,
-                                                     columns=['cell ID',
-                                                              'initial FOV',
-                                                              'xmin', 'ymin',
-                                                              'xmax', 'ymax'])
-                        toCheckDF['centerX'] = (toCheckDF.loc[:, 'xmin'] +
-                                                toCheckDF.loc[:, 'xmax']) / 2
-                        toCheckDF['centerY'] = (toCheckDF.loc[:, 'ymin'] +
-                                                toCheckDF.loc[:, 'ymax']) / 2
-                        [d, i] = fovTree.query(toCheckDF.loc[:, ['centerX',
-                                                                 'centerY']],
-                                               k=1)
-                        assignedFOV = np.array(tiledPositions
-                                               .loc[fovIntersections, :]
-                                               .index.values.tolist())[i]
-                        toCheckDF['assigned FOV'] = assignedFOV
-                        if len(np.unique(assignedFOV)) == 1:
-                            if len(toCheckDF[toCheckDF['initial FOV'] ==
-                                             np.unique(assignedFOV)[0]]) > 0:
-                                selected = toCheckDF[
-                                    toCheckDF['initial FOV'] == np.unique(
-                                        assignedFOV)[0]].sample(n=1)
-                            else:
-                                selected = toCheckDF.sample(n=1)
-                        else:
-                            matching = toCheckDF[toCheckDF['initial FOV'] ==
-                                                 toCheckDF['assigned FOV']]
-                            if len(matching) == 0:
-                                selected = toCheckDF.sample(n=1)
-                            else:
-                                selected = matching.sample(n=1)
-                        selectedFOV = selected.loc[:, 'assigned FOV'] \
-                            .values.tolist()[0]
-                        selectedCellID = selected.loc[:, 'cell ID'] \
-                            .values.tolist()[0]
-                        newFOVAssignments[
-                            currentFOV][selectedCellID] = selectedFOV
+                        if cellsToConsider[0].get_feature_id() not in G.nodes:
+                            G.add_node(cellsToConsider[0].get_feature_id(),
+                                       originalFOV=currentFOV,
+                                       assignedFOV=assignedFOV)
+                    if len(cellsToConsider) > 1:
+                        for cellToConsider1 in cellsToConsider:
+                            for cellToConsider2 in cellsToConsider:
+                                if cellToConsider1.get_feature_id() !=\
+                                    cellToConsider2.get_feature_id():
+                                    G.add_edge(cellToConsider1.get_feature_id(),
+                                               cellToConsider2.get_feature_id())
+        return G
 
-        for currentFOV in allFOVs:
-            secondaryCellAssignments = \
-                self._secondary_assignments(currentFOV, newFOVAssignments)
-            allFOV = list(set([x[1] for x in secondaryCellAssignments]))
-            for f in allFOV:
-                cellsInFOV = [x[0] for x in secondaryCellAssignments
-                              if x[1] == f]
-                featureDB.write_features(cellsInFOV, f)
+    def _remove_overlapping_cells(self, graph):
+        connectedComponents = list(nx.connected_components(graph))
+        cleanedCells = []
+        for component in connectedComponents:
+            if len(component) == 1:
+                originalFOV = graph.nodes[component[0]]['originalFOV']
+                assignedFOV = graph.nodes[component[0]]['assignedFOV']
+                cleanedCells.append([component[0], originalFOV, assignedFOV])
+            if len(component) > 1:
+                compList = []
+                for c in component:
+                    cellID = c
+                    originalFOV = graph.nodes[c]['originalFOV']
+                    assignedFOV = graph.nodes[c]['assignedFOV']
+                    compList.append([cellID, originalFOV, assignedFOV])
+                compDF = pandas.DataFrame(data=compList,
+                                          columns=['cell_ID', 'originalFOV',
+                                                   'assignedFOV'])
+                matchingAssignment = compDF[compDF['originalFOV'] ==
+                                            compDF['assignedFOV']]
+                if len(matchingAssignment) > 0:
+                    selected = matchingAssignment.sample(n=1)
+                else:
+                    selected = compDF.sample(n=1)
+                cleanedCells.append(selected.loc[:,'cell_ID'],
+                                    selected.loc[:,'originalFOV'],
+                                    selected.loc[:,'assignedFOV'])
+        cleanedCellsDF = pandas.DataFrame(cleanedCells,
+                                          columns = ['cell_id', 'originalFOV',
+                                                     'assignedFOV'])
+        return cleanedCellsDF
+
+    def return_exported_data(self):
+        kwargs = {'index_col': 0}
+        return self.dataSet.load_dataframe_from_csv(
+            'cleanedcells', analysisTask=self.analysisName, **kwargs)
+
+    def _run_analysis(self) -> None:
+        G = self._construct_graph()
+        cleanedCells = self._remove_overlapping_cells(G)
+
+        self.dataSet.save_dataframe_to_csv(cleanedCells, 'cleanedcells',
+                                           analysisTask=self)
+
+class RefineCellDatabases(FeatureSavingAnalysisTask):
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'seed_channel_name' not in self.parameters:
+            self.parameters['seed_channel_name'] = 'DAPI'
+        if 'watershed_channel_name' not in self.parameters:
+            self.parameters['watershed_channel_name'] = 'polyT'
+
+    self.segmentTask = self.dataSet.load_analysis_task(
+        self.parameters['segment_task'])
+    self.cleaningTask = self.dataSet.load_analysis_task(
+        self.parameters['cleaning_task'])
+
+    def fragment_count(self):
+        return len(self.dataSet.get_fovs())
+
+    def get_estimated_memory(self):
+        # TODO - refine estimate
+        return 2048
+
+    def get_estimated_time(self):
+        # TODO - refine estimate
+        return 5
+
+    def get_dependencies(self):
+        return [self.parameters['segment_task'],
+                self.parameters['cleaning_task']]
+
+    def _run_analysis(self, fragmentIndex):
+
+        cleanedCells = self.cleaningTask.return_exported_data()
+        originalCells = self.segmentTask.get_feature_database()\
+            .read_features(fragmentIndex)
+        featureDB = self.get_feature_database()
+        cleanedC = cleanedCells[cleanedCells['originalFOV'] == fragmentIndex]
+        cleanedGroups = cleanedC.groupby('assignedFOV')
+        for k,g in cleanedGroups:
+            cellsToConsider = g['cell_id'].values.tolist()
+            featureList = [x for x in originalCells if
+                           x.get_feature_id().isin(cellsToConsider)]
+            featureDB.write_features(featureList, fragmentIndex)
 
 
 class ExportCellMetadata(analysistask.AnalysisTask):

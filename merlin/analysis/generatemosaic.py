@@ -166,10 +166,10 @@ class GenerateMosaic(analysistask.AnalysisTask):
                 inputImage[:, inputImage.shape[0] - cropWidth:] = 0
 
             if self.parameters['draw_fov_labels']:
-                inputImage = cv2.putText(
-                    inputImage, str(f), (int(0.2*inputImage.shape[0]), 
-                    int(0.2*inputImage.shape[0])), 0, 10, (65000, 65000, 
-                    65000), 20)
+                inputImage = cv2.putText(inputImage, str(f),
+                                         (int(0.2*inputImage.shape[0]),
+                                          int(0.2*inputImage.shape[1])),
+                                         0, 10, (65000, 65000, 65000), 20)
 
             transformedImage = self._transform_image_to_mosaic(
                 inputImage, f, alignTask, micronExtents,

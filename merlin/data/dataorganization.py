@@ -112,10 +112,8 @@ class DataOrganization(object):
             # TODO this should raise a meaningful exception if the data channel
             # is not found
         """
-        return self.data[self.data['channelName'] == dataChannelName].index.values.tolist()[0]
-        # .apply(
-        #     lambda x: str(x).lower()).str.match(
-        #     dataChannelName.lower())].index.values.tolist()[0]
+        return self.data[self.data['channelName'] == dataChannelName]\
+            .index.values.tolist()[0]
 
     def get_data_channel_color(self, dataChannel: int) -> str:
         """Get the color used for measuring the specified data channel.

@@ -179,17 +179,34 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
     def _return_overlapping_cells(self, currentCell, cells: List):
         areas = [currentCell.intersection(x) for x in cells]
         overlapping = [cells[i] for i,x in enumerate(areas) if x > 0]
+        benchmark = currentCell.intersection(currentCell)
+        contained = [x for x in overlapping if
+                     x.intersection(currentCell) == benchmark]
+        if len(contained) > 1:
+            overlapping = []
+        else:
+            toReturn = []
+            for c in overlapping:
+                if c.get_feature_id() == currentCell.get_feature_id():
+                    toReturn.append(c)
+                else:
+                    if c.intersection(currentCell) != c.intersection(c):
+                        toReturn.append(c)
+            overlapping = toReturn
+
         return overlapping
 
     def _construct_graph(self):
         G = nx.Graph()
         spatialIndex = rtree.index.Index()
         allFOVs = self.dataSet.get_fovs()
+        allFOVs = list(range(10))
         tiledPositions, allFOVBoxes = self._get_fov_boxes()
         numToID = dict()
         idToNum = dict()
         currentID = 0
         for currentFOV in allFOVs:
+            print(currentFOV)
             currentUnassigned = self._intial_clean(currentFOV)
             for i in range(len(currentUnassigned)):
                 numToID[currentID] = currentUnassigned[i].get_feature_id()
@@ -199,6 +216,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 spatialIndex, currentUnassigned, idToNum)
 
         for currentFOV in allFOVs:
+            print(currentFOV)
             fovIntersections = sorted([i for i, x in enumerate(allFOVBoxes) if
                                        allFOVBoxes[currentFOV].intersects(x)])
             fovTree = self._construct_fov_tree(tiledPositions, fovIntersections)
@@ -207,14 +225,11 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 overlappingCells = spatialIndex.intersection(
                     cell.get_bounding_box(), objects=True)
                 toCheck = [x.object for x in overlappingCells]
-                toCheck = [x for x in toCheck if x.get_feature_id()
-                           not in droppedCells]
                 cellsToConsider = self._return_overlapping_cells(cell, toCheck)
-
                 if len(cellsToConsider) == 0:
-                    raise Exception(('Missing {} from spatial tree. Spatial ' +
-                                     'tree must be malformed.').format(
-                        cell.get_feature_id()))
+                    #This would occur when a cell is contained entirely in the
+                    #boundary of another cell
+                    pass
 
                 else:
                     for cellToConsider in cellsToConsider:
@@ -226,8 +241,8 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                         assignedFOV = tiledPositions \
                             .loc[fovIntersections, :] \
                             .index.values.tolist()[i]
-                        if cellsToConsider[0].get_feature_id() not in G.nodes:
-                            G.add_node(cellsToConsider[0].get_feature_id(),
+                        if cellToConsider.get_feature_id() not in G.nodes:
+                            G.add_node(cellToConsider.get_feature_id(),
                                        originalFOV=currentFOV,
                                        assignedFOV=assignedFOV)
                     if len(cellsToConsider) > 1:
@@ -242,12 +257,14 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
     def _remove_overlapping_cells(self, graph):
         connectedComponents = list(nx.connected_components(graph))
         cleanedCells = []
+        connectedComponents = [list(x) for x in connectedComponents]
         for component in connectedComponents:
             if len(component) == 1:
                 originalFOV = graph.nodes[component[0]]['originalFOV']
                 assignedFOV = graph.nodes[component[0]]['assignedFOV']
                 cleanedCells.append([component[0], originalFOV, assignedFOV])
             if len(component) > 1:
+                print(component)
                 compList = []
                 for c in component:
                     cellID = c
@@ -263,9 +280,10 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                     selected = matchingAssignment.sample(n=1)
                 else:
                     selected = compDF.sample(n=1)
-                cleanedCells.append(selected.loc[:,'cell_ID'],
-                                    selected.loc[:,'originalFOV'],
-                                    selected.loc[:,'assignedFOV'])
+                cellID = selected.loc[:,'cell_ID'].values.tolist()
+                originalFOV = selected.loc[:, 'originalFOV'].values.tolist()
+                assignedFOV = selected.loc[:, 'assignedFOV'].values.tolist()
+                cleanedCells.append(cellID + originalFOV + assignedFOV)
         cleanedCellsDF = pandas.DataFrame(cleanedCells,
                                           columns = ['cell_id', 'originalFOV',
                                                      'assignedFOV'])
@@ -287,15 +305,10 @@ class RefineCellDatabases(FeatureSavingAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        if 'seed_channel_name' not in self.parameters:
-            self.parameters['seed_channel_name'] = 'DAPI'
-        if 'watershed_channel_name' not in self.parameters:
-            self.parameters['watershed_channel_name'] = 'polyT'
-
-    self.segmentTask = self.dataSet.load_analysis_task(
-        self.parameters['segment_task'])
-    self.cleaningTask = self.dataSet.load_analysis_task(
-        self.parameters['cleaning_task'])
+        self.segmentTask = self.dataSet.load_analysis_task(
+            self.parameters['segment_task'])
+        self.cleaningTask = self.dataSet.load_analysis_task(
+            self.parameters['cleaning_task'])
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())

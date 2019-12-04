@@ -13,7 +13,7 @@ from merlin.util import spatialfeature
 from merlin.util import watershed
 import pandas
 import networkx as nx
-import os
+
 
 class FeatureSavingAnalysisTask(analysistask.ParallelAnalysisTask):
 
@@ -119,6 +119,7 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             (filterSize, filterSize), filterSigma)
             for z in range(len(self.dataSet.get_z_positions()))])
 
+
 class CleanCellBoundaries(analysistask.AnalysisTask):
     '''
     A task to construct a network graph where each cell is a node, and overlaps
@@ -178,7 +179,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
 
     def _return_overlapping_cells(self, currentCell, cells: List):
         areas = [currentCell.intersection(x) for x in cells]
-        overlapping = [cells[i] for i,x in enumerate(areas) if x > 0]
+        overlapping = [cells[i] for i, x in enumerate(areas) if x > 0]
         benchmark = currentCell.intersection(currentCell)
         contained = [x for x in overlapping if
                      x.intersection(currentCell) == benchmark]
@@ -225,8 +226,8 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 toCheck = [x.object for x in overlappingCells]
                 cellsToConsider = self._return_overlapping_cells(cell, toCheck)
                 if len(cellsToConsider) == 0:
-                    #This would occur when a cell is contained entirely in the
-                    #boundary of another cell
+                    # This would occur when a cell is contained entirely in the
+                    # boundary of another cell
                     pass
 
                 else:
@@ -288,12 +289,12 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                     cellIDs.append(c)
                     originalFOVs.append(graph.nodes[c]['originalFOV'])
                     assignedFOVs.append(graph.nodes[c]['assignedFOV'])
-                listOfLists = list(zip(cellIDs,originalFOVs,assignedFOVs))
+                listOfLists = list(zip(cellIDs, originalFOVs, assignedFOVs))
                 listOfLists = [list(x) for x in listOfLists]
                 cleanedCells = cleanedCells + listOfLists
         cleanedCellsDF = pandas.DataFrame(cleanedCells,
-                                          columns = ['cell_id', 'originalFOV',
-                                                     'assignedFOV'])
+                                          columns=['cell_id', 'originalFOV',
+                                                   'assignedFOV'])
         return cleanedCellsDF
 
     def return_exported_data(self):
@@ -307,6 +308,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
 
         self.dataSet.save_dataframe_to_csv(cleanedCells, 'cleanedcells',
                                            analysisTask=self)
+
 
 class RefineCellDatabases(FeatureSavingAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
@@ -340,7 +342,7 @@ class RefineCellDatabases(FeatureSavingAnalysisTask):
         featureDB = self.get_feature_database()
         cleanedC = cleanedCells[cleanedCells['originalFOV'] == fragmentIndex]
         cleanedGroups = cleanedC.groupby('assignedFOV')
-        for k,g in cleanedGroups:
+        for k, g in cleanedGroups:
             cellsToConsider = g['cell_id'].values.tolist()
             featureList = [x for x in originalCells if
                            x.get_feature_id().isin(cellsToConsider)]

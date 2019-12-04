@@ -133,7 +133,8 @@
             "module": "merlin.analysis.partition",
             "parameters": {
                 "filter_task": "AdaptiveFilterBarcodes",
-                "assignment_task": "RefineCellDatabases"
+                "assignment_task": "RefineCellDatabases",
+                "cleaning_task": "CleanCellBoundaries"
             }
         },
         {

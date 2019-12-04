@@ -113,11 +113,19 @@
             }
         },
         {
-            "task": "AssignCellFOV",
+            "task": "CleanCellBoundaries",
             "module": "merlin.analysis.segment",
             "parameters": {
                 "segment_task": "WatershedSegment",
                 "global_align_task": "SimpleGlobalAlignment"
+            }
+        },
+        {
+            "task": "RefineCellDatabases",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "segment_task": "WatershedSegment",
+                "cleaning_task": "CleanCellBoundaries"
             }
         },
         {
@@ -139,7 +147,7 @@
             "task": "ExportCellMetadata",
             "module": "merlin.analysis.segment",
             "parameters": {
-                "segment_task": "AssignCellFOV"
+                "segment_task": "RefineCellDatabases"
             }
         },
         {

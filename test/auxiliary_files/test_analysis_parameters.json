@@ -133,7 +133,7 @@
             "module": "merlin.analysis.partition",
             "parameters": {
                 "filter_task": "AdaptiveFilterBarcodes",
-                "assignment_task": "AssignCellFOV"
+                "assignment_task": "RefineCellDatabases"
             }
         },
         {
@@ -158,7 +158,7 @@
                 "apply_highpass": true,
                 "warp_task": "FiducialCorrelationWarp",
                 "highpass_sigma": 5,
-                "segment_task": "AssignCellFOV",
+                "segment_task": "RefineCellDatabases",
                 "global_align_task": "SimpleGlobalAlignment"
             }
         },

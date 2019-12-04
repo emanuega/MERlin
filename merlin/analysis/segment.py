@@ -200,13 +200,12 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
         G = nx.Graph()
         spatialIndex = rtree.index.Index()
         allFOVs = self.dataSet.get_fovs()
-        allFOVs = list(range(10))
+        allFOVs = list(range(2))
         tiledPositions, allFOVBoxes = self._get_fov_boxes()
         numToID = dict()
         idToNum = dict()
         currentID = 0
         for currentFOV in allFOVs:
-            print(currentFOV)
             currentUnassigned = self._intial_clean(currentFOV)
             for i in range(len(currentUnassigned)):
                 numToID[currentID] = currentUnassigned[i].get_feature_id()
@@ -216,7 +215,6 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 spatialIndex, currentUnassigned, idToNum)
 
         for currentFOV in allFOVs:
-            print(currentFOV)
             fovIntersections = sorted([i for i, x in enumerate(allFOVBoxes) if
                                        allFOVBoxes[currentFOV].intersects(x)])
             fovTree = self._construct_fov_tree(tiledPositions, fovIntersections)
@@ -243,15 +241,19 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                             .index.values.tolist()[i]
                         if cellToConsider.get_feature_id() not in G.nodes:
                             G.add_node(cellToConsider.get_feature_id(),
-                                       originalFOV=currentFOV,
+                                       originalFOV=cellToConsider.get_fov(),
                                        assignedFOV=assignedFOV)
                     if len(cellsToConsider) > 1:
                         for cellToConsider1 in cellsToConsider:
-                            for cellToConsider2 in cellsToConsider:
-                                if cellToConsider1.get_feature_id() !=\
-                                    cellToConsider2.get_feature_id():
-                                    G.add_edge(cellToConsider1.get_feature_id(),
-                                               cellToConsider2.get_feature_id())
+                            if cellToConsider1.get_feature_id() !=\
+                                    cell.get_feature_id():
+                                G.add_edge(cell.get_feature_id(),
+                                           cellToConsider1.get_feature_id())
+                            # for cellToConsider2 in cellsToConsider:
+                            #     if cellToConsider1.get_feature_id() !=\
+                            #         cellToConsider2.get_feature_id():
+                            #         G.add_edge(cellToConsider1.get_feature_id(),
+                            #                    cellToConsider2.get_feature_id())
         return G
 
     def _remove_overlapping_cells(self, graph):
@@ -264,26 +266,31 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 assignedFOV = graph.nodes[component[0]]['assignedFOV']
                 cleanedCells.append([component[0], originalFOV, assignedFOV])
             if len(component) > 1:
-                print(component)
-                compList = []
-                for c in component:
-                    cellID = c
-                    originalFOV = graph.nodes[c]['originalFOV']
-                    assignedFOV = graph.nodes[c]['assignedFOV']
-                    compList.append([cellID, originalFOV, assignedFOV])
-                compDF = pandas.DataFrame(data=compList,
-                                          columns=['cell_ID', 'originalFOV',
-                                                   'assignedFOV'])
-                matchingAssignment = compDF[compDF['originalFOV'] ==
-                                            compDF['assignedFOV']]
-                if len(matchingAssignment) > 0:
-                    selected = matchingAssignment.sample(n=1)
-                else:
-                    selected = compDF.sample(n=1)
-                cellID = selected.loc[:,'cell_ID'].values.tolist()
-                originalFOV = selected.loc[:, 'originalFOV'].values.tolist()
-                assignedFOV = selected.loc[:, 'assignedFOV'].values.tolist()
-                cleanedCells.append(cellID + originalFOV + assignedFOV)
+                sg = nx.subgraph(graph, component)
+                verts = list(nx.articulation_points(sg))
+                if len(verts) > 0:
+                    sg = nx.subgraph(graph,
+                                     [x for x in component if x not in verts])
+                allEdges = [[k, v] for k, v in nx.degree(sg)]
+                sortedEdges = sorted(allEdges, key=lambda x: x[1], reverse=True)
+                maxEdges = sortedEdges[0][1]
+                while maxEdges > 0:
+                    sg = nx.subgraph(graph, [x[0] for x in sortedEdges[1:]])
+                    allEdges = [[k, v] for k, v in nx.degree(sg)]
+                    sortedEdges = sorted(allEdges, key=lambda x: x[1],
+                                         reverse=True)
+                    maxEdges = sortedEdges[0][1]
+                keptComponents = list(sg.nodes())
+                cellIDs = []
+                originalFOVs = []
+                assignedFOVs = []
+                for c in keptComponents:
+                    cellIDs.append(c)
+                    originalFOVs.append(graph.nodes[c]['originalFOV'])
+                    assignedFOVs.append(graph.nodes[c]['assignedFOV'])
+                listOfLists = list(zip(cellIDs,originalFOVs,assignedFOVs))
+                listOfLists = [list(x) for x in listOfLists]
+                cleanedCells = cleanedCells + listOfLists
         cleanedCellsDF = pandas.DataFrame(cleanedCells,
                                           columns = ['cell_id', 'originalFOV',
                                                      'assignedFOV'])

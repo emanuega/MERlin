@@ -225,10 +225,10 @@ def test_find_overlapping_cells():
     assert ((p5 in t5) and (p1 not in t5)
             and (p2 not in t5) and (p3 not in t5) and (p4 not in t5))
 
-def test_remove_overlapping_cells():
 
-    allFOVs = [0]
-    fovBoxes = [geometry.box(-1, -1, 10, 10)]
+def test_remove_overlapping_cells():
+    allFOVs = [0,1]
+    fovBoxes = [geometry.box(-1, -1, 2, 2), geometry.box(2, 2, 6, 6)]
     currentFOV = 0
     cells = spatialfeature.simple_clean_cells(allCells)
 
@@ -241,6 +241,10 @@ def test_remove_overlapping_cells():
     cleanedCellsDF = spatialfeature.remove_overlapping_cells(G)
     keptCells = cleanedCellsDF['cell_id'].values.tolist()
 
+    assert G.nodes[p5.get_feature_id()]['originalFOV'] == 0
+    assert G.nodes[p5.get_feature_id()]['assignedFOV'] == 1
+    assert G.nodes[p1.get_feature_id()]['originalFOV'] == 0
+    assert G.nodes[p1.get_feature_id()]['assignedFOV'] == 0
     assert p1.get_feature_id() in keptCells
     assert p4.get_feature_id() in keptCells
     assert p5.get_feature_id() in keptCells

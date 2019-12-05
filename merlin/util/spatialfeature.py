@@ -619,6 +619,7 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
                 'bounds_y2': boundingBox[3],
                 'volume': feature.get_volume()}
 
+
 def simple_clean_cells(cells: List) -> List:
     """
     Removes cells that lack a bounding box or have a volume equal to 0
@@ -727,9 +728,9 @@ def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
     coords = [x.centroid.coords.xy for x in fovBoxes]
     xcoords = [x[0][0] for x in coords]
     ycoords = [x[1][0] for x in coords]
-    coordsDF = pandas.DataFrame(data = np.array(list(zip(xcoords, ycoords))),
-                                index = allFOVs,
-                                columns = ['centerX','centerY'])
+    coordsDF = pandas.DataFrame(data=np.array(list(zip(xcoords, ycoords))),
+                                index=allFOVs,
+                                columns=['centerX', 'centerY'])
     fovTree = cKDTree(data=coordsDF.loc[fovIntersections,
                                         ['centerX', 'centerY']].values)
     for cell in cells:

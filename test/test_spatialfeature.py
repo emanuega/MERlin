@@ -1,7 +1,6 @@
 import pytest
 import numpy as np
 import json
-import rtree
 import networkx as nx
 from shapely import geometry
 
@@ -231,12 +230,12 @@ def test_remove_overlapping_cells():
     allFOVs = [0]
     fovBoxes = [geometry.box(-1, -1, 10, 10)]
     currentFOV = 0
-    allCells = spatialfeature.simple_clean_cells(allCells)
+    cells = spatialfeature.simple_clean_cells(allCells)
 
-    spatialIndex, _, _ = spatialfeature.construct_tree(allCells)
+    spatialIndex, _, _ = spatialfeature.construct_tree(cells)
 
     G = nx.Graph()
-    G = spatialfeature.construct_graph(G, allCells, spatialIndex,
+    G = spatialfeature.construct_graph(G, cells, spatialIndex,
                                        currentFOV, allFOVs, fovBoxes)
 
     cleanedCellsDF = spatialfeature.remove_overlapping_cells(G)

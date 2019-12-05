@@ -174,22 +174,6 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
             tree.insert(idToNum[element.get_feature_id()],
                         element.get_bounding_box(), obj=element)
 
-    def _construct_tree(self):
-        spatialIndex = rtree.index.Index()
-        allFOVs = self.dataSet.get_fovs()
-        numToID = dict()
-        idToNum = dict()
-        currentID = 0
-        for currentFOV in allFOVs:
-            currentUnassigned = self._intial_clean(currentFOV)
-            for i in range(len(currentUnassigned)):
-                numToID[currentID] = currentUnassigned[i].get_feature_id()
-                idToNum[currentUnassigned[i].get_feature_id()] = currentID
-                currentID += 1
-            self._append_cells_to_spatial_tree(
-                spatialIndex, currentUnassigned, idToNum)
-        return spatialIndex
-
     def return_exported_data(self):
         kwargs = {'index_col': 0}
         return self.dataSet.load_dataframe_from_csv(

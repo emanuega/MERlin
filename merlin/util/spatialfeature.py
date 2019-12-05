@@ -12,6 +12,8 @@ import merlin
 import pandas
 import networkx as nx
 import rtree
+from scipy.spatial import cKDTree
+
 
 from merlin.core import dataset
 
@@ -660,7 +662,7 @@ def construct_tree(cells: List,
     for i in range(len(cells)):
         idToNum[cells[i].get_feature_id()] = count
         count += 1
-    spatialfeature.append_cells_to_spatial_tree(spatialIndex, cells, idToNum)
+    append_cells_to_spatial_tree(spatialIndex, cells, idToNum)
 
     return spatialIndex, count, idToNum
 
@@ -720,7 +722,7 @@ def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
     """
 
     fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
-                               fovboxes[currentFOV].intersects(x)])
+                               fovBoxes[currentFOV].intersects(x)])
 
     coords = [x.centroid.coords.xy for x in fovBoxes]
     xcoords = [x[0][0] for x in coords]
@@ -734,7 +736,7 @@ def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
         overlappingCells = spatialTree.intersection(
             cell.get_bounding_box(), objects=True)
         toCheck = [x.object for x in overlappingCells]
-        cellsToConsider = spatialfeature.return_overlapping_cells(
+        cellsToConsider = return_overlapping_cells(
             cell, toCheck)
         if len(cellsToConsider) == 0:
             pass

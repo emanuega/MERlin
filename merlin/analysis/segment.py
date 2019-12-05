@@ -121,13 +121,15 @@ class WatershedSegment(FeatureSavingAnalysisTask):
 
 
 class CleanCellBoundaries(analysistask.AnalysisTask):
-    '''
+
+    """
     A task to construct a network graph where each cell is a node, and overlaps
     are represented by edges. This graph is then refined to assign cells to the
     fov they are closest to (in terms of centroid). This graph is then refined
     to eliminate overlapping cells to leave a single cell occupying a given
     position.
-    '''
+    """
+
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
@@ -204,8 +206,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 overlappingCells = spatialIndex.intersection(
                     cell.get_bounding_box(), objects=True)
                 toCheck = [x.object for x in overlappingCells]
-                cellsToConsider = spatialfeature.return_overlapping_cells(
-                    cell, toCheck)
+                cellsToConsider = cell.get_overlapping_features(toCheck)
                 if len(cellsToConsider) == 0:
                     # This would occur when a cell is contained entirely in the
                     # boundary of another cell

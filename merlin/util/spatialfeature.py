@@ -300,6 +300,35 @@ class SpatialFeature(object):
 
         return containmentList
 
+    def get_overlapping_features(self, featuresToCheck: List['SpatialFeature']
+                                 ) -> List['SpatialFeature']:
+        """ Determine which features within the provided list overlap with this
+        feature.
+
+        Args:
+            featuresToCheck: the list of features to check for overlap with
+                this feature.
+        Returns: the features that overlap with this feature
+        """
+        areas = [self.intersection(x) for x in featuresToCheck]
+        overlapping = [featuresToCheck[i] for i, x in enumerate(areas) if x > 0]
+        benchmark = self.intersection(self)
+        contained = [x for x in overlapping if
+                     x.intersection(self) == benchmark]
+        if len(contained) > 1:
+            overlapping = []
+        else:
+            toReturn = []
+            for c in overlapping:
+                if c.get_feature_id() == self.get_feature_id():
+                    toReturn.append(c)
+                else:
+                    if c.intersection(self) != c.intersection(c):
+                        toReturn.append(c)
+            overlapping = toReturn
+
+        return overlapping
+
     def to_json_dict(self) -> Dict:
         return {
             'fov': self._fov,
@@ -588,28 +617,10 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
                 'volume': feature.get_volume()}
 
 
-def return_overlapping_cells(currentCell, cells: List):
-    areas = [currentCell.intersection(x) for x in cells]
-    overlapping = [cells[i] for i, x in enumerate(areas) if x > 0]
-    benchmark = currentCell.intersection(currentCell)
-    contained = [x for x in overlapping if
-                 x.intersection(currentCell) == benchmark]
-    if len(contained) > 1:
-        overlapping = []
-    else:
-        toReturn = []
-        for c in overlapping:
-            if c.get_feature_id() == currentCell.get_feature_id():
-                toReturn.append(c)
-            else:
-                if c.intersection(currentCell) != c.intersection(c):
-                    toReturn.append(c)
-        overlapping = toReturn
+# TODO - in the future a utility class can be created for managing groups of
+# spatial features
+def remove_overlapping_cells(graph) -> pandas.DataFrame:
 
-    return overlapping
-
-
-def remove_overlapping_cells(graph):
     connectedComponents = list(nx.connected_components(graph))
     cleanedCells = []
     connectedComponents = [list(x) for x in connectedComponents]

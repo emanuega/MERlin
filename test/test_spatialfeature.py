@@ -208,12 +208,13 @@ def test_feature_contains_positions():
                                        [False, False, True,
                                         False, True, True])])
 
+
 def test_find_overlapping_cells():
-    t1 = spatialfeature.return_overlapping_cells(p1, allCells)
-    t2 = spatialfeature.return_overlapping_cells(p2, allCells)
-    t3 = spatialfeature.return_overlapping_cells(p3, allCells)
-    t4 = spatialfeature.return_overlapping_cells(p4, allCells)
-    t5 = spatialfeature.return_overlapping_cells(p5, allCells)
+    t1 = p1.get_overlapping_features(allCells)
+    t2 = p2.get_overlapping_features(allCells)
+    t3 = p3.get_overlapping_features(allCells)
+    t4 = p4.get_overlapping_features(allCells)
+    t5 = p5.get_overlapping_features(allCells)
 
     assert ((p1 in t1) and (p3 in t1)
             and (p2 not in t1) and (p5 not in t1) and (p5 not in t1))
@@ -225,8 +226,8 @@ def test_find_overlapping_cells():
     assert ((p5 in t5) and (p1 not in t5)
             and (p2 not in t5) and (p3 not in t5) and (p4 not in t5))
 
-def test_remove_overlapping_cells():
 
+def test_remove_overlapping_cells():
 
     def append_cells_to_spatial_tree(tree, cells, idToNum):
         for element in cells:
@@ -251,8 +252,7 @@ def test_remove_overlapping_cells():
             overlappingCells = spatialIndex.intersection(
                 cell.get_bounding_box(), objects=True)
             toCheck = [x.object for x in overlappingCells]
-            cellsToConsider = spatialfeature.return_overlapping_cells(cell,
-                                                                      toCheck)
+            cellsToConsider = cell.get_overlapping_features(cell, toCheck)
             if len(cellsToConsider) == 0:
                 pass
 

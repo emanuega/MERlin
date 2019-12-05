@@ -24,6 +24,8 @@ class GenerateMosaic(analysistask.AnalysisTask):
             self.parameters['fov_crop_width'] = 0
         if 'separate_files' not in self.parameters:
             self.parameters['separate_files'] = False
+        if 'draw_fov_labels' not in self.parameters:
+            self.parameters['draw_fov_labels'] = False
 
         if self.parameters['microns_per_pixel'] == 'full_resolution':
             self.mosaicMicronsPerPixel = self.dataSet.get_microns_per_pixel()
@@ -164,6 +166,12 @@ class GenerateMosaic(analysistask.AnalysisTask):
                 inputImage[inputImage.shape[0] - cropWidth:, :] = 0
                 inputImage[:, :cropWidth] = 0
                 inputImage[:, inputImage.shape[0] - cropWidth:] = 0
+
+            if self.parameters['draw_fov_labels']:
+                inputImage = cv2.putText(inputImage, str(f),
+                                         (int(0.2*inputImage.shape[0]),
+                                          int(0.2*inputImage.shape[1])),
+                                         0, 10, (65000, 65000, 65000), 20)
 
             transformedImage = self._transform_image_to_mosaic(
                 inputImage, f, alignTask, micronExtents,

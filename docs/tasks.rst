@@ -98,10 +98,15 @@ Parameters:
 * seed\_channel\_name -- The name of the data channel to use to find seeds
 * watershed\_channel\_name -- The name of the data channel to use as the watershed image.W
 
-segment.AssignCellFOV
+segment.CleanCellBoundaries
 --------------------------------
 
-Description: Assigns each cell to the FOV centroid they are closest to, and eliminates overlapping cells from the dataset, keeping 1.
+Description: Assigns each cell to the FOV centroid they are closest to, and eliminates overlapping cells, preferentially removing cells that overlap with the largest number of other cells until there is no more overlap in a given group of cells.
+
+segment.RefineCellDatabases
+--------------------------------
+
+Description: Creates a new cell database based on an initial cell database and a set of cells to keep.
 
 segment.ExportCellMetadata
 --------------------------------
@@ -119,7 +124,7 @@ Parameters:
 * data\_channels -- The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.
 * z\_indexes -- The z index to export. If not provided all z indexes are exported.
 * fov\_crop\_width -- The number of pixels to remove from each edge of each fov before inserting it into the mosaic.
-
+* draw\_fov\_labels -- Flag indicating if the fov index should be drawn on top of each fov in the mosaic
 sequential.SumSignal
 -------------------------------
 

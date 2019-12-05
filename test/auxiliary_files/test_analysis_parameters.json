@@ -113,7 +113,7 @@
             }
         },
         {
-            "task": "AssignCellFOV",
+            "task": "CleanCellBoundaries",
             "module": "merlin.analysis.segment",
             "parameters": {
                 "segment_task": "WatershedSegment",
@@ -121,11 +121,20 @@
             }
         },
         {
+            "task": "RefineCellDatabases",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "segment_task": "WatershedSegment",
+                "cleaning_task": "CleanCellBoundaries"
+            }
+        },
+        {
             "task": "PartitionBarcodes",
             "module": "merlin.analysis.partition",
             "parameters": {
                 "filter_task": "AdaptiveFilterBarcodes",
-                "assignment_task": "AssignCellFOV"
+                "assignment_task": "RefineCellDatabases",
+                "cleaning_task": "CleanCellBoundaries"
             }
         },
         {
@@ -139,7 +148,7 @@
             "task": "ExportCellMetadata",
             "module": "merlin.analysis.segment",
             "parameters": {
-                "segment_task": "AssignCellFOV"
+                "segment_task": "RefineCellDatabases"
             }
         },
         {
@@ -150,7 +159,7 @@
                 "apply_highpass": true,
                 "warp_task": "FiducialCorrelationWarp",
                 "highpass_sigma": 5,
-                "segment_task": "AssignCellFOV",
+                "segment_task": "RefineCellDatabases",
                 "global_align_task": "SimpleGlobalAlignment"
             }
         },

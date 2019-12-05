@@ -21,3 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.3] - 2019-12-04
 ### Fixed
 - Addressed bugs present in cleaning overlapping cells and assigning them to a fov
+### Added
+- Added option to draw field of view labels overlaid on the mosaic
+

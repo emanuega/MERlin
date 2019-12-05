@@ -252,7 +252,7 @@ def test_remove_overlapping_cells():
             overlappingCells = spatialIndex.intersection(
                 cell.get_bounding_box(), objects=True)
             toCheck = [x.object for x in overlappingCells]
-            cellsToConsider = cell.get_overlapping_features(cell, toCheck)
+            cellsToConsider = cell.get_overlapping_features(toCheck)
             if len(cellsToConsider) == 0:
                 pass
 

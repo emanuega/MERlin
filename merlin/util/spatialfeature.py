@@ -617,6 +617,53 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
                 'bounds_y2': boundingBox[3],
                 'volume': feature.get_volume()}
 
+def simple_clean_cells(cells: List) -> List:
+    """
+    Removes cells that lack a bounding box or have a volume equal to 0
+
+    Args:
+        cells: List of spatial features
+
+    Returns:
+        List of spatial features
+
+    """
+    return [cell for cell in cells
+            if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
+
+
+def append_cells_to_spatial_tree(tree: rtree.index.Index,
+                                 cells: List, idToNum: Dict):
+    for element in cells:
+        tree.insert(idToNum[element.get_feature_id()],
+                    element.get_bounding_box(), obj=element)
+
+
+def construct_tree(cells: List,
+                   spatialIndex: rtree.index.Index = rtree.index.Index(),
+                   count: int = 0, idToNum: Dict = dict()):
+    """
+    Builds or adds to an rtree with a list of cells
+
+    Args:
+        cells: list of spatial features
+        spatialIndex: an existing rtree to append to
+        count: number of existing entries in existing rtree
+        idToNum: dict containing feature ID as key, and number in rtree as value
+
+    Returns:
+        spatialIndex: an rtree updated with the input cells
+        count: number of entries in rtree
+        idToNum: dict containing feature ID as key, and number in rtree as value
+    """
+
+    for i in range(len(cells)):
+        idToNum[cells[i].get_feature_id()] = count
+        count += 1
+    spatialfeature.append_cells_to_spatial_tree(spatialIndex, cells, idToNum)
+
+    return spatialIndex, count, idToNum
+
 
 def return_overlapping_cells(currentCell, cells: List):
     """
@@ -653,6 +700,7 @@ def return_overlapping_cells(currentCell, cells: List):
         overlapping = toReturn
 
     return overlapping
+
 
 def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
     """
@@ -710,8 +758,6 @@ def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
                         graph.add_edge(cell.get_feature_id(),
                                        cellToConsider1.get_feature_id())
     return graph
-
-
 
 
 def remove_overlapping_cells(graph):

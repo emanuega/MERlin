@@ -197,12 +197,24 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
 
     def _run_analysis(self) -> None:
 
-        spatialTree = self._construct_tree()
-        fovBoxes = self._get_fov_boxes()
-        graph = nx.Graph()
+        spatialTree = rtree.index.Index()
+        count = 0
+        idToNum = dict()
         allFOVs = self.dataSet.get_fovs()
         for currentFOV in allFOVs:
-            cells = self._intial_clean(currentFOV)
+            cells = self.segmentTask.get_feature_database()\
+                .read_features(currentFOV)
+            cells = spatialfeature.simple_clean_cells(cells)
+
+            spatialTree, count, idToNum = spatialfeature.construct_tree(
+                cells, spatialTree, count, idToNum)
+
+        fovBoxes = self._get_fov_boxes()
+        graph = nx.Graph()
+        for currentFOV in allFOVs:
+            cells = self.segmentTask.get_feature_database()\
+                .read_features(currentFOV)
+            cells = spatialfeature.simple_clean_cells(cells)
             graph = spatialfeature.construct_graph(graph, cells,
                                                    spatialTree, currentFOV,
                                                    allFOVs, fovBoxes)

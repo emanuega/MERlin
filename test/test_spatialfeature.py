@@ -231,19 +231,9 @@ def test_remove_overlapping_cells():
     allFOVs = [0]
     fovBoxes = [geometry.box(-1, -1, 10, 10)]
     currentFOV = 0
+    allCells = spatialfeature.simple_clean_cells(allCells)
 
-    spatialIndex = rtree.index.Index()
-    numToID = dict()
-    idToNum = dict()
-    currentID = 0
-    for currentFOV in allFOVs:
-        for i in range(len(allCells)):
-            numToID[currentID] = allCells[i].get_feature_id()
-            idToNum[allCells[i].get_feature_id()] = currentID
-            currentID += 1
-    for cell in allCells:
-        spatialIndex.insert(idToNum[cell.get_feature_id()],
-                            cell.get_bounding_box(), obj=cell)
+    spatialIndex, _, _ = spatialfeature.construct_tree(allCells)
 
     G = nx.Graph()
     G = spatialfeature.construct_graph(G, allCells, spatialIndex,

@@ -248,7 +248,7 @@ class RefineCellDatabases(FeatureSavingAnalysisTask):
         for k, g in cleanedGroups:
             cellsToConsider = g['cell_id'].values.tolist()
             featureList = [x for x in originalCells if
-                           x.get_feature_id().isin(cellsToConsider)]
+                           str(x.get_feature_id()) in cellsToConsider]
             featureDB.write_features(featureList, fragmentIndex)
 
 

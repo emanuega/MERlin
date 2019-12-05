@@ -208,12 +208,13 @@ def test_feature_contains_positions():
                                        [False, False, True,
                                         False, True, True])])
 
+
 def test_find_overlapping_cells():
-    t1 = spatialfeature.return_overlapping_cells(p1, allCells)
-    t2 = spatialfeature.return_overlapping_cells(p2, allCells)
-    t3 = spatialfeature.return_overlapping_cells(p3, allCells)
-    t4 = spatialfeature.return_overlapping_cells(p4, allCells)
-    t5 = spatialfeature.return_overlapping_cells(p5, allCells)
+    t1 = p1.get_overlapping_features(allCells)
+    t2 = p2.get_overlapping_features(allCells)
+    t3 = p3.get_overlapping_features(allCells)
+    t4 = p4.get_overlapping_features(allCells)
+    t5 = p5.get_overlapping_features(allCells)
 
     assert ((p1 in t1) and (p3 in t1)
             and (p2 not in t1) and (p5 not in t1) and (p5 not in t1))
@@ -225,6 +226,7 @@ def test_find_overlapping_cells():
     assert ((p5 in t5) and (p1 not in t5)
             and (p2 not in t5) and (p3 not in t5) and (p4 not in t5))
 
+<<<<<<< HEAD
 def test_remove_overlapping_cells():
 
     allFOVs = [0]
@@ -247,6 +249,50 @@ def test_remove_overlapping_cells():
     G = nx.Graph()
     G = spatialfeature.construct_graph(G, allCells, spatialIndex,
                                        currentFOV, allFOVs, fovBoxes)
+=======
+
+def test_remove_overlapping_cells():
+
+    def construct_graph(cells):
+        G = nx.Graph()
+        spatialIndex = rtree.index.Index()
+        numToID = dict()
+        idToNum = dict()
+        currentID = 0
+        currentUnassigned = cells
+        for i in range(len(currentUnassigned)):
+            numToID[currentID] = currentUnassigned[i].get_feature_id()
+            idToNum[currentUnassigned[i].get_feature_id()] = currentID
+            currentID += 1
+        spatialfeature.append_cells_to_spatial_tree(
+            spatialIndex, currentUnassigned, idToNum)
+
+        currentCells = cells
+        for cell in currentCells:
+            overlappingCells = spatialIndex.intersection(
+                cell.get_bounding_box(), objects=True)
+            toCheck = [x.object for x in overlappingCells]
+            cellsToConsider = cell.get_overlapping_features(toCheck)
+            if len(cellsToConsider) == 0:
+                pass
+
+            else:
+                for cellToConsider in cellsToConsider:
+                    assignedFOV = 0
+                    if cellToConsider.get_feature_id() not in G.nodes:
+                        G.add_node(cellToConsider.get_feature_id(),
+                                   originalFOV=cellToConsider.get_fov(),
+                                   assignedFOV=assignedFOV)
+                if len(cellsToConsider) > 1:
+                    for cellToConsider1 in cellsToConsider:
+                        if cellToConsider1.get_feature_id() !=\
+                                cell.get_feature_id():
+                            G.add_edge(cell.get_feature_id(),
+                                       cellToConsider1.get_feature_id())
+        return G
+
+    G = construct_graph(allCells)
+>>>>>>> b46e01fbcf2daf9f5898a282726b02ed717a930c
 
     cleanedCellsDF = spatialfeature.remove_overlapping_cells(G)
     keptCells = cleanedCellsDF['cell_id'].values.tolist()

@@ -11,6 +11,7 @@ import h5py
 import merlin
 import pandas
 import networkx as nx
+import rtree
 
 from merlin.core import dataset
 
@@ -300,6 +301,35 @@ class SpatialFeature(object):
 
         return containmentList
 
+    def get_overlapping_features(self, featuresToCheck: List['SpatialFeature']
+                                 ) -> List['SpatialFeature']:
+        """ Determine which features within the provided list overlap with this
+        feature.
+
+        Args:
+            featuresToCheck: the list of features to check for overlap with
+                this feature.
+        Returns: the features that overlap with this feature
+        """
+        areas = [self.intersection(x) for x in featuresToCheck]
+        overlapping = [featuresToCheck[i] for i, x in enumerate(areas) if x > 0]
+        benchmark = self.intersection(self)
+        contained = [x for x in overlapping if
+                     x.intersection(self) == benchmark]
+        if len(contained) > 1:
+            overlapping = []
+        else:
+            toReturn = []
+            for c in overlapping:
+                if c.get_feature_id() == self.get_feature_id():
+                    toReturn.append(c)
+                else:
+                    if c.intersection(self) != c.intersection(c):
+                        toReturn.append(c)
+            overlapping = toReturn
+
+        return overlapping
+
     def to_json_dict(self) -> Dict:
         return {
             'fov': self._fov,
@@ -588,6 +618,7 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
                 'volume': feature.get_volume()}
 
 
+<<<<<<< HEAD
 def return_overlapping_cells(currentCell, cells: List):
     """
     Determines if there is overlap between a cell of interest and a list of
@@ -621,9 +652,18 @@ def return_overlapping_cells(currentCell, cells: List):
                 if c.intersection(currentCell) != c.intersection(c):
                     toReturn.append(c)
         overlapping = toReturn
+=======
+# TODO - in the future a utility class can be created for managing groups of
+# spatial features
+def append_cells_to_spatial_tree(tree: rtree.index.Index,
+                                 cells: List, idToNum: Dict):
+    for element in cells:
+        tree.insert(idToNum[element.get_feature_id()],
+                    element.get_bounding_box(), obj=element)
+>>>>>>> b46e01fbcf2daf9f5898a282726b02ed717a930c
 
-    return overlapping
 
+<<<<<<< HEAD
 def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
     """
     Adds the cells from the current fov to a graph where each node is a cell
@@ -704,6 +744,10 @@ def remove_overlapping_cells(graph):
 
     :return:
     """
+=======
+def remove_overlapping_cells(graph) -> pandas.DataFrame:
+
+>>>>>>> b46e01fbcf2daf9f5898a282726b02ed717a930c
     connectedComponents = list(nx.connected_components(graph))
     cleanedCells = []
     connectedComponents = [list(x) for x in connectedComponents]

@@ -177,26 +177,6 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
             tree.insert(idToNum[element.get_feature_id()],
                         element.get_bounding_box(), obj=element)
 
-    def _return_overlapping_cells(self, currentCell, cells: List):
-        areas = [currentCell.intersection(x) for x in cells]
-        overlapping = [cells[i] for i, x in enumerate(areas) if x > 0]
-        benchmark = currentCell.intersection(currentCell)
-        contained = [x for x in overlapping if
-                     x.intersection(currentCell) == benchmark]
-        if len(contained) > 1:
-            overlapping = []
-        else:
-            toReturn = []
-            for c in overlapping:
-                if c.get_feature_id() == currentCell.get_feature_id():
-                    toReturn.append(c)
-                else:
-                    if c.intersection(currentCell) != c.intersection(c):
-                        toReturn.append(c)
-            overlapping = toReturn
-
-        return overlapping
-
     def _construct_graph(self):
         G = nx.Graph()
         spatialIndex = rtree.index.Index()
@@ -224,7 +204,8 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 overlappingCells = spatialIndex.intersection(
                     cell.get_bounding_box(), objects=True)
                 toCheck = [x.object for x in overlappingCells]
-                cellsToConsider = self._return_overlapping_cells(cell, toCheck)
+                cellsToConsider = spatialfeature.return_overlapping_cells(
+                    cell, toCheck)
                 if len(cellsToConsider) == 0:
                     # This would occur when a cell is contained entirely in the
                     # boundary of another cell
@@ -250,52 +231,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                                     cell.get_feature_id():
                                 G.add_edge(cell.get_feature_id(),
                                            cellToConsider1.get_feature_id())
-                            # for cellToConsider2 in cellsToConsider:
-                            #     if cellToConsider1.get_feature_id() !=\
-                            #         cellToConsider2.get_feature_id():
-                            #         G.add_edge(cellToConsider1.get_feature_id(),
-                            #                    cellToConsider2.get_feature_id())
         return G
-
-    def _remove_overlapping_cells(self, graph):
-        connectedComponents = list(nx.connected_components(graph))
-        cleanedCells = []
-        connectedComponents = [list(x) for x in connectedComponents]
-        for component in connectedComponents:
-            if len(component) == 1:
-                originalFOV = graph.nodes[component[0]]['originalFOV']
-                assignedFOV = graph.nodes[component[0]]['assignedFOV']
-                cleanedCells.append([component[0], originalFOV, assignedFOV])
-            if len(component) > 1:
-                sg = nx.subgraph(graph, component)
-                verts = list(nx.articulation_points(sg))
-                if len(verts) > 0:
-                    sg = nx.subgraph(graph,
-                                     [x for x in component if x not in verts])
-                allEdges = [[k, v] for k, v in nx.degree(sg)]
-                sortedEdges = sorted(allEdges, key=lambda x: x[1], reverse=True)
-                maxEdges = sortedEdges[0][1]
-                while maxEdges > 0:
-                    sg = nx.subgraph(graph, [x[0] for x in sortedEdges[1:]])
-                    allEdges = [[k, v] for k, v in nx.degree(sg)]
-                    sortedEdges = sorted(allEdges, key=lambda x: x[1],
-                                         reverse=True)
-                    maxEdges = sortedEdges[0][1]
-                keptComponents = list(sg.nodes())
-                cellIDs = []
-                originalFOVs = []
-                assignedFOVs = []
-                for c in keptComponents:
-                    cellIDs.append(c)
-                    originalFOVs.append(graph.nodes[c]['originalFOV'])
-                    assignedFOVs.append(graph.nodes[c]['assignedFOV'])
-                listOfLists = list(zip(cellIDs, originalFOVs, assignedFOVs))
-                listOfLists = [list(x) for x in listOfLists]
-                cleanedCells = cleanedCells + listOfLists
-        cleanedCellsDF = pandas.DataFrame(cleanedCells,
-                                          columns=['cell_id', 'originalFOV',
-                                                   'assignedFOV'])
-        return cleanedCellsDF
 
     def return_exported_data(self):
         kwargs = {'index_col': 0}
@@ -304,7 +240,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
 
     def _run_analysis(self) -> None:
         G = self._construct_graph()
-        cleanedCells = self._remove_overlapping_cells(G)
+        cleanedCells = spatialfeature.remove_overlapping_cells(G)
 
         self.dataSet.save_dataframe_to_csv(cleanedCells, 'cleanedcells',
                                            analysisTask=self)

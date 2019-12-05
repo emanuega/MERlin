@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 import json
+import rtree
+import networkx as nx
 from shapely import geometry
 
 from merlin.util import spatialfeature
@@ -17,6 +19,18 @@ feature3 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)],
 feature4 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)],
                                           [geometry.Polygon(testCoords2)]],
                                          0, zCoordinates=np.array([0, 0.5]))
+
+p1 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])]], 0)
+p2 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 0.5), (0, 1), (1, 1), (1, 0.5)])]], 0)
+p3 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 0.5), (0, 1.5), (1, 1.5), (1, 0.5)])]], 0)
+p4 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 1), (0, 2), (1, 2), (1, 1)])]], 0)
+p5 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(4, 4), (4, 5), (5, 5), (5, 4)])]], 0)
+allCells = [p1, p2, p3, p4, p5]
 
 
 def test_feature_from_label_matrix():
@@ -193,3 +207,77 @@ def test_feature_contains_positions():
     assert all([a == b for a, b in zip(feature4.contains_positions(positions2),
                                        [False, False, True,
                                         False, True, True])])
+
+def test_find_overlapping_cells():
+    t1 = spatialfeature.return_overlapping_cells(p1, allCells)
+    t2 = spatialfeature.return_overlapping_cells(p2, allCells)
+    t3 = spatialfeature.return_overlapping_cells(p3, allCells)
+    t4 = spatialfeature.return_overlapping_cells(p4, allCells)
+    t5 = spatialfeature.return_overlapping_cells(p5, allCells)
+
+    assert ((p1 in t1) and (p3 in t1)
+            and (p2 not in t1) and (p5 not in t1) and (p5 not in t1))
+    assert len(t2) == 0
+    assert ((p3 in t3) and (p1 in t3) and (p4 in t3)
+            and (p2 not in t3) and (p5 not in t3))
+    assert ((p4 in t4) and (p3 in t4) and
+            (p1 not in t4) and (p2 not in t4) and (p5 not in t4))
+    assert ((p5 in t5) and (p1 not in t5)
+            and (p2 not in t5) and (p3 not in t5) and (p4 not in t5))
+
+def test_remove_overlapping_cells():
+
+
+    def append_cells_to_spatial_tree(tree, cells, idToNum):
+        for element in cells:
+            tree.insert(idToNum[element.get_feature_id()],
+                        element.get_bounding_box(), obj=element)
+
+    def construct_graph(cells):
+        G = nx.Graph()
+        spatialIndex = rtree.index.Index()
+        numToID = dict()
+        idToNum = dict()
+        currentID = 0
+        currentUnassigned = cells
+        for i in range(len(currentUnassigned)):
+            numToID[currentID] = currentUnassigned[i].get_feature_id()
+            idToNum[currentUnassigned[i].get_feature_id()] = currentID
+            currentID += 1
+        append_cells_to_spatial_tree(spatialIndex, currentUnassigned, idToNum)
+
+        currentCells = cells
+        for cell in currentCells:
+            overlappingCells = spatialIndex.intersection(
+                cell.get_bounding_box(), objects=True)
+            toCheck = [x.object for x in overlappingCells]
+            cellsToConsider = spatialfeature.return_overlapping_cells(cell,
+                                                                      toCheck)
+            if len(cellsToConsider) == 0:
+                pass
+
+            else:
+                for cellToConsider in cellsToConsider:
+                    assignedFOV = 0
+                    if cellToConsider.get_feature_id() not in G.nodes:
+                        G.add_node(cellToConsider.get_feature_id(),
+                                   originalFOV=cellToConsider.get_fov(),
+                                   assignedFOV=assignedFOV)
+                if len(cellsToConsider) > 1:
+                    for cellToConsider1 in cellsToConsider:
+                        if cellToConsider1.get_feature_id() !=\
+                                cell.get_feature_id():
+                            G.add_edge(cell.get_feature_id(),
+                                       cellToConsider1.get_feature_id())
+        return G
+
+    G = construct_graph(allCells)
+
+    cleanedCellsDF = spatialfeature.remove_overlapping_cells(G)
+    keptCells = cleanedCellsDF['cell_id'].values.tolist()
+
+    assert p1.get_feature_id() in keptCells
+    assert p4.get_feature_id() in keptCells
+    assert p5.get_feature_id() in keptCells
+    assert p2.get_feature_id() not in keptCells
+    assert p3.get_feature_id() not in keptCells

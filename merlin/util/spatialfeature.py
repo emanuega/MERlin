@@ -10,6 +10,7 @@ from shapely import geometry
 import h5py
 import merlin
 import pandas
+import networkx as nx
 
 from merlin.core import dataset
 
@@ -585,3 +586,65 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
                 'bounds_x2': boundingBox[2],
                 'bounds_y2': boundingBox[3],
                 'volume': feature.get_volume()}
+
+
+def return_overlapping_cells(currentCell, cells: List):
+    areas = [currentCell.intersection(x) for x in cells]
+    overlapping = [cells[i] for i, x in enumerate(areas) if x > 0]
+    benchmark = currentCell.intersection(currentCell)
+    contained = [x for x in overlapping if
+                 x.intersection(currentCell) == benchmark]
+    if len(contained) > 1:
+        overlapping = []
+    else:
+        toReturn = []
+        for c in overlapping:
+            if c.get_feature_id() == currentCell.get_feature_id():
+                toReturn.append(c)
+            else:
+                if c.intersection(currentCell) != c.intersection(c):
+                    toReturn.append(c)
+        overlapping = toReturn
+
+    return overlapping
+
+
+def remove_overlapping_cells(graph):
+    connectedComponents = list(nx.connected_components(graph))
+    cleanedCells = []
+    connectedComponents = [list(x) for x in connectedComponents]
+    for component in connectedComponents:
+        if len(component) == 1:
+            originalFOV = graph.nodes[component[0]]['originalFOV']
+            assignedFOV = graph.nodes[component[0]]['assignedFOV']
+            cleanedCells.append([component[0], originalFOV, assignedFOV])
+        if len(component) > 1:
+            sg = nx.subgraph(graph, component)
+            verts = list(nx.articulation_points(sg))
+            if len(verts) > 0:
+                sg = nx.subgraph(graph,
+                                 [x for x in component if x not in verts])
+            allEdges = [[k, v] for k, v in nx.degree(sg)]
+            sortedEdges = sorted(allEdges, key=lambda x: x[1], reverse=True)
+            maxEdges = sortedEdges[0][1]
+            while maxEdges > 0:
+                sg = nx.subgraph(graph, [x[0] for x in sortedEdges[1:]])
+                allEdges = [[k, v] for k, v in nx.degree(sg)]
+                sortedEdges = sorted(allEdges, key=lambda x: x[1],
+                                     reverse=True)
+                maxEdges = sortedEdges[0][1]
+            keptComponents = list(sg.nodes())
+            cellIDs = []
+            originalFOVs = []
+            assignedFOVs = []
+            for c in keptComponents:
+                cellIDs.append(c)
+                originalFOVs.append(graph.nodes[c]['originalFOV'])
+                assignedFOVs.append(graph.nodes[c]['assignedFOV'])
+            listOfLists = list(zip(cellIDs, originalFOVs, assignedFOVs))
+            listOfLists = [list(x) for x in listOfLists]
+            cleanedCells = cleanedCells + listOfLists
+    cleanedCellsDF = pandas.DataFrame(cleanedCells,
+                                      columns=['cell_id', 'originalFOV',
+                                               'assignedFOV'])
+    return cleanedCellsDF

@@ -119,7 +119,7 @@ Parameters:
 * data\_channels -- The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.
 * z\_indexes -- The z index to export. If not provided all z indexes are exported.
 * fov\_crop\_width -- The number of pixels to remove from each edge of each fov before inserting it into the mosaic.
-
+* draw\_fov\_labels -- Flag indicating if the fov index should be drawn on top of each fov in the mosaic
 sequential.SumSignal
 -------------------------------
 

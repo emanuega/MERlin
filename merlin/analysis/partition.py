@@ -56,7 +56,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
         cleaningTask = self.dataSet.load_analysis_task(
             self.parameters['cleaning_task'])
 
-        tiledPos, fovBoxes = cleaningTask._get_fov_boxes()
+        fovBoxes = cleaningTask.get_fov_boxes()
         fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
                                    fovBoxes[fragmentIndex].intersects(x)])
 

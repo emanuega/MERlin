@@ -146,7 +146,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
         return [self.parameters['segment_task'],
                 self.parameters['global_align_task']]
 
-    def _get_fov_boxes(self):
+    def get_fov_boxes(self):
         allFOVs = self.dataSet.get_fovs()
         coords = [self.alignTask.fov_global_extent(f) for f in allFOVs]
         coordsDF = pandas.DataFrame(coords,
@@ -193,7 +193,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
             spatialTree, count, idToNum = spatialfeature.construct_tree(
                 cells, spatialTree, count, idToNum)
 
-        fovBoxes = self._get_fov_boxes()
+        fovBoxes = self.get_fov_boxes()
         graph = nx.Graph()
         for currentFOV in allFOVs:
             cells = self.segmentTask.get_feature_database()\

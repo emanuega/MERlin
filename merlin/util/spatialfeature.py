@@ -11,6 +11,7 @@ import h5py
 import merlin
 import pandas
 import networkx as nx
+import rtree
 
 from merlin.core import dataset
 
@@ -619,6 +620,13 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
 
 # TODO - in the future a utility class can be created for managing groups of
 # spatial features
+def append_cells_to_spatial_tree(tree: rtree.index.Index,
+                                 cells: List, idToNum: Dict):
+    for element in cells:
+        tree.insert(idToNum[element.get_feature_id()],
+                    element.get_bounding_box(), obj=element)
+
+
 def remove_overlapping_cells(graph) -> pandas.DataFrame:
 
     connectedComponents = list(nx.connected_components(graph))

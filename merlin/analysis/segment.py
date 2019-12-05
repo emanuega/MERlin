@@ -173,12 +173,6 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
         return [cell for cell in currentCells
                 if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
 
-    def _append_cells_to_spatial_tree(self, tree: rtree.index.Index,
-                                      cells: List, idToNum: Dict):
-        for element in cells:
-            tree.insert(idToNum[element.get_feature_id()],
-                        element.get_bounding_box(), obj=element)
-
     def _construct_graph(self):
         G = nx.Graph()
         spatialIndex = rtree.index.Index()
@@ -194,7 +188,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 numToID[currentID] = currentUnassigned[i].get_feature_id()
                 idToNum[currentUnassigned[i].get_feature_id()] = currentID
                 currentID += 1
-            self._append_cells_to_spatial_tree(
+            spatialfeature.append_cells_to_spatial_tree(
                 spatialIndex, currentUnassigned, idToNum)
 
         for currentFOV in allFOVs:

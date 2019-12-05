@@ -229,11 +229,6 @@ def test_find_overlapping_cells():
 
 def test_remove_overlapping_cells():
 
-    def append_cells_to_spatial_tree(tree, cells, idToNum):
-        for element in cells:
-            tree.insert(idToNum[element.get_feature_id()],
-                        element.get_bounding_box(), obj=element)
-
     def construct_graph(cells):
         G = nx.Graph()
         spatialIndex = rtree.index.Index()
@@ -245,7 +240,8 @@ def test_remove_overlapping_cells():
             numToID[currentID] = currentUnassigned[i].get_feature_id()
             idToNum[currentUnassigned[i].get_feature_id()] = currentID
             currentID += 1
-        append_cells_to_spatial_tree(spatialIndex, currentUnassigned, idToNum)
+        spatialfeature.append_cells_to_spatial_tree(
+            spatialIndex, currentUnassigned, idToNum)
 
         currentCells = cells
         for cell in currentCells:

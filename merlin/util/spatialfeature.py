@@ -589,6 +589,22 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
 
 
 def return_overlapping_cells(currentCell, cells: List):
+    """
+    Determines if there is overlap between a cell of interest and a list of
+    other cells. In the event that the cell of interest is entirely contained
+    within one of the cells in the cells it is being compared to, an empty
+    list is returned. Otherwise, the cell of interest and any overlapping
+    cells are returned.
+    Args:
+        currentCell: A spatial feature of interest
+        cells: A list of spatial features to compare to, the spatial feature
+               of interest is expected to be in this list
+
+    Returns:
+        A list of spatial features including the cell of interest and all
+        overlapping cells, or an empty list if the cell of intereset is
+        entirely contained within one of the cells it is compared to
+    """
     areas = [currentCell.intersection(x) for x in cells]
     overlapping = [cells[i] for i, x in enumerate(areas) if x > 0]
     benchmark = currentCell.intersection(currentCell)
@@ -608,8 +624,86 @@ def return_overlapping_cells(currentCell, cells: List):
 
     return overlapping
 
+def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
+    """
+    Adds the cells from the current fov to a graph where each node is a cell
+    and edges connect overlapping cells.
+
+    Args:
+        graph: An undirected graph, either empty of already containing cells
+        cells: A list of spatial features to potentially add to graph
+        spatialTree: an rtree index containing each cell in the dataset
+        currentFOV: the fov currently being added to the graph
+        allFOVs: a list of all fovs in the dataset
+        fovBoxes: a list of shapely polygons containing the bounds of each fov
+
+    Returns:
+        A graph updated to include cells from the current fov
+    """
+
+    fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
+                               fovboxes[currentFOV].intersects(x)])
+
+    coords = [x.centroid.coords.xy for x in fovBoxes]
+    xcoords = [x[0][0] for x in coords]
+    ycoords = [x[1][0] for x in coords]
+    coordsDF = pandas.DataFrame(data = np.array(list(zip(xcoords, ycoords))),
+                                index = allFOVs,
+                                columns = ['centerX','centerY'])
+    fovTree = cKDTree(data=coordsDF.loc[fovIntersections,
+                                        ['centerX', 'centerY']].values)
+    for cell in cells:
+        overlappingCells = spatialTree.intersection(
+            cell.get_bounding_box(), objects=True)
+        toCheck = [x.object for x in overlappingCells]
+        cellsToConsider = spatialfeature.return_overlapping_cells(
+            cell, toCheck)
+        if len(cellsToConsider) == 0:
+            pass
+        else:
+            for cellToConsider in cellsToConsider:
+                xmin, ymin, xmax, ymax =\
+                    cellToConsider.get_bounding_box()
+                xCenter = (xmin + xmax) / 2
+                yCenter = (ymin + ymax) / 2
+                [d, i] = fovTree.query(np.array([xCenter, yCenter]))
+                assignedFOV = coordsDF.loc[fovIntersections, :]\
+                    .index.values.tolist()[i]
+                if cellToConsider.get_feature_id() not in graph.nodes:
+                    graph.add_node(cellToConsider.get_feature_id(),
+                                   originalFOV=cellToConsider.get_fov(),
+                                   assignedFOV=assignedFOV)
+            if len(cellsToConsider) > 1:
+                for cellToConsider1 in cellsToConsider:
+                    if cellToConsider1.get_feature_id() !=\
+                            cell.get_feature_id():
+                        graph.add_edge(cell.get_feature_id(),
+                                       cellToConsider1.get_feature_id())
+    return graph
+
+
+
 
 def remove_overlapping_cells(graph):
+    """
+    Takes in a graph in which each node is a cell and edges connect cells that
+    overlap eachother in space. Removes overlapping cells, preferentially
+    eliminating the cell that overlaps the most cells (i.e. if cell A overlaps
+    cells B, C, and D, whereas cell B only overlaps cell A, cell C only overlaps
+    cell A, and cell D only overlaps cell A, then cell A will be removed,
+    leaving cells B, C, and D remaining because there is no more overlap
+    within this group of cells).
+    Args:
+        graph: An undirected graph, in which each node is a cell and each
+               edge connects overlapping cells. nodes are expected to have
+               the following attributes: originalFOV, assignedFOV
+    Returns:
+        A pandas dataframe containing the feature ID of all cells after removing
+        all instances of overlap. There are columns for cell_id, originalFOV,
+        and assignedFOV
+
+    :return:
+    """
     connectedComponents = list(nx.connected_components(graph))
     cleanedCells = []
     connectedComponents = [list(x) for x in connectedComponents]

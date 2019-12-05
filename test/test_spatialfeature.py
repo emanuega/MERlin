@@ -227,51 +227,26 @@ def test_find_overlapping_cells():
 
 def test_remove_overlapping_cells():
 
+    allFOVs = [0]
+    fovBoxes = [geometry.box(-1, -1, 10, 10)]
+    currentFOV = 0
 
-    def append_cells_to_spatial_tree(tree, cells, idToNum):
-        for element in cells:
-            tree.insert(idToNum[element.get_feature_id()],
-                        element.get_bounding_box(), obj=element)
-
-    def construct_graph(cells):
-        G = nx.Graph()
-        spatialIndex = rtree.index.Index()
-        numToID = dict()
-        idToNum = dict()
-        currentID = 0
-        currentUnassigned = cells
-        for i in range(len(currentUnassigned)):
-            numToID[currentID] = currentUnassigned[i].get_feature_id()
-            idToNum[currentUnassigned[i].get_feature_id()] = currentID
+    spatialIndex = rtree.index.Index()
+    numToID = dict()
+    idToNum = dict()
+    currentID = 0
+    for currentFOV in allFOVs:
+        for i in range(len(allCells)):
+            numToID[currentID] = allCells[i].get_feature_id()
+            idToNum[allCells[i].get_feature_id()] = currentID
             currentID += 1
-        append_cells_to_spatial_tree(spatialIndex, currentUnassigned, idToNum)
+    for cell in allCells:
+        spatialIndex.insert(idToNum[cell.get_feature_id()],
+                            cell.get_bounding_box(), obj=cell)
 
-        currentCells = cells
-        for cell in currentCells:
-            overlappingCells = spatialIndex.intersection(
-                cell.get_bounding_box(), objects=True)
-            toCheck = [x.object for x in overlappingCells]
-            cellsToConsider = spatialfeature.return_overlapping_cells(cell,
-                                                                      toCheck)
-            if len(cellsToConsider) == 0:
-                pass
-
-            else:
-                for cellToConsider in cellsToConsider:
-                    assignedFOV = 0
-                    if cellToConsider.get_feature_id() not in G.nodes:
-                        G.add_node(cellToConsider.get_feature_id(),
-                                   originalFOV=cellToConsider.get_fov(),
-                                   assignedFOV=assignedFOV)
-                if len(cellsToConsider) > 1:
-                    for cellToConsider1 in cellsToConsider:
-                        if cellToConsider1.get_feature_id() !=\
-                                cell.get_feature_id():
-                            G.add_edge(cell.get_feature_id(),
-                                       cellToConsider1.get_feature_id())
-        return G
-
-    G = construct_graph(allCells)
+    G = nx.Graph()
+    G = spatialfeature.construct_graph(G, allCells, spatialIndex,
+                                       currentFOV, allFOVs, fovBoxes)
 
     cleanedCellsDF = spatialfeature.remove_overlapping_cells(G)
     keptCells = cleanedCellsDF['cell_id'].values.tolist()

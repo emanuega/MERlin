@@ -152,13 +152,10 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
         coordsDF = pandas.DataFrame(coords,
                                     columns=['minx', 'miny', 'maxx', 'maxy'],
                                     index=allFOVs)
-        coordsDF['centerX'] = (coordsDF['minx'] + coordsDF['maxx']) / 2
-        coordsDF['centerY'] = (coordsDF['miny'] + coordsDF['maxy']) / 2
-
         boxes = [geometry.box(x[0], x[1], x[2], x[3]) for x in
                  coordsDF.loc[:, ['minx', 'miny', 'maxx', 'maxy']].values]
 
-        return coordsDF, boxes
+        return boxes
 
     def _construct_fov_tree(self, tiledPositions: pandas.DataFrame,
                             fovIntersections: List):
@@ -177,12 +174,9 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
             tree.insert(idToNum[element.get_feature_id()],
                         element.get_bounding_box(), obj=element)
 
-    def _construct_graph(self):
-        G = nx.Graph()
+    def _construct_tree(self):
         spatialIndex = rtree.index.Index()
         allFOVs = self.dataSet.get_fovs()
-        allFOVs = list(range(2))
-        tiledPositions, allFOVBoxes = self._get_fov_boxes()
         numToID = dict()
         idToNum = dict()
         currentID = 0
@@ -194,44 +188,7 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
                 currentID += 1
             self._append_cells_to_spatial_tree(
                 spatialIndex, currentUnassigned, idToNum)
-
-        for currentFOV in allFOVs:
-            fovIntersections = sorted([i for i, x in enumerate(allFOVBoxes) if
-                                       allFOVBoxes[currentFOV].intersects(x)])
-            fovTree = self._construct_fov_tree(tiledPositions, fovIntersections)
-            currentCells = self._intial_clean(currentFOV)
-            for cell in currentCells:
-                overlappingCells = spatialIndex.intersection(
-                    cell.get_bounding_box(), objects=True)
-                toCheck = [x.object for x in overlappingCells]
-                cellsToConsider = spatialfeature.return_overlapping_cells(
-                    cell, toCheck)
-                if len(cellsToConsider) == 0:
-                    # This would occur when a cell is contained entirely in the
-                    # boundary of another cell
-                    pass
-
-                else:
-                    for cellToConsider in cellsToConsider:
-                        xmin, ymin, xmax, ymax =\
-                            cellToConsider.get_bounding_box()
-                        xCenter = (xmin + xmax) / 2
-                        yCenter = (ymin + ymax) / 2
-                        [d, i] = fovTree.query(np.array([xCenter, yCenter]))
-                        assignedFOV = tiledPositions \
-                            .loc[fovIntersections, :] \
-                            .index.values.tolist()[i]
-                        if cellToConsider.get_feature_id() not in G.nodes:
-                            G.add_node(cellToConsider.get_feature_id(),
-                                       originalFOV=cellToConsider.get_fov(),
-                                       assignedFOV=assignedFOV)
-                    if len(cellsToConsider) > 1:
-                        for cellToConsider1 in cellsToConsider:
-                            if cellToConsider1.get_feature_id() !=\
-                                    cell.get_feature_id():
-                                G.add_edge(cell.get_feature_id(),
-                                           cellToConsider1.get_feature_id())
-        return G
+        return spatialIndex
 
     def return_exported_data(self):
         kwargs = {'index_col': 0}
@@ -239,8 +196,18 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
             'cleanedcells', analysisTask=self.analysisName, **kwargs)
 
     def _run_analysis(self) -> None:
-        G = self._construct_graph()
-        cleanedCells = spatialfeature.remove_overlapping_cells(G)
+
+        spatialTree = self._construct_tree()
+        fovBoxes = self._get_fov_boxes()
+        graph = nx.Graph()
+        allFOVs = self.dataSet.get_fovs()
+        for currentFOV in allFOVs:
+            cells = self._intial_clean(currentFOV)
+            graph = spatialfeature.construct_graph(graph, cells,
+                                                   spatialTree, currentFOV,
+                                                   allFOVs, fovBoxes)
+
+        cleanedCells = spatialfeature.remove_overlapping_cells(graph)
 
         self.dataSet.save_dataframe_to_csv(cleanedCells, 'cleanedcells',
                                            analysisTask=self)

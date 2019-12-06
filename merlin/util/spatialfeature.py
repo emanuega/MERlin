@@ -635,6 +635,7 @@ def simple_clean_cells(cells: List) -> List:
     return [cell for cell in cells
             if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
 
+
 def get_fov_boxes(fovs: List, alignTask: analysistask.AnalysisTask) -> List:
     """
     Creates a list of shapely boxes for each fov containing the global
@@ -655,6 +656,7 @@ def get_fov_boxes(fovs: List, alignTask: analysistask.AnalysisTask) -> List:
              coordsDF.loc[:, ['minx', 'miny', 'maxx', 'maxy']].values]
 
     return boxes
+
 
 def append_cells_to_spatial_tree(tree: rtree.index.Index,
                                  cells: List, idToNum: Dict):

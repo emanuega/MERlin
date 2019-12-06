@@ -197,6 +197,7 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
         self._write_graph(graph, 'cleaned_cells',
                           self.analysisName, fragmentIndex)
 
+
 class CombineCleanedBoundaries(analysistask.AnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
@@ -231,7 +232,6 @@ class CombineCleanedBoundaries(analysistask.AnalysisTask):
 
         self.dataSet.save_dataframe_to_csv(cleanedCells, 'all_cleaned_cells',
                                            analysisTask=self)
-
 
 
 class RefineCellDatabases(FeatureSavingAnalysisTask):

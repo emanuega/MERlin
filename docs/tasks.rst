@@ -101,7 +101,12 @@ Parameters:
 segment.CleanCellBoundaries
 --------------------------------
 
-Description: Assigns each cell to the FOV centroid they are closest to, and eliminates overlapping cells, preferentially removing cells that overlap with the largest number of other cells until there is no more overlap in a given group of cells.
+Description: For a FOV of interest, this task identifies all other FOVs with any overlapping regions, and constructs a graph containing cells from the FOV of interest and all cells from either that FOV or the overlapping FOVs that overlap a cell, with edges connecting overlapping cells
+
+segment.CombineCleanedBoundaries
+--------------------------------
+
+Description: Combines the cleaned cell boundaries generated for each fov, and eliminates overlapping cells, preferentially removing cells that overlap with the largest number of other cells until there is no more overlap in a given group of cells.
 
 segment.RefineCellDatabases
 --------------------------------

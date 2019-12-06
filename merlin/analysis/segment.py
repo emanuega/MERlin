@@ -149,21 +149,20 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
         return [self.parameters['segment_task'],
                 self.parameters['global_align_task']]
 
-    def _write_graph(self, analysisResult: nx.Graph, resultName: str,
+    def _write_graph(self, analysisResult, resultName: str,
                      analysisName: str, resultIndex: int = None,
                      subdirectory: str = None) -> None:
-        graphOut = nx.readwrite.json_graph.jit_data(analysisResult)
 
         savePath = self.dataSet._analysis_result_save_path(
-            resultName, analysisName, resultIndex, subdirectory, '.json')
-        with open(savePath, 'w') as f:
-            outfile.write(graphOut, f)
+            resultName, analysisName, resultIndex, subdirectory, '.gpickle')
+        nx.readwrite.gpickle.write_gpickle(analysisResult, savePath)
 
     def return_exported_data(self, fragmentIndex) -> nx.Graph:
-        f = self.dataSet.load_json_analysis_result('cleanecells',
-                                                   self.analysisName,
-                                                   fragmentIndex, None)
-        loadedG = nx.readwrite.json_graph.jit_graph(f, create_using=nx.Graph())
+
+        savePath = self.dataSet._analysis_result_save_path(
+            'cleaned_cells', self.analysisName, fragmentIndex, None, '.gpickle')
+
+        loadedG = nx.readwrite.gpickle.read_gpickle(savePath)
 
         return loadedG
 
@@ -195,7 +194,7 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
                                                spatialTree, fragmentIndex,
                                                allFOVs, fovBoxes)
 
-        self._write_graph(self, graph, 'cleanedcells',
+        self._write_graph(graph, 'cleaned_cells',
                           self.analysisName, fragmentIndex)
 
 class CombineCleanedBoundaries(analysistask.AnalysisTask):
@@ -219,7 +218,7 @@ class CombineCleanedBoundaries(analysistask.AnalysisTask):
     def return_exported_data(self):
         kwargs = {'index_col': 0}
         return self.dataSet.load_dataframe_from_csv(
-            'allcleanedcells', analysisTask=self.analysisName, **kwargs)
+            'all_cleaned_cells', analysisTask=self.analysisName, **kwargs)
 
     def _run_analysis(self):
         allFOVs = self.dataSet.get_fovs()
@@ -230,7 +229,7 @@ class CombineCleanedBoundaries(analysistask.AnalysisTask):
 
         cleanedCells = spatialfeature.remove_overlapping_cells(graph)
 
-        self.dataSet.save_dataframe_to_csv(cleanedCells, 'allcleanedcells',
+        self.dataSet.save_dataframe_to_csv(cleanedCells, 'all_cleaned_cells',
                                            analysisTask=self)
 
 

@@ -149,17 +149,6 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
         return [self.parameters['segment_task'],
                 self.parameters['global_align_task']]
 
-    def get_fov_boxes(self):
-        allFOVs = self.dataSet.get_fovs()
-        coords = [self.alignTask.fov_global_extent(f) for f in allFOVs]
-        coordsDF = pandas.DataFrame(coords,
-                                    columns=['minx', 'miny', 'maxx', 'maxy'],
-                                    index=allFOVs)
-        boxes = [geometry.box(x[0], x[1], x[2], x[3]) for x in
-                 coordsDF.loc[:, ['minx', 'miny', 'maxx', 'maxy']].values]
-
-        return boxes
-
     def _write_graph(self, analysisResult: nx.Graph, resultName: str,
                      analysisName: str, resultIndex: int = None,
                      subdirectory: str = None) -> None:
@@ -180,7 +169,9 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
 
     def _run_analysis(self, fragmentIndex) -> None:
         allFOVs = np.array(self.dataSet.get_fovs())
-        fovBoxes = self.get_fov_boxes()
+        alignTask = self.dataSet.load_analysis_task(
+            self.parameters['global_align_task'])
+        fovBoxes = spatialfeature.get_fov_boxes(allFOVs, alignTask)
         fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
                                    fovBoxes[fragmentIndex].intersects(x)])
         intersectingFOVs = list(allFOVs[np.array(fovIntersections)])

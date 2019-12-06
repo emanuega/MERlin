@@ -121,11 +121,18 @@
             }
         },
         {
+            "task": "CombineCleanedBoundaries",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "cleaning_task": "CleanCellBoundaries"
+            }
+        },
+        {
             "task": "RefineCellDatabases",
             "module": "merlin.analysis.segment",
             "parameters": {
                 "segment_task": "WatershedSegment",
-                "cleaning_task": "CleanCellBoundaries"
+                "combine_cleaning_task": "CombineCleanedBoundaries"
             }
         },
         {
@@ -134,7 +141,7 @@
             "parameters": {
                 "filter_task": "AdaptiveFilterBarcodes",
                 "assignment_task": "RefineCellDatabases",
-                "cleaning_task": "CleanCellBoundaries"
+                "alignment_task": "SimpleGlobalAlignment"
             }
         },
         {

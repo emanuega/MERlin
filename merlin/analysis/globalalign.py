@@ -120,9 +120,10 @@ class SimpleGlobalAlignment(GlobalAlignment):
         Returns:
             a list of four floats, representing the xmin, xmax, ymin, ymax
         """
-
+        imageDimensions = self.dataSet.get_image_dimensions()
         return [x for y in (self.fov_coordinates_to_global(fov, (0, 0)),
-                            self.fov_coordinates_to_global(fov, (2048, 2048)))
+                            self.fov_coordinates_to_global(
+                                fov, (imageDimensions[0], imageDimensions[1])))
                 for x in y]
 
     def global_coordinates_to_fov(self, fov, globalCoordinates):

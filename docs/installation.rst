@@ -58,13 +58,14 @@ MERlin can be installed by cloning the repository and installing with pip:
 Specifying paths with a .env file
 ==================================
 
-A .env file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .env in the user home directory (~\.env on linux or C:\users\UserName\.env on Windows):
+A .merlinenv file is required to specify the search locations for the various input and output files. The following variables should be defined in a file named .merlinenv in the user home directory (~\\.merlinenv on linux or C:\\users\\UserName\\.merlinenv on Windows):
 
 * DATA\_HOME - The path of the root directory to the raw data.
 * ANALYSIS\_HOME - The path of the root directory where analysis results should be stored.
 * PARAMETERS\_HOME - The path to the directory where the merfish-parameters directory resides.
 
 The PARAMETERS_HOME directory should contain the following folders:
+
 * analysis - Contains the analysis parameters json files.
 * codebooks - Contains the codebook csv files.
 * dataorganization - Contains the data organization csv files.
@@ -76,10 +77,16 @@ The PARAMETERS_HOME directory should contain the following folders:
 An example PARAMETERS_HOME directory with typical files can be found in the
 `merlin-parameters-example <https://github.com/emanuega/merlin-parameters-example>`_ repository.
 
-The contents of an example .env file are below:
+The contents of an example .merlinenv file are below:
 
 .. code-block:: none
 
     DATA_HOME=D:/data
     ANALYSIS_HOME=D:/analysis
     PARAMETERS_HOME=D:/merfish-parameters
+
+Merlin can create a .merlinenv file for you using the command:
+
+.. code-blocks:: none
+
+    merlin --configure .

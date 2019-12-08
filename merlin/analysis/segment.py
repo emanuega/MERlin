@@ -170,7 +170,7 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
         allFOVs = np.array(self.dataSet.get_fovs())
         alignTask = self.dataSet.load_analysis_task(
             self.parameters['global_align_task'])
-        fovBoxes = spatialfeature.get_fov_boxes(allFOVs, alignTask)
+        fovBoxes = self.alignTask.get_fov_boxes()
         fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
                                    fovBoxes[fragmentIndex].intersects(x)])
         intersectingFOVs = list(allFOVs[np.array(fovIntersections)])
@@ -199,6 +199,14 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
 
 
 class CombineCleanedBoundaries(analysistask.AnalysisTask):
+    """
+    A task to construct a network graph where each cell is a node, and overlaps
+    are represented by edges. This graph is then refined to assign cells to the
+    fov they are closest to (in terms of centroid). This graph is then refined
+    to eliminate overlapping cells to leave a single cell occupying a given
+    position.
+
+    """
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 

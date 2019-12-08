@@ -636,28 +636,6 @@ def simple_clean_cells(cells: List) -> List:
             if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
 
 
-def get_fov_boxes(fovs: List, alignTask: analysistask.AnalysisTask) -> List:
-    """
-    Creates a list of shapely boxes for each fov containing the global
-    coordinates as the box coordinates.
-
-    Args:
-        fovs: A list of fovs to create boxes for
-        alignTask: a globalalign task to get global coordinates for each fov
-
-    Returns:
-        A list of shapely boxes
-    """
-    coords = [alignTask.fov_global_extent(f) for f in fovs]
-    coordsDF = pandas.DataFrame(coords,
-                                columns=['minx', 'miny', 'maxx', 'maxy'],
-                                index=fovs)
-    boxes = [geometry.box(x[0], x[1], x[2], x[3]) for x in
-             coordsDF.loc[:, ['minx', 'miny', 'maxx', 'maxy']].values]
-
-    return boxes
-
-
 def append_cells_to_spatial_tree(tree: rtree.index.Index,
                                  cells: List, idToNum: Dict):
     for element in cells:

@@ -73,6 +73,18 @@ class GlobalAlignment(analysistask.AnalysisTask):
         """
         pass
 
+    @abstractmethod
+    def get_fov_boxes(self) -> List:
+        """
+        Creates a list of shapely boxes for each fov containing the global
+        coordinates as the box coordinates.
+
+        Returns:
+            A list of shapely boxes
+        """
+        pass
+
+
 
 class SimpleGlobalAlignment(GlobalAlignment):
 
@@ -120,10 +132,9 @@ class SimpleGlobalAlignment(GlobalAlignment):
         Returns:
             a list of four floats, representing the xmin, xmax, ymin, ymax
         """
-        imageDimensions = self.dataSet.get_image_dimensions()
+
         return [x for y in (self.fov_coordinates_to_global(fov, (0, 0)),
-                            self.fov_coordinates_to_global(
-                                fov, (imageDimensions[0], imageDimensions[1])))
+                            self.fov_coordinates_to_global(fov, (2048, 2048)))
                 for x in y]
 
     def global_coordinates_to_fov(self, fov, globalCoordinates):
@@ -156,6 +167,17 @@ class SimpleGlobalAlignment(GlobalAlignment):
         maxY = np.max([x[1] for x in fovBounds])
 
         return minX, minY, maxX, maxY
+
+    def get_fov_boxes(self) -> List:
+        fovs = self.dataSet.get_fovs()
+        coords = [self.fov_global_extent(f) for f in fovs]
+        coordsDF = pandas.DataFrame(coords,
+                                    columns=['minx', 'miny', 'maxx', 'maxy'],
+                                    index=fovs)
+        boxes = [geometry.box(x[0], x[1], x[2], x[3]) for x in
+                 coordsDF.loc[:, ['minx', 'miny', 'maxx', 'maxy']].values]
+
+        return boxes
 
 
 class CorrelationGlobalAlignment(GlobalAlignment):

@@ -2,6 +2,7 @@ from abc import abstractmethod
 import numpy as np
 from typing import Tuple
 from typing import List
+from shapely import geometry
 
 from merlin.core import analysistask
 
@@ -170,12 +171,7 @@ class SimpleGlobalAlignment(GlobalAlignment):
 
     def get_fov_boxes(self) -> List:
         fovs = self.dataSet.get_fovs()
-        coords = [self.fov_global_extent(f) for f in fovs]
-        coordsDF = pandas.DataFrame(coords,
-                                    columns=['minx', 'miny', 'maxx', 'maxy'],
-                                    index=fovs)
-        boxes = [geometry.box(x[0], x[1], x[2], x[3]) for x in
-                 coordsDF.loc[:, ['minx', 'miny', 'maxx', 'maxy']].values]
+        boxes = [geometry.box(*self.fov_global_extent(f)) for f in fovs]
 
         return boxes
 

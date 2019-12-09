@@ -168,8 +168,6 @@ class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
 
     def _run_analysis(self, fragmentIndex) -> None:
         allFOVs = np.array(self.dataSet.get_fovs())
-        alignTask = self.dataSet.load_analysis_task(
-            self.parameters['global_align_task'])
         fovBoxes = self.alignTask.get_fov_boxes()
         fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
                                    fovBoxes[fragmentIndex].intersects(x)])

@@ -56,8 +56,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
         alignTask = self.dataSet.load_analysis_task(
             self.parameters['alignment_task'])
 
-        fovBoxes = spatialfeature.get_fov_boxes(self.dataSet.get_fovs(),
-                                                alignTask)
+        fovBoxes = alignTask.get_fov_boxes()
         fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
                                    fovBoxes[fragmentIndex].intersects(x)])
 

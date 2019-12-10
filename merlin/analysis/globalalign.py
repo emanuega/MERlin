@@ -14,6 +14,8 @@ class GlobalAlignment(analysistask.AnalysisTask):
     different field of views relative to each other in order to construct
     a global alignment.
     """
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
 
     @abstractmethod
     def fov_coordinates_to_global(
@@ -74,7 +76,6 @@ class GlobalAlignment(analysistask.AnalysisTask):
         """
         pass
 
-    @abstractmethod
     def get_fov_boxes(self) -> List:
         """
         Creates a list of shapely boxes for each fov containing the global
@@ -83,7 +84,10 @@ class GlobalAlignment(analysistask.AnalysisTask):
         Returns:
             A list of shapely boxes
         """
-        pass
+        fovs = self.dataSet.get_fovs()
+        boxes = [geometry.box(*self.fov_global_extent(f)) for f in fovs]
+
+        return boxes
 
 
 
@@ -168,12 +172,6 @@ class SimpleGlobalAlignment(GlobalAlignment):
         maxY = np.max([x[1] for x in fovBounds])
 
         return minX, minY, maxX, maxY
-
-    def get_fov_boxes(self) -> List:
-        fovs = self.dataSet.get_fovs()
-        boxes = [geometry.box(*self.fov_global_extent(f)) for f in fovs]
-
-        return boxes
 
 
 class CorrelationGlobalAlignment(GlobalAlignment):

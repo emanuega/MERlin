@@ -24,3 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added option to draw field of view labels overlaid on the mosaic
 
+## [0.1.4] - 2019-12-05
+### Changed
+- Changed the clean overlapping cells to run in parallel

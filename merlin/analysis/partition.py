@@ -2,7 +2,7 @@ import pandas
 import numpy as np
 
 from merlin.core import analysistask
-
+from merlin.util import spatialfeature
 
 class PartitionBarcodes(analysistask.ParallelAnalysisTask):
 
@@ -26,7 +26,7 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
     def get_dependencies(self):
         return [self.parameters['filter_task'],
                 self.parameters['assignment_task'],
-                self.parameters['cleaning_task']]
+                self.parameters['alignment_task']]
 
     def get_partitioned_barcodes(self, fov: int = None) -> pandas.DataFrame:
         """Retrieve the cell by barcode matrixes calculated from this
@@ -53,10 +53,10 @@ class PartitionBarcodes(analysistask.ParallelAnalysisTask):
             self.parameters['filter_task'])
         assignmentTask = self.dataSet.load_analysis_task(
             self.parameters['assignment_task'])
-        cleaningTask = self.dataSet.load_analysis_task(
-            self.parameters['cleaning_task'])
+        alignTask = self.dataSet.load_analysis_task(
+            self.parameters['alignment_task'])
 
-        fovBoxes = cleaningTask.get_fov_boxes()
+        fovBoxes = alignTask.get_fov_boxes()
         fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
                                    fovBoxes[fragmentIndex].intersects(x)])
 

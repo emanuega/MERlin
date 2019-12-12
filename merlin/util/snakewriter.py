@@ -44,7 +44,8 @@ class SnakemakeRule(object):
     def _generate_done_input(self) -> str:
         inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
                       for x in self._analysisTask.get_dependencies()]
-        inputDone= ','.join([self._generate_done_output(x) for x in inputTasks])
+        inputDone = ','.join([self._generate_done_output(x)
+                              for x in inputTasks])
 
         return inputDone
 
@@ -61,7 +62,8 @@ class SnakemakeRule(object):
                         self._analysisTask)))
 
     def _generate_done_output(self,
-                         analysisTask: analysistask.AnalysisTask = None) -> str:
+                              analysisTask:
+                              analysistask.AnalysisTask = None) -> str:
         if analysisTask is None:
             analysisTask = self._analysisTask
 
@@ -71,7 +73,8 @@ class SnakemakeRule(object):
                     analysisTask)))
 
     def _generate_touch_output(self,
-                         analysisTask: analysistask.AnalysisTask = None) -> str:
+                               analysisTask:
+                               analysistask.AnalysisTask = None) -> str:
         if analysisTask is None:
             analysisTask = self._analysisTask
 
@@ -112,9 +115,9 @@ class SnakemakeRule(object):
     def as_string(self) -> str:
         fullString = ('rule %s:\n\tinput: %s\n\toutput: %s\n\tmessage: %s\n\t'
                       + 'shell: %s\n\n') \
-                      % (self._analysisTask.get_analysis_name(),
-                         self._generate_done_input(), self._generate_output(),
-                         self._generate_message(),  self._generate_shell())
+                     % (self._analysisTask.get_analysis_name(),
+                        self._generate_done_input(), self._generate_output(),
+                        self._generate_message(),  self._generate_shell())
         fullString += ('rule %sDone:\n\tinput: %s\n\toutput: %s\n\t' +
                        'shell: \'touch %s\'\n') \
                       % (self._analysisTask.get_analysis_name(),

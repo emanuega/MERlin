@@ -66,9 +66,6 @@ class AnalysisTask(ABC):
         if 'codebookNum' in self.parameters:
             self.codebookNum = self.parameters['codebookNum']
 
-    def fragment_count(self):
-        return 1
-
     def save(self, overwrite=False) -> None:
         """Save a copy of this AnalysisTask into the data set.
 

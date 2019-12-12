@@ -70,6 +70,16 @@ class SnakemakeRule(object):
                 analysisTask.dataSet.analysis_full_completion_filename(
                     analysisTask)))
 
+    def _generate_touch_output(self,
+                         analysisTask: analysistask.AnalysisTask = None) -> str:
+        if analysisTask is None:
+            analysisTask = self._analysisTask
+
+        return self._clean_string(
+            analysisTask.dataSet.analysis_full_completion_filename(
+                    analysisTask))
+
+
     def _generate_message(self) -> str:
         messageString = \
             ''.join(['Running ', self._analysisTask.get_analysis_name()])
@@ -106,10 +116,11 @@ class SnakemakeRule(object):
                          self._generate_done_input(), self._generate_output(),
                          self._generate_message(),  self._generate_shell())
         fullString += ('rule %sDone:\n\tinput: %s\n\toutput: %s\n\t' +
-                       'shell: sleep 1\n') \
+                       'shell: \'touch %s\'\n') \
                       % (self._analysisTask.get_analysis_name(),
                          self._generate_input_names(self._analysisTask),
-                         self._generate_done_output(self._analysisTask))
+                         self._generate_done_output(self._analysisTask),
+                         self._generate_touch_output(self._analysisTask))
 
         return fullString
 

@@ -118,7 +118,6 @@ class AnalysisTask(ABC):
             self._indicate_running()
             self._run_analysis()
             self.dataSet.record_analysis_complete(self)
-            self.dataSet.check_and_record_analysis_fully_complete(self)
             logger.info('Completed ' + self.get_analysis_name())
             self.dataSet.close_logger(self)
         except Exception as e:
@@ -323,7 +322,6 @@ class ParallelAnalysisTask(AnalysisTask):
                 self._indicate_running(fragmentIndex)
                 self._run_analysis(fragmentIndex)
                 self.dataSet.record_analysis_complete(self, fragmentIndex)
-                self.dataSet.check_and_record_analysis_fully_complete(self)
                 logger.info('Completed %s %i'
                             % (self.get_analysis_name(), fragmentIndex))
                 self.dataSet.close_logger(self, fragmentIndex)

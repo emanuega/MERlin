@@ -718,20 +718,9 @@ class DataSet(object):
                               fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'error', fragmentIndex)
 
-    def check_and_record_analysis_fully_complete(self,
-                                                 analysisTask:
-                                                 analysistask.AnalysisTask):
-        expectedOutputs = analysisTask.fragment_count()
-        taskSubDir = self.get_task_subdirectory(analysisTask)
-        allTaskFiles = os.listdir(taskSubDir)
-        existingOutputs= len(['done' for f in allTaskFiles
-                              if os.path.splitext(f)[1] == '.done'])
-        if expectedOutputs == existingOutputs:
-            self._record_analysis_full_completion(analysisTask)
-
-    def _record_analysis_full_completion(self,
-                                         analysisTask:
-                                         analysistask.AnalysisTask):
+    def record_analysis_full_completion(self,
+                                        analysisTask:
+                                        analysistask.AnalysisTask):
         fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
                                 'task.done'])
         with open(fileName, 'w') as f:

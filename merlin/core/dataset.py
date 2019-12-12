@@ -718,6 +718,25 @@ class DataSet(object):
                               fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'error', fragmentIndex)
 
+    def check_and_record_analysis_fully_complete(self,
+                                                 analysisTask:
+                                                 analysistask.AnalysisTask):
+        expectedOutputs = analysisTask.fragment_count()
+        taskSubDir = self.get_task_subdirectory(analysisTask)
+        allTaskFiles = os.listdir(taskSubDir)
+        existingOutputs= len(['done' for f in allTaskFiles
+                              if os.path.splitext(f)[1] == '.done'])
+        if expectedOutputs == existingOutputs:
+            self._record_analysis_full_completion(analysisTask)
+
+    def _record_analysis_full_completion(self,
+                                         analysisTask:
+                                         analysistask.AnalysisTask):
+        fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
+                                'task.done'])
+        with open(fileName, 'w') as f:
+            f.write('%s' % time.time())
+
     def get_analysis_start_time(self, analysisTask: analysistask.AnalysisTask,
                                 fragmentIndex: int = None) -> float:
         """Get the time that this analysis task started
@@ -780,6 +799,15 @@ class DataSet(object):
         except FileNotFoundError:
             pass
 
+    def _reset_analysis_full_complete(self,
+                                      analysisTask: analysistask.AnalysisTask):
+        fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
+                                'task.done'])
+        try:
+            os.remove(fileName)
+        except FileNotFoundError:
+            pass
+
     def is_analysis_idle(self, analysisTask: analysistask.AnalysisTask,
                          fragmentIndex: int = None) -> bool:
         fileName = self._analysis_status_file(
@@ -801,9 +829,22 @@ class DataSet(object):
                                fragmentIndex: int = None) -> str:
         return self._analysis_status_file(analysisTask, 'done', fragmentIndex)
 
+    def analysis_full_completion_filename(self,
+                                          analysisTask:
+                                          analysistask.AnalysisTask) -> str:
+        return os.sep.join([self.get_task_subdirectory(analysisTask),
+                            'task.done'])
+
     def check_analysis_error(self, analysisTask: analysistask.AnalysisTask,
                              fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
+
+    def check_analysis_full_completion(self,
+                                       analysisTask:
+                                       analysistask.AnalysisTask): -> bool
+        fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
+                                'task.done'])
+        return os.path.exists(fileName)
 
     def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
                               fragmentIndex: int = None):
@@ -814,7 +855,7 @@ class DataSet(object):
         self._reset_analysis_event(analysisTask, 'run', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'done', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'error', fragmentIndex)
-
+        self._reset_analysis_full_complete(analysisTask)
 
 class ImageDataSet(DataSet):
 

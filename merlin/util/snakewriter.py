@@ -40,17 +40,23 @@ class SnakemakeRule(object):
                                 for x in inputTasks])
         return self._clean_string(inputString)
 
+    # def _generate_output(self) -> str:
+    #     if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
+    #         return self._clean_string(
+    #             self._add_quotes(
+    #                 self._analysisTask.dataSet.analysis_done_filename(
+    #                     self._analysisTask, '{i}')))
+    #     else:
+    #         return self._clean_string(
+    #             self._add_quotes(
+    #                 self._analysisTask.dataSet.analysis_done_filename(
+    #                     self._analysisTask)))
+
     def _generate_output(self) -> str:
-        if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-            return self._clean_string(
-                self._add_quotes(
-                    self._analysisTask.dataSet.analysis_done_filename(
-                        self._analysisTask, '{i}')))
-        else:
-            return self._clean_string(
-                self._add_quotes(
-                    self._analysisTask.dataSet.analysis_done_filename(
-                        self._analysisTask)))
+        return self._clean_string(
+            self._add_quotes(
+                self._analysisTask.dataSet.analysis_full_completion_filename(
+                    self._analysisTask)))
 
     def _generate_message(self) -> str:
         messageString = \

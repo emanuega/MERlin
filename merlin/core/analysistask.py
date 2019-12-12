@@ -66,6 +66,9 @@ class AnalysisTask(ABC):
         if 'codebookNum' in self.parameters:
             self.codebookNum = self.parameters['codebookNum']
 
+    def fragment_count(self):
+        return 1
+
     def save(self, overwrite=False) -> None:
         """Save a copy of this AnalysisTask into the data set.
 
@@ -115,6 +118,7 @@ class AnalysisTask(ABC):
             self._indicate_running()
             self._run_analysis()
             self.dataSet.record_analysis_complete(self)
+            self.dataSet.check_and_record_analysis_fully_complete(self)
             logger.info('Completed ' + self.get_analysis_name())
             self.dataSet.close_logger(self)
         except Exception as e:
@@ -250,7 +254,7 @@ class InternallyParallelAnalysisTask(AnalysisTask):
     """
     An abstract class for analysis that can only be run in one part,
     but can internally be sped up using multiple processes. Subclasses
-    should implement the analysis to perform in te run_analysis() function.
+    should implement the analysis to perform in the run_analysis() function.
     """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
@@ -281,10 +285,6 @@ class ParallelAnalysisTask(AnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-
-    @abstractmethod
-    def fragment_count(self):
-        pass
 
     def run(self, fragmentIndex: int=None, overwrite=True) -> None:
         """Run the specified index of this analysis task.
@@ -322,7 +322,8 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.record_analysis_started(self, fragmentIndex)
                 self._indicate_running(fragmentIndex)
                 self._run_analysis(fragmentIndex)
-                self.dataSet.record_analysis_complete(self, fragmentIndex) 
+                self.dataSet.record_analysis_complete(self, fragmentIndex)
+                self.dataSet.check_and_record_analysis_fully_complete(self)
                 logger.info('Completed %s %i'
                             % (self.get_analysis_name(), fragmentIndex))
                 self.dataSet.close_logger(self, fragmentIndex)
@@ -331,6 +332,9 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.record_analysis_error(self, fragmentIndex)
                 self.dataSet.close_logger(self, fragmentIndex)
                 raise e
+
+    def fragment_count(self):
+        return len(self.dataSet.get_fovs())
 
     def _reset_analysis(self, fragmentIndex: int=None) -> None:
         """Remove files created by this analysis task and remove markers

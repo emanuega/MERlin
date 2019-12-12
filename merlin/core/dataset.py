@@ -841,7 +841,7 @@ class DataSet(object):
 
     def check_analysis_full_completion(self,
                                        analysisTask:
-                                       analysistask.AnalysisTask): -> bool
+                                       analysistask.AnalysisTask) -> bool:
         fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
                                 'task.done'])
         return os.path.exists(fileName)

@@ -25,6 +25,7 @@ class SnakemakeRule(object):
             self._analysisTask.dataSet.analysis_done_filename(taskName, '{g}')),
             indexCount)
 
+
     def _generate_input_names(self, task):
         if isinstance(task, analysistask.ParallelAnalysisTask):
             return self._clean_string(self._expand_as_string(
@@ -40,23 +41,34 @@ class SnakemakeRule(object):
                                 for x in inputTasks])
         return self._clean_string(inputString)
 
-    # def _generate_output(self) -> str:
-    #     if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-    #         return self._clean_string(
-    #             self._add_quotes(
-    #                 self._analysisTask.dataSet.analysis_done_filename(
-    #                     self._analysisTask, '{i}')))
-    #     else:
-    #         return self._clean_string(
-    #             self._add_quotes(
-    #                 self._analysisTask.dataSet.analysis_done_filename(
-    #                     self._analysisTask)))
+    def _generate_done_input(self) -> str:
+        inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
+                      for x in self._analysisTask.get_dependencies()]
+        inputDone= ','.join([self._generate_done_output(x) for x in inputTasks])
+
+        return inputDone
 
     def _generate_output(self) -> str:
+        if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
+            return self._clean_string(
+                self._add_quotes(
+                    self._analysisTask.dataSet.analysis_done_filename(
+                        self._analysisTask, '{i}')))
+        else:
+            return self._clean_string(
+                self._add_quotes(
+                    self._analysisTask.dataSet.analysis_done_filename(
+                        self._analysisTask)))
+
+    def _generate_done_output(self,
+                         analysisTask: analysistask.AnalysisTask = None) -> str:
+        if analysisTask is None:
+            analysisTask = self._analysisTask
+
         return self._clean_string(
             self._add_quotes(
-                self._analysisTask.dataSet.analysis_full_completion_filename(
-                    self._analysisTask)))
+                analysisTask.dataSet.analysis_full_completion_filename(
+                    analysisTask)))
 
     def _generate_message(self) -> str:
         messageString = \
@@ -89,16 +101,19 @@ class SnakemakeRule(object):
 
     def as_string(self) -> str:
         fullString = ('rule %s:\n\tinput: %s\n\toutput: %s\n\tmessage: %s\n\t'
-                      + 'shell: %s\n') \
+                      + 'shell: %s\n\n') \
                       % (self._analysisTask.get_analysis_name(),
-                         self._generate_input(), self._generate_output(),
+                         self._generate_done_input(), self._generate_output(),
                          self._generate_message(),  self._generate_shell())
+        fullString += ('rule %sDone:\n\tinput: %s\n\toutput: %s\n') \
+                      % (self._analysisTask.get_analysis_name(),
+                         self._generate_input_names(self._analysisTask),
+                         self._generate_done_output(self._analysisTask),)
 
         return fullString
 
     def full_output(self) -> str:
         return self._generate_input_names(self._analysisTask)
-
 
 class SnakefileGenerator(object):
 
@@ -151,8 +166,8 @@ class SnakefileGenerator(object):
 
         terminalTasks = self._identify_terminal_tasks(analysisTasks)
         workflowString = 'rule all: \n\tinput: ' + \
-            ','.join([ruleList[x].full_output() for x in terminalTasks]) + \
-            '\n\n'
+            ','.join([ruleList[x]._generate_done_output()
+                      for x in terminalTasks]) + '\n\n'
         workflowString += '\n'.join([x.as_string() for x in ruleList.values()])
 
         return self._dataSet.save_workflow(workflowString)

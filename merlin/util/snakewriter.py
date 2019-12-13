@@ -165,8 +165,7 @@ class SnakefileGenerator(object):
             for d in a.get_dependencies():
                 taskGraph.add_edge(d, x)
 
-        return [k for k, v in taskGraph.out_degree if v == 0
-                and not analysisTasks[k].is_complete()]
+        return [k for k, v in taskGraph.out_degree if v == 0]
 
     def generate_workflow(self) -> str:
         """Generate a snakemake workflow for the analysis parameters
@@ -177,7 +176,7 @@ class SnakefileGenerator(object):
         """
         analysisTasks = self._parse_parameters()
         ruleList = {k: SnakemakeRule(v, self._pythonPath)
-                    for k, v in analysisTasks.items() if not v.is_complete()}
+                    for k, v in analysisTasks.items()}
 
         terminalTasks = self._identify_terminal_tasks(analysisTasks)
         workflowString = 'rule all: \n\tinput: ' + \

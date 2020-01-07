@@ -59,7 +59,7 @@ class SnakemakeRule(object):
             ''.join(['Running ', self._analysisTask.get_analysis_name()])
 
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-            messageString += ' {wildcards.i}'
+            messageString += ' {wildcards.g}'
 
         return self._add_quotes(messageString)
 
@@ -77,7 +77,7 @@ class SnakemakeRule(object):
              self._clean_string(self._analysisTask.dataSet.analysisHome),
              '\"'])
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-            shellString += ' -i {wildcards.i}'
+            shellString += ' -i {wildcards.g}'
         shellString += ' ' + self._clean_string(
             self._analysisTask.dataSet.dataSetName)
 

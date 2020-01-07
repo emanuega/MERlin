@@ -11,7 +11,7 @@ def test_run_single_task(simple_merfish_task):
     snakeRule = snakewriter.SnakemakeRule(simple_merfish_task)
     with open('temp.Snakefile', 'w') as outFile:
         outFile.write('rule all: \n\tinput: '
-                      + snakeRule.full_output() + '\n\n')
+                      + snakeRule._generate_current_task_outputs() + '\n\n')
         outFile.write(snakeRule.as_string())
 
     snakemake.snakemake('temp.Snakefile')

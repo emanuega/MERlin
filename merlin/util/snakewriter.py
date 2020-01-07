@@ -92,6 +92,9 @@ class SnakemakeRule(object):
                         self._generate_message(),  self._generate_shell())
         return fullString
 
+    # def full_output(self) -> str:
+    #     return self._generate_current_task_outputs(self._analysisTask)
+
 
 class SnakefileGenerator(object):
 

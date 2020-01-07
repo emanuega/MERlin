@@ -149,8 +149,9 @@ class SnakefileGenerator(object):
                 parameters = {'dependent_task': k}
                 newTask = ParallelTaskComplete(self._dataSet, parameters,
                                                '{}Done'.format(k))
-                newTask.save()
-                updatedTasks[newTask.get_analysis_name()] = newTask
+                if newTask.get_analysis_name() not in analysisTasks:
+                    newTask.save()
+                    updatedTasks[newTask.get_analysis_name()] = newTask
         return updatedTasks
 
     def _identify_terminal_tasks(self, analysisTasks):

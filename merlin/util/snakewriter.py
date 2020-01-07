@@ -143,7 +143,7 @@ class SnakefileGenerator(object):
 
     def _add_parallel_completion_tasks(self, analysisTasks):
         updatedTasks = {}
-        for k,v in analysisTasks.items():
+        for k, v in analysisTasks.items():
             updatedTasks[k] = v
             if isinstance(v, analysistask.ParallelAnalysisTask):
                 parameters = {'dependent_task': k}

@@ -328,7 +328,6 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.close_logger(self, fragmentIndex)
                 raise e
 
-
     @abstractmethod
     def fragment_count(self):
         pass

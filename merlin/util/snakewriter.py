@@ -49,8 +49,8 @@ class SnakemakeRule(object):
                     inputString.append(t.dataSet.analysis_done_filename(t))
             inputString = ','.join(inputString)
         else:
-            inputString = ','.join([x.dataSet.analysis_done_filename(x)
-                                    for x in inputTasks])
+            inputString = self._add_quotes(','.join(
+                [x.dataSet.analysis_done_filename(x) for x in inputTasks]))
 
         return self._clean_string(inputString)
 
@@ -59,7 +59,7 @@ class SnakemakeRule(object):
             ''.join(['Running ', self._analysisTask.get_analysis_name()])
 
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-            messageString += ' {wildcards.g}'
+            messageString += ' {wildcards.i}'
 
         return self._add_quotes(messageString)
 
@@ -77,7 +77,7 @@ class SnakemakeRule(object):
              self._clean_string(self._analysisTask.dataSet.analysisHome),
              '\"'])
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-            shellString += ' -i {wildcards.g}'
+            shellString += ' -i {wildcards.i}'
         shellString += ' ' + self._clean_string(
             self._analysisTask.dataSet.dataSetName)
 
@@ -92,8 +92,16 @@ class SnakemakeRule(object):
                         self._generate_message(),  self._generate_shell())
         return fullString
 
-    # def full_output(self) -> str:
-    #     return self._generate_current_task_outputs(self._analysisTask)
+    def full_output(self) -> str:
+        if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
+            return self._clean_string(self._expand_as_string(
+                self._analysisTask.get_analysis_name(),
+                self._analysisTask.fragment_count()))
+        else:
+            return self._clean_string(
+                self._add_quotes(
+                    self._analysisTask.dataSet.analysis_done_filename(
+                        self._analysisTask)))
 
 
 class SnakefileGenerator(object):

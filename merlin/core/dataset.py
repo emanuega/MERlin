@@ -718,13 +718,6 @@ class DataSet(object):
                               fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'error', fragmentIndex)
 
-    def record_analysis_full_completion(self,
-                                        analysisTask:
-                                        analysistask.AnalysisTask):
-        fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
-                                'task.done'])
-        with open(fileName, 'w') as f:
-            f.write('%s' % time.time())
 
     def get_analysis_start_time(self, analysisTask: analysistask.AnalysisTask,
                                 fragmentIndex: int = None) -> float:

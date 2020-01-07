@@ -328,8 +328,10 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.close_logger(self, fragmentIndex)
                 raise e
 
+
+    @abstractmethod
     def fragment_count(self):
-        return len(self.dataSet.get_fovs())
+        pass
 
     def _reset_analysis(self, fragmentIndex: int=None) -> None:
         """Remove files created by this analysis task and remove markers

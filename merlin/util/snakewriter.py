@@ -1,5 +1,6 @@
 import importlib
 import networkx
+import merlin
 
 from merlin.core import analysistask
 from merlin.core import dataset
@@ -25,63 +26,35 @@ class SnakemakeRule(object):
             self._analysisTask.dataSet.analysis_done_filename(taskName, '{g}')),
             indexCount)
 
-
-    def _generate_input_names(self, task):
-        if isinstance(task, analysistask.ParallelAnalysisTask):
-            return self._clean_string(self._expand_as_string(
-                task.get_analysis_name(), task.fragment_count()))
-        else:
-            return self._clean_string(self._add_quotes(
-                self._analysisTask.dataSet.analysis_done_filename(task)))
-
-    def _generate_input(self) -> str:
-        inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
-                      for x in self._analysisTask.get_dependencies()]
-        inputString = ','.join([self._generate_input_names(x)
-                                for x in inputTasks])
-        return self._clean_string(inputString)
-
-    def _generate_done_input(self) -> str:
-        inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
-                      for x in self._analysisTask.get_dependencies()]
-        inputDone = ','.join([self._generate_done_output(x)
-                              for x in inputTasks])
-
-        return inputDone
-
-    def _generate_output(self) -> str:
+    def _generate_current_task_outputs(self):
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
-            return self._clean_string(
-                self._add_quotes(
-                    self._analysisTask.dataSet.analysis_done_filename(
-                        self._analysisTask, '{i}')))
+            return self._clean_string(self._expand_as_string(
+                self._analysisTask.get_analysis_name(),
+                self._analysisTask.fragment_count()))
         else:
             return self._clean_string(
                 self._add_quotes(
                     self._analysisTask.dataSet.analysis_done_filename(
                         self._analysisTask)))
 
-    def _generate_done_output(self,
-                              analysisTask:
-                              analysistask.AnalysisTask = None) -> str:
-        if analysisTask is None:
-            analysisTask = self._analysisTask
+    def _generate_current_task_inputs(self):
+        inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
+                      for x in self._analysisTask.get_dependencies()]
+        if self._analysisTask.__class__ == \
+                merlin.analysis.paralleltaskcomplete.ParallelTaskComplete:
+            inputString = []
+            for t in inputTasks:
+                if isinstance(t, analysistask.ParallelAnalysisTask):
+                    inputString.append(self._expand_as_string(
+                        t, t.fragment_count()))
+                else:
+                    inputString.append(t.dataSet.analysis_done_filename(t))
+            inputString = ','.join(inputString)
+        else:
+            inputString = ','.join([x.dataSet.analysis_done_filename(x)
+                                    for x in inputTasks])
 
-        return self._clean_string(
-            self._add_quotes(
-                analysisTask.dataSet.analysis_full_completion_filename(
-                    analysisTask)))
-
-    def _generate_touch_output(self,
-                               analysisTask:
-                               analysistask.AnalysisTask = None) -> str:
-        if analysisTask is None:
-            analysisTask = self._analysisTask
-
-        return self._clean_string(
-            analysisTask.dataSet.analysis_full_completion_filename(
-                    analysisTask))
-
+        return self._clean_string(inputString)
 
     def _generate_message(self) -> str:
         messageString = \
@@ -116,19 +89,11 @@ class SnakemakeRule(object):
         fullString = ('rule %s:\n\tinput: %s\n\toutput: %s\n\tmessage: %s\n\t'
                       + 'shell: %s\n\n') \
                      % (self._analysisTask.get_analysis_name(),
-                        self._generate_done_input(), self._generate_output(),
+                        self._generate_current_task_inputs(),
+                        self._generate_current_task_outputs(),
                         self._generate_message(),  self._generate_shell())
-        fullString += ('rule %sDone:\n\tinput: %s\n\toutput: %s\n\t' +
-                       'shell: \'touch %s\'\n') \
-                      % (self._analysisTask.get_analysis_name(),
-                         self._generate_input_names(self._analysisTask),
-                         self._generate_done_output(self._analysisTask),
-                         self._generate_touch_output(self._analysisTask))
-
         return fullString
 
-    def full_output(self) -> str:
-        return self._generate_input_names(self._analysisTask)
 
 class SnakefileGenerator(object):
 
@@ -156,6 +121,20 @@ class SnakefileGenerator(object):
             analysisTasks[newTask.get_analysis_name()] = newTask
         return analysisTasks
 
+    def _add_parallel_completion_tasks(self, analysisTasks):
+        updatedTasks = {}
+        for k,v in analysisTasks.items():
+            updatedTasks[k] = v
+            if isinstance(v, analysistask.ParallelAnalysisTask):
+                analysisClass = getattr(merlin.analysis.paralleltaskcomplete,
+                                        'ParallelTaskComplete')
+                parameters = {'dependent_task': k}
+                newTask = analysisClass(self._dataSet, parameters,
+                                        '{}Done'.format(k))
+                newTask.save()
+                updatedTasks[newTask.get_analysis_name()] = newTask
+        return updatedTasks
+
     def _identify_terminal_tasks(self, analysisTasks):
         taskGraph = networkx.DiGraph()
         for x in analysisTasks.keys():
@@ -175,12 +154,15 @@ class SnakefileGenerator(object):
             the path to the generated snakemake workflow
         """
         analysisTasks = self._parse_parameters()
+        terminalTasks = self._identify_terminal_tasks(analysisTasks)
+
+        analysisTasks = self._add_parallel_completion_tasks(analysisTasks)
+
         ruleList = {k: SnakemakeRule(v, self._pythonPath)
                     for k, v in analysisTasks.items()}
 
-        terminalTasks = self._identify_terminal_tasks(analysisTasks)
         workflowString = 'rule all: \n\tinput: ' + \
-            ','.join([ruleList[x]._generate_done_output()
+            ','.join([ruleList[x]._generate_current_task_outputs()
                       for x in terminalTasks]) + '\n\n'
         workflowString += '\n'.join([x.as_string() for x in ruleList.values()])
 

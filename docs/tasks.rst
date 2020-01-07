@@ -179,3 +179,12 @@ Parameters:
 * sum\_task
 * partition\_task  
 * global\_align\_task  
+
+paralleltaskcomplete.ParallelTaskComplete
+_________________________________________
+
+Description: Check whether a parallel analysis task has completed all jobs and create a done fine for that task if so. This task does not need to be invoked by the user, it is used by the snakewriter.
+
+Parameters:
+
+* dependent\_task -- the parallel analysis task to check to see if it has completed

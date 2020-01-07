@@ -1,6 +1,6 @@
 import importlib
 import networkx
-import merlin
+import merlin as m
 
 from merlin.core import analysistask
 from merlin.core import dataset
@@ -123,14 +123,14 @@ class SnakefileGenerator(object):
 
     def _add_parallel_completion_tasks(self, analysisTasks):
         updatedTasks = {}
+        parallelCompletionTask = getattr(importlib.import_module(
+            merlin.analysis.paralleltaskcomplete), 'ParallelTaskComplete')
         for k,v in analysisTasks.items():
             updatedTasks[k] = v
             if isinstance(v, analysistask.ParallelAnalysisTask):
-                analysisClass = getattr(merlin.analysis.paralleltaskcomplete,
-                                        'ParallelTaskComplete')
                 parameters = {'dependent_task': k}
-                newTask = analysisClass(self._dataSet, parameters,
-                                        '{}Done'.format(k))
+                newTask = parallelCompletionTask(self._dataSet, parameters,
+                                                 '{}Done'.format(k))
                 newTask.save()
                 updatedTasks[newTask.get_analysis_name()] = newTask
         return updatedTasks

@@ -39,8 +39,7 @@ class SnakemakeRule(object):
     def _generate_current_task_inputs(self):
         inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
                       for x in self._analysisTask.get_dependencies()]
-        if self._analysisTask.__class__ == \
-                merlin.analysis.paralleltaskcomplete.ParallelTaskComplete:
+        if self._analysisTask.__class__ == ParallelTaskComplete:
             inputString = []
             for t in inputTasks:
                 if isinstance(t, analysistask.ParallelAnalysisTask):

@@ -377,12 +377,18 @@ class ParallelAnalysisTask(AnalysisTask):
 
     def is_complete(self, fragmentIndex=None):
         if fragmentIndex is None:
-            for i in range(self.fragment_count()):
-                if not self.is_complete(i):
+            missingCount = []
+            if self.dataSet.check_analysis_done(self):
+                return True
+            else:
+                for i in range(self.fragment_count()):
+                    if not self.is_complete(i):
+                        missingCount.append(i)
+                if len(missingCount) > 0:
                     return False
-
-            return True
-
+                else:
+                    self.dataSet.record_analysis_complete(self)
+                    return True
         else:
             return self.dataSet.check_analysis_done(self, fragmentIndex)
 

@@ -23,5 +23,4 @@ class ParallelTaskComplete(analysistask.AnalysisTask):
     def _run_analysis(self):
         dependentTask = self.dataSet.load_analysis_task(
             self.parameters['dependent_task'])
-        if dependentTask.is_complete():
-            self.dataSet.record_analysis_complete(analysisTask=dependentTask)
+        dependentTask.is_complete()

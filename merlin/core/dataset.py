@@ -781,15 +781,6 @@ class DataSet(object):
         except FileNotFoundError:
             pass
 
-    def _reset_analysis_full_complete(self,
-                                      analysisTask: analysistask.AnalysisTask):
-        fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
-                                'task.done'])
-        try:
-            os.remove(fileName)
-        except FileNotFoundError:
-            pass
-
     def is_analysis_idle(self, analysisTask: analysistask.AnalysisTask,
                          fragmentIndex: int = None) -> bool:
         fileName = self._analysis_status_file(
@@ -811,22 +802,10 @@ class DataSet(object):
                                fragmentIndex: int = None) -> str:
         return self._analysis_status_file(analysisTask, 'done', fragmentIndex)
 
-    def analysis_full_completion_filename(self,
-                                          analysisTask:
-                                          analysistask.AnalysisTask) -> str:
-        return os.sep.join([self.get_task_subdirectory(analysisTask),
-                            'task.done'])
-
     def check_analysis_error(self, analysisTask: analysistask.AnalysisTask,
                              fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
 
-    def check_analysis_full_completion(self,
-                                       analysisTask:
-                                       analysistask.AnalysisTask) -> bool:
-        fileName = os.sep.join([self.get_task_subdirectory(analysisTask),
-                                'task.done'])
-        return os.path.exists(fileName)
 
     def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
                               fragmentIndex: int = None):
@@ -837,7 +816,7 @@ class DataSet(object):
         self._reset_analysis_event(analysisTask, 'run', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'done', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'error', fragmentIndex)
-        self._reset_analysis_full_complete(analysisTask)
+        self._reset_analysis_event(analysisTask, 'done')
 
 class ImageDataSet(DataSet):
 

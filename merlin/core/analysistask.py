@@ -250,7 +250,7 @@ class InternallyParallelAnalysisTask(AnalysisTask):
     """
     An abstract class for analysis that can only be run in one part,
     but can internally be sped up using multiple processes. Subclasses
-    should implement the analysis to perform in te run_analysis() function.
+    should implement the analysis to perform in the run_analysis() function.
     """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
@@ -281,10 +281,6 @@ class ParallelAnalysisTask(AnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-
-    @abstractmethod
-    def fragment_count(self):
-        pass
 
     def run(self, fragmentIndex: int=None, overwrite=True) -> None:
         """Run the specified index of this analysis task.
@@ -322,7 +318,7 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.record_analysis_started(self, fragmentIndex)
                 self._indicate_running(fragmentIndex)
                 self._run_analysis(fragmentIndex)
-                self.dataSet.record_analysis_complete(self, fragmentIndex) 
+                self.dataSet.record_analysis_complete(self, fragmentIndex)
                 logger.info('Completed %s %i'
                             % (self.get_analysis_name(), fragmentIndex))
                 self.dataSet.close_logger(self, fragmentIndex)
@@ -331,6 +327,10 @@ class ParallelAnalysisTask(AnalysisTask):
                 self.dataSet.record_analysis_error(self, fragmentIndex)
                 self.dataSet.close_logger(self, fragmentIndex)
                 raise e
+
+    @abstractmethod
+    def fragment_count(self):
+        pass
 
     def _reset_analysis(self, fragmentIndex: int=None) -> None:
         """Remove files created by this analysis task and remove markers
@@ -377,12 +377,18 @@ class ParallelAnalysisTask(AnalysisTask):
 
     def is_complete(self, fragmentIndex=None):
         if fragmentIndex is None:
-            for i in range(self.fragment_count()):
-                if not self.is_complete(i):
+            missingCount = []
+            if self.dataSet.check_analysis_done(self):
+                return True
+            else:
+                for i in range(self.fragment_count()):
+                    if not self.is_complete(i):
+                        missingCount.append(i)
+                if len(missingCount) > 0:
                     return False
-
-            return True
-
+                else:
+                    self.dataSet.record_analysis_complete(self)
+                    return True
         else:
             return self.dataSet.check_analysis_done(self, fragmentIndex)
 

@@ -718,6 +718,7 @@ class DataSet(object):
                               fragmentIndex: int = None) -> None:
         self._record_analysis_event(analysisTask, 'error', fragmentIndex)
 
+
     def get_analysis_start_time(self, analysisTask: analysistask.AnalysisTask,
                                 fragmentIndex: int = None) -> float:
         """Get the time that this analysis task started
@@ -805,6 +806,7 @@ class DataSet(object):
                              fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
 
+
     def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
                               fragmentIndex: int = None):
         if analysisTask.is_running():
@@ -814,7 +816,7 @@ class DataSet(object):
         self._reset_analysis_event(analysisTask, 'run', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'done', fragmentIndex)
         self._reset_analysis_event(analysisTask, 'error', fragmentIndex)
-
+        self._reset_analysis_event(analysisTask, 'done')
 
 class ImageDataSet(DataSet):
 

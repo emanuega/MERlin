@@ -261,7 +261,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
         updated = False
         while not all(completeFragments):
             if (intensityBins is None or 
-                blankCounts is None or codingCounts is None):
+                    blankCounts is None or codingCounts is None):
                 for i in range(self.fragment_count()):
                     if not pendingFragments[i] and decodeTask.is_complete(i):
                         pendingFragments[i] = decodeTask.is_complete(i)

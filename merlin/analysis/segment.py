@@ -120,7 +120,7 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             for z in range(len(self.dataSet.get_z_positions()))])
 
 
-class CleanCellBoundaries(analysistask.AnalysisTask):
+class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
     '''
     A task to construct a network graph where each cell is a node, and overlaps
     are represented by edges. This graph is then refined to assign cells to the
@@ -136,6 +136,9 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
         self.alignTask = self.dataSet.load_analysis_task(
             self.parameters['global_align_task'])
 
+    def fragment_count(self):
+        return len(self.dataSet.get_fovs())
+
     def get_estimated_memory(self):
         return 2048
 
@@ -146,46 +149,34 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
         return [self.parameters['segment_task'],
                 self.parameters['global_align_task']]
 
-    def get_fov_boxes(self):
-        allFOVs = self.dataSet.get_fovs()
-        coords = [self.alignTask.fov_global_extent(f) for f in allFOVs]
-        coordsDF = pandas.DataFrame(coords,
-                                    columns=['minx', 'miny', 'maxx', 'maxy'],
-                                    index=allFOVs)
-        boxes = [geometry.box(x[0], x[1], x[2], x[3]) for x in
-                 coordsDF.loc[:, ['minx', 'miny', 'maxx', 'maxy']].values]
+    def _write_graph(self, analysisResult, resultName: str,
+                     analysisName: str, resultIndex: int = None,
+                     subdirectory: str = None) -> None:
 
-        return boxes
+        savePath = self.dataSet._analysis_result_save_path(
+            resultName, analysisName, resultIndex, subdirectory, '.gpickle')
+        nx.readwrite.gpickle.write_gpickle(analysisResult, savePath)
 
-    def _construct_fov_tree(self, tiledPositions: pandas.DataFrame,
-                            fovIntersections: List):
-        return cKDTree(data=tiledPositions.loc[fovIntersections,
-                                               ['centerX', 'centerY']].values)
+    def return_exported_data(self, fragmentIndex) -> nx.Graph:
 
-    def _intial_clean(self, currentFOV: int):
-        currentCells = self.segmentTask.get_feature_database()\
-            .read_features(currentFOV)
-        return [cell for cell in currentCells
-                if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
+        savePath = self.dataSet._analysis_result_save_path(
+            'cleaned_cells', self.analysisName, fragmentIndex, None, '.gpickle')
 
-    def _append_cells_to_spatial_tree(self, tree: rtree.index.Index,
-                                      cells: List, idToNum: Dict):
-        for element in cells:
-            tree.insert(idToNum[element.get_feature_id()],
-                        element.get_bounding_box(), obj=element)
+        loadedG = nx.readwrite.gpickle.read_gpickle(savePath)
 
-    def return_exported_data(self):
-        kwargs = {'index_col': 0}
-        return self.dataSet.load_dataframe_from_csv(
-            'cleanedcells', analysisTask=self.analysisName, **kwargs)
+        return loadedG
 
-    def _run_analysis(self) -> None:
+    def _run_analysis(self, fragmentIndex) -> None:
+        allFOVs = np.array(self.dataSet.get_fovs())
+        fovBoxes = self.alignTask.get_fov_boxes()
+        fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
+                                   fovBoxes[fragmentIndex].intersects(x)])
+        intersectingFOVs = list(allFOVs[np.array(fovIntersections)])
 
         spatialTree = rtree.index.Index()
         count = 0
         idToNum = dict()
-        allFOVs = self.dataSet.get_fovs()
-        for currentFOV in allFOVs:
+        for currentFOV in intersectingFOVs:
             cells = self.segmentTask.get_feature_database()\
                 .read_features(currentFOV)
             cells = spatialfeature.simple_clean_cells(cells)
@@ -193,19 +184,59 @@ class CleanCellBoundaries(analysistask.AnalysisTask):
             spatialTree, count, idToNum = spatialfeature.construct_tree(
                 cells, spatialTree, count, idToNum)
 
-        fovBoxes = self.get_fov_boxes()
+        graph = nx.Graph()
+        cells = self.segmentTask.get_feature_database()\
+            .read_features(fragmentIndex)
+        cells = spatialfeature.simple_clean_cells(cells)
+        graph = spatialfeature.construct_graph(graph, cells,
+                                               spatialTree, fragmentIndex,
+                                               allFOVs, fovBoxes)
+
+        self._write_graph(graph, 'cleaned_cells',
+                          self.analysisName, fragmentIndex)
+
+
+class CombineCleanedBoundaries(analysistask.AnalysisTask):
+    """
+    A task to construct a network graph where each cell is a node, and overlaps
+    are represented by edges. This graph is then refined to assign cells to the
+    fov they are closest to (in terms of centroid). This graph is then refined
+    to eliminate overlapping cells to leave a single cell occupying a given
+    position.
+
+    """
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        self.cleaningTask = self.dataSet.load_analysis_task(
+            self.parameters['cleaning_task'])
+
+    def get_estimated_memory(self):
+        # TODO - refine estimate
+        return 2048
+
+    def get_estimated_time(self):
+        # TODO - refine estimate
+        return 5
+
+    def get_dependencies(self):
+        return [self.parameters['cleaning_task']]
+
+    def return_exported_data(self):
+        kwargs = {'index_col': 0}
+        return self.dataSet.load_dataframe_from_csv(
+            'all_cleaned_cells', analysisTask=self.analysisName, **kwargs)
+
+    def _run_analysis(self):
+        allFOVs = self.dataSet.get_fovs()
         graph = nx.Graph()
         for currentFOV in allFOVs:
-            cells = self.segmentTask.get_feature_database()\
-                .read_features(currentFOV)
-            cells = spatialfeature.simple_clean_cells(cells)
-            graph = spatialfeature.construct_graph(graph, cells,
-                                                   spatialTree, currentFOV,
-                                                   allFOVs, fovBoxes)
+            subGraph = self.cleaningTask.return_exported_data(currentFOV)
+            graph = nx.compose(graph, subGraph)
 
         cleanedCells = spatialfeature.remove_overlapping_cells(graph)
 
-        self.dataSet.save_dataframe_to_csv(cleanedCells, 'cleanedcells',
+        self.dataSet.save_dataframe_to_csv(cleanedCells, 'all_cleaned_cells',
                                            analysisTask=self)
 
 
@@ -216,7 +247,7 @@ class RefineCellDatabases(FeatureSavingAnalysisTask):
         self.segmentTask = self.dataSet.load_analysis_task(
             self.parameters['segment_task'])
         self.cleaningTask = self.dataSet.load_analysis_task(
-            self.parameters['cleaning_task'])
+            self.parameters['combine_cleaning_task'])
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -231,7 +262,7 @@ class RefineCellDatabases(FeatureSavingAnalysisTask):
 
     def get_dependencies(self):
         return [self.parameters['segment_task'],
-                self.parameters['cleaning_task']]
+                self.parameters['combine_cleaning_task']]
 
     def _run_analysis(self, fragmentIndex):
 

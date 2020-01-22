@@ -16,6 +16,7 @@ from scipy.spatial import cKDTree
 
 
 from merlin.core import dataset
+from merlin.core import analysistask
 
 
 class SpatialFeature(object):

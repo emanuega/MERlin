@@ -2,6 +2,7 @@ from abc import abstractmethod
 import numpy as np
 from typing import Tuple
 from typing import List
+from shapely import geometry
 
 from merlin.core import analysistask
 
@@ -13,6 +14,8 @@ class GlobalAlignment(analysistask.AnalysisTask):
     different field of views relative to each other in order to construct
     a global alignment.
     """
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
 
     @abstractmethod
     def fov_coordinates_to_global(
@@ -72,6 +75,20 @@ class GlobalAlignment(analysistask.AnalysisTask):
             maximum x and y extents. All are in units of microns.
         """
         pass
+
+    def get_fov_boxes(self) -> List:
+        """
+        Creates a list of shapely boxes for each fov containing the global
+        coordinates as the box coordinates.
+
+        Returns:
+            A list of shapely boxes
+        """
+        fovs = self.dataSet.get_fovs()
+        boxes = [geometry.box(*self.fov_global_extent(f)) for f in fovs]
+
+        return boxes
+
 
 
 class SimpleGlobalAlignment(GlobalAlignment):

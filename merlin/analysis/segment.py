@@ -346,8 +346,33 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         return watershedMarker
 
+    def _convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
+        # create 3D images of 8bit
+        # https://stackoverflow.com/questions/25485886/how-to-convert-a
+        # -16-bit-to-an-8-bit-image-in-opencv
+    
+        # invert image
+        uint16Image = 2**16 - uint16Image
+    
+        # convert to uint8
+        ratio = np.amax(uint16Image) / 256 ; 
+        uint8Image = (uint16Image / ratio).astype('uint8')
+    
+        rgbImage = np.zeros((2048,2048,3))
+        rgbImage[:,:,0] = uint8Image
+        rgbImage[:,:,1] = uint8Image
+        rgbImage[:,:,2] = uint8Image
+        rgbImage = rgbImage.astype('uint8')
+    
+        return rgbImage
+
     def _apply_watershed(self, fov: int, channelIndex: int,
                                 watershedMarkers: np.ndarray) -> np.ndarray:
+         warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+
+        imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
+            for z in range(len(self.dataSet.get_z_positions()))])
 
 
     def _read_and_filter_image_stack(self, fov: int, channelIndex: int,

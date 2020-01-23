@@ -134,12 +134,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
     found in  https://opencv-python-tutroals.readthedocs.io/en/latest/
     py_tutorials/py_imgproc/py_watershed/py_watershed.html. 
 
-    The watershed segmentation is performed in each z-position independently and 
-    combined into 3D objects in a later step
+    The watershed segmentation is performed in each z-position 
+    independently and     combined into 3D objects in a later step
     
-    Since each field of view is analyzed individually, the segmentation results
-    should be cleaned in order to merge cells that cross the field of
-    view boundary.
+    Since each field of view is analyzed individually, the segmentation
+    results should be cleaned in order to merge cells that cross the
+    field of view boundary.
     """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
@@ -213,9 +213,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         edgeMask = np.zeros(imageStack.shape)
         for z in range(len(self.dataSet.get_z_positions())):
             edgeMask[:,:,z] = canny(
-                white_tophat(imageStack[:,:,z], selem.disk(10)), 
-                sigma=2, use_quantiles=True, low_threshold=0.5, 
-                high_threshold=0.8)
+                white_tophat(imageStack[:,:,z], selem.disk(10)),
+                             sigma=2, use_quantiles=True,
+                             low_threshold=0.5, high_threshold=0.8)
             edgeMask[:,:,z] = binary_closing(edgeMask[:,:,z],selem.disk(5))
             edgeMask[:,:,z] = remove_small_objects(
                 edgeMask[:,:,z].astype('bool'), min_size=100, connectivity=1)
@@ -225,12 +225,13 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         tresholdingMask = np.zeros(imageStack.shape)
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            tresholdingMask[:,:,z] = imageStack[:,:,z] > 
+            tresholdingMask[:,:,z] = imageStack[:,:,z] >
                 threshold_local(imageStack[:,:,z], fineBlockSize, offset=0)
             tresholdingMask[:,:,z] = remove_small_objects(
-                imageStack[:,:,z].astype('bool'), min_size=100, connectivity=1)
-            tresholdingMask[:,:,z] = binary_closing(imageStack[:,:,z], 
-                selem.disk(5))
+                                            imageStack[:,:,z].astype('bool'),
+                                            min_size=100, connectivity=1)
+            tresholdingMask[:,:,z] = binary_closing(imageStack[:,:,z],
+                                                    selem.disk(5))
             tresholdingMask[:,:,z] = skeletonize(imageStack[:,:,z])
 
         # combine masks
@@ -250,12 +251,14 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         coarseBlockSize = 241
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseThresholdingMask = imageStack[:,:,z] > 
-                threshold_local(imageStack[:,:,z], coarseBlockSize, offset=0)
+            coarseThresholdingMask = imageStack[:,:,z] >
+                                        threshold_local(imageStack[:,:,z],
+                                                    coarseBlockSize, offset=0)
             fineThresholdingMask = imageStack[:,:,z] > 
-                threshold_local(imageStack[:,:,z], fineBlockSize, offset=0)    
+                                        threshold_local(imageStack[:,:,z],
+                                                    fineBlockSize, offset=0)
             thresholdingMask[:,:,z] = coarseThresholdingMask*
-                fineThresholdingMask
+                                        fineThresholdingMask
             thresholdingMask[:,:,z] = binary_fill_holes(thresholdingMask[:,:,z])
         
         # generate nuclei mask from hessian, fine
@@ -263,20 +266,21 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             fineHessian = hessian(imageStack[:,:,z])
             fineHessianMask[:,:,z] = fineHessian == fineHessian.max()
-            fineHessianMask[:,:,z] = binary_closing(
-                fineHessianMask[:,:,z], selem.disk(5))
+            fineHessianMask[:,:,z] = binary_closing(fineHessianMask[:,:,z],
+                                                    selem.disk(5))
             fineHessianMask[:,:,z] = binary_fill_holes(fineHessianMask[:,:,z])
         
         # generate dapi mask from hessian, coarse
         coarseHessianMask = np.zeros(imageStack.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseHessian = hessian(imageStack[:,:,z] - 
-                white_tophat(imageStack[:,:,z], selem.disk(20)))
+            coarseHessian = hessian(imageStack[:,:,z] -
+                                    white_tophat(imageStack[:,:,z],
+                                                 selem.disk(20)))
             coarseHessianMask[:,:,z] = coarseHessian == coarseHessian.max()
-            coarseHessianMask[:,:,z] = binary_closing(coarseHessianMask[:,:,z], 
-                selem.disk(5))
+            coarseHessianMask[:,:,z] = binary_closing(coarseHessianMask[:,:,z],
+                                                      selem.disk(5))
             coarseHessianMask[:,:,z] = binary_fill_holes(
-                coarseHessianMask[:,:,z])
+                                                    coarseHessianMask[:,:,z])
         
         # combine masks
         nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask 

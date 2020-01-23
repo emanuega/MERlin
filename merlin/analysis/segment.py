@@ -230,7 +230,6 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
 
 class MachineLearningSegment(FeatureSavingAnalysisTask):
-
     """
     An analysis task that determines the boundaries of features in the
     image data in each field of view using a the specified machine learning

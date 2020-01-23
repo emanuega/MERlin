@@ -183,9 +183,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         
         membraneMask = self._get_membrane_mask(fragmentIndex, watershedIndex)
         nucleiMask = self._get_nuclei_mask(fragmentIndex, watershedIndex)
-        watershedMarkers = self._generate_markers(nucleiMask,membraneMask)
-
-
+        watershedMarkers = self._get_watershed_markers(nucleiMask,membraneMask)
+        watershedOutput = self._apply_watershed(fragmentIndex, watershedIndex,
+                                                watershedMarkers)
 
 
 
@@ -313,7 +313,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask 
         return binary_fill_holes(nucleiMask)
 
-    def _generate_markers(self, nucleiMask: np.ndarray, 
+    def _get_watershed_markers(self, nucleiMask: np.ndarray, 
                                 membraneMask: np.ndarray) -> np.ndarray:
         
         watershedMarker = np.zeros(nucleiMask.shape)
@@ -346,8 +346,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         return watershedMarker
 
-    def _generate_watershed_mask(self, fov: int, channelIndex: int,
-                                     filterSigma: float) -> np.ndarray:
+    def _apply_watershed(self, fov: int, channelIndex: int,
+                                watershedMarkers: np.ndarray) -> np.ndarray:
 
 
     def _read_and_filter_image_stack(self, fov: int, channelIndex: int,

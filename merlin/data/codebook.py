@@ -18,7 +18,7 @@ class Codebook(object):
     A Codebook stores the association of barcodes to genes.
     """
 
-    def __init__(self, dataSet, filePath, codebookIndex: int = 0,
+    def __init__(self, filePath: str, dataSet=None, codebookIndex: int = 0,
                  codebookName: str = None):
         """
         Create a new Codebook for the data in the specified data set.
@@ -60,7 +60,8 @@ class Codebook(object):
             codebookName = os.path.splitext(os.path.basename(filePath))[0]
         self._codebookName = codebookName
         self._codebookIndex = codebookIndex
-        self._dataSet.save_codebook(self)
+        if self._dataSet is not None:
+            self._dataSet.save_codebook(self)
 
     @staticmethod
     def _generate_codebook_dataframe(barcodeData, bitNames):

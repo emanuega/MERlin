@@ -964,7 +964,7 @@ class MERFISHDataSet(ImageDataSet):
         self.dataOrganization = dataorganization.DataOrganization(
                 self, dataOrganizationName)
         if codebookNames:
-            self.codebooks = [codebook.Codebook(self, name, i)
+            self.codebooks = [codebook.Codebook(name, self, i)
                               for i, name in enumerate(codebookNames)]
         else:
             self.codebooks = self.load_codebooks()
@@ -1038,7 +1038,7 @@ class MERFISHDataSet(ImageDataSet):
         codebookName = '_'.join(os.path.splitext(os.path.basename(
             codebookFile[0]))[0].split('_')[2:])
         return codebook.Codebook(
-            self, codebookFile[0], codebookIndex, codebookName)
+            codebookFile[0], self, codebookIndex, codebookName)
 
     def get_stored_codebook_name(self, codebookIndex: int = 0) -> Optional[str]:
         """ Get the name of the codebook stored within this dataset with the

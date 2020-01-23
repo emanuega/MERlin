@@ -180,6 +180,16 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         watershedIndex = self.dataSet.get_data_organization() \
             .get_data_channel_index(self.parameters['watershed_channel_name'])
+        
+        membraneMask = self._get_membrane_mask(fragmentIndex, watershedIndex)
+        nucleiMask = self._get_nuclei_mask(fragmentIndex, watershedIndex)
+        watershedMarkers = self._generate_markers(nucleiMask,membraneMask)
+
+
+
+
+
+
         watershedImages = self._read_and_filter_image_stack(fragmentIndex,
                                                             watershedIndex, 5)
         seeds = watershed.separate_merged_seeds(
@@ -201,8 +211,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
 
-    def _get_membrane_mask(self, fov: int, channelIndex: int,
-                                     filterSigma: float) -> np.ndarray:
+    def _get_membrane_mask(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
 
@@ -230,20 +239,20 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             tresholdingMask[:,:,z] = imageStack[:,:,z] >
                                         threshold_local(imageStack[:,:,z],
-                                        fineBlockSize, offset=0)
+                                                        fineBlockSize, 
+                                                        offset=0)
             tresholdingMask[:,:,z] = remove_small_objects(
-                                        imageStack[:,:,z].astype('bool'),
-                                        min_size=100, connectivity=1)
+                                            imageStack[:,:,z].astype('bool'),
+                                            min_size=100, connectivity=1)
             tresholdingMask[:,:,z] = binary_closing(imageStack[:,:,z],
-                                        selem.disk(5))
+                                                    selem.disk(5))
             tresholdingMask[:,:,z] = skeletonize(imageStack[:,:,z])
 
         # combine masks
         # return edgeMask + thresholdingMask
         return thresholdingMask
 
-    def _get_nuclei_mask(self, fov: int, channelIndex: int,
-                                     filterSigma: float) -> np.ndarray:
+    def _get_nuclei_mask(self, fov: int, channelIndex: int) -> np.ndarray:
 
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
@@ -258,10 +267,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             coarseThresholdingMask = imageStack[:,:,z] >
                                         threshold_local(imageStack[:,:,z],
-                                            coarseBlockSize, offset=0)
+                                                        coarseBlockSize, 
+                                                        offset=0)
             fineThresholdingMask = imageStack[:,:,z] > 
                                         threshold_local(imageStack[:,:,z],
-                                            fineBlockSize, offset=0)
+                                                        fineBlockSize, 
+                                                        offset=0)
             thresholdingMask[:,:,z] = coarseThresholdingMask*
                                         fineThresholdingMask
             thresholdingMask[:,:,z] = binary_fill_holes(
@@ -281,7 +292,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             fineHessian = hessian(imageStack[:,:,z])
             fineHessianMask[:,:,z] = fineHessian == fineHessian.max()
             fineHessianMask[:,:,z] = binary_closing(fineHessianMask[:,:,z],
-                                        selem.disk(5))
+                                                    selem.disk(5))
             fineHessianMask[:,:,z] = fineHessianMask[:,:,z]*borderMask
             fineHessianMask[:,:,z] = binary_fill_holes(fineHessianMask[:,:,z])
         
@@ -290,10 +301,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             coarseHessian = hessian(imageStack[:,:,z] -
                                     white_tophat(imageStack[:,:,z],
-                                        selem.disk(20)))
+                                                 selem.disk(20)))
             coarseHessianMask[:,:,z] = coarseHessian == coarseHessian.max()
             coarseHessianMask[:,:,z] = binary_closing(coarseHessianMask[:,:,z],
-                                            selem.disk(5))
+                                                      selem.disk(5))
             coarseHessianMask[:,:,z] = coarseHessianMask[:,:,z]*borderMask
             coarseHessianMask[:,:,z] = binary_fill_holes(
                                             coarseHessianMask[:,:,z])
@@ -301,6 +312,39 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         # combine masks
         nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask 
         return binary_fill_holes(nucleiMask)
+
+    def _generate_markers(self, nucleiMask: np.ndarray, 
+                                membraneMask: np.ndarray) -> np.ndarray:
+        
+        watershedMarker = np.zeros(nucleiMask.shape)
+
+        for z in range(len(self.dataSet.get_z_positions())):
+            
+            # generate areas of sure bg and fg, as well as the area of 
+            # unknown classification
+            background = sm.dilation(nucleiMask[:,:,z],sm.selem.disk(15))
+            membraneDilated  = sm.dilation(membraneMask[:,:,z].astype('bool'),
+                                    sm.selem.disk(10))
+            foreground = sm.erosion(nucleiMask[:,:,z]*~membraneDilated,
+                            sm.selem.disk(5))
+            unknown = background*~foreground
+            
+            background = np.uint8(background)*255
+            foreground = np.uint8(foreground)*255
+            unknown    = np.uint8(unknown)*255
+            
+            # Marker labelling
+            ret, markers = cv2.connectedComponents(foreground)
+
+            # Add one to all labels so that sure background is not 0, but 1
+            markers = markers+100
+
+            # Now, mark the region of unknown with zero
+            markers[unknown==255] = 0
+
+            watershedMarker[:,:,z] = markers
+
+        return watershedMarker
 
     def _generate_watershed_mask(self, fov: int, channelIndex: int,
                                      filterSigma: float) -> np.ndarray:
@@ -316,38 +360,6 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             (filterSize, filterSize), filterSigma)
             for z in range(len(self.dataSet.get_z_positions()))])
         
-
-#--------------------------------------------------------------------------------------------------------------------
-# Generate. As before, use a combination of masks
-#--------------------------------------------------------------------------------------------------------------------
-sure_bg_dapi = sm.dilation(foreground,sm.selem.disk(15))
-
-mask_wga_dil = sm.dilation(mask_wga,sm.selem.disk(10))
-sure_fg = sm.erosion(foreground*~mask_wga_dil,sm.selem.disk(5))
-
-unknown_dapi = sure_bg_dapi*~sure_fg
-
-sure_bg_dapi = np.uint8(sure_bg_dapi)*255
-sure_fg      = np.uint8(sure_fg)*255
-unknown_dapi = np.uint8(unknown_dapi)*255
-
-
-# Marker labelling
-ret, markers = cv2.connectedComponents(sure_fg)
-
-# Add one to all labels so that sure background is not 0, but 1
-markers_dapi = markers+100
-
-# Now, mark the region of unknown with zero
-markers_dapi[unknown_dapi==255] = 0
-
-# Apply watershed using cv2
-markers_ws_dapi = cv2.watershed(Idapi_inv,markers_dapi)
-
-
-
-
-
 
 class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
     '''

@@ -374,6 +374,14 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
             for z in range(len(self.dataSet.get_z_positions()))])
 
+        watershedOutput = np.zeros(watershedMarkers.shape)
+        for z in range(len(self.dataSet.get_z_positions())):
+            rgbImage = convert_grayscale_to_rgb(dapiStack[:,:,z])
+            watershedOutput[:,:,z] = cv2.watershed(rgbImage,
+                                                    watershedMarkers[:,:,z].
+                                                    astype('int32'))
+        return watershedOutput
+
 
     def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
                                      filterSigma: float) -> np.ndarray:

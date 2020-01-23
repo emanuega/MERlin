@@ -181,15 +181,20 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         watershedIndex = self.dataSet.get_data_organization() \
             .get_data_channel_index(self.parameters['watershed_channel_name'])
         
+        # Prepare masks for cv2 watershed
         membraneMask = self._get_membrane_mask(fragmentIndex, watershedIndex)
         nucleiMask = self._get_nuclei_mask(fragmentIndex, watershedIndex)
         watershedMarkers = self._get_watershed_markers(nucleiMask,membraneMask)
+        
+        # perform watershed in individual z positions
         watershedOutput = self._apply_watershed(fragmentIndex, watershedIndex,
                                                 watershedMarkers)
 
+        # combine all z positions in watershed
+        watershedCombinedOutput = self._combine_watershed_z_positions(
+                                                watershedOutput)
 
-
-
+        """
         watershedImages = self._read_and_filter_image_stack(fragmentIndex,
                                                             watershedIndex, 5)
         seeds = watershed.separate_merged_seeds(
@@ -201,6 +206,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         watershedOutput = segmentation.watershed(
             normalizedWatershed, measure.label(seeds), mask=watershedMask,
             connectivity=np.ones((3, 3, 3)), watershed_line=True)
+        """
 
         zPos = np.array(self.dataSet.get_data_organization().get_z_positions())
         featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
@@ -239,7 +245,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             tresholdingMask[:,:,z] = imageStack[:,:,z] >
                                         threshold_local(imageStack[:,:,z],
-                                                        fineBlockSize, 
+                                                        fineBlockSize,
                                                         offset=0)
             tresholdingMask[:,:,z] = remove_small_objects(
                                             imageStack[:,:,z].astype('bool'),
@@ -267,11 +273,11 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             coarseThresholdingMask = imageStack[:,:,z] >
                                         threshold_local(imageStack[:,:,z],
-                                                        coarseBlockSize, 
+                                                        coarseBlockSize,
                                                         offset=0)
             fineThresholdingMask = imageStack[:,:,z] > 
                                         threshold_local(imageStack[:,:,z],
-                                                        fineBlockSize, 
+                                                        fineBlockSize,
                                                         offset=0)
             thresholdingMask[:,:,z] = coarseThresholdingMask*
                                         fineThresholdingMask
@@ -310,17 +316,17 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                             coarseHessianMask[:,:,z])
         
         # combine masks
-        nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask 
+        nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask
         return binary_fill_holes(nucleiMask)
 
-    def _get_watershed_markers(self, nucleiMask: np.ndarray, 
+    def _get_watershed_markers(self, nucleiMask: np.ndarray,
                                 membraneMask: np.ndarray) -> np.ndarray:
         
         watershedMarker = np.zeros(nucleiMask.shape)
 
         for z in range(len(self.dataSet.get_z_positions())):
             
-            # generate areas of sure bg and fg, as well as the area of 
+            # generate areas of sure bg and fg, as well as the area of
             # unknown classification
             background = sm.dilation(nucleiMask[:,:,z],sm.selem.disk(15))
             membraneDilated  = sm.dilation(membraneMask[:,:,z].astype('bool'),
@@ -347,15 +353,16 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         return watershedMarker
 
     def _convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
-        # create 3D images of 8bit
-        # https://stackoverflow.com/questions/25485886/how-to-convert-a
-        # -16-bit-to-an-8-bit-image-in-opencv
+        # cv2 only works in 3D images of 8bit. Make a 3D grayscale by
+        # using the same grayscale image in each of the rgb channels
+        # code below based on https://stackoverflow.com/questions/
+        # 25485886/how-to-convert-a-16-bit-to-an-8-bit-image-in-opencv
     
         # invert image
         uint16Image = 2**16 - uint16Image
     
         # convert to uint8
-        ratio = np.amax(uint16Image) / 256 ; 
+        ratio = np.amax(uint16Image) / 256
         uint8Image = (uint16Image / ratio).astype('uint8')
     
         rgbImage = np.zeros((2048,2048,3))
@@ -382,7 +389,34 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                                     astype('int32'))
         return watershedOutput
 
+    def _combine_watershed_z_positions(self, watershedOutput: np.ndarray)
+                                                                -> np.ndarray:
+        """
+        PSEUDECODE
 
+        initialize empty array the same size as the watershedOutput array
+
+        start loop from the section farthest from the coverslip (N)
+        
+        for each nuclei
+            get nuclei indexes in sections N - 1 and N + 1 (if applies)
+
+            if there is nuclei in the projection of N into N-1 and N+1
+                get the index of the overlaping nuclei in N+1
+                
+                find the most frequent non-zero index in N+1, 
+
+            
+            else if projection N -> N+1 has overlaping nuclei
+                get the indexes of nuclei in N+1
+                find the index in N+1, different from zero, that is most frequent
+
+
+        relabel_segmentation_stack
+        clean_segmentation_stack
+
+        """
+    """
     def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
                                      filterSigma: float) -> np.ndarray:
         filterSize = int(2*np.ceil(2*filterSigma)+1)
@@ -392,7 +426,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             warpTask.get_aligned_image(fov, channelIndex, z),
             (filterSize, filterSize), filterSigma)
             for z in range(len(self.dataSet.get_z_positions()))])
-        
+    """
+
 
 class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
     '''

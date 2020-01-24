@@ -234,7 +234,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                              low_threshold=0.5, high_threshold=0.8)
             edgeMask[:,:,z] = binary_closing(edgeMask[:,:,z],selem.disk(5))
             edgeMask[:,:,z] = remove_small_objects(
-                                edgeMask[:,:,z].astype('bool'), 
+                                edgeMask[:,:,z].astype('bool'),
                                 min_size=100, connectivity=1)
             edgeMask[:,:,z] = skeletonize(edgeMask[:,:,z])
         """
@@ -287,7 +287,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         # generate border mask, necessary to avoid making a single
         # connected component when using binary_fill_holes below
         borderMask = np.zeros((2048,2048))
-        borderMask[25:2023,25:2023] = 1 
+        borderMask[25:2023,25:2023] = 1
 
         # TODO - use the image size variable for borderMask
 
@@ -394,7 +394,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         z1NucleiIndexes = np.unique(watershedZ1[watershedZ0 == n0])
         z1NucleiIndexes = z1NucleiIndexes[z1NucleiIndexes>100]
  
-        if z1NucleiIndexes.shape[0] > 0: 
+        if z1NucleiIndexes.shape[0] > 0:
             
             # calculate overlap fraction        
             n0Area = np.count_nonzero(watershedZ0 == n0)
@@ -417,36 +417,38 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                                   index),
                                       reverse=True))
             
-            if n0OverlapFraction[indexSorted[0]] > 0.2 and 
+            if n0OverlapFraction[indexSorted[0]] > 0.2 and
                     n1OverlapFraction[indexSorted[0]] > 0.5:
-                return m1NucleiIndexes[indexSorted[0]], 
-                        n0OverlapFraction[indexSorted[0]], 
+                return m1NucleiIndexes[indexSorted[0]],
+                        n0OverlapFraction[indexSorted[0]],
                         n1OverlapFraction[indexSorted[0]]
             else:
-                return False, False, False    
+                return False, False, False
         else:
             return False, False, False
 
 
     def _combine_watershed_z_positions(self, watershedOutput: np.ndarray)
                                                                 -> np.ndarray:
-        
+        # TO DO: this implementation is very rough, needs to be improved. 
+        # good just for testing purposes
+
         # Initialize empty array with size as watershedOutput array
         watershedCombinedZ = np.zeros(watershedOutput.shape)
 
-        # copy the mask of the section farthest to the coverslip 
+        # copy the mask of the section farthest to the coverslip
         watershedCombinedZ[:,:,-1] = watershedOutput[:,:,-1]
 
         # starting far from coverslip
-        for z in range(len(self.dataSet.get_z_positions())-1,0,-1): 
+        for z in range(len(self.dataSet.get_z_positions())-1,0,-1):
             zNucleiIndex = np.unique(watershedOutput[:,:,z])[
                                         np.unique(watershedOutput[:,:,z])>100]
         
         for n0 in zNucleiIndex: # for each nuclei N(Z) in Z
             n1,f0,f1 = _get_overlapping_nuclei(watershedCombinedZ[:,:,z],
-                                                watershedOutput[:,:,z-1],n0) 
+                                                watershedOutput[:,:,z-1],n0)
             if n1:
-                watershedCombinedZ[:,:,z-1][watershedOutput[:,:,z-1] == n1] 
+                watershedCombinedZ[:,:,z-1][watershedOutput[:,:,z-1] == n1]
                                                                         = n0
         return watershedCombinedZ
 

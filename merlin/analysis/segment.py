@@ -383,51 +383,72 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         watershedOutput = np.zeros(watershedMarkers.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            rgbImage = convert_grayscale_to_rgb(dapiStack[:,:,z])
+            rgbImage = _convert_grayscale_to_rgb(dapiStack[:,:,z])
             watershedOutput[:,:,z] = cv2.watershed(rgbImage,
                                                     watershedMarkers[:,:,z].
                                                     astype('int32'))
         return watershedOutput
 
+    def _get_overlapping_nuclei(self,watershedZ0: np.ndarray, 
+                                    watershedZ1: np.ndarray, n0: int):
+        z1NucleiIndexes = np.unique(watershedZ1[watershedZ0 == n0])
+        z1NucleiIndexes = z1NucleiIndexes[z1NucleiIndexes>100]
+ 
+        if z1NucleiIndexes.shape[0] > 0: 
+            
+            # calculate overlap fraction        
+            n0Area = np.count_nonzero(watershedZ0 == n0)
+            n1Area = np.zeros(len(z1NucleiIndexes))
+            overlapArea = np.zeros(len(z1NucleiIndexes))
+            
+            for ii in range(len(z1NucleiIndexes)):
+                n1 = z1NucleiIndexes[ii]
+                n1Area[ii] = np.count_nonzero(watershedZ1 == n1)
+                overlapArea[ii] = np.count_nonzero((watershedZ0 == n0)
+                                                    *(watershedZ1 == n1))
+          
+            n0OverlapFraction = np.asarray(overlapArea/n0Area)
+            n1OverlapFraction = np.asarray(overlapArea/n1Area)
+            index = list(range(len(n0OverlapFraction)))
+            
+            # select the nuclei that has the highest fraction in n0 and n1
+            r1, r2, indexSorted = zip(*sorted(zip(n0OverlapFraction,
+                                                  n1OverlapFraction,
+                                                  index),
+                                      reverse=True))
+            
+            if n0OverlapFraction[indexSorted[0]] > 0.2 and 
+                    n1OverlapFraction[indexSorted[0]] > 0.5:
+                return m1NucleiIndexes[indexSorted[0]], 
+                        n0OverlapFraction[indexSorted[0]], 
+                        n1OverlapFraction[indexSorted[0]]
+            else:
+                return False, False, False    
+        else:
+            return False, False, False
+
+
     def _combine_watershed_z_positions(self, watershedOutput: np.ndarray)
                                                                 -> np.ndarray:
-        """
-        PSEUDECODE
-
-        initialize empty array the same size as the watershedOutput array
-
-        start loop from the section farthest from the coverslip (N)
         
-        for each nuclei
-            get nuclei indexes in sections N - 1 and N + 1 (if applies)
+        # Initialize empty array with size as watershedOutput array
+        watershedCombinedZ = np.zeros(watershedOutput.shape)
 
-            if there is nuclei in the projection of N into N-1 and N+1
-                get the index of the overlaping nuclei in N+1
-                
-                find the most frequent non-zero index in N+1, 
+        # copy the mask of the section farthest to the coverslip 
+        watershedCombinedZ[:,:,-1] = watershedOutput[:,:,-1]
 
-            
-            else if projection N -> N+1 has overlaping nuclei
-                get the indexes of nuclei in N+1
-                find the index in N+1, different from zero, that is most frequent
-
-
-        relabel_segmentation_stack
-        clean_segmentation_stack
-
-        """
-    """
-    def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
-                                     filterSigma: float) -> np.ndarray:
-        filterSize = int(2*np.ceil(2*filterSigma)+1)
-        warpTask = self.dataSet.load_analysis_task(
-            self.parameters['warp_task'])
-        return np.array([cv2.GaussianBlur(
-            warpTask.get_aligned_image(fov, channelIndex, z),
-            (filterSize, filterSize), filterSigma)
-            for z in range(len(self.dataSet.get_z_positions()))])
-    """
-
+        # starting far from coverslip
+        for z in range(len(self.dataSet.get_z_positions())-1,0,-1): 
+            zNucleiIndex = np.unique(watershedOutput[:,:,z])[
+                                        np.unique(watershedOutput[:,:,z])>100]
+        
+        for n0 in zNucleiIndex: # for each nuclei N(Z) in Z
+            n1,f0,f1 = _get_overlapping_nuclei(watershedCombinedZ[:,:,z],
+                                                watershedOutput[:,:,z-1],n0) 
+            if n1:
+                watershedCombinedZ[:,:,z-1][watershedOutput[:,:,z-1] == n1] 
+                                                                        = n0
+        return watershedCombinedZ
 
 class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
     '''

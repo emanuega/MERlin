@@ -137,7 +137,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
     The watershed segmentation is performed in each z-position
     independently and     combined into 3D objects in a later step
-    
+
     Since each field of view is analyzed individually, the segmentation
     results should be cleaned in order to merge cells that cross the
     field of view boundary.
@@ -181,12 +181,13 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         watershedIndex = self.dataSet.get_data_organization() \
             .get_data_channel_index(self.parameters['watershed_channel_name'])
-        
+
         # Prepare masks for cv2 watershed
         membraneMask = self._get_membrane_mask(fragmentIndex, watershedIndex)
         nucleiMask = self._get_nuclei_mask(fragmentIndex, watershedIndex)
-        watershedMarkers = self._get_watershed_markers(nucleiMask,membraneMask)
-        
+        watershedMarkers = self._get_watershed_markers(nucleiMask,
+                                                                membraneMask)
+
         # perform watershed in individual z positions
         watershedOutput = self._apply_watershed(fragmentIndex, watershedIndex,
                                                 watershedMarkers)

@@ -222,14 +222,14 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             mask[:, :, z] = (membraneImages[:, :, z] >
                              filters.threshold_local(membraneImages[:, :, z],
-                                             fineBlockSize,
-                                             offset=0))
+                                                     fineBlockSize,
+                                                     offset=0))
             mask[:, :, z] = morphology.remove_small_objects(
                                     membraneImages[:, :, z].astype('bool'),
                                     min_size=100,
                                     connectivity=1)
             mask[:, :, z] = morphology.binary_closing(membraneImages[:, :, z],
-                                           morphology.selem.disk(5))
+                                                      morphology.selem.disk(5))
             mask[:, :, z] = morphology.skeletonize(membraneImages[:, :, z])
 
         # combine masks
@@ -279,7 +279,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         coarseHessianMask = np.zeros(nucleiImages.shape)
         for z in range(len(self.dataSet.get_z_positions())):
             coarseHessian = filters.hessian(nucleiImages[:, :, z] -
-                                    morphology.white_tophat(
+                                            morphology.white_tophat(
                                                 nucleiImages[:, :, z],
                                                 morphology.selem.disk(20)))
             coarseHessianMask[:, :, z] = coarseHessian == coarseHessian.max()

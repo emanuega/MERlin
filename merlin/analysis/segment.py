@@ -277,7 +277,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             threshold_local(imageStack[:, :, z], coarseBlockSize, offset=0)
             fineThresholdingMask = imageStack[:, :, z] >
             threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
-            thresholdingMask[:, :, z] = coarseThresholdingMask * 
+            thresholdingMask[:, :, z] = coarseThresholdingMask *
             fineThresholdingMask
             thresholdingMask[:, :, z] = binary_fill_holes(
                                         thresholdingMask[:, :, z])
@@ -307,8 +307,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                     white_tophat(imageStack[:, :, z],
                                                  selem.disk(20)))
             coarseHessianMask[:, :, z] = coarseHessian == coarseHessian.max()
-            coarseHessianMask[:, :, z] = binary_closing(coarseHessianMask[:, :, z],
-                                                      selem.disk(5))
+            coarseHessianMask[:, :, z] = binary_closing(
+                coarseHessianMask[:, :, z], selem.disk(5))
             coarseHessianMask[:, :, z] = coarseHessianMask[:, :, z]*borderMask
             coarseHessianMask[:, :, z] = binary_fill_holes(
                                             coarseHessianMask[:, :, z])
@@ -326,10 +326,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             # generate areas of sure bg and fg, as well as the area of
             # unknown classification
             background = sm.dilation(nucleiMask[:, :, z], sm.selem.disk(15))
-            membraneDilated  = sm.dilation(membraneMask[:, :, z].astype('bool'),
-                                    sm.selem.disk(10))
+            membraneDilated = sm.dilation(membraneMask[:, :, z].astype('bool'),
+                sm.selem.disk(10))
             foreground = sm.erosion(nucleiMask[:, :, z]*~membraneDilated,
-                            sm.selem.disk(5))
+                sm.selem.disk(5))
             unknown = background*~foreground
 
             background = np.uint8(background)*255

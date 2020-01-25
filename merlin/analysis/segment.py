@@ -180,7 +180,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         nucleiIndex = self.dataSet.get_data_organization().
         get_data_channel_index(self.parameters['nuclei_channel_name'])
 
-        # read membrane (seed) and nuclei (watershed) images 
+        # read membrane (seed) and nuclei (watershed) images
         membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)
         nucleiImages = self._read_image_stack(fragmentIndex, nucleiIndex)
 
@@ -221,11 +221,11 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                              fineBlockSize,
                                              offset=0))
             mask[:, :, z] = remove_small_objects(membraneImages[:, :, z].
-                                                astype('bool'),
-                                                min_size=100,
-                                                connectivity=1)
+                                                 astype('bool'),
+                                                 min_size=100,
+                                                 connectivity=1)
             mask[:, :, z] = binary_closing(membraneImages[:, :, z],
-                                                      selem.disk(5))
+                                           selem.disk(5))
             mask[:, :, z] = skeletonize(membraneImages[:, :, z])
 
         # combine masks
@@ -288,10 +288,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
     def _get_watershed_markers(self, nucleiImages: np.ndarray,
                                membraneImages: np.ndarray) -> np.ndarray:
-        
+
         nucleiMask = self._get_nuclei_mask(nucleiImages)
         membraneMask = self._get_membrane_mask(membraneImages)
-        
+
         watershedMarker = np.zeros(nucleiMask.shape)
 
         for z in range(len(self.dataSet.get_z_positions())):
@@ -352,8 +352,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             watershedOutput[:, :, z] = cv2.watershed(rgbImage,
                                                      watershedMarkers[:, :, z].
                                                      astype('int32'))
-            watershedOutput[:, :, z][watershedOutput[:, :, z] <= 100] =  0
-    
+            watershedOutput[:, :, z][watershedOutput[:, :, z] <= 100] = 0
+
         return watershedOutput
 
     def _get_overlapping_nuclei(self, watershedZ0: np.ndarray,

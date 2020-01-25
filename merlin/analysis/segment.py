@@ -418,8 +418,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             if n0OverlapFraction[indexSorted[0]] > 0.2 and
             n1OverlapFraction[indexSorted[0]] > 0.5:
                 return m1NucleiIndexes[indexSorted[0]],
-                       n0OverlapFraction[indexSorted[0]],
-                       n1OverlapFraction[indexSorted[0]]
+                n0OverlapFraction[indexSorted[0]],
+                n1OverlapFraction[indexSorted[0]]
             else:
                 return False, False, False
         else:
@@ -427,7 +427,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
 
     def _combine_watershed_z_positions(self, watershedOutput: np.ndarray)
-                                                                -> np.ndarray:
+                                       -> np.ndarray:
         # TO DO: this implementation is very rough, needs to be improved.
         # good just for testing purposes
 

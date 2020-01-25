@@ -176,9 +176,11 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         # read membrane (seed) and nuclei (watershed) indexes
         membraneIndex = self.dataSet.get_data_organization().
-            get_data_channel_index(self.parameters['membrane_channel_name'])
+                        get_data_channel_index(
+                        self.parameters['m brane_channel_name'])
         nucleiIndex = self.dataSet.get_data_organization().
-            get_data_channel_index(self.parameters['nuclei_channel_name'])
+                      get_data_channel_index(
+                      self.parameters['nuclei_channel_name'])
         
         # read membrane (seed) and nuclei (watershed) images 
         membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)

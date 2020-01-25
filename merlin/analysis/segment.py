@@ -281,7 +281,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                                       offset=0))
             fineThresholdingMask = (imageStack[:, :, z] >
                                     threshold_local(imageStack[:, :, z],
-                                                    fineBlockSize, 
+                                                    fineBlockSize,
                                                     offset=0))
             thresholdingMask[:, :, z] = (coarseThresholdingMask *
                                          fineThresholdingMask)
@@ -315,7 +315,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             coarseHessianMask[:, :, z] = coarseHessian == coarseHessian.max()
             coarseHessianMask[:, :, z] = binary_closing(
                 coarseHessianMask[:, :, z], selem.disk(5))
-            coarseHessianMask[:, :, z] = (coarseHessianMask[:, :, z] * 
+            coarseHessianMask[:, :, z] = (coarseHessianMask[:, :, z] *
                                           borderMask)
             coarseHessianMask[:, :, z] = binary_fill_holes(
                                             coarseHessianMask[:, :, z])
@@ -335,9 +335,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             background = sm.dilation(nucleiMask[:, :, z], sm.selem.disk(15))
             membraneDilated = sm.dilation(membraneMask[:, :, z].astype('bool'),
                                           sm.selem.disk(10))
-            foreground = sm.erosion(nucleiMask[:, :, z] *~ membraneDilated,
+            foreground = sm.erosion(nucleiMask[:, :, z] * ~ membraneDilated,
                                     sm.selem.disk(5))
-            unknown = background *~ foreground
+            unknown = background * ~ foreground
 
             background = np.uint8(background) * 255
             foreground = np.uint8(foreground) * 255
@@ -433,7 +433,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             return False, False, False
 
     def _combine_watershed_z_positions(self,
-        watershedOutput: np.ndarray) -> np.ndarray:
+            watershedOutput: np.ndarray) -> np.ndarray:
+
         # TO DO: this implementation is very rough, needs to be improved.
         # good just for testing purposes
 
@@ -448,11 +449,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             zNucleiIndex = np.unique(watershedOutput[:, :, z])[
                                     np.unique(watershedOutput[:, :, z]) > 100]
 
-        for n0 in zNucleiIndex: # for each nuclei N(Z) in Z
-            n1,f0,f1 = _get_overlapping_nuclei(watershedCombinedZ[:, :, z],
-                                                watershedOutput[:, :, z-1], n0)
+        for n0 in zNucleiIndex:
+            n1, f0, f1 = _get_overlapping_nuclei(watershedCombinedZ[:, :, z],
+                                                 watershedOutput[:, :, z-1],
+                                                 n0)
             if n1:
-                watershedCombinedZ[:, :, z-1][(watershedOutput[:, :, z-1] == 
+                watershedCombinedZ[:, :, z-1][(watershedOutput[:, :, z-1] ==
                                                n1)] = n0
         return watershedCombinedZ
 

@@ -220,6 +220,16 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
 
+    def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
+                                     filterSigma: float) -> np.ndarray:
+        filterSize = int(2*np.ceil(2*filterSigma)+1)
+        warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+        return np.array([cv2.GaussianBlur(
+            warpTask.get_aligned_image(fov, channelIndex, z),
+            (filterSize, filterSize), filterSigma)
+            for z in range(len(self.dataSet.get_z_positions()))])
+
     def _get_membrane_mask(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])

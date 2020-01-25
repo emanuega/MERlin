@@ -266,7 +266,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         # generate nuclei mask from hessian, fine
         fineHessianMask = np.zeros(nucleiImages.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            fineHessian = hessian(nucleiImages[:, :, z])
+            fineHessian = filters.hessian(nucleiImages[:, :, z])
             fineHessianMask[:, :, z] = fineHessian == fineHessian.max()
             fineHessianMask[:, :, z] = morphology.binary_closing(
                                                     fineHessianMask[:, :, z],

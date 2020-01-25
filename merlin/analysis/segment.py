@@ -248,14 +248,11 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             tresholdingMask[:, :, z] = imageStack[:, :, z] >
             threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
-
             tresholdingMask[:, :, z] = remove_small_objects(
                 imageStack[:, :, z].astype('bool'), min_size=100,
                 connectivity=1)
-
             tresholdingMask[:, :, z] = binary_closing(imageStack[:, :, z],
                                                       selem.disk(5))
-
             tresholdingMask[:, :, z] = skeletonize(imageStack[:, :, z])
 
         # combine masks
@@ -276,15 +273,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         coarseBlockSize = 241
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseThresholdingMask = imageStack[:, :, z] > 
+            coarseThresholdingMask = imageStack[:, :, z] >
             threshold_local(imageStack[:, :, z], coarseBlockSize, offset=0)
-
-            fineThresholdingMask = imageStack[:, :, z] > 
+            fineThresholdingMask = imageStack[:, :, z] >
             threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
-
-            thresholdingMask[:, :, z] = coarseThresholdingMask*
-                                        fineThresholdingMask
-
+            thresholdingMask[:, :, z] = coarseThresholdingMask * 
+            fineThresholdingMask
             thresholdingMask[:, :, z] = binary_fill_holes(
                                         thresholdingMask[:, :, z])
 
@@ -301,9 +295,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             fineHessian = hessian(imageStack[:, :, z])
             fineHessianMask[:, :, z] = fineHessian == fineHessian.max()
             fineHessianMask[:, :, z] = binary_closing(fineHessianMask[:, :, z],
-                                                    selem.disk(5))
+                                                      selem.disk(5))
             fineHessianMask[:, :, z] = fineHessianMask[:, :, z]*borderMask
-            fineHessianMask[:, :, z] = binary_fill_holes(fineHessianMask[:, :, z])
+            fineHessianMask[:, :, z] = binary_fill_holes(
+                fineHessianMask[:, :, z])
 
         # generate dapi mask from hessian, coarse
         coarseHessianMask = np.zeros(imageStack.shape)

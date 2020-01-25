@@ -352,6 +352,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             watershedOutput[:, :, z] = cv2.watershed(rgbImage,
                                                      watershedMarkers[:, :, z].
                                                      astype('int32'))
+            watershedOutput[:, :, z][watershedOutput[:, :, z] <= 100] =  0
+    
         return watershedOutput
 
     def _get_overlapping_nuclei(self, watershedZ0: np.ndarray,

@@ -425,9 +425,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         else:
             return False, False, False
 
-
     def _combine_watershed_z_positions(self, watershedOutput: np.ndarray)
-                                       -> np.ndarray:
+            -> np.ndarray:
         # TO DO: this implementation is very rough, needs to be improved.
         # good just for testing purposes
 

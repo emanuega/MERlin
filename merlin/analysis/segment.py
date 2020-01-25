@@ -275,10 +275,14 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         coarseBlockSize = 241
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseThresholdingMask = imageStack[:, :, z] >
-            threshold_local(imageStack[:, :, z], coarseBlockSize, offset=0)
-            fineThresholdingMask = imageStack[:, :, z] >
-            threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
+            coarseThresholdingMask = (imageStack[:, :, z] >
+                                      threshold_local(imageStack[:, :, z],
+                                                      coarseBlockSize,
+                                                      offset=0))
+            fineThresholdingMask = (imageStack[:, :, z] >
+                                    threshold_local(imageStack[:, :, z],
+                                                    fineBlockSize, 
+                                                    offset=0))
             thresholdingMask[:, :, z] = coarseThresholdingMask *
             fineThresholdingMask
             thresholdingMask[:, :, z] = binary_fill_holes(
@@ -407,8 +411,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                 overlapArea[ii] = np.count_nonzero((watershedZ0 == n0) *
                                                    (watershedZ1 == n1))
 
-            n0OverlapFraction = np.asarray(overlapArea/n0Area)
-            n1OverlapFraction = np.asarray(overlapArea/n1Area)
+            n0OverlapFraction = np.asarray(overlapArea / n0Area)
+            n1OverlapFraction = np.asarray(overlapArea / n1Area)
             index = list(range(len(n0OverlapFraction)))
 
             # select the nuclei that has the highest fraction in n0 and n1

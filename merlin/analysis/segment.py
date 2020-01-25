@@ -309,7 +309,6 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         featureDB.write_features(featureList, fragmentIndex)
 
     def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
-
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
         return np.array([warpTask.get_aligned_image(fov, channelIndex, z)

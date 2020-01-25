@@ -246,8 +246,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         tresholdingMask = np.zeros(imageStack.shape)
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            tresholdingMask[:, :, z] = imageStack[:, :, z] >
-            threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
+            tresholdingMask[:, :, z] = (imageStack[:, :, z] >
+                                        threshold_local(imageStack[:, :, z],
+                                                        fineBlockSize,
+                                                        offset=0))
             tresholdingMask[:, :, z] = remove_small_objects(
                 imageStack[:, :, z].astype('bool'), min_size=100,
                 connectivity=1)
@@ -425,9 +427,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         else:
             return False, False, False
 
-    def _combine_watershed_z_positions(self, 
-                                       watershedOutput: np.ndarray)
-                                       -> np.ndarray:
+    def _combine_watershed_z_positions(self, watershedOutput: np.ndarray)
+        -> np.ndarray:
         # TO DO: this implementation is very rough, needs to be improved.
         # good just for testing purposes
 
@@ -440,11 +441,11 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         # starting far from coverslip
         for z in range(len(self.dataSet.get_z_positions())-1, 0, -1):
             zNucleiIndex = np.unique(watershedOutput[:, :, z])[
-                                    np.unique(watershedOutput[:, :, z])>100]
+                                    np.unique(watershedOutput[:, :, z]) > 100]
 
         for n0 in zNucleiIndex: # for each nuclei N(Z) in Z
             n1,f0,f1 = _get_overlapping_nuclei(watershedCombinedZ[:, :, z],
-                                                watershedOutput[:, :, z-1],n0)
+                                                watershedOutput[:, :, z-1], n0)
             if n1:
                 watershedCombinedZ[:, :, z-1][watershedOutput[:, :, z-1] == n1]
                                                                         = n0

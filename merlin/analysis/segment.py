@@ -226,7 +226,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
                                for z in range(len(self.dataSet.
-                                                    get_z_positions()))])
+                                                  get_z_positions()))])
         # generate mask based on edge detection
         """
         edgeMask = np.zeros(imageStack.shape)
@@ -247,7 +247,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
             tresholdingMask[:, :, z] = imageStack[:, :, z] >
-                threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
+                                       threshold_local(imageStack[:, :, z],
+                                                       fineBlockSize,
+                                                       offset=0)
             tresholdingMask[:, :, z] = remove_small_objects(
                 imageStack[:, :, z].astype('bool'), min_size=100, 
                 connectivity=1)

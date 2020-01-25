@@ -452,8 +452,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             n1,f0,f1 = _get_overlapping_nuclei(watershedCombinedZ[:, :, z],
                                                 watershedOutput[:, :, z-1], n0)
             if n1:
-                watershedCombinedZ[:, :, z-1][watershedOutput[:, :, z-1] == n1]
-                                                                        = n0
+                watershedCombinedZ[:, :, z-1][(watershedOutput[:, :, z-1] == 
+                                               n1)] = n0
         return watershedCombinedZ
 
 class CleanCellBoundaries(analysistask.ParallelAnalysisTask):

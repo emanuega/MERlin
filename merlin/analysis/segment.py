@@ -186,7 +186,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         membraneMask = self._get_membrane_mask(fragmentIndex, watershedIndex)
         nucleiMask = self._get_nuclei_mask(fragmentIndex, watershedIndex)
         watershedMarkers = self._get_watershed_markers(nucleiMask,
-                                                                membraneMask)
+                                                       membraneMask)
 
         # perform watershed in individual z positions
         watershedOutput = self._apply_watershed(fragmentIndex, watershedIndex,

@@ -247,14 +247,14 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
             tresholdingMask[:, :, z] = imageStack[:, :, z] >
-                                        threshold_local(imageStack[:, :, z],
-                                                        fineBlockSize,
-                                                        offset=0)
+                threshold_local(imageStack[:, :, z],
+                                fineBlockSize,
+                                offset=0)
             tresholdingMask[:, :, z] = remove_small_objects(
-                imageStack[:, :, z].astype('bool'), min_size=100, 
+                imageStack[:, :, z].astype('bool'), min_size=100,
                 connectivity=1)
             tresholdingMask[:, :, z] = binary_closing(imageStack[:, :, z],
-                selem.disk(5))
+                                                      selem.disk(5))
             tresholdingMask[:, :, z] = skeletonize(imageStack[:, :, z])
 
         # combine masks
@@ -267,7 +267,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             self.parameters['warp_task'])
 
         imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
-            for z in range(len(self.dataSet.get_z_positions()))])
+                               for z in range(len(self.dataSet.
+                                                  get_z_positions()))])
 
         # generate nuclei mask based on thresholding
         thresholdingMask = np.zeros(imageStack.shape)

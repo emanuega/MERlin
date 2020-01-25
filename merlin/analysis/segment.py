@@ -146,10 +146,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        if 'seed_channel_name' not in self.parameters:
-            self.parameters['seed_channel_name'] = 'WGA'
-        if 'watershed_channel_name' not in self.parameters:
-            self.parameters['watershed_channel_name'] = 'DAPI'
+        if 'membrane_channel_name' not in self.parameters:
+            self.parameters['membrane_channel_name'] = 'ConA'
+        if 'nuclei_channel_name' not in self.parameters:
+            self.parameters['nucleichannel_name'] = 'DAPI'
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -174,123 +174,75 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
 
-        seedIndex = self.dataSet.get_data_organization().get_data_channel_index(
-            self.parameters['seed_channel_name'])
-        seedImages = self._read_and_filter_image_stack(fragmentIndex,
-                                                       seedIndex, 5)
-
-        watershedIndex = self.dataSet.get_data_organization() \
-            .get_data_channel_index(self.parameters['watershed_channel_name'])
+        # read membrane (seed) and nuclei (watershed) indexes
+        membraneIndex = self.dataSet.get_data_organization().
+            get_data_channel_index(self.parameters['membrane_channel_name'])
+        nucleiIndex = self.dataSet.get_data_organization().
+            get_data_channel_index(self.parameters['nuclei_channel_name'])
+        
+        # read membrane (seed) and nuclei (watershed) images 
+        membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)
+        nucleiImages = self._read_image_stack(fragmentIndex, nucleiIndex)
 
         # Prepare masks for cv2 watershed
-        membraneMask = self._get_membrane_mask(fragmentIndex, watershedIndex)
-        nucleiMask = self._get_nuclei_mask(fragmentIndex, watershedIndex)
-        watershedMarkers = self._get_watershed_markers(nucleiMask,
-                                                       membraneMask)
+        watershedMarkers = self._get_watershed_markers(nucleiImages,
+                                                       membraneImages)
 
         # perform watershed in individual z positions
-        watershedOutput = self._apply_watershed(fragmentIndex, watershedIndex,
+        watershedOutput = self._apply_watershed(nucleiImages,
                                                 watershedMarkers)
 
         # combine all z positions in watershed
         watershedCombinedOutput = self._combine_watershed_z_positions(
                                                 watershedOutput)
 
-        """
-        watershedImages = self._read_and_filter_image_stack(fragmentIndex,
-                                                            watershedIndex, 5)
-        seeds = watershed.separate_merged_seeds(
-            watershed.extract_seeds(seedImages))
-        normalizedWatershed, watershedMask =
-        watershed.prepare_watershed_images(
-            watershedImages)
-
-        seeds[np.invert(watershedMask)] = 0
-        watershedOutput = segmentation.watershed(
-            normalizedWatershed, measure.label(seeds), mask=watershedMask,
-            connectivity=np.ones((3, 3, 3)), watershed_line=True)
-        """
-
         zPos = np.array(self.dataSet.get_data_organization().get_z_positions())
         featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
-            (watershedOutput == i), fragmentIndex,
+            (watershedCombinedOutput == i), fragmentIndex,
             globalTask.fov_to_global_transform(fragmentIndex), zPos)
             for i in np.unique(watershedOutput) if i != 0]
 
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
 
-    def _read_and_filter_image_stack(self, fov: int, channelIndex: int,
-                                     filterSigma: float) -> np.ndarray:
-        filterSize = int(2*np.ceil(2*filterSigma)+1)
+    def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
-        return np.array([cv2.GaussianBlur(
-            warpTask.get_aligned_image(fov, channelIndex, z),
-            (filterSize, filterSize), filterSigma)
-            for z in range(len(self.dataSet.get_z_positions()))])
+        return np.array([warpTask.get_aligned_image(fov, channelIndex, z)
+                         for z in range(len(self.dataSet.get_z_positions()))])
 
-    def _get_membrane_mask(self, fov: int, channelIndex: int) -> np.ndarray:
-        warpTask = self.dataSet.load_analysis_task(
-            self.parameters['warp_task'])
-
-        imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
-                               for z in range(len(self.dataSet.
-                                                  get_z_positions()))])
-        # generate mask based on edge detection
-        """
-        edgeMask = np.zeros(imageStack.shape)
-        for z in range(len(self.dataSet.get_z_positions())):
-            edgeMask[:, :, z] = canny(
-                white_tophat(imageStack[:, :, z], selem.disk(10)),
-                             sigma=2, use_quantiles=True,
-                             low_threshold=0.5, high_threshold=0.8)
-            edgeMask[:, :, z] = binary_closing(edgeMask[:, :, z],selem.disk(5))
-            edgeMask[:, :, z] = remove_small_objects(
-                                edgeMask[:, :, z].astype('bool'),
-                                min_size=100, connectivity=1)
-            edgeMask[:, :, z] = skeletonize(edgeMask[:, :, z])
-        """
-
+    def _get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
         # generate mask based on thresholding
-        tresholdingMask = np.zeros(imageStack.shape)
+        mask = np.zeros(membraneImages.shape)
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            tresholdingMask[:, :, z] = (imageStack[:, :, z] >
-                                        threshold_local(imageStack[:, :, z],
-                                                        fineBlockSize,
-                                                        offset=0))
-            tresholdingMask[:, :, z] = remove_small_objects(
-                imageStack[:, :, z].astype('bool'), min_size=100,
-                connectivity=1)
-            tresholdingMask[:, :, z] = binary_closing(imageStack[:, :, z],
+            mask[:, :, z] = (membraneImages[:, :, z] >
+                             threshold_local(membraneImages[:, :, z],
+                                             fineBlockSize,
+                                             offset=0))
+            mask[:, :, z] = remove_small_objects(membraneImages[:, :, z].
+                                                astype('bool'),
+                                                min_size=100,
+                                                connectivity=1)
+            mask[:, :, z] = binary_closing(membraneImages[:, :, z],
                                                       selem.disk(5))
-            tresholdingMask[:, :, z] = skeletonize(imageStack[:, :, z])
+            mask[:, :, z] = skeletonize(membraneImages[:, :, z])
 
         # combine masks
-        # return edgeMask + thresholdingMask
-        return thresholdingMask
+        return mask
 
-    def _get_nuclei_mask(self, fov: int, channelIndex: int) -> np.ndarray:
-
-        warpTask = self.dataSet.load_analysis_task(
-            self.parameters['warp_task'])
-
-        imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
-                               for z in range(len(self.dataSet.
-                                                  get_z_positions()))])
-
+    def _get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
         # generate nuclei mask based on thresholding
-        thresholdingMask = np.zeros(imageStack.shape)
+        thresholdingMask = np.zeros(nucleiImages.shape)
         coarseBlockSize = 241
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseThresholdingMask = (imageStack[:, :, z] >
-                                      threshold_local(imageStack[:, :, z],
+            coarseThresholdingMask = (nucleiImages[:, :, z] >
+                                      threshold_local(nucleiImages[:, :, z],
                                                       coarseBlockSize,
                                                       offset=0))
-            fineThresholdingMask = (imageStack[:, :, z] >
-                                    threshold_local(imageStack[:, :, z],
+            fineThresholdingMask = (nucleiImages[:, :, z] >
+                                    threshold_local(nucleiImages[:, :, z],
                                                     fineBlockSize,
                                                     offset=0))
             thresholdingMask[:, :, z] = (coarseThresholdingMask *
@@ -306,21 +258,21 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         # TODO - use the image size variable for borderMask
 
         # generate nuclei mask from hessian, fine
-        fineHessianMask = np.zeros(imageStack.shape)
+        fineHessianMask = np.zeros(nucleiImages.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            fineHessian = hessian(imageStack[:, :, z])
+            fineHessian = hessian(nucleiImages[:, :, z])
             fineHessianMask[:, :, z] = fineHessian == fineHessian.max()
             fineHessianMask[:, :, z] = binary_closing(fineHessianMask[:, :, z],
                                                       selem.disk(5))
             fineHessianMask[:, :, z] = fineHessianMask[:, :, z] * borderMask
             fineHessianMask[:, :, z] = binary_fill_holes(
-                fineHessianMask[:, :, z])
+                                        fineHessianMask[:, :, z])
 
         # generate dapi mask from hessian, coarse
-        coarseHessianMask = np.zeros(imageStack.shape)
+        coarseHessianMask = np.zeros(nucleiImages.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseHessian = hessian(imageStack[:, :, z] -
-                                    white_tophat(imageStack[:, :, z],
+            coarseHessian = hessian(nucleiImages[:, :, z] -
+                                    white_tophat(nucleiImages[:, :, z],
                                                  selem.disk(20)))
             coarseHessianMask[:, :, z] = coarseHessian == coarseHessian.max()
             coarseHessianMask[:, :, z] = binary_closing(
@@ -334,8 +286,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask
         return binary_fill_holes(nucleiMask)
 
-    def _get_watershed_markers(self, nucleiMask: np.ndarray,
-                               membraneMask: np.ndarray) -> np.ndarray:
+    def _get_watershed_markers(self, nucleiImages: np.ndarray,
+                               membraneImages: np.ndarray) -> np.ndarray:
+        
+        nucleiMask = self._get_nuclei_mask(nucleiImages)
+        membraneMask = self._get_membrane_mask(membraneImages)
+        
         watershedMarker = np.zeros(nucleiMask.shape)
 
         for z in range(len(self.dataSet.get_z_positions())):
@@ -387,18 +343,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         return rgbImage
 
-    def _apply_watershed(self, fov: int, channelIndex: int,
+    def _apply_watershed(self, nucleiImages: np.ndarray,
                          watershedMarkers: np.ndarray) -> np.ndarray:
-        warpTask = self.dataSet.load_analysis_task(
-            self.parameters['warp_task'])
-
-        imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
-                               for z in range(len(self.dataSet.
-                                                  get_z_positions()))])
 
         watershedOutput = np.zeros(watershedMarkers.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            rgbImage = _convert_grayscale_to_rgb(dapiStack[:, :, z])
+            rgbImage = _convert_grayscale_to_rgb(nucleiImages[:, :, z])
             watershedOutput[:, :, z] = cv2.watershed(rgbImage,
                                                      watershedMarkers[:, :, z].
                                                      astype('int32'))

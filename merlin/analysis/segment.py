@@ -318,7 +318,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         return binary_fill_holes(nucleiMask)
 
     def _get_watershed_markers(self, nucleiMask: np.ndarray,
-        membraneMask: np.ndarray) -> np.ndarray:
+            membraneMask: np.ndarray) -> np.ndarray:
         watershedMarker = np.zeros(nucleiMask.shape)
 
         for z in range(len(self.dataSet.get_z_positions())):
@@ -371,7 +371,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         return rgbImage
 
     def _apply_watershed(self, fov: int, channelIndex: int,
-        watershedMarkers: np.ndarray) -> np.ndarray:
+            watershedMarkers: np.ndarray) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
 
@@ -383,18 +383,18 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         for z in range(len(self.dataSet.get_z_positions())):
             rgbImage = _convert_grayscale_to_rgb(dapiStack[:, :, z])
             watershedOutput[:, :, z] = cv2.watershed(rgbImage,
-                                                    watershedMarkers[:, :, z].
-                                                    astype('int32'))
+                                                     watershedMarkers[:, :, z].
+                                                     astype('int32'))
         return watershedOutput
 
-    def _get_overlapping_nuclei(self,watershedZ0: np.ndarray, 
-                                    watershedZ1: np.ndarray, n0: int):
+    def _get_overlapping_nuclei(self,watershedZ0: np.ndarray,
+            watershedZ1: np.ndarray, n0: int):
         z1NucleiIndexes = np.unique(watershedZ1[watershedZ0 == n0])
-        z1NucleiIndexes = z1NucleiIndexes[z1NucleiIndexes>100]
+        z1NucleiIndexes = z1NucleiIndexes[z1NucleiIndexes > 100]
 
         if z1NucleiIndexes.shape[0] > 0:
 
-            # calculate overlap fraction        
+            # calculate overlap fraction
             n0Area = np.count_nonzero(watershedZ0 == n0)
             n1Area = np.zeros(len(z1NucleiIndexes))
             overlapArea = np.zeros(len(z1NucleiIndexes))
@@ -402,8 +402,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             for ii in range(len(z1NucleiIndexes)):
                 n1 = z1NucleiIndexes[ii]
                 n1Area[ii] = np.count_nonzero(watershedZ1 == n1)
-                overlapArea[ii] = np.count_nonzero((watershedZ0 == n0)
-                                                    *(watershedZ1 == n1))
+                overlapArea[ii] = np.count_nonzero((watershedZ0 == n0) * 
+                                                   (watershedZ1 == n1))
 
             n0OverlapFraction = np.asarray(overlapArea/n0Area)
             n1OverlapFraction = np.asarray(overlapArea/n1Area)
@@ -415,11 +415,11 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                                   index),
                                       reverse=True))
 
-            if n0OverlapFraction[indexSorted[0]] > 0.2 and
+            if n0OverlapFraction[indexSorted[0]] > 0.2 and 
                     n1OverlapFraction[indexSorted[0]] > 0.5:
                 return m1NucleiIndexes[indexSorted[0]],
-                        n0OverlapFraction[indexSorted[0]],
-                        n1OverlapFraction[indexSorted[0]]
+                       n0OverlapFraction[indexSorted[0]],
+                       n1OverlapFraction[indexSorted[0]]
             else:
                 return False, False, False
         else:

@@ -225,8 +225,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             self.parameters['warp_task'])
 
         imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
-            for z in range(len(self.dataSet.get_z_positions()))])
-
+                                for z in range(len(self.dataSet.
+                                                    get_z_positions()))])
         # generate mask based on edge detection
         """
         edgeMask = np.zeros(imageStack.shape)

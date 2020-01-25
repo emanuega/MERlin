@@ -247,14 +247,15 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
             tresholdingMask[:, :, z] = imageStack[:, :, z] >
-                threshold_local(imageStack[:, :, z],
-                                fineBlockSize,
-                                offset=0)
+            threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
+            
             tresholdingMask[:, :, z] = remove_small_objects(
                 imageStack[:, :, z].astype('bool'), min_size=100,
                 connectivity=1)
+            
             tresholdingMask[:, :, z] = binary_closing(imageStack[:, :, z],
-                                                      selem.disk(5))
+                selem.disk(5))
+            
             tresholdingMask[:, :, z] = skeletonize(imageStack[:, :, z])
 
         # combine masks
@@ -290,8 +291,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         # generate border mask, necessary to avoid making a single
         # connected component when using binary_fill_holes below
-        borderMask = np.zeros((2048,2048))
-        borderMask[25:2023,25:2023] = 1
+        borderMask = np.zeros((2048, 2048))
+        borderMask[25:2023, 25:2023] = 1
 
         # TODO - use the image size variable for borderMask
 
@@ -330,7 +331,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
             # generate areas of sure bg and fg, as well as the area of
             # unknown classification
-            background = sm.dilation(nucleiMask[:, :, z],sm.selem.disk(15))
+            background = sm.dilation(nucleiMask[:, :, z], sm.selem.disk(15))
             membraneDilated  = sm.dilation(membraneMask[:, :, z].astype('bool'),
                                     sm.selem.disk(10))
             foreground = sm.erosion(nucleiMask[:, :, z]*~membraneDilated,
@@ -367,7 +368,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         ratio = np.amax(uint16Image) / 256
         uint8Image = (uint16Image / ratio).astype('uint8')
 
-        rgbImage = np.zeros((2048,2048,3))
+        rgbImage = np.zeros((2048, 2048, 3))
         rgbImage[:, :, 0] = uint8Image
         rgbImage[:, :, 1] = uint8Image
         rgbImage[:, :, 2] = uint8Image

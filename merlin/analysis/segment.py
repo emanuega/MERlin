@@ -422,8 +422,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                                   index),
                                       reverse=True))
 
-            if n0OverlapFraction[indexSorted[0]] > 0.2 and
-            n1OverlapFraction[indexSorted[0]] > 0.5:
+            if (n0OverlapFraction[indexSorted[0]] > 0.2 and
+                    n1OverlapFraction[indexSorted[0]] > 0.5):
                 return m1NucleiIndexes[indexSorted[0]],
                 n0OverlapFraction[indexSorted[0]],
                 n1OverlapFraction[indexSorted[0]]

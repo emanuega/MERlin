@@ -283,8 +283,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                     threshold_local(imageStack[:, :, z],
                                                     fineBlockSize, 
                                                     offset=0))
-            thresholdingMask[:, :, z] = coarseThresholdingMask *
-            fineThresholdingMask
+            thresholdingMask[:, :, z] = (coarseThresholdingMask *
+                                         fineThresholdingMask)
             thresholdingMask[:, :, z] = binary_fill_holes(
                                         thresholdingMask[:, :, z])
 
@@ -302,7 +302,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             fineHessianMask[:, :, z] = fineHessian == fineHessian.max()
             fineHessianMask[:, :, z] = binary_closing(fineHessianMask[:, :, z],
                                                       selem.disk(5))
-            fineHessianMask[:, :, z] = fineHessianMask[:, :, z]*borderMask
+            fineHessianMask[:, :, z] = fineHessianMask[:, :, z] * borderMask
             fineHessianMask[:, :, z] = binary_fill_holes(
                 fineHessianMask[:, :, z])
 
@@ -315,7 +315,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             coarseHessianMask[:, :, z] = coarseHessian == coarseHessian.max()
             coarseHessianMask[:, :, z] = binary_closing(
                 coarseHessianMask[:, :, z], selem.disk(5))
-            coarseHessianMask[:, :, z] = coarseHessianMask[:, :, z]*borderMask
+            coarseHessianMask[:, :, z] = (coarseHessianMask[:, :, z] * 
+                                          borderMask)
             coarseHessianMask[:, :, z] = binary_fill_holes(
                                             coarseHessianMask[:, :, z])
 
@@ -334,19 +335,19 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             background = sm.dilation(nucleiMask[:, :, z], sm.selem.disk(15))
             membraneDilated = sm.dilation(membraneMask[:, :, z].astype('bool'),
                                           sm.selem.disk(10))
-            foreground = sm.erosion(nucleiMask[:, :, z]*~membraneDilated,
+            foreground = sm.erosion(nucleiMask[:, :, z] *~ membraneDilated,
                                     sm.selem.disk(5))
-            unknown = background*~foreground
+            unknown = background *~ foreground
 
-            background = np.uint8(background)*255
-            foreground = np.uint8(foreground)*255
-            unknown = np.uint8(unknown)*255
+            background = np.uint8(background) * 255
+            foreground = np.uint8(foreground) * 255
+            unknown = np.uint8(unknown) * 255
 
             # Marker labelling
             ret, markers = cv2.connectedComponents(foreground)
 
             # Add one to all labels so that sure background is not 0, but 1
-            markers = markers+100
+            markers = markers + 100
 
             # Now, mark the region of unknown with zero
             markers[unknown == 255] = 0

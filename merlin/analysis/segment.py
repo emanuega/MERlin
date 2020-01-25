@@ -239,8 +239,121 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
     TODO: implement unets / Ilastik
     """
 
+<<<<<<< HEAD
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
+=======
+        imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
+                               for z in range(len(self.dataSet.
+                                                  get_z_positions()))])
+
+        # generate nuclei mask based on thresholding
+        thresholdingMask = np.zeros(imageStack.shape)
+        coarseBlockSize = 241
+        fineBlockSize = 61
+        for z in range(len(self.dataSet.get_z_positions())):
+            coarseThresholdingMask = imageStack[:, :, z] >
+            threshold_local(imageStack[:, :, z], coarseBlockSize, offset=0)
+            fineThresholdingMask = imageStack[:, :, z] >
+            threshold_local(imageStack[:, :, z], fineBlockSize, offset=0)
+            thresholdingMask[:, :, z] = coarseThresholdingMask *
+            fineThresholdingMask
+            thresholdingMask[:, :, z] = binary_fill_holes(
+                                        thresholdingMask[:, :, z])
+
+        # generate border mask, necessary to avoid making a single
+        # connected component when using binary_fill_holes below
+        borderMask = np.zeros((2048, 2048))
+        borderMask[25:2023, 25:2023] = 1
+
+        # TODO - use the image size variable for borderMask
+
+        # generate nuclei mask from hessian, fine
+        fineHessianMask = np.zeros(imageStack.shape)
+        for z in range(len(self.dataSet.get_z_positions())):
+            fineHessian = hessian(imageStack[:, :, z])
+            fineHessianMask[:, :, z] = fineHessian == fineHessian.max()
+            fineHessianMask[:, :, z] = binary_closing(fineHessianMask[:, :, z],
+                                                      selem.disk(5))
+            fineHessianMask[:, :, z] = fineHessianMask[:, :, z]*borderMask
+            fineHessianMask[:, :, z] = binary_fill_holes(
+                fineHessianMask[:, :, z])
+
+        # generate dapi mask from hessian, coarse
+        coarseHessianMask = np.zeros(imageStack.shape)
+        for z in range(len(self.dataSet.get_z_positions())):
+            coarseHessian = hessian(imageStack[:, :, z] -
+                                    white_tophat(imageStack[:, :, z],
+                                                 selem.disk(20)))
+            coarseHessianMask[:, :, z] = coarseHessian == coarseHessian.max()
+            coarseHessianMask[:, :, z] = binary_closing(
+                coarseHessianMask[:, :, z], selem.disk(5))
+            coarseHessianMask[:, :, z] = coarseHessianMask[:, :, z]*borderMask
+            coarseHessianMask[:, :, z] = binary_fill_holes(
+                                            coarseHessianMask[:, :, z])
+
+        # combine masks
+        nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask
+        return binary_fill_holes(nucleiMask)
+
+    def _get_watershed_markers(self, nucleiMask: np.ndarray,
+                                membraneMask: np.ndarray) -> np.ndarray:
+        watershedMarker = np.zeros(nucleiMask.shape)
+
+        for z in range(len(self.dataSet.get_z_positions())):
+
+            # generate areas of sure bg and fg, as well as the area of
+            # unknown classification
+            background = sm.dilation(nucleiMask[:, :, z], sm.selem.disk(15))
+            membraneDilated = sm.dilation(membraneMask[:, :, z].astype('bool'),
+                sm.selem.disk(10))
+            foreground = sm.erosion(nucleiMask[:, :, z]*~membraneDilated,
+                sm.selem.disk(5))
+            unknown = background*~foreground
+
+            background = np.uint8(background)*255
+            foreground = np.uint8(foreground)*255
+            unknown    = np.uint8(unknown)*255
+
+            # Marker labelling
+            ret, markers = cv2.connectedComponents(foreground)
+
+            # Add one to all labels so that sure background is not 0, but 1
+            markers = markers+100
+
+            # Now, mark the region of unknown with zero
+            markers[unknown==255] = 0
+
+            watershedMarker[:, :, z] = markers
+
+        return watershedMarker
+
+    def _convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
+        # cv2 only works in 3D images of 8bit. Make a 3D grayscale by
+        # using the same grayscale image in each of the rgb channels
+        # code below based on https://stackoverflow.com/questions/
+        # 25485886/how-to-convert-a-16-bit-to-an-8-bit-image-in-opencv
+
+        # invert image
+        uint16Image = 2**16 - uint16Image
+
+        # convert to uint8
+        ratio = np.amax(uint16Image) / 256
+        uint8Image = (uint16Image / ratio).astype('uint8')
+
+        rgbImage = np.zeros((2048, 2048, 3))
+        rgbImage[:, :, 0] = uint8Image
+        rgbImage[:, :, 1] = uint8Image
+        rgbImage[:, :, 2] = uint8Image
+        rgbImage = rgbImage.astype('uint8')
+
+        return rgbImage
+
+    def _apply_watershed(self, fov: int, channelIndex: int,
+                                watershedMarkers: np.ndarray) -> np.ndarray:
+         warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+>>>>>>> pep8 compliance
 
         if 'method' not in self.parameters:
             self.parameters['method'] = 'cellpose'

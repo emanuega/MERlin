@@ -226,36 +226,36 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
             for z in range(len(self.dataSet.get_z_positions()))])
-        
+
         # generate mask based on edge detection
         """
         edgeMask = np.zeros(imageStack.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            edgeMask[:,:,z] = canny(
-                white_tophat(imageStack[:,:,z], selem.disk(10)),
+            edgeMask[:, :, z] = canny(
+                white_tophat(imageStack[:, :, z], selem.disk(10)),
                              sigma=2, use_quantiles=True,
                              low_threshold=0.5, high_threshold=0.8)
-            edgeMask[:,:,z] = binary_closing(edgeMask[:,:,z],selem.disk(5))
-            edgeMask[:,:,z] = remove_small_objects(
-                                edgeMask[:,:,z].astype('bool'),
+            edgeMask[:, :, z] = binary_closing(edgeMask[:, :, z],selem.disk(5))
+            edgeMask[:, :, z] = remove_small_objects(
+                                edgeMask[:, :, z].astype('bool'),
                                 min_size=100, connectivity=1)
-            edgeMask[:,:,z] = skeletonize(edgeMask[:,:,z])
+            edgeMask[:, :, z] = skeletonize(edgeMask[:, :, z])
         """
 
         # generate mask based on thresholding
         tresholdingMask = np.zeros(imageStack.shape)
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            tresholdingMask[:,:,z] = imageStack[:,:,z] >
-                                        threshold_local(imageStack[:,:,z],
+            tresholdingMask[:, :, z] = imageStack[:, :, z] >
+                                        threshold_local(imageStack[:, :, z],
                                                         fineBlockSize,
                                                         offset=0)
-            tresholdingMask[:,:,z] = remove_small_objects(
-                                            imageStack[:,:,z].astype('bool'),
+            tresholdingMask[:, :, z] = remove_small_objects(
+                                            imageStack[:, :, z].astype('bool'),
                                             min_size=100, connectivity=1)
-            tresholdingMask[:,:,z] = binary_closing(imageStack[:,:,z],
+            tresholdingMask[:, :, z] = binary_closing(imageStack[:, :, z],
                                                     selem.disk(5))
-            tresholdingMask[:,:,z] = skeletonize(imageStack[:,:,z])
+            tresholdingMask[:, :, z] = skeletonize(imageStack[:, :, z])
 
         # combine masks
         # return edgeMask + thresholdingMask
@@ -274,18 +274,18 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         coarseBlockSize = 241
         fineBlockSize = 61
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseThresholdingMask = imageStack[:,:,z]
-                                        >threshold_local(imageStack[:,:,z],
+            coarseThresholdingMask = imageStack[:, :, z]
+                                        >threshold_local(imageStack[:, :, z],
                                                         coarseBlockSize,
                                                         offset=0)
-            fineThresholdingMask = imageStack[:,:,z]
-                                        > threshold_local(imageStack[:,:,z],
+            fineThresholdingMask = imageStack[:, :, z]
+                                        > threshold_local(imageStack[:, :, z],
                                                         fineBlockSize,
                                                         offset=0)
-            thresholdingMask[:,:,z] = coarseThresholdingMask*
+            thresholdingMask[:, :, z] = coarseThresholdingMask*
                                         fineThresholdingMask
-            thresholdingMask[:,:,z] = binary_fill_holes(
-                                        thresholdingMask[:,:,z])
+            thresholdingMask[:, :, z] = binary_fill_holes(
+                                        thresholdingMask[:, :, z])
 
         # generate border mask, necessary to avoid making a single
         # connected component when using binary_fill_holes below
@@ -297,25 +297,25 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         # generate nuclei mask from hessian, fine
         fineHessianMask = np.zeros(imageStack.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            fineHessian = hessian(imageStack[:,:,z])
-            fineHessianMask[:,:,z] = fineHessian == fineHessian.max()
-            fineHessianMask[:,:,z] = binary_closing(fineHessianMask[:,:,z],
+            fineHessian = hessian(imageStack[:, :, z])
+            fineHessianMask[:, :, z] = fineHessian == fineHessian.max()
+            fineHessianMask[:, :, z] = binary_closing(fineHessianMask[:, :, z],
                                                     selem.disk(5))
-            fineHessianMask[:,:,z] = fineHessianMask[:,:,z]*borderMask
-            fineHessianMask[:,:,z] = binary_fill_holes(fineHessianMask[:,:,z])
+            fineHessianMask[:, :, z] = fineHessianMask[:, :, z]*borderMask
+            fineHessianMask[:, :, z] = binary_fill_holes(fineHessianMask[:, :, z])
 
         # generate dapi mask from hessian, coarse
         coarseHessianMask = np.zeros(imageStack.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            coarseHessian = hessian(imageStack[:,:,z] -
-                                    white_tophat(imageStack[:,:,z],
+            coarseHessian = hessian(imageStack[:, :, z] -
+                                    white_tophat(imageStack[:, :, z],
                                                  selem.disk(20)))
-            coarseHessianMask[:,:,z] = coarseHessian == coarseHessian.max()
-            coarseHessianMask[:,:,z] = binary_closing(coarseHessianMask[:,:,z],
+            coarseHessianMask[:, :, z] = coarseHessian == coarseHessian.max()
+            coarseHessianMask[:, :, z] = binary_closing(coarseHessianMask[:, :, z],
                                                       selem.disk(5))
-            coarseHessianMask[:,:,z] = coarseHessianMask[:,:,z]*borderMask
-            coarseHessianMask[:,:,z] = binary_fill_holes(
-                                            coarseHessianMask[:,:,z])
+            coarseHessianMask[:, :, z] = coarseHessianMask[:, :, z]*borderMask
+            coarseHessianMask[:, :, z] = binary_fill_holes(
+                                            coarseHessianMask[:, :, z])
 
         # combine masks
         nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask
@@ -329,10 +329,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
             # generate areas of sure bg and fg, as well as the area of
             # unknown classification
-            background = sm.dilation(nucleiMask[:,:,z],sm.selem.disk(15))
-            membraneDilated  = sm.dilation(membraneMask[:,:,z].astype('bool'),
+            background = sm.dilation(nucleiMask[:, :, z],sm.selem.disk(15))
+            membraneDilated  = sm.dilation(membraneMask[:, :, z].astype('bool'),
                                     sm.selem.disk(10))
-            foreground = sm.erosion(nucleiMask[:,:,z]*~membraneDilated,
+            foreground = sm.erosion(nucleiMask[:, :, z]*~membraneDilated,
                             sm.selem.disk(5))
             unknown = background*~foreground
 
@@ -349,7 +349,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             # Now, mark the region of unknown with zero
             markers[unknown==255] = 0
 
-            watershedMarker[:,:,z] = markers
+            watershedMarker[:, :, z] = markers
 
         return watershedMarker
 
@@ -367,9 +367,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         uint8Image = (uint16Image / ratio).astype('uint8')
 
         rgbImage = np.zeros((2048,2048,3))
-        rgbImage[:,:,0] = uint8Image
-        rgbImage[:,:,1] = uint8Image
-        rgbImage[:,:,2] = uint8Image
+        rgbImage[:, :, 0] = uint8Image
+        rgbImage[:, :, 1] = uint8Image
+        rgbImage[:, :, 2] = uint8Image
         rgbImage = rgbImage.astype('uint8')
 
         return rgbImage
@@ -384,9 +384,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         watershedOutput = np.zeros(watershedMarkers.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            rgbImage = _convert_grayscale_to_rgb(dapiStack[:,:,z])
-            watershedOutput[:,:,z] = cv2.watershed(rgbImage,
-                                                    watershedMarkers[:,:,z].
+            rgbImage = _convert_grayscale_to_rgb(dapiStack[:, :, z])
+            watershedOutput[:, :, z] = cv2.watershed(rgbImage,
+                                                    watershedMarkers[:, :, z].
                                                     astype('int32'))
         return watershedOutput
 
@@ -438,18 +438,18 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         watershedCombinedZ = np.zeros(watershedOutput.shape)
 
         # copy the mask of the section farthest to the coverslip
-        watershedCombinedZ[:,:,-1] = watershedOutput[:,:,-1]
+        watershedCombinedZ[:, :, -1] = watershedOutput[:, :, -1]
 
         # starting far from coverslip
-        for z in range(len(self.dataSet.get_z_positions())-1,0,-1):
-            zNucleiIndex = np.unique(watershedOutput[:,:,z])[
-                                        np.unique(watershedOutput[:,:,z])>100]
+        for z in range(len(self.dataSet.get_z_positions())-1, 0, -1):
+            zNucleiIndex = np.unique(watershedOutput[:, :, z])[
+                                    np.unique(watershedOutput[:, :, z])>100]
 
         for n0 in zNucleiIndex: # for each nuclei N(Z) in Z
-            n1,f0,f1 = _get_overlapping_nuclei(watershedCombinedZ[:,:,z],
-                                                watershedOutput[:,:,z-1],n0)
+            n1,f0,f1 = _get_overlapping_nuclei(watershedCombinedZ[:, :, z],
+                                                watershedOutput[:, :, z-1],n0)
             if n1:
-                watershedCombinedZ[:,:,z-1][watershedOutput[:,:,z-1] == n1]
+                watershedCombinedZ[:, :, z-1][watershedOutput[:, :, z-1] == n1]
                                                                         = n0
         return watershedCombinedZ
 

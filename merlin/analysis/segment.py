@@ -318,7 +318,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         return binary_fill_holes(nucleiMask)
 
     def _get_watershed_markers(self, nucleiMask: np.ndarray,
-                                membraneMask: np.ndarray) -> np.ndarray:
+        membraneMask: np.ndarray) -> np.ndarray:
         watershedMarker = np.zeros(nucleiMask.shape)
 
         for z in range(len(self.dataSet.get_z_positions())):
@@ -327,14 +327,14 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             # unknown classification
             background = sm.dilation(nucleiMask[:, :, z], sm.selem.disk(15))
             membraneDilated = sm.dilation(membraneMask[:, :, z].astype('bool'),
-                sm.selem.disk(10))
+                                          sm.selem.disk(10))
             foreground = sm.erosion(nucleiMask[:, :, z]*~membraneDilated,
-                sm.selem.disk(5))
+                                    sm.selem.disk(5))
             unknown = background*~foreground
 
             background = np.uint8(background)*255
             foreground = np.uint8(foreground)*255
-            unknown    = np.uint8(unknown)*255
+            unknown = np.uint8(unknown)*255
 
             # Marker labelling
             ret, markers = cv2.connectedComponents(foreground)
@@ -343,7 +343,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             markers = markers+100
 
             # Now, mark the region of unknown with zero
-            markers[unknown==255] = 0
+            markers[unknown == 255] = 0
 
             watershedMarker[:, :, z] = markers
 
@@ -371,12 +371,13 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         return rgbImage
 
     def _apply_watershed(self, fov: int, channelIndex: int,
-                                watershedMarkers: np.ndarray) -> np.ndarray:
-         warpTask = self.dataSet.load_analysis_task(
+        watershedMarkers: np.ndarray) -> np.ndarray:
+        warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
 
         imageStack = np.array([warpTask.get_aligned_image(fov, channelIndex, z)
-            for z in range(len(self.dataSet.get_z_positions()))])
+                               for z in range(len(self.dataSet.
+                                                  get_z_positions()))])
 
         watershedOutput = np.zeros(watershedMarkers.shape)
         for z in range(len(self.dataSet.get_z_positions())):

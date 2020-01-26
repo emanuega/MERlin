@@ -17,6 +17,7 @@ from merlin.util import spatialfeature
 from merlin.util import watershed
 import pandas
 import networkx as nx
+import time 
 
 
 class FeatureSavingAnalysisTask(analysistask.ParallelAnalysisTask):
@@ -171,8 +172,13 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         return featureDB.read_features()
 
     def _run_analysis(self, fragmentIndex):
+        startTime = time.time()
+
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
+
+        
+        print('reading indexes for fov ' + str(fragmentIndex) )
 
         # read membrane (seed) and nuclei (watershed) indexes
         membraneIndex = self.dataSet \
@@ -184,24 +190,41 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                           .get_data_channel_index(
                             self.parameters['nuclei_channel_name'])
 
+        endTime = time.time()
+        print("Indexes read, ET {:.2f} min"\
+            .format((endTime - startTime) / 60))
+
         # read membrane (seed) and nuclei (watershed) images
         membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)
         nucleiImages = self._read_image_stack(fragmentIndex, nucleiIndex)
 
-        print('membraneImages = ' + str(membraneImages.shape))
-        print('nucleiImages = ' + str(nucleiImages.shape))
+        endTime = time.time()
+        print("Images read, ET {:.2f} min" \
+            .format((endTime - startTime) / 60))
 
         # Prepare masks for cv2 watershed
         watershedMarkers = self._get_watershed_markers(nucleiImages,
                                                        membraneImages)
 
+        endTime = time.time()
+        print("Markers calculated, ET {:.2f} min" \
+            .format((endTime - startTime) / 60))
+
         # perform watershed in individual z positions
         watershedOutput = self._apply_watershed(nucleiImages,
                                                 watershedMarkers)
 
+        endTime = time.time()
+        print("watershed calculated, ET {:.2f} min" \
+            .format((endTime - startTime) / 60))
+
         # combine all z positions in watershed
         watershedCombinedOutput = self._combine_watershed_z_positions(
                                                 watershedOutput)
+
+        endTime = time.time()
+        print("watershed z positions combined, ET {:.2f} min" \
+            .format((endTime - startTime) / 60))
 
         zPos = np.array(self.dataSet.get_data_organization().get_z_positions())
         featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
@@ -211,6 +234,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
+
+        endTime = time.time()
+        print("features written, ET {:.2f} min" \
+            .format((endTime - startTime) / 60))
 
     def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(

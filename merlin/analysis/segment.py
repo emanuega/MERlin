@@ -362,7 +362,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         watershedOutput = np.zeros(watershedMarkers.shape)
         for z in range(len(self.dataSet.get_z_positions())):
-            rgbImage = _convert_grayscale_to_rgb(nucleiImages[z, :, :])
+            rgbImage = self._convert_grayscale_to_rgb(nucleiImages[z, :, :])
             watershedOutput[z, :, :] = cv2.watershed(rgbImage,
                                                      watershedMarkers[z, :, :].
                                                      astype('int32'))
@@ -427,9 +427,10 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                     np.unique(watershedOutput[z, :, :]) > 100]
 
         for n0 in zNucleiIndex:
-            n1, f0, f1 = _get_overlapping_nuclei(watershedCombinedZ[z, :, :],
-                                                 watershedOutput[z-1, :, :],
-                                                 n0)
+            n1, f0, f1 = self._get_overlapping_nuclei(
+                                                watershedCombinedZ[z, :, :],
+                                                watershedOutput[z-1, :, :],
+                                                n0)
             if n1:
                 watershedCombinedZ[z-1, :, :][(watershedOutput[z-1, :, :] ==
                                                n1)] = n0

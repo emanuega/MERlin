@@ -196,6 +196,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         compartmentImages = self._read_image_stack(fragmentIndex,
                                                    compartmentIndex)
 
+        print('membraneImages = ' + str(membraneImages.shape))
+        print('nucleiImages = ' + str(nucleiImages.shape))
+
         # Prepare masks for cv2 watershed
         watershedMarkers = segmentation.get_cv2_watershed_markers(
                             compartmentImages,

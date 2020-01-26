@@ -228,12 +228,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                                                      fineBlockSize,
                                                      offset=0))
             mask[z, :, :] = morphology.remove_small_objects(
-                                    membraneImages[z, :, :].astype('bool'),
+                                    mask[z, :, :].astype('bool'),
                                     min_size=100,
                                     connectivity=1)
-            mask[z, :, :] = morphology.binary_closing(membraneImages[z, :, :],
+            mask[z, :, :] = morphology.binary_closing(mask[z, :, :],
                                                       morphology.selem.disk(5))
-            mask[z, :, :] = morphology.skeletonize(membraneImages[z, :, :])
+            mask[z, :, :] = morphology.skeletonize(mask[z, :, :])
 
         # combine masks
         return mask

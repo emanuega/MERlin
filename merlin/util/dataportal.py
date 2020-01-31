@@ -342,6 +342,11 @@ class GCloudFilePortal(FilePortal):
             self._exchange_extension(newExtension), self._client)
 
     def read_as_text(self):
+        """
+        Attempts to read a file from bucket as text, it if encounters a timeout
+        exception it reattempts after sleeping for exponentially increasing
+        delays, up to a delay of about 4 minutes
+        """
         backoffSeries= [1,2,4,8,16,32,64,128,256]
         for sleepDuration in backoffSeries:
             try:
@@ -354,6 +359,11 @@ class GCloudFilePortal(FilePortal):
                     sleep(sleepDuration)
 
     def read_file_bytes(self, startByte, endByte):
+        """
+        Attempts to read a file from bucket as bytes, it if encounters a timeout
+        exception it reattempts after sleeping for exponentially increasing
+        delays, up to a delay of about 4 minutes
+        """
         backoffSeries= [1,2,4,8,16,32,64,128,256]
         for sleepDuration in backoffSeries:
             try:

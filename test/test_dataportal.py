@@ -23,7 +23,7 @@ def local_data_portal():
 
 
 def s3_data_portal():
-    yield dataportal.S3DataPortal('s3://merlin-test-bucket/test-files',
+    yield dataportal.S3DataPortal('s3://merlin-test-bucket-vg/test-files',
                                   region_name='us-east-2',
                                   config=Config(signature_version=UNSIGNED))
 

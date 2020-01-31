@@ -341,17 +341,6 @@ class GCloudFilePortal(FilePortal):
         return GCloudFilePortal(
             self._exchange_extension(newExtension), self._client)
 
-    def _error_tolerant_access(self, request, attempts = 5, wait = 60):
-        while attempts > 0:
-            try:
-                file = self._fileHandle.download_as_string()
-                return file
-            except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
-                attempts -= 1
-                sleep(60)
-                if attempts == 0:
-                    raise
-
     def read_as_text(self):
         backoffSeries= [1,2,4,8,16,32,64,128,256]
         for sleepDuration in backoffSeries:

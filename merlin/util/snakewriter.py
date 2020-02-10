@@ -58,8 +58,9 @@ class SnakemakeRule(object):
             inputString = ','.join(inputString)
         else:
             if len(inputTasks) > 0:
-                inputString = ','.join([self._add_quotes(
-                    x.dataSet.analysis_done_filename(x)) for x in inputTasks])
+                inputString = ','.join(['ancient(' + self._add_quotes(
+                    x.dataSet.analysis_done_filename(x)) + ')'
+                                        for x in inputTasks])
             else:
                 inputString = ''
 

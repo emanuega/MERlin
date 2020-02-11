@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from scipy import ndimage
+from scipy.ndimage.morphology import binary_fill_holes
 from skimage import morphology
 from skimage import filters
 from skimage import measure
@@ -139,3 +140,235 @@ def prepare_watershed_images(watershedImageStack: np.ndarray
     normalizedWatershed[np.invert(watershedMask)] = 1
 
     return normalizedWatershed, watershedMask
+
+def get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
+    """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
+    The images expected are some type of membrane label (WGA, ConA, 
+    Lamin, Cadherins)
+
+    Args:
+        membraneImages: a 3 dimensional numpy array containing the images
+            arranged as (z, x, y).
+    Returns: 
+        ndarray containing a 3 dimensional mask arranged as (z, x, y)
+    """
+    mask = np.zeros(membraneImages.shape)
+    fineBlockSize = 61
+    for z in range(len(self.dataSet.get_z_positions())):
+        mask[z, :, :] = (membraneImages[z, :, :] >
+                         filters.threshold_local(membraneImages[z, :, :],
+                                                 fineBlockSize,
+                                                 offset=0))
+        mask[z, :, :] = morphology.remove_small_objects(
+                                mask[z, :, :].astype('bool'),
+                                min_size=100,
+                                connectivity=1)
+        mask[z, :, :] = morphology.binary_closing(mask[z, :, :],
+                                                  morphology.selem.disk(5))
+        mask[z, :, :] = morphology.skeletonize(mask[z, :, :])
+
+    # combine masks
+    return mask
+
+def get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
+    
+    # TO DO: Add description
+
+    # generate nuclei mask based on thresholding
+    thresholdingMask = np.zeros(nucleiImages.shape)
+    coarseBlockSize = 241
+    fineBlockSize = 61
+    for z in range(len(self.dataSet.get_z_positions())):
+        coarseThresholdingMask = (nucleiImages[z, :, :] >
+                                  filters.threshold_local(
+                                    nucleiImages[z, :, :],
+                                    coarseBlockSize,
+                                    offset=0))
+        fineThresholdingMask = (nucleiImages[z, :, :] >
+                                filters.threshold_local(
+                                    nucleiImages[z, :, :],
+                                    fineBlockSize,
+                                    offset=0))
+        thresholdingMask[z, :, :] = (coarseThresholdingMask *
+                                     fineThresholdingMask)
+        thresholdingMask[z, :, :] = binary_fill_holes(
+                                    thresholdingMask[z, :, :])
+
+    # generate border mask, necessary to avoid making a single
+    # connected component when using binary_fill_holes below
+    borderMask = np.zeros((2048, 2048))
+    borderMask[25:2023, 25:2023] = 1
+
+    # TODO - use the image size variable for borderMask
+
+    # generate nuclei mask from hessian, fine
+    fineHessianMask = np.zeros(nucleiImages.shape)
+    for z in range(len(self.dataSet.get_z_positions())):
+        fineHessian = filters.hessian(nucleiImages[z, :, :])
+        fineHessianMask[z, :, :] = fineHessian == fineHessian.max()
+        fineHessianMask[z, :, :] = morphology.binary_closing(
+                                                fineHessianMask[z, :, :],
+                                                morphology.selem.disk(5))
+        fineHessianMask[z, :, :] = fineHessianMask[z, :, :] * borderMask
+        fineHessianMask[z, :, :] = binary_fill_holes(
+                                    fineHessianMask[z, :, :])
+
+    # generate dapi mask from hessian, coarse
+    coarseHessianMask = np.zeros(nucleiImages.shape)
+    for z in range(len(self.dataSet.get_z_positions())):
+        coarseHessian = filters.hessian(nucleiImages[z, :, :] -
+                                        morphology.white_tophat(
+                                            nucleiImages[z, :, :],
+                                            morphology.selem.disk(20)))
+        coarseHessianMask[z, :, :] = coarseHessian == coarseHessian.max()
+        coarseHessianMask[z, :, :] = morphology.binary_closing(
+            coarseHessianMask[z, :, :], morphology.selem.disk(5))
+        coarseHessianMask[z, :, :] = (coarseHessianMask[z, :, :] *
+                                      borderMask)
+        coarseHessianMask[z, :, :] = binary_fill_holes(
+                                        coarseHessianMask[z, :, :])
+
+    # combine masks
+    nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask
+    return binary_fill_holes(nucleiMask)
+
+def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
+                              membraneImages: np.ndarray) -> np.ndarray:
+    # TO DO: Add description
+
+    nucleiMask = self.get_nuclei_mask(nucleiImages)
+    membraneMask = self.get_membrane_mask(membraneImages)
+
+    watershedMarker = np.zeros(nucleiMask.shape)
+
+    for z in range(len(self.dataSet.get_z_positions())):
+
+        # generate areas of sure bg and fg, as well as the area of
+        # unknown classification
+        background = morphology.dilation(nucleiMask[z, :, :],
+                                         morphology.selem.disk(15))
+        membraneDilated = morphology.dilation(
+            membraneMask[z, :, :].astype('bool'),
+            morphology.selem.disk(10))
+        foreground = morphology.erosion(nucleiMask[z, :, :] * ~
+                                        membraneDilated,
+                                        morphology.selem.disk(5))
+        unknown = background * ~ foreground
+
+        background = np.uint8(background) * 255
+        foreground = np.uint8(foreground) * 255
+        unknown = np.uint8(unknown) * 255
+
+        # Marker labelling
+        ret, markers = cv2.connectedComponents(foreground)
+
+        # Add one to all labels so that sure background is not 0, but 1
+        markers = markers + 100
+
+        # Now, mark the region of unknown with zero
+        markers[unknown == 255] = 0
+
+        watershedMarker[z, :, :] = markers
+
+    return watershedMarker
+
+def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
+    # cv2 only works in 3D images of 8bit. Make a 3D grayscale by
+    # using the same grayscale image in each of the rgb channels
+    # code below based on https://stackoverflow.com/questions/
+    # 25485886/how-to-convert-a-16-bit-to-an-8-bit-image-in-opencv
+
+    # invert image
+    uint16Image = 2**16 - uint16Image
+
+    # convert to uint8
+    ratio = np.amax(uint16Image) / 256
+    uint8Image = (uint16Image / ratio).astype('uint8')
+
+    rgbImage = np.zeros((2048, 2048, 3))
+    rgbImage[:, :, 0] = uint8Image
+    rgbImage[:, :, 1] = uint8Image
+    rgbImage[:, :, 2] = uint8Image
+    rgbImage = rgbImage.astype('uint8')
+
+    return rgbImage
+
+def apply_watershed(self, nucleiImages: np.ndarray,
+                    watershedMarkers: np.ndarray) -> np.ndarray:
+
+    watershedOutput = np.zeros(watershedMarkers.shape)
+    for z in range(len(self.dataSet.get_z_positions())):
+        rgbImage = self.convert_grayscale_to_rgb(nucleiImages[z, :, :])
+        watershedOutput[z, :, :] = cv2.watershed(rgbImage,
+                                                 watershedMarkers[z, :, :].
+                                                 astype('int32'))
+        watershedOutput[z, :, :][watershedOutput[z, :, :] <= 100] = 0
+
+    return watershedOutput
+
+def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
+                           watershedZ1: np.ndarray, n0: int):
+    z1NucleiIndexes = np.unique(watershedZ1[watershedZ0 == n0])
+    z1NucleiIndexes = z1NucleiIndexes[z1NucleiIndexes > 100]
+
+    if z1NucleiIndexes.shape[0] > 0:
+
+        # calculate overlap fraction
+        n0Area = np.count_nonzero(watershedZ0 == n0)
+        n1Area = np.zeros(len(z1NucleiIndexes))
+        overlapArea = np.zeros(len(z1NucleiIndexes))
+
+        for ii in range(len(z1NucleiIndexes)):
+            n1 = z1NucleiIndexes[ii]
+            n1Area[ii] = np.count_nonzero(watershedZ1 == n1)
+            overlapArea[ii] = np.count_nonzero((watershedZ0 == n0) *
+                                               (watershedZ1 == n1))
+
+        n0OverlapFraction = np.asarray(overlapArea / n0Area)
+        n1OverlapFraction = np.asarray(overlapArea / n1Area)
+        index = list(range(len(n0OverlapFraction)))
+
+        # select the nuclei that has the highest fraction in n0 and n1
+        r1, r2, indexSorted = zip(*sorted(zip(n0OverlapFraction,
+                                              n1OverlapFraction,
+                                              index),
+                                  reverse=True))
+
+        if (n0OverlapFraction[indexSorted[0]] > 0.2 and
+                n1OverlapFraction[indexSorted[0]] > 0.5):
+            return m1NucleiIndexes[indexSorted[0]],
+            n0OverlapFraction[indexSorted[0]],
+            n1OverlapFraction[indexSorted[0]]
+        else:
+            return False, False, False
+    else:
+        return False, False, False
+
+def combine_2d_segmentation_masks_into_3d(self,
+                                          watershedOutput:
+                                          np.ndarray) -> np.ndarray:
+    # TO DO: Add description
+
+    # TO DO: this implementation is very rough, needs to be improved.
+    # good just for testing purposes
+
+    # Initialize empty array with size as watershedOutput array
+    watershedCombinedZ = np.zeros(watershedOutput.shape)
+
+    # copy the mask of the section farthest to the coverslip
+    watershedCombinedZ[-1, :, :] = watershedOutput[-1, :, :]
+
+    # starting far from coverslip
+    for z in range(len(self.dataSet.get_z_positions())-1, 0, -1):
+        zNucleiIndex = np.unique(watershedOutput[z, :, :])[
+                                np.unique(watershedOutput[z, :, :]) > 100]
+
+    for n0 in zNucleiIndex:
+        n1, f0, f1 = self.get_overlapping_nuclei(
+                                            watershedCombinedZ[z, :, :],
+                                            watershedOutput[z-1, :, :],
+                                            n0)
+        if n1:
+            watershedCombinedZ[z-1, :, :][(watershedOutput[z-1, :, :] ==
+                                           n1)] = n0
+    return watershedCombinedZ

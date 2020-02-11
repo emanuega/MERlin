@@ -330,7 +330,6 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
 
     return watershedMarker
 
-
 def convert_grayscale_to_rgb(uint16Image: np.ndarray) -> np.ndarray:
     """Convert a 16 bit 2D grayscale image into a 3D 8-bit RGB image.
     cv2 only works in 8-bit. Based on https://stackoverflow.com/questions/
@@ -358,7 +357,6 @@ def convert_grayscale_to_rgb(uint16Image: np.ndarray) -> np.ndarray:
 
     return rgbImage
 
-
 def apply_cv2_watershed(compartmentImages: np.ndarray,
                         watershedMarkers: np.ndarray) -> np.ndarray:
     """Perform watershed using cv2
@@ -383,7 +381,6 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
         watershedOutput[z, :, :][watershedOutput[z, :, :] <= 100] = 0
 
     return watershedOutput
-
 
 def get_overlapping_objects(watershedZ0: np.ndarray,
                             watershedZ1: np.ndarray, n0: int):
@@ -438,7 +435,6 @@ def get_overlapping_objects(watershedZ0: np.ndarray,
             return False, False, False
     else:
         return False, False, False
-
 
 def combine_2d_segmentation_masks_into_3d(watershedOutput:
                                           np.ndarray) -> np.ndarray:

@@ -141,6 +141,7 @@ def prepare_watershed_images(watershedImageStack: np.ndarray
 
     return normalizedWatershed, watershedMask
 
+
 def get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
     """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
     The images expected are some type of membrane label (WGA, ConA,
@@ -169,6 +170,7 @@ def get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
 
     # combine masks
     return mask
+
 
 def get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
     """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
@@ -239,6 +241,7 @@ def get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
     nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask
     return binary_fill_holes(nucleiMask)
 
+
 def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
                               membraneImages: np.ndarray) -> np.ndarray:
     """Combine membrane and nuclei markers into a single multilabel mask
@@ -290,6 +293,7 @@ def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
 
     return watershedMarker
 
+
 def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
     """Convert a 16 bit 2D grayscale image into a 3D 8-bit RGB image.
     cv2 only works in 8-bit. Based on https://stackoverflow.com/questions/
@@ -298,7 +302,7 @@ def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
     Args:
         uint16Image: a 2 dimensional numpy array containing the 16-bit
             image
-    Returns: 
+    Returns:
         ndarray containing a 3 dimensional 8-bit image stack
     """
 
@@ -317,8 +321,9 @@ def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
 
     return rgbImage
 
+
 def apply_cv2_watershed(self, nucleiImages: np.ndarray,
-                    watershedMarkers: np.ndarray) -> np.ndarray:
+                        watershedMarkers: np.ndarray) -> np.ndarray:
     """Perform watershed using cv2
 
     Args:
@@ -326,9 +331,9 @@ def apply_cv2_watershed(self, nucleiImages: np.ndarray,
             arranged as (z, x, y).
         watershedMarkers: a 3 dimensional numpy array containing the cv2
             markers arranged as (z, x, y).
-    Returns: 
+    Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
-            segmented cells. masks in different z positions are 
+            segmented cells. masks in different z positions are
             independent
     """
 
@@ -341,6 +346,7 @@ def apply_cv2_watershed(self, nucleiImages: np.ndarray,
         watershedOutput[z, :, :][watershedOutput[z, :, :] <= 100] = 0
 
     return watershedOutput
+
 
 def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
                            watershedZ1: np.ndarray, n0: int):
@@ -357,7 +363,6 @@ def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
         a tuple (n1, f0, f1) containing the label of the cell in Z1
         overlapping n0 (n1), the fraction of n0 overlaping n1 (f0) and
         the fraction of n1 overlapping n0 (f1)
-       
     """
 
     z1NucleiIndexes = np.unique(watershedZ1[watershedZ0 == n0])
@@ -396,6 +401,7 @@ def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
     else:
         return False, False, False
 
+
 def combine_2d_segmentation_masks_into_3d(self,
                                           watershedOutput:
                                           np.ndarray) -> np.ndarray:
@@ -406,7 +412,7 @@ def combine_2d_segmentation_masks_into_3d(self,
     Args:
         watershedOutput: a 3 dimensional numpy array containing the
             segmentation masks arranged as (z, x, y).
-    Returns: 
+    Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
             relabeled segmented cells
     """

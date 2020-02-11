@@ -199,32 +199,32 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         nucleiImages = self._read_image_stack(fragmentIndex, nucleiIndex)
 
         endTime = time.time()
-        print(" images read, ET {:.2f} min" \
-                .format((endTime - startTime) / 60))
+        print(" images read, ET {:.2f} min".format(
+                (endTime - startTime) / 60))
 
         # Prepare masks for cv2 watershed
         watershedMarkers = watershed.get_cv2_watershed_markers(nucleiImages,
                                                                membraneImages)
 
         endTime = time.time()
-        print(" markers calculated, ET {:.2f} min" \
-                .format((endTime - startTime) / 60))
+        print(" markers calculated, ET {:.2f} min".format(
+                (endTime - startTime) / 60))
 
         # perform watershed in individual z positions
         watershedOutput = watershed.apply_cv2_watershed(nucleiImages,
                                                         watershedMarkers)
 
         endTime = time.time()
-        print(" watershed calculated, ET {:.2f} min" \
-                .format((endTime - startTime) / 60))
+        print(" watershed calculated, ET {:.2f} min".format(
+            (endTime - startTime) / 60))
 
         # combine all z positions in watershed
         watershedCombinedOutput = watershed \
             .combine_2d_segmentation_masks_into_3d(watershedOutput)
 
         endTime = time.time()
-        print(" watershed z positions combined, ET {:.2f} min" \
-                .format((endTime - startTime) / 60))
+        print(" watershed z positions combined, ET {:.2f} min".format(
+                (endTime - startTime) / 60))
 
         # get features from mask. This is the slowestart (6 min for the
         # previous part, 15+ for the rest, for a 7 frame Image.
@@ -238,8 +238,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         featureDB.write_features(featureList, fragmentIndex)
 
         endTime = time.time()
-        print(" features written, ET {:.2f} min" \
-                .format((endTime - startTime) / 60))
+        print(" features written, ET {:.2f} min".format(
+                (endTime - startTime) / 60))
 
     def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(

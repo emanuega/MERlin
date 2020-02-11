@@ -252,7 +252,7 @@ def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
             arranged as (z, x, y).
         membraneImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
-    Returns: 
+    Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
             cv2-compatible watershed markers
     """

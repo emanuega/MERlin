@@ -226,6 +226,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         print("watershed z positions combined, ET {:.2f} min" \
             .format((endTime - startTime) / 60))
 
+        # get features from mask. This is the slowestart (6 min for the 
+        # previous part, 15+ for the rest, for a 7 frame Image. 
         zPos = np.array(self.dataSet.get_data_organization().get_z_positions())
         featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
             (watershedCombinedOutput == i), fragmentIndex,

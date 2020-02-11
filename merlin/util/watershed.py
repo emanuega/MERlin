@@ -204,7 +204,6 @@ def get_membrane_mask(membraneImages: np.ndarray,
 
     return mask
 
-
 def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
     """Calculate binary mask with 1's in compartment (nuclei or cytoplasm)
     pixels and 0 otherwise. The images expected are some type of compartment
@@ -274,7 +273,6 @@ def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
     # combine masks
     compartmentMask = thresholdingMask + fineHessianMask + coarseHessianMask
     return binary_fill_holes(compartmentMask)
-
 
 def get_cv2_watershed_markers(compartmentImages: np.ndarray,
                               membraneImages: np.ndarray,

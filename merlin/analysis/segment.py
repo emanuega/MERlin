@@ -9,7 +9,6 @@ import rtree
 from shapely import geometry
 from typing import List, Dict
 from scipy.spatial import cKDTree
-from scipy.ndimage.morphology import binary_fill_holes
 
 from merlin.core import dataset
 from merlin.core import analysistask
@@ -174,11 +173,13 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
     def _run_analysis(self, fragmentIndex):
         startTime = time.time()
 
+        print('Entered the _run_analysis method, FOV ' + str(fragmentIndex) )
+
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
 
         
-        print('reading indexes for fov ' + str(fragmentIndex) )
+        print(' globalTask loaded')
 
         # read membrane (seed) and nuclei (watershed) indexes
         membraneIndex = self.dataSet \
@@ -191,7 +192,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                             self.parameters['nuclei_channel_name'])
 
         endTime = time.time()
-        print("Indexes read, ET {:.2f} min"\
+        print(" image indexes read, ET {:.2f} min"\
             .format((endTime - startTime) / 60))
 
         # read membrane (seed) and nuclei (watershed) images
@@ -199,31 +200,31 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         nucleiImages = self._read_image_stack(fragmentIndex, nucleiIndex)
 
         endTime = time.time()
-        print("Images read, ET {:.2f} min" \
+        print(" images read, ET {:.2f} min" \
             .format((endTime - startTime) / 60))
 
         # Prepare masks for cv2 watershed
-        watershedMarkers = self._get_watershed_markers(nucleiImages,
-                                                       membraneImages)
+        watershedMarkers = watershed.get_cv2_watershed_markers(nucleiImages,
+                                                               membraneImages)
 
         endTime = time.time()
-        print("Markers calculated, ET {:.2f} min" \
+        print(" markers calculated, ET {:.2f} min" \
             .format((endTime - startTime) / 60))
 
         # perform watershed in individual z positions
-        watershedOutput = self._apply_watershed(nucleiImages,
-                                                watershedMarkers)
+        watershedOutput = watershed.apply_cv2_watershed(nucleiImages,
+                                                        watershedMarkers)
 
         endTime = time.time()
-        print("watershed calculated, ET {:.2f} min" \
+        print(" watershed calculated, ET {:.2f} min" \
             .format((endTime - startTime) / 60))
 
         # combine all z positions in watershed
-        watershedCombinedOutput = self._combine_watershed_z_positions(
-                                                watershedOutput)
+        watershedCombinedOutput = watershed \
+            .combine_2d_segmentation_masks_into_3d(watershedOutput)
 
         endTime = time.time()
-        print("watershed z positions combined, ET {:.2f} min" \
+        print(" watershed z positions combined, ET {:.2f} min" \
             .format((endTime - startTime) / 60))
 
         # get features from mask. This is the slowestart (6 min for the 
@@ -238,7 +239,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         featureDB.write_features(featureList, fragmentIndex)
 
         endTime = time.time()
-        print("features written, ET {:.2f} min" \
+        print(" features written, ET {:.2f} min" \
             .format((endTime - startTime) / 60))
 
     def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
@@ -246,7 +247,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
             self.parameters['warp_task'])
         return np.array([warpTask.get_aligned_image(fov, channelIndex, z)
                          for z in range(len(self.dataSet.get_z_positions()))])
-
+"""
     def _get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
         # generate mask based on thresholding
         mask = np.zeros(membraneImages.shape)
@@ -464,6 +465,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                 watershedCombinedZ[z-1, :, :][(watershedOutput[z-1, :, :] ==
                                                n1)] = n0
         return watershedCombinedZ
+"""
 
 class CleanCellBoundaries(analysistask.ParallelAnalysisTask):
     '''

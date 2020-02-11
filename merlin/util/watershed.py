@@ -156,6 +156,7 @@ def get_membrane_mask(membraneImages: np.ndarray,
         membraneChannelName: A string with the name of a membrane channel.
         compartmentChannelName: A string with the name of the compartment
             channel
+
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
     """

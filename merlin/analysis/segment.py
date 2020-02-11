@@ -177,7 +177,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
     def _run_analysis(self, fragmentIndex):
         startTime = time.time()
 
-        print('Entered the _run_analysis method, FOV ' + str(fragmentIndex) )
+        print('Entered the _run_analysis method, FOV ' + str(fragmentIndex))
 
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
@@ -199,7 +199,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         endTime = time.time()
         print(" images read, ET {:.2f} min" \
-            .format((endTime - startTime) / 60))
+                .format((endTime - startTime) / 60))
 
         # Prepare masks for cv2 watershed
         watershedMarkers = segmentation.get_cv2_watershed_markers(
@@ -210,7 +210,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         endTime = time.time()
         print(" markers calculated, ET {:.2f} min" \
-            .format((endTime - startTime) / 60))
+                .format((endTime - startTime) / 60))
 
         # perform watershed in individual z positions
         watershedOutput = segmentation.apply_cv2_watershed(compartmentImages,
@@ -218,7 +218,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
         endTime = time.time()
         print(" watershed calculated, ET {:.2f} min" \
-            .format((endTime - startTime) / 60))
+                .format((endTime - startTime) / 60))
 
         # combine all z positions in watershed
         watershedCombinedOutput = segmentation \
@@ -323,7 +323,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
         endTime = time.time()
         print(" features written, ET {:.2f} min" \
-            .format((endTime - startTime) / 60))
+                .format((endTime - startTime) / 60))
 
     def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(

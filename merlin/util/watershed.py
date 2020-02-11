@@ -171,8 +171,15 @@ def get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
     return mask
 
 def get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
-    
-    # TO DO: Add description
+    """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
+    The images expected are some type of Nuclei label (e.g. DAPI)
+
+    Args:
+        membraneImages: a 3 dimensional numpy array containing the images
+            arranged as (z, x, y).
+    Returns: 
+        ndarray containing a 3 dimensional mask arranged as (z, x, y)
+    """
 
     # generate nuclei mask based on thresholding
     thresholdingMask = np.zeros(nucleiImages.shape)
@@ -234,7 +241,18 @@ def get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
 
 def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
                               membraneImages: np.ndarray) -> np.ndarray:
-    # TO DO: Add description
+    """Combine membrane and nuclei markers into a single multilabel mask
+    for CV2 watershed
+
+    Args:
+        nucleiImages: a 3 dimensional numpy array containing the images
+            arranged as (z, x, y).
+        membraneImages: a 3 dimensional numpy array containing the images
+            arranged as (z, x, y).
+    Returns: 
+        ndarray containing a 3 dimensional mask arranged as (z, x, y) of
+            cv2-compatible watershed markers
+    """
 
     nucleiMask = self.get_nuclei_mask(nucleiImages)
     membraneMask = self.get_membrane_mask(membraneImages)
@@ -273,10 +291,16 @@ def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
     return watershedMarker
 
 def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
-    # cv2 only works in 3D images of 8bit. Make a 3D grayscale by
-    # using the same grayscale image in each of the rgb channels
-    # code below based on https://stackoverflow.com/questions/
-    # 25485886/how-to-convert-a-16-bit-to-an-8-bit-image-in-opencv
+    """Convert a 16 bit 2D grayscale image into a 3D 8-bit RGB image. 
+    cv2 only works in 8-bit. Based on https://stackoverflow.com/questions/
+    25485886/how-to-convert-a-16-bit-to-an-8-bit-image-in-opencv3D 
+
+    Args:
+        uint16Image: a 2 dimensional numpy array containing the 16-bit 
+            image
+    Returns: 
+        ndarray containing a 3 dimensional 8-bit image stack 
+    """
 
     # invert image
     uint16Image = 2**16 - uint16Image
@@ -293,8 +317,20 @@ def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
 
     return rgbImage
 
-def apply_watershed(self, nucleiImages: np.ndarray,
+def apply_cv2_watershed(self, nucleiImages: np.ndarray,
                     watershedMarkers: np.ndarray) -> np.ndarray:
+    """Perform watershed using cv2
+
+    Args:
+        nucleiImages: a 3 dimensional numpy array containing the images
+            arranged as (z, x, y).
+        watershedMarkers: a 3 dimensional numpy array containing the cv2
+            markers arranged as (z, x, y).
+    Returns: 
+        ndarray containing a 3 dimensional mask arranged as (z, x, y) of
+            segmented cells. masks in different z positions are 
+            independent
+    """
 
     watershedOutput = np.zeros(watershedMarkers.shape)
     for z in range(len(self.dataSet.get_z_positions())):
@@ -308,6 +344,22 @@ def apply_watershed(self, nucleiImages: np.ndarray,
 
 def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
                            watershedZ1: np.ndarray, n0: int):
+    """Perform watershed using cv2
+
+    Args:
+        watershedZ0: a 2 dimensional numpy array containing a 
+            segmentation mask
+        watershedZ1: a 2 dimensional numpy array containing a
+            segmentation mask adjacent to watershedZ1
+        n0: an integer with the index of the cell/nuclei to be compared
+            between the provided watershed segmentation masks
+    Returns:
+        a tuple (n1, f0, f1) containing the label of the cell in Z1 
+        overlapping n0 (n1), the fraction of n0 overlaping n1 (f0) and 
+        the fraction of n1 overlapping n0 (f1)
+       
+    """
+
     z1NucleiIndexes = np.unique(watershedZ1[watershedZ0 == n0])
     z1NucleiIndexes = z1NucleiIndexes[z1NucleiIndexes > 100]
 
@@ -336,7 +388,7 @@ def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
 
         if (n0OverlapFraction[indexSorted[0]] > 0.2 and
                 n1OverlapFraction[indexSorted[0]] > 0.5):
-            return m1NucleiIndexes[indexSorted[0]],
+            return z1NucleiIndexes[indexSorted[0]],
             n0OverlapFraction[indexSorted[0]],
             n1OverlapFraction[indexSorted[0]]
         else:
@@ -347,10 +399,17 @@ def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
 def combine_2d_segmentation_masks_into_3d(self,
                                           watershedOutput:
                                           np.ndarray) -> np.ndarray:
-    # TO DO: Add description
+    """Take a 3 dimensional watershed masks and relabel them so that 
+    nuclei in adjacent sections have the same label if the area their 
+    overlap surpases certain threshold 
 
-    # TO DO: this implementation is very rough, needs to be improved.
-    # good just for testing purposes
+    Args:
+        watershedOutput: a 3 dimensional numpy array containing the 
+            segmentation masks arranged as (z, x, y).
+    Returns: 
+        ndarray containing a 3 dimensional mask arranged as (z, x, y) of
+            relabeled segmented cells
+    """
 
     # Initialize empty array with size as watershedOutput array
     watershedCombinedZ = np.zeros(watershedOutput.shape)

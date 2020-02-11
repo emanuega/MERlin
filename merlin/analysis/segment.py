@@ -191,8 +191,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                             self.parameters['nuclei_channel_name'])
 
         endTime = time.time()
-        print(" image indexes read, ET {:.2f} min" \
-                .format((endTime - startTime) / 60))
+        print(" image indexes read, ET {:.2f} min".format(
+                (endTime - startTime) / 60))
 
         # read membrane (seed) and nuclei (watershed) images
         membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)

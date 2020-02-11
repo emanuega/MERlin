@@ -142,7 +142,6 @@ def prepare_watershed_images(watershedImageStack: np.ndarray
 
     return normalizedWatershed, watershedMask
 
-
 def get_membrane_mask(membraneImages: np.ndarray,
                       membraneChannelName: str,
                       compartmentChannelName: str) -> np.ndarray:

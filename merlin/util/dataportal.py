@@ -2,9 +2,11 @@ import os
 import boto3
 import botocore
 from google.cloud import storage
+from google.cloud import exceptions
 from urllib import parse
 from abc import abstractmethod, ABC
 from typing import List
+from time import sleep
 
 
 class DataPortal(ABC):
@@ -340,12 +342,41 @@ class GCloudFilePortal(FilePortal):
         return GCloudFilePortal(
             self._exchange_extension(newExtension), self._client)
 
+    def _error_tolerant_access(self, request, attempts = 5, wait = 60):
+        while attempts > 0:
+            try:
+                file = self._fileHandle.download_as_string()
+                return file
+            except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
+                attempts -= 1
+                sleep(60)
+                if attempts == 0:
+                    raise
+
     def read_as_text(self):
-        return self._fileHandle.download_as_string().decode('utf-8')
+         backoffSeries= [1,2,4,8,16,32,64,128,256]
+        for sleepDuration in backoffSeries:
+            try:
+                file = self._fileHandle.download_as_string().decode('utf-8')
+                return file
+            except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
+                if sleepDuration == backoffSeries[-1]:
+                    raise
+                else:
+                    sleep(sleepDuration)
 
     def read_file_bytes(self, startByte, endByte):
-        return self._fileHandle.download_as_string(
-            start=startByte, end=endByte-1)
+        backoffSeries= [1,2,4,8,16,32,64,128,256]
+            for sleepDuration in backoffSeries:
+            try:
+                file = self._fileHandle.download_as_string(start=startByte,
+                                                           end=endByte-1)
+                return file
+            except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
+                if sleepDuration == backoffSeries[-1]:
+                    raise
+                else:
+                    sleep(sleepDuration)
 
     def close(self) -> None:
         pass

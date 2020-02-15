@@ -375,6 +375,5 @@ class GCloudFilePortal(FilePortal):
                                             endByte=endByte-1)
         return file
 
-
     def close(self) -> None:
         pass

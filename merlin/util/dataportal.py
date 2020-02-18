@@ -370,7 +370,7 @@ class GCloudFilePortal(FilePortal):
         for sleepDuration in backoffSeries:
             try:
                 file = self._fileHandle.download_as_string(start=startByte,
-                                                        end=endByte-1)
+                                                           end=endByte-1)
                 return file
             except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
                 if sleepDuration == backoffSeries[-1]:

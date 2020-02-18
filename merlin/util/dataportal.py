@@ -354,7 +354,7 @@ class GCloudFilePortal(FilePortal):
                     raise
 
     def read_as_text(self):
-         backoffSeries= [1,2,4,8,16,32,64,128,256]
+        backoffSeries = [1,2,4,8,16,32,64,128,256]
         for sleepDuration in backoffSeries:
             try:
                 file = self._fileHandle.download_as_string().decode('utf-8')
@@ -366,7 +366,7 @@ class GCloudFilePortal(FilePortal):
                     sleep(sleepDuration)
 
     def read_file_bytes(self, startByte, endByte):
-        backoffSeries= [1,2,4,8,16,32,64,128,256]
+        backoffSeries = [1,2,4,8,16,32,64,128,256]
             for sleepDuration in backoffSeries:
             try:
                 file = self._fileHandle.download_as_string(start=startByte,

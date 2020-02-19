@@ -253,14 +253,14 @@ class DataOrganization(object):
         selection = self.fileMap[(self.fileMap['imageType'] == imageType) &
                                  (self.fileMap['fov'] == fov) &
                                  (self.fileMap['imagingRound'] == imagingRound)]
-        filemapPath = selection['imagePath'].values[0]
-        
+        filemapPath = selection['imagePath'].values[0]      
         if os.path.exists(filemapPath):
             return filemapPath
 
         else:
-            head,tail = os.path.split(filemapPath)
-            return os.path.join(self._dataSet.dataHome, self._dataSet.dataSetName, tail)
+            head, tail = os.path.split(filemapPath)
+            return os.path.join(self._dataSet.dataHome,
+                                self._dataSet.dataSetName, tail)
 
         # return selection['imagePath'].values[0]
 

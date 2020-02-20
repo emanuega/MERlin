@@ -32,3 +32,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Snakemake job inputs were simplified using the ParallelCompleteTask to improve DAG construction speed and overall snakemake runtime performance
 
 ## [0.1.5] - 2020-01-22
+### Changed
+- Updated loading of raw data from filemap to fall back onto trying to load the file using the current merlin.DATA_HOME and the file name if the filemap path is not found

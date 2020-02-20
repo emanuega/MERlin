@@ -347,7 +347,7 @@ class GCloudFilePortal(FilePortal):
         exception it reattempts after sleeping for exponentially increasing
         delays, up to a delay of about 4 minutes
         """
-        backoffSeries= [1,2,4,8,16,32,64,128,256]
+        backoffSeries= [1, 2, 4, 8, 16, 32, 64, 128, 256]
         for sleepDuration in backoffSeries:
             try:
                 file = self._fileHandle.download_as_string().decode('utf-8')
@@ -364,7 +364,7 @@ class GCloudFilePortal(FilePortal):
         exception it reattempts after sleeping for exponentially increasing
         delays, up to a delay of about 4 minutes
         """
-        backoffSeries= [1,2,4,8,16,32,64,128,256]
+        backoffSeries= [1, 2, 4, 8, 16, 32, 64, 128, 256]
         for sleepDuration in backoffSeries:
             try:
                 file = self._fileHandle.download_as_string(start=startByte,

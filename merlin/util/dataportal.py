@@ -8,6 +8,7 @@ from abc import abstractmethod, ABC
 from typing import List
 from time import sleep
 
+
 class DataPortal(ABC):
 
     """
@@ -341,16 +342,12 @@ class GCloudFilePortal(FilePortal):
         return GCloudFilePortal(
             self._exchange_extension(newExtension), self._client)
 
-    def read_as_text(self):
-        """
-        Attempts to read a file from bucket as text, it if encounters a timeout
-        exception it reattempts after sleeping for exponentially increasing
-        delays, up to a delay of about 4 minutes
-        """
-        backoffSeries= [1, 2, 4, 8, 16, 32, 64, 128, 256]
+    def error_tolerant_reading(self, method, startByte=None,
+                               endByte=None):
+        backoffSeries = [1, 2, 4, 8, 16, 32, 64, 128, 256]
         for sleepDuration in backoffSeries:
             try:
-                file = self._fileHandle.download_as_string().decode('utf-8')
+                file = method(start=startByte, end=endByte)
                 return file
             except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
                 if sleepDuration == backoffSeries[-1]:
@@ -358,23 +355,25 @@ class GCloudFilePortal(FilePortal):
                 else:
                     sleep(sleepDuration)
 
+    def read_as_text(self):
+        """
+        Attempts to read a file from bucket as text, it if encounters a timeout
+        exception it reattempts after sleeping for exponentially increasing
+        delays, up to a delay of about 4 minutes
+        """
+        file = error_tolerant_reading(self._fileHandle.download_as_string)
+        return file.decode('utf-8')
+
     def read_file_bytes(self, startByte, endByte):
         """
         Attempts to read a file from bucket as bytes, it if encounters a timeout
         exception it reattempts after sleeping for exponentially increasing
         delays, up to a delay of about 4 minutes
         """
-        backoffSeries= [1, 2, 4, 8, 16, 32, 64, 128, 256]
-        for sleepDuration in backoffSeries:
-            try:
-                file = self._fileHandle.download_as_string(start=startByte,
-                                                           end=endByte-1)
-                return file
-            except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
-                if sleepDuration == backoffSeries[-1]:
-                    raise
-                else:
-                    sleep(sleepDuration)
+        file = error_tolerant_reading(self._fileHandle.download_as_string,
+                                      start=startByte, end=endByte-1)
+        return file
+
 
     def close(self) -> None:
         pass

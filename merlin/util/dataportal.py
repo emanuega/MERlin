@@ -342,7 +342,7 @@ class GCloudFilePortal(FilePortal):
         return GCloudFilePortal(
             self._exchange_extension(newExtension), self._client)
 
-    def error_tolerant_reading(self, method, startByte=None,
+    def _error_tolerant_reading(self, method, startByte=None,
                                endByte=None):
         backoffSeries = [1, 2, 4, 8, 16, 32, 64, 128, 256]
         for sleepDuration in backoffSeries:
@@ -361,7 +361,7 @@ class GCloudFilePortal(FilePortal):
         exception it reattempts after sleeping for exponentially increasing
         delays, up to a delay of about 4 minutes
         """
-        file = error_tolerant_reading(self._fileHandle.download_as_string)
+        file = self._error_tolerant_reading(self._fileHandle.download_as_string)
         return file.decode('utf-8')
 
     def read_file_bytes(self, startByte, endByte):
@@ -370,8 +370,8 @@ class GCloudFilePortal(FilePortal):
         exception it reattempts after sleeping for exponentially increasing
         delays, up to a delay of about 4 minutes
         """
-        file = error_tolerant_reading(self._fileHandle.download_as_string,
-                                      start=startByte, end=endByte-1)
+        file = self._error_tolerant_reading(self._fileHandle.download_as_string,
+                                            start=startByte, end=endByte-1)
         return file
 
 

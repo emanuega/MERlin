@@ -258,9 +258,9 @@ class DataOrganization(object):
                             filemapPath)
 
     def _truncate_file_path(self, path) -> None:
-        #This is only in place to maintain backwards compatability with
-        #prior versions of the filemap that generated full paths instead of
-        #paths relative to the .merlinenv paths.
+        # This is only in place to maintain backwards compatability with
+        # prior versions of the filemap that generated full paths instead of
+        # paths relative to the .merlinenv paths.
         head, tail = os.path.split(path)
         return tail
 

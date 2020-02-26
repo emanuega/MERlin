@@ -9,6 +9,7 @@ import time
 import logging
 import pickle
 import datetime
+import collections
 from matplotlib import pyplot as plt
 from typing import List
 from typing import Tuple
@@ -94,6 +95,12 @@ class DataSet(object):
                 'creation_date': str(datetime.datetime.now())
             }
             self.save_json_analysis_result(newMetadata, 'dataset', None)
+
+    def get_stored_metadata(self) -> Dict:
+        return self.load_json_analysis_result('dataset', None)
+
+    def get_full_metadata(self) -> Dict:
+        return self.load_json_analysis_result('dataset', None)
 
     def save_workflow(self, workflowString: str) -> str:
         """ Save a snakemake workflow for analysis of this dataset.
@@ -415,17 +422,18 @@ class DataSet(object):
             os.remove(hPath)
 
     def save_json_analysis_result(
-            self, analysisResult: Dict, resultName: str,
-            analysisName: str, resultIndex: int = None,
-            subdirectory: str = None) -> None:
+            self, analysisResult: Union[List, Dict], resultName: str,
+            analysisName: Optional[str], resultIndex: Optional[int] = None,
+            subdirectory: Optional[str] = None) -> None:
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.json')
         with open(savePath, 'w') as f:
             json.dump(analysisResult, f)
 
     def load_json_analysis_result(
-            self, resultName: str, analysisName: str, resultIndex: int = None,
-            subdirectory: str = None) -> Dict:
+            self, resultName: str, analysisName: Optional[str],
+            resultIndex: Optional[int] = None,
+            subdirectory: Optional[str] = None) -> Union[List, Dict]:
         savePath = self._analysis_result_save_path(
             resultName, analysisName, resultIndex, subdirectory, '.json')
         with open(savePath, 'r') as f:
@@ -930,7 +938,7 @@ class MERFISHDataSet(ImageDataSet):
     def __init__(self, dataDirectoryName: str, codebookNames: List[str] = None,
                  dataOrganizationName: str = None, positionFileName: str = None,
                  dataHome: str = None, analysisHome: str = None,
-                 microscopeParametersName: str = None):
+                 microscopeParametersName: str = None, **kwargs):
         """Create a MERFISH dataset for the specified raw data.
 
         Args:
@@ -1160,29 +1168,70 @@ class MERFISHDataSet(ImageDataSet):
     def _convert_parameter_list(self, listIn, castFunction, delimiter=';'):
         return [castFunction(x) for x in listIn.split(delimiter) if len(x) > 0]
 
+    def get_full_metadata(self):
+        datasetMeta = self.get_stored_metadata()
+        datasetMeta.update({
+            'image_width': self.get_image_dimensions()[0],
+            'image_height': self.get_image_dimensions()[1],
+            'barcode_length': self.get_codebook().get_bit_count(),
+            'barcode_count': self.get_codebook().get_barcode_count(),
+            'fov_count': len(self.get_fovs()),
+            'z_count': len(self.get_z_positions()),
+            'sequential_count': len(self.get_data_organization()
+                                    .get_sequential_rounds())
+        })
+        return datasetMeta
+
 
 class MetaMERFISHDataSet(DataSet):
-    def __init__(self, metaDataSetName: str, dataSets: List[str],
-                 dataHome: str = None, analysisHome: str = None):
+    def __init__(self, metaDataSetName: str, dataSetNames: List[str]=None,
+                 dataHome: str = None, analysisHome: str = None, **kwargs):
         """Create a MetaMERFISHDataSet for the specified processed datasets.
 
         Args:
             metaDataSetName: A name to use for this metadataset
-            dataSets: a list of strings, each entry specifies a merfish
-                    datasets to use. A full path can be provided, otherwise it
-                    looks in the analysisHome directory.
+
+            dataSetNames: a list of strings, each entry specifies a
+                    MERFISHDataSet to use. A full path can be provided,
+                    otherwise it looks in the analysisHome directory.
+                    TODO is this true? it seems to use self.analysisHome
             dataHome: path for raw data
             analysisHome: path for analyzed data
         """
-
         super().__init__(metaDataSetName, dataHome, analysisHome)
 
         self.metaDataSetName = metaDataSetName
-        self.dataSets = dataSets
 
-    def load_datasets(self):
+        try:
+            existingDataSetNames = self._load_dataset_names()
+        except FileNotFoundError:
+            existingDataSetNames = None
+
+        if existingDataSetNames is None:
+            self.dataSetNames = dataSetNames
+            self.save_json_analysis_result(
+                self.dataSetNames, 'dataset_names', None)
+        else:
+            if collections.Counter(existingDataSetNames) ==\
+                    collections.Counter(dataSetNames):
+                self.dataSetNames = dataSetNames
+
+        # make sure all datasets are available
+        self.load_datasets()
+
+    def _load_dataset_names(self) -> List[str]:
+        return self.load_json_analysis_result('dataset_names', None)
+
+    def load_datasets(self) -> Dict[str, MERFISHDataSet]:
         dataSetDict = dict()
-        for ds in self.dataSets:
+        for ds in self.dataSetNames:
             dataSetDict[ds] = MERFISHDataSet(ds, dataHome=self.dataHome,
                                              analysisHome=self.analysisHome)
         return dataSetDict
+
+    def get_full_metadata(self):
+        datasetMeta = self.get_stored_metadata()
+        datasetMeta.update({
+            'dataset_count': len(self.dataSetNames)
+        })
+        return datasetMeta

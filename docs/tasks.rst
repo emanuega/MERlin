@@ -77,6 +77,7 @@ Description: Generate the barcode parameter histograms for the mean intensity, m
 Parameters:
 
 * run\_after\_task -- The task to start generating the adaptive threshold after. To run concurrently with decode, this can be specified as the preprocess task, otherwise it can be specified as the decode task.
+* tolerance -- Tolerance from zero in the optimization routine, if left unset defaults to 0.001. It is useful to adjust this to be more tolerant if an experiment has few blanks or few barcodes overall, as it can be impossible to hit within 0.1% of the requested misidentification rate.
 
 filterbarcodes.AdaptiveFilterBarcodes
 ----------------------------------------

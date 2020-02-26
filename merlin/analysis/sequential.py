@@ -1,6 +1,4 @@
 import pandas
-import rtree
-import networkx
 import numpy as np
 import cv2
 from skimage.measure import regionprops
@@ -76,7 +74,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
             data=[(propsDict[k].intensity_image.sum(),
                    propsDict[k].filled_area)
                   if k in propsDict else (0, 0)
-                  for k in range(1, len(cellCoords)+1)],
+                  for k in range(1, len(cellCoords) + 1)],
             index=cellIDs,
             columns=['Intensity', 'Pixels'])
         return propsOut

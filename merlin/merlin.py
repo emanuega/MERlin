@@ -6,17 +6,18 @@ import sys
 import snakemake
 import time
 import requests
+import importlib
 from typing import TextIO
 from typing import Dict
 
 import merlin as m
-from merlin.core import dataset
 from merlin.core import executor
 from merlin.util import snakewriter
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description='Decode MERFISH data.')
+    parser = argparse.ArgumentParser(description='Decode MERFISH data.',
+                                     argument_default=None)
 
     parser.add_argument('--profile', action='store_true',
                         help='enable profiling')
@@ -39,7 +40,8 @@ def build_parser():
     parser.add_argument('-p', '--positions',
                         help='name of the position file to use')
     parser.add_argument('-n', '--core-count', type=int,
-                        help='number of cores to use for the analysis')
+                        help='number of cores to use for the analysis',
+                        default=1)
     parser.add_argument(
         '-t', '--analysis-task',
         help='the name of the analysis task to execute. If no '
@@ -54,14 +56,16 @@ def build_parser():
     parser.add_argument('-k', '--snakemake-parameters',
                         help='the name of the snakemake parameters file')
     parser.add_argument('--no_report',
-                        help='flag indicating that the snakemake stats ' +
-                        'should not be shared to improve MERlin')
-    parser.add_argument('--dataset-class', default="MERFISHDataSet",
-                        help='flag indicating that MERlin is being used to ' +
-                        'perform analyses on a metadataset')
-    parser.add_argument('--contained-datasets', nargs='+',
-                        help='list of dataset names that comprise the ' +
-                             'metadataset')
+                        help='flag indicating that the snakemake stats '
+                             + 'should not be shared to improve MERlin')
+    parser.add_argument('--dataset-class',
+                        default="MERFISHDataSet",
+                        help='the type of dataset to analyze '
+                             + 'with merlin')
+    parser.add_argument('--sample-datasets', nargs='+',
+                        help='list of dataset names that comprise the '
+                             + 'metadataset when dataset class is '
+                             + 'merlin.core.dataset.MetaMERFISHDataSet')
 
     return parser
 
@@ -104,25 +108,28 @@ def merlin():
         configure_environment()
         return
 
-    if args.dataset_class == 'MERFISHDataSet':
-        dataSet = dataset.MERFISHDataSet(
-            args.dataset,
-            dataOrganizationName=_clean_string_arg(args.data_organization),
-            codebookNames=args.codebook,
-            microscopeParametersName=_clean_string_arg(
-                args.microscope_parameters),
-            positionFileName=_clean_string_arg(args.positions),
-            dataHome=_clean_string_arg(args.data_home),
-            analysisHome=_clean_string_arg(args.analysis_home)
-        )
+    dataSetArgs = {
+        'dataHome': _clean_string_arg(args.data_home),
+        'analysisHome': _clean_string_arg(args.analysis_home),
+        'dataOrganizationName': _clean_string_arg(args.data_organization),
+        'codebookNames': args.codebook,
+        'microscopeParametersName': _clean_string_arg(
+            args.microscope_parameters),
+        'positionFileName': _clean_string_arg(args.positions),
+        'dataSetNames': args.sample_datasets
+    }
 
-    elif args.dataset_class == 'MetaMERFISHDataSet':
-        dataSet = dataset.MetaMERFISHDataSet(
-            args.dataset, args.contained_datasets,
-            dataHome=_clean_string_arg(args.data_home),
-            analysisHome=_clean_string_arg(args.analysis_home)
-        )
+    if '.' in args.dataset_class:
+        splitClass = str.split(args.dataset_class, '.')
+        datasetModuleName = '.'.join(splitClass[:-1])
+        datasetClassName = splitClass[-1]
+    else:
+        datasetModuleName = 'merlin.core.dataset'
+        datasetClassName = args.dataset_class
 
+    datasetModule = importlib.import_module(datasetModuleName)
+    datasetClass = getattr(datasetModule, datasetClassName)
+    dataSet = datasetClass(args.dataset, **dataSetArgs)
 
     parametersHome = m.ANALYSIS_PARAMETERS_HOME
     e = executor.LocalExecutor(coreCount=args.core_count)
@@ -190,19 +197,10 @@ def run_with_snakemake(
         analysisParameters = {
             t: dataSet.load_analysis_task(t).get_parameters()
             for t in dataSet.get_analysis_tasks()}
-        datasetMeta = {
-            'image_width': dataSet.get_image_dimensions()[0],
-            'image_height': dataSet.get_image_dimensions()[1],
-            'barcode_length': dataSet.get_codebook().get_bit_count(),
-            'barcode_count': dataSet.get_codebook().get_barcode_count(),
-            'fov_count': len(dataSet.get_fovs()),
-            'z_count': len(dataSet.get_z_positions()),
-            'sequential_count': len(dataSet.get_data_organization()
-                                    .get_sequential_rounds()),
-            'dataset_name': dataSet.dataSetName,
-            'report_time': reportTime,
-            'analysis_parameters': analysisParameters
-        }
+        datasetMeta = dataSet.get_full_metadata()
+        datasetMeta['return_time'] = reportTime
+        datasetMeta['analysis_parameters'] = analysisParameters
+
         try:
             requests.post('http://merlin.georgeemanuel.com/post',
                           files={'file': ('.'.join(

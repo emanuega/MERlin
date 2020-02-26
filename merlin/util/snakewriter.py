@@ -81,7 +81,6 @@ class SnakemakeRule(object):
         shellString += self._clean_string(
             self._analysisTask.dataSet.dataSetName) + ' '
 
-
         shellString += ''.join(
             ['-t ', self._clean_string(self._analysisTask.analysisName),
              ' -e \"', self._clean_string(self._analysisTask.dataSet.dataHome),
@@ -89,10 +88,7 @@ class SnakemakeRule(object):
              self._clean_string(self._analysisTask.dataSet.analysisHome), '\"'])
         if isinstance(self._analysisTask.dataSet, dataset.MetaMERFISHDataSet):
             shellString += ' --dataset-class \"MetaMERFISHDataSet\"'
-            shellString += ' --contained-datasets '
-            containedDS = ['\"{}\"'.format(x) for x in
-                           self._analysisTask.dataSet.dataSets]
-            shellString += ' '.join(containedDS)
+
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
             shellString += ' -i {wildcards.i}'
 

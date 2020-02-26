@@ -371,7 +371,8 @@ class GCloudFilePortal(FilePortal):
         delays, up to a delay of about 4 minutes
         """
         file = self._error_tolerant_reading(self._fileHandle.download_as_string,
-                                            start=startByte, end=endByte-1)
+                                            startByte=startByte,
+                                            endByte=endByte-1)
         return file
 
 

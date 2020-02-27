@@ -32,3 +32,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Snakemake job inputs were simplified using the ParallelCompleteTask to improve DAG construction speed and overall snakemake runtime performance
 
 ## [0.1.5] - 2020-01-22
+### Changed
+- Updated the filemap to only store the file name so that it can easily be pointed to new data home directories. This change maintains backward compatibility.

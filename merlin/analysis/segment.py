@@ -201,6 +201,8 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         endTime = time.time()
         print(" images read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
+        print(" membraneImages Type: " + type(membraneImages))
+        print(" nucleiImages Type: " + type(nucleiImages))
 
         # Prepare masks for cv2 watershed
         watershedMarkers = watershed.get_cv2_watershed_markers(nucleiImages,

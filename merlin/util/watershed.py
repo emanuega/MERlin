@@ -142,7 +142,7 @@ def prepare_watershed_images(watershedImageStack: np.ndarray
     return normalizedWatershed, watershedMask
 
 
-def get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
+def get_membrane_mask(membraneImages: np.ndarray) -> np.ndarray:
     """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
     The images expected are some type of membrane label (WGA, ConA,
     Lamin, Cadherins)
@@ -172,7 +172,7 @@ def get_membrane_mask(self, membraneImages: np.ndarray) -> np.ndarray:
     return mask
 
 
-def get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
+def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
     """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
     The images expected are some type of Nuclei label (e.g. DAPI)
 
@@ -242,7 +242,7 @@ def get_nuclei_mask(self, nucleiImages: np.ndarray) -> np.ndarray:
     return binary_fill_holes(nucleiMask)
 
 
-def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
+def get_cv2_watershed_markers(nucleiImages: np.ndarray,
                               membraneImages: np.ndarray) -> np.ndarray:
     """Combine membrane and nuclei markers into a single multilabel mask
     for CV2 watershed
@@ -294,7 +294,7 @@ def get_cv2_watershed_markers(self, nucleiImages: np.ndarray,
     return watershedMarker
 
 
-def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
+def convert_grayscale_to_rgb(uint16Image: np.ndarray) -> np.ndarray:
     """Convert a 16 bit 2D grayscale image into a 3D 8-bit RGB image.
     cv2 only works in 8-bit. Based on https://stackoverflow.com/questions/
     25485886/how-to-convert-a-16-bit-to-an-8-bit-image-in-opencv3D
@@ -322,7 +322,7 @@ def convert_grayscale_to_rgb(self, uint16Image: np.ndarray) -> np.ndarray:
     return rgbImage
 
 
-def apply_cv2_watershed(self, nucleiImages: np.ndarray,
+def apply_cv2_watershed(nucleiImages: np.ndarray,
                         watershedMarkers: np.ndarray) -> np.ndarray:
     """Perform watershed using cv2
 
@@ -348,7 +348,7 @@ def apply_cv2_watershed(self, nucleiImages: np.ndarray,
     return watershedOutput
 
 
-def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
+def get_overlapping_nuclei(watershedZ0: np.ndarray,
                            watershedZ1: np.ndarray, n0: int):
     """Perform watershed using cv2
 
@@ -402,8 +402,7 @@ def get_overlapping_nuclei(self, watershedZ0: np.ndarray,
         return False, False, False
 
 
-def combine_2d_segmentation_masks_into_3d(self,
-                                          watershedOutput:
+def combine_2d_segmentation_masks_into_3d(watershedOutput:
                                           np.ndarray) -> np.ndarray:
     """Take a 3 dimensional watershed masks and relabel them so that
     nuclei in adjacent sections have the same label if the area their

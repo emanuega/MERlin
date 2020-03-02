@@ -355,6 +355,7 @@ def convert_grayscale_to_rgb(uint16Image: np.ndarray) -> np.ndarray:
 
     return rgbImage
 
+<<<<<<< HEAD
 def apply_cv2_watershed(compartmentImages: np.ndarray,
                         watershedMarkers: np.ndarray) -> np.ndarray:
     """Perform watershed using cv2

@@ -11,7 +11,7 @@ from typing import Tuple
 from merlin.util import matlab
 
 """
-This module contains utility functions for preparing imagmes for 
+This module contains utility functions for preparing imagmes for
 watershed segmentation.
 """
 
@@ -155,7 +155,7 @@ def get_membrane_mask(membraneImages: np.ndarray) -> np.ndarray:
     """
     mask = np.zeros(membraneImages.shape)
     fineBlockSize = 61
-    for z in range(len(self.dataSet.get_z_positions())):
+    for z in range(membraneImages.shape[0]):
         mask[z, :, :] = (membraneImages[z, :, :] >
                          filters.threshold_local(membraneImages[z, :, :],
                                                  fineBlockSize,
@@ -187,7 +187,7 @@ def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
     thresholdingMask = np.zeros(nucleiImages.shape)
     coarseBlockSize = 241
     fineBlockSize = 61
-    for z in range(len(self.dataSet.get_z_positions())):
+    for z in range(nucleiImages.shape[0]):
         coarseThresholdingMask = (nucleiImages[z, :, :] >
                                   filters.threshold_local(
                                     nucleiImages[z, :, :],
@@ -212,7 +212,7 @@ def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
 
     # generate nuclei mask from hessian, fine
     fineHessianMask = np.zeros(nucleiImages.shape)
-    for z in range(len(self.dataSet.get_z_positions())):
+    for z in range(nucleiImages.shape[0]):
         fineHessian = filters.hessian(nucleiImages[z, :, :])
         fineHessianMask[z, :, :] = fineHessian == fineHessian.max()
         fineHessianMask[z, :, :] = morphology.binary_closing(
@@ -224,7 +224,7 @@ def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
 
     # generate dapi mask from hessian, coarse
     coarseHessianMask = np.zeros(nucleiImages.shape)
-    for z in range(len(self.dataSet.get_z_positions())):
+    for z in range(nucleiImages.shape[0]):
         coarseHessian = filters.hessian(nucleiImages[z, :, :] -
                                         morphology.white_tophat(
                                             nucleiImages[z, :, :],
@@ -257,12 +257,12 @@ def get_cv2_watershed_markers(nucleiImages: np.ndarray,
             cv2-compatible watershed markers
     """
 
-    nucleiMask = self.get_nuclei_mask(nucleiImages)
-    membraneMask = self.get_membrane_mask(membraneImages)
+    nucleiMask = get_nuclei_mask(nucleiImages)
+    membraneMask = get_membrane_mask(membraneImages)
 
     watershedMarker = np.zeros(nucleiMask.shape)
 
-    for z in range(len(self.dataSet.get_z_positions())):
+    for z in range(nucleiImages.shape[0]):
 
         # generate areas of sure bg and fg, as well as the area of
         # unknown classification
@@ -338,8 +338,8 @@ def apply_cv2_watershed(nucleiImages: np.ndarray,
     """
 
     watershedOutput = np.zeros(watershedMarkers.shape)
-    for z in range(len(self.dataSet.get_z_positions())):
-        rgbImage = self.convert_grayscale_to_rgb(nucleiImages[z, :, :])
+    for z in range(nucleiImages.shape[0]):
+        rgbImage = convert_grayscale_to_rgb(nucleiImages[z, :, :])
         watershedOutput[z, :, :] = cv2.watershed(rgbImage,
                                                  watershedMarkers[z, :, :].
                                                  astype('int32'))
@@ -423,13 +423,12 @@ def combine_2d_segmentation_masks_into_3d(watershedOutput:
     watershedCombinedZ[-1, :, :] = watershedOutput[-1, :, :]
 
     # starting far from coverslip
-    for z in range(len(self.dataSet.get_z_positions())-1, 0, -1):
+    for z in range(watershedOutput.shape[0]-1, 0, -1):
         zNucleiIndex = np.unique(watershedOutput[z, :, :])[
                                 np.unique(watershedOutput[z, :, :]) > 100]
 
     for n0 in zNucleiIndex:
-        n1, f0, f1 = self.get_overlapping_nuclei(
-                                            watershedCombinedZ[z, :, :],
+        n1, f0, f1 = get_overlapping_nuclei(watershedCombinedZ[z, :, :],
                                             watershedOutput[z-1, :, :],
                                             n0)
         if n1:

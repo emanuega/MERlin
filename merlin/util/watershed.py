@@ -294,11 +294,9 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
 
     compartmentMask = get_compartment_mask(compartmentImages)
     membraneMask = get_membrane_mask(membraneImages, membraneFlag)
-
     watershedMarker = np.zeros(compartmentMask.shape)
 
     for z in range(compartmentImages.shape[0]):
-
         # generate areas of sure bg and fg, as well as the area of
         # unknown classification
         background = morphology.dilation(compartmentMask[z, :, :],
@@ -355,7 +353,6 @@ def convert_grayscale_to_rgb(uint16Image: np.ndarray) -> np.ndarray:
 
     return rgbImage
 
-<<<<<<< HEAD
 def apply_cv2_watershed(compartmentImages: np.ndarray,
                         watershedMarkers: np.ndarray) -> np.ndarray:
     """Perform watershed using cv2

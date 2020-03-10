@@ -40,6 +40,9 @@ def build_parser():
                         help='name of the position file to use')
     parser.add_argument('-n', '--core-count', type=int,
                         help='number of cores to use for the analysis')
+    parser.add_argument('--check-done', action='store_true',
+                        help='flag to only check if the analysis task is ' +
+                        'done')
     parser.add_argument(
         '-t', '--analysis-task',
         help='the name of the analysis task to execute. If no '
@@ -121,9 +124,18 @@ def merlin():
 
     if not args.generate_only:
         if args.analysis_task:
-            print('Running %s' % args.analysis_task)
-            e.run(dataSet.load_analysis_task(args.analysis_task),
-                  index=args.fragment_index)
+            task = dataSet.load_analysis_task(args.analysis_task)
+            if args.check_done:
+                # checking completion creates the .done file for parallel tasks
+                # where completion has not yet been checked
+                if task.is_complete():
+                    print('Task %s is complete' % args.analysis_task)
+                else:
+                    print('Task %s is not complete' % args.analysis_task)
+
+            else:
+                print('Running %s' % args.analysis_task)
+                e.run(task, index=args.fragment_index)
         elif snakefilePath:
             snakemakeParameters = {}
             if args.snakemake_parameters:

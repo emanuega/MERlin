@@ -1,6 +1,5 @@
 import importlib
 import networkx
-from merlin.analysis.paralleltaskcomplete import ParallelTaskComplete
 from merlin.core import analysistask
 from merlin.core import dataset
 
@@ -32,50 +31,31 @@ class SnakemakeRule(object):
                     self._analysisTask.dataSet.analysis_done_filename(
                         self._analysisTask, '{i}')))
         else:
-            if self._analysisTask.__class__ == ParallelTaskComplete:
-                dependentTask = self._analysisTask.parameters['dependent_task']
-                taskToUse = self._analysisTask.dataSet.load_analysis_task(
-                    dependentTask)
-                out = taskToUse.dataSet.analysis_done_filename(taskToUse)
-                return self._clean_string(self._add_quotes(out))
-            else:
-                return self._clean_string(
-                    self._add_quotes(
-                        self._analysisTask.dataSet.analysis_done_filename(
-                            self._analysisTask)))
+            return self._clean_string(
+                self._add_quotes(
+                    self._analysisTask.dataSet.analysis_done_filename(
+                        self._analysisTask)))
 
     def _generate_current_task_inputs(self):
         inputTasks = [self._analysisTask.dataSet.load_analysis_task(x)
                       for x in self._analysisTask.get_dependencies()]
-        if self._analysisTask.__class__ == ParallelTaskComplete:
-            inputString = []
-            for t in inputTasks:
-                if isinstance(t, analysistask.ParallelAnalysisTask):
-                    inputString.append(self._expand_as_string(
-                        t, t.fragment_count()))
-                else:
-                    inputString.append(t.dataSet.analysis_done_filename(t))
-            inputString = ','.join(inputString)
+        if len(inputTasks) > 0:
+            inputString = ','.join(['ancient(' + self._add_quotes(
+                x.dataSet.analysis_done_filename(x)) + ')'
+                                    for x in inputTasks])
         else:
-            if len(inputTasks) > 0:
-                inputString = ','.join(['ancient(' + self._add_quotes(
-                    x.dataSet.analysis_done_filename(x)) + ')'
-                                        for x in inputTasks])
-            else:
-                inputString = ''
+            inputString = ''
 
         return self._clean_string(inputString)
 
     def _generate_message(self) -> str:
         messageString = \
             ''.join(['Running ', self._analysisTask.get_analysis_name()])
-
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
             messageString += ' {wildcards.i}'
-
         return self._add_quotes(messageString)
 
-    def _generate_shell(self) -> str:
+    def _base_shell_command(self) -> str:
         if self._pythonPath is None:
             shellString = 'python '
         else:
@@ -88,11 +68,23 @@ class SnakemakeRule(object):
              ' -s \"',
              self._clean_string(self._analysisTask.dataSet.analysisHome),
              '\"'])
+        return shellString
+
+    def _generate_shell(self) -> str:
+        shellString = self._base_shell_command()
         if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
             shellString += ' -i {wildcards.i}'
         shellString += ' ' + self._clean_string(
             self._analysisTask.dataSet.dataSetName)
+        return self._add_quotes(shellString)
 
+    def _generate_done_shell(self) -> str:
+        """ Check done shell command for parallel analysis tasks
+        """
+        shellString = self._base_shell_command()
+        shellString += ' --check-done'
+        shellString += ' ' + self._clean_string(
+            self._analysisTask.dataSet.dataSetName)
         return self._add_quotes(shellString)
 
     def as_string(self) -> str:
@@ -102,6 +94,23 @@ class SnakemakeRule(object):
                         self._generate_current_task_inputs(),
                         self._generate_output(),
                         self._generate_message(),  self._generate_shell())
+        # for parallel tasks, add a second snakemake task to reduce the time
+        # it takes to generate DAGs
+        if isinstance(self._analysisTask, analysistask.ParallelAnalysisTask):
+            fullString += \
+                ('rule %s:\n\tinput: %s\n\toutput: %s\n\tmessage: %s\n\t'
+                 + 'shell: %s\n\n')\
+                % (self._analysisTask.get_analysis_name() + 'Done',
+                   self._clean_string(self._expand_as_string(
+                       self._analysisTask,
+                       self._analysisTask.fragment_count())),
+                   self._add_quotes(self._clean_string(
+                       self._analysisTask.dataSet.analysis_done_filename(
+                           self._analysisTask))),
+                   self._add_quotes(
+                       'Checking %s done' % self._analysisTask.analysisName),
+                   self._generate_done_shell())
+        print(fullString)
         return fullString
 
     def full_output(self) -> str:
@@ -119,7 +128,7 @@ class SnakemakeRule(object):
 class SnakefileGenerator(object):
 
     def __init__(self, analysisParameters, dataSet: dataset.DataSet,
-                 pythonPath: str=None):
+                 pythonPath: str = None):
         self._analysisParameters = analysisParameters
         self._dataSet = dataSet
         self._pythonPath = pythonPath
@@ -142,19 +151,6 @@ class SnakefileGenerator(object):
             analysisTasks[newTask.get_analysis_name()] = newTask
         return analysisTasks
 
-    def _add_parallel_completion_tasks(self, analysisTasks):
-        updatedTasks = {}
-        for k, v in analysisTasks.items():
-            updatedTasks[k] = v
-            if isinstance(v, analysistask.ParallelAnalysisTask):
-                parameters = {'dependent_task': k}
-                newTask = ParallelTaskComplete(self._dataSet, parameters,
-                                               '{}Done'.format(k))
-                if newTask.get_analysis_name() not in analysisTasks:
-                    newTask.save()
-                    updatedTasks[newTask.get_analysis_name()] = newTask
-        return updatedTasks
-
     def _identify_terminal_tasks(self, analysisTasks):
         taskGraph = networkx.DiGraph()
         for x in analysisTasks.keys():
@@ -175,8 +171,6 @@ class SnakefileGenerator(object):
         """
         analysisTasks = self._parse_parameters()
         terminalTasks = self._identify_terminal_tasks(analysisTasks)
-
-        analysisTasks = self._add_parallel_completion_tasks(analysisTasks)
 
         ruleList = {k: SnakemakeRule(v, self._pythonPath)
                     for k, v in analysisTasks.items()}

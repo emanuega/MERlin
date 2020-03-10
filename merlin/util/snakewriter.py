@@ -110,7 +110,6 @@ class SnakemakeRule(object):
                    self._add_quotes(
                        'Checking %s done' % self._analysisTask.analysisName),
                    self._generate_done_shell())
-        print(fullString)
         return fullString
 
     def full_output(self) -> str:

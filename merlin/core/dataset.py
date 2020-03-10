@@ -201,7 +201,7 @@ class DataSet(object):
             analysisTask, imageBaseName, imageIndex))
         indexInFile = sliceIndex*imagesPerSlice + frameIndex
         return imageFile.asarray(key=int(indexInFile))
-    
+
     def writer_for_analysis_images(
             self, analysisTask: TaskOrName, imageBaseName: str,
             imageIndex: int = None, imagej: bool = True) -> tifffile.TiffWriter:
@@ -830,7 +830,7 @@ class DataSet(object):
         fileName = self._analysis_status_file(
                 analysisTask, 'run', fragmentIndex)
         try:
-            return time.time() - os.path.getmtime(fileName) > 120
+            return time.time() - os.path.getmtime(fileName) > 1
         except FileNotFoundError:
             return True
 
@@ -849,7 +849,6 @@ class DataSet(object):
     def check_analysis_error(self, analysisTask: analysistask.AnalysisTask,
                              fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
-
 
     def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
                               fragmentIndex: int = None):

@@ -1194,7 +1194,6 @@ class MetaMERFISHDataSet(DataSet):
             dataSetNames: a list of strings, each entry specifies a
                     MERFISHDataSet to use. A full path can be provided,
                     otherwise it looks in the analysisHome directory.
-                    TODO is this true? it seems to use self.analysisHome
             dataHome: path for raw data
             analysisHome: path for analyzed data
         """
@@ -1216,17 +1215,22 @@ class MetaMERFISHDataSet(DataSet):
                     collections.Counter(dataSetNames):
                 self.dataSetNames = dataSetNames
 
-        # make sure all datasets are available
-        self.load_datasets()
-
     def _load_dataset_names(self) -> List[str]:
         return self.load_json_analysis_result('dataset_names', None)
 
     def load_datasets(self) -> Dict[str, MERFISHDataSet]:
         dataSetDict = dict()
         for ds in self.dataSetNames:
-            dataSetDict[ds] = MERFISHDataSet(ds, dataHome=self.dataHome,
-                                             analysisHome=self.analysisHome)
+            if os.path.isdir(ds):
+                head, tail = os.path.split(ds)
+                dataSetDict[tail] = MERFISHDataSet(tail, dataHome=self.dataHome,
+                                                   analysisHome=head)
+            elif os.path.isdir(os.path.join(self.analysisHome, ds)):
+                dataSetDict[ds] = MERFISHDataSet(ds, dataHome=self.dataHome,
+                                                 analysisHome=self.analysisHome)
+            else:
+                dataSetDict[ds] = None
+                print('{} is not available'.format(ds))
         return dataSetDict
 
     def get_full_metadata(self):

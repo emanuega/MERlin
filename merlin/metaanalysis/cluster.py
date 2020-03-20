@@ -46,8 +46,7 @@ class CreateAnnData(analysistask.AnalysisTask):
 
     def _run_analysis(self) -> None:
         data = self.metaDataSet.load_analysis_task(
-            self.parameters['aggregate_task']).load_aggregated_data(
-            self.parameters['combined_analysis'])
+            self.parameters['aggregate_task']).load_aggregated_data()
         data = data.dropna()
         allGenes = self._identify_multiplex_and_sequential_genes()
         scData = sc.AnnData(X=data.loc[:, allGenes].values)

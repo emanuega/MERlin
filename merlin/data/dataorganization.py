@@ -253,8 +253,13 @@ class DataOrganization(object):
         selection = self.fileMap[(self.fileMap['imageType'] == imageType) &
                                  (self.fileMap['fov'] == fov) &
                                  (self.fileMap['imagingRound'] == imagingRound)]
+        filemapPath = selection['imagePath'].values[0]
+        return os.path.join(self._dataSet.dataHome, self._dataSet.dataSetName,
+                            filemapPath)
 
-        return selection['imagePath'].values[0]
+    def _truncate_file_path(self, path) -> None:
+        head, tail = os.path.split(path)
+        return tail
 
     def _map_image_files(self) -> None:
         # TODO: This doesn't map the fiducial image types and currently assumes
@@ -263,6 +268,8 @@ class DataOrganization(object):
 
         try:
             self.fileMap = self._dataSet.load_dataframe_from_csv('filemap')
+            self.fileMap['imagePath'] = self.fileMap['imagePath'].apply(
+                self._truncate_file_path)
 
         except FileNotFoundError:
             uniqueEntries = self.data.drop_duplicates(
@@ -302,6 +309,8 @@ class DataOrganization(object):
             self.fileMap = pandas.DataFrame(fileData)
             self.fileMap[['imagingRound', 'fov']] = \
                 self.fileMap[['imagingRound', 'fov']].astype(int)
+            self.fileMap['imagePath'] = self.fileMap['imagePath'].apply(
+                self._truncate_file_path)
 
             self._validate_file_map()
 

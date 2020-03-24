@@ -40,7 +40,7 @@ class BypassAnalyzedData(analysistask.AnalysisTask):
             dst = self.metaDataSet._analysis_result_save_path('starting_data', self, fileExtension=ext)
             copy2(self.parameters['source_file'], dst)
 
-    def return_data(self):
+    def return_exported_data(self):
         ext = os.path.splitext(self.parameters['source_file'])[1]
         if ext == '.csv':
             return self.metaDataSet.load_dataframe_from_csv('starting_data', self)

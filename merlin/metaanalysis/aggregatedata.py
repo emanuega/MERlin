@@ -27,7 +27,7 @@ class AggregateData(analysistask.AnalysisTask):
         else:
             return dep
 
-    def load_aggregated_data(self, **kwargs):
+    def return_exported_data(self, **kwargs):
         return self.metaDataSet.load_dataframe_from_csv('aggregated_data', self, **kwargs)
 
     def _run_analysis(self):

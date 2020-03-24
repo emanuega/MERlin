@@ -16,6 +16,9 @@ class CreateAnnData(analysistask.AnalysisTask):
         super().__init__(metaDataSet, parameters, analysisName)
 
         self.metaDataSet = metaDataSet
+        if 'excluded_stains' not in self.parameters:
+            self.parameters['excluded_stains'] = ['cellstain', 'nuclearstain', 'DAPI', 'polyT', 'polyA']
+
 
     def get_estimated_memory(self):
         return 10000
@@ -32,8 +35,9 @@ class CreateAnnData(analysistask.AnalysisTask):
         aData.write(path)
 
     def _identify_multiplex_and_sequential_genes(self):
+        #TODO: there's probably an edge case where a gene has the same name as a metadatafeature in the input file
         genes = []
-        excluded = ['cellstain', 'nuclearstain', 'DAPI', 'polyT', 'polyA']
+        excluded = self.parameters['excluded_stains']
         for k, v in self.metaDataSet.load_datasets().items():
             for cb in v.codebooks:
                 missing = [x for x in cb.get_gene_names() if x not in genes]
@@ -46,7 +50,7 @@ class CreateAnnData(analysistask.AnalysisTask):
 
     def _run_analysis(self) -> None:
         data = self.metaDataSet.load_analysis_task(
-            self.parameters['aggregate_task']).load_aggregated_data()
+            self.parameters['aggregate_task']).return_exported_data()
         data = data.dropna()
         allGenes = self._identify_multiplex_and_sequential_genes()
         scData = sc.AnnData(X=data.loc[:, allGenes].values)
@@ -106,7 +110,7 @@ class Clustering(analysistask.ParallelAnalysisTask):
         return 100
 
     def get_dependencies(self):
-        return [self.parameters['filecreationtask']]
+        return [self.parameters['file_creation_task']]
 
     def _load_data(self):
         requestedTask = self.get_dependencies()[0]
@@ -462,6 +466,8 @@ class ClusterStabilityAnalysis(analysistask.AnalysisTask):
         super().__init__(metaDataSet, parameters, analysisName)
 
         self.metaDataSet = metaDataSet
+        if 'min_fraction_cells' not in self.parameters:
+            self.parameters['min_fraction_cells'] = 0.9
 
     def get_estimated_memory(self):
         return 10000
@@ -552,5 +558,5 @@ class ClusterStabilityAnalysis(analysistask.AnalysisTask):
         df['fraction stable cells'] = df['stable cells'] /\
                                       df['total cells']
 
-        selectedKandRes = df[df['fraction stable cells'] >= 0.9].sort_values(
+        selectedKandRes = df[df['fraction stable cells'] >= self.parameters['min_fraction_cells']].sort_values(
             by='stable clusters', ascending=False).iloc[0, :]

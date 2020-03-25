@@ -397,3 +397,37 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
                 self.parameters['previous_iteration']
             ).get_barcode_count_history()
             return np.append(previousHistory, [countsMean], axis=0)
+
+
+class OptimizeConvergence(OptimizeIteration):
+
+    """
+    An analysis task for performing a single iteration of scale factor
+    optimization.
+    """
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'fov_per_iteration' not in self.parameters:
+            self.parameters['fov_per_iteration'] = 50
+        if 'area_threshold' not in self.parameters:
+            self.parameters['area_threshold'] = 5
+        if 'optimize_background' not in self.parameters:
+            self.parameters['optimize_background'] = False
+        if 'optimize_chromatic_correction' not in self.parameters:
+            self.parameters['optimize_chromatic_correction'] = False
+
+    def get_estimated_memory(self):
+        return 4000
+
+    def get_estimated_time(self):
+        return 1000
+
+    def get_dependencies(self):
+        dependencies = [self.parameters['preprocess_task'],
+                        self.parameters['warp_task']]
+        if 'previous_iteration' in self.parameters:
+            dependencies += [self.parameters['previous_iteration']]
+        return dependencies
+

@@ -181,6 +181,115 @@ class PixelBasedDecoder(object):
 
         return barcodeInformation
 
+    def extract_barcodes_with_index_inbatch(
+            self, barcodeIndex: int, decodedImage: np.ndarray,
+            pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
+            distances: np.ndarray, fov: int, cropWidth: int, zIndex: int = None,
+            globalAligner=None, segmenter=None, minimumArea: int = 0
+    ) -> pandas.DataFrame:
+        """Extract the barcode information from the decoded image for barcodes
+        that were decoded to the specified barcode index.
+
+        Args:
+            barcodeIndex: the index of the barcode to extract the corresponding
+                barcodes
+            decodedImage: the image indicating the barcode index assigned to
+                each pixel
+            pixelMagnitudes: an image containing norm of the intensities for
+                each pixel across all bits after scaling by the scale factors
+            pixelTraces: an image stack containing the normalized pixel
+                intensity traces
+            distances: an image indicating the distance between the normalized
+                pixel trace and the assigned barcode for each pixel
+            fov: the index of the field of view
+            cropWidth: the number of pixels around the edge of each image within
+                which barcodes are excluded from the output list.
+            zIndex: the index of the z position
+            globalAligner: the aligner used for converted to local x,y
+                coordinates to global x,y coordinates
+            segmenter: the cell segmenter for assigning a cell for each of the
+                identified barcodes
+            minimumArea: the minimum area of barcodes to identify. Barcodes
+                less than the specified minimum area are ignored.
+        Returns:
+            a pandas dataframe containing all the barcodes decoded with the
+                specified barcode index
+        """
+        properties = measure.regionprops(
+            measure.label(decodedImage == barcodeIndex),
+            intensity_image=pixelMagnitudes,
+            cache=False)
+
+        centroidCoords = np.array(
+            [prop.weighted_centroid for prop in properties])
+        if centroidCoords.shape[1] == 2:
+            centroids = np.zeros((centroidCoords.shape[0], 3))
+            centroids[:, 0] = zIndex
+            centroids[:, [1, 2]] = centroidCoords[:, [1, 0]]
+        else:
+            centroids = centroidCoords[:, [0, 2, 1]]
+
+        if globalAligner is not None:
+            tForm = globalAligner.fov_to_global_transform(fov)
+            toGlobal = np.ones(centroids.shape)
+            toGlobal[:, [0, 1]] = centroids[:, [1, 2]]
+            globalCentroids = np.matmul(tForm, toGlobal.T).T[:, [2, 0, 1]]
+            globalCentroids[:, 0] = centroids[:, 0]
+        else:
+            globalCentroids = centroids
+
+        allCoords = [list(p.coords) for p in properties]
+        if len(distances.shape) == 2:
+            d = [[distances[y[0], y[1]] for y in x] for x in allCoords]
+        else:
+            d = [[distances[y[0], y[1], y[2]] for y in x] for x in allCoords]
+
+        columnNames = ['barcode_id', 'fov', 'mean_intensity', 'max_intensity',
+                       'area', 'mean_distance', 'min_distance',
+                       'x', 'y', 'z', 'global_x', 'global_y', 'global_z',
+                       'cell_index']
+        df = pandas.DataFrame(np.zeros((len(properties), 14)), columns=columnNames)
+        df['barcode_id'] = barcodeIndex
+        df['fov'] = fov
+        df.loc[:, ['mean_intensity', 'max_intensity', 'area']] = np.array(
+            [[x.mean_intensity, x.max_intensity, x.area] for x in properties])
+        df.loc[:, ['mean_distance', 'min_distance']] = np.array(
+            [[np.mean(x), np.min(x)] if len(x) > 1 else [x[0], x[0]] for x in
+             d])
+        df.loc[:, ['x', 'y', 'z']] = centroids[:, [1, 2, 0]]
+        df.loc[:, ['global_x', 'global_y', 'global_z']] = centroids[:,
+                                                          [1, 2, 0]]
+        df['cell_index'] = -1
+        if len(pixelTraces.shape) == 3:
+            intensities = [[pixelTraces[:, y[0], y[1]] for y in x] for
+                           x in allCoords]
+            intensities = pandas.DataFrame(
+                [np.mean(x, 0) if len(x) > 1 else x[0] for x in intensities],
+                columns=['intensity_{}'.format(i) for i in
+                         range(pixelTraces.shape[0])])
+        else:
+            intensities = [
+                [pixelTraces[y[0], :, y[1], y[2]] for y in x] for x in
+                allCoords]
+            intensities = pandas.DataFrame(
+                [np.mean(x, 0) if len(x) > 1 else x[0] for x in intensities],
+                columns=['intensity_{}'.format(i) for i in
+                         range(pixelTraces.shape[1])])
+
+        fullDF = pandas.concat([df, intensities], 1)
+        fullDF = fullDF[(fullDF['x'].between(cropWidth,
+                                             decodedImage.shape[0] - cropWidth,
+                                             inclusive=False)) &
+                        (fullDF['y'].between(cropWidth,
+                                             decodedImage.shape[1] - cropWidth,
+                                             inclusive=False)) &
+                        (fullDF['area'] >= minimumArea)]
+
+        if segmenter is not None:
+            print('no support for segmenter in extract barcodes in batch')
+
+        return fullDF
+
     @staticmethod
     def _position_within_crop(position: np.ndarray, cropWidth: float,
                               imageSize: Tuple[int]) -> bool:

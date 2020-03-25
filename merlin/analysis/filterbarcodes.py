@@ -52,7 +52,8 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         barcodeGroups = barcodes.groupby('barcode_id')
         bcToKeep = []
         for bcGroup, bcData in barcodeGroups:
-            bcToKeep.append(duplicatebcremoval.cleanup_across_z(bcData, zPlanes, maxDist))
+            bcToKeep.append(duplicatebcremoval.cleanup_across_z(bcData, zPlanes,
+                                                                maxDist))
         mergedBC = pandas.concat(bcToKeep, 0).reset_index(drop=True)
         mergedBC = mergedBC.sort_values(by=['barcode_id', 'z'])
         return mergedBC
@@ -71,7 +72,8 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         if self.parameters['remove_zplane_duplicates']:
             zPlanes = self.parameters['z_planes_above_below']
             maxDist = self.parameters['max_centroid_separation']
-            currentBC = self._remove_zplane_duplicates(currentBC, zPlanes, maxDist)
+            currentBC = self._remove_zplane_duplicates(currentBC, zPlanes,
+                                                       maxDist)
         barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
 
 
@@ -384,7 +386,8 @@ class AdaptiveFilterBarcodes(FilterBarcodes):
         if self.parameters['remove_zplane_duplicates']:
             zPlanes = self.parameters['z_planes_above_below']
             maxDist = self.parameters['max_centroid_separation']
-            currentBarcodes = self._remove_zplane_duplicates(currentBarcodes, zPlanes, maxDist)
+            currentBarcodes = self._remove_zplane_duplicates(currentBarcodes,
+                                                             zPlanes, maxDist)
         bcDatabase.write_barcodes(
             adaptiveTask.extract_barcodes_with_threshold(
                 threshold, currentBarcodes), fov=fragmentIndex)

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 import networkx as nx
 import pandas as pd
+from random import choice
 
 def cleanup_across_z(barcodes: pd.DataFrame, zPlanes: int, maxDist: float) -> pd.DataFrame:
     """ Depending on the separation between z planes, spots from a single molecule may be observed in more than
@@ -36,6 +37,6 @@ def cleanup_across_z(barcodes: pd.DataFrame, zPlanes: int, maxDist: float) -> pd
             comparisonHits = queryBC.index.values[np.isfinite(dist)]
             graph.add_edges_from(list(zip(currentHits, comparisonHits)))
     connectedComponents = [list(x) for x in list(nx.connected_components(graph))]
-    keptBarcodes = barcodes.loc[sorted([x[0] if len(x) == 1 else random.choice(x) for x in connectedComponents]), :]
+    keptBarcodes = barcodes.loc[sorted([x[0] if len(x) == 1 else choice(x) for x in connectedComponents]), :]
     return keptBarcodes
 

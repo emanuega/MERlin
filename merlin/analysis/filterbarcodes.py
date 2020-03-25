@@ -53,7 +53,7 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         bcToKeep = []
         for bcGroup, bcData in barcodeGroups:
             bcToKeep.append(duplicatebcremoval.cleanup_across_z(bcData, zPlanes, maxDist))
-        mergedBC = pd.concat(bcToKeep, 0).reset_index(drop=True)
+        mergedBC = pandas.concat(bcToKeep, 0).reset_index(drop=True)
         mergedBC = mergedBC.sort_values(by=['barcode_id', 'z'])
         return mergedBC
 

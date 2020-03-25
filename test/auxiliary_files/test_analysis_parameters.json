@@ -67,7 +67,10 @@
             "parameters": {
                 "decode_task": "Decode",
                 "area_threshold": 5,
-                "intensity_threshold": 1
+                "intensity_threshold": 1,
+                "remove_zplane_duplicates": true,
+                "z_planes_above_below": 1,
+                "max_centroid_separation": 1.414
             }
         },
         {
@@ -83,7 +86,10 @@
             "module": "merlin.analysis.filterbarcodes",
             "parameters": {
                 "decode_task": "Decode",
-                "adaptive_task": "GenerateAdaptiveThreshold"
+                "adaptive_task": "GenerateAdaptiveThreshold",
+                "remove_zplane_duplicates": true,
+                "z_planes_above_below": 1,
+                "max_centroid_separation": 1.414
             }
         },
         {

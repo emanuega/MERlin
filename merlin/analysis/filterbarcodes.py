@@ -5,7 +5,7 @@ from scipy import optimize
 from merlin.core import analysistask
 from merlin.data.codebook import Codebook
 from merlin.analysis import decode
-
+from merlin.util import duplicatebcremoval
 
 class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
 
@@ -23,6 +23,13 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
             self.parameters['intensity_threshold'] = 200
         if 'distance_threshold' not in self.parameters:
             self.parameters['distance_threshold'] = 1e6
+        if 'remove_zplane_duplicates' not in self.parameters:
+            self.parameters['remove_zplane_duplicates'] = False
+        if self.parameters['remove_zplane_duplicates']:
+            if 'z_planes_above_below' not in self.parameters:
+                self.parameters['z_planes_above_below'] = 1
+            if 'max_centroid_separation' not in self.parameters:
+                self.parameters['max_centroid_separation'] = np.sqrt(2)
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -41,6 +48,15 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
             self.parameters['decode_task'])
         return decodeTask.get_codebook()
 
+    def _remove_zplane_duplicates(self, barcodes, zPlanes, maxDist):
+        barcodeGroups = barcodes.groupby('barcode_id')
+        bcToKeep = []
+        for bcGroup, bcData in barcodeGroups:
+            bcToKeep.append(duplicatebcremoval.cleanup_across_z(bcData, zPlanes, maxDist))
+        mergedBC = pd.concat(bcToKeep, 0).reset_index(drop=True)
+        mergedBC = mergedBC.sort_values(by=['barcode_id', 'z'])
+        return mergedBC
+
     def _run_analysis(self, fragmentIndex):
         decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])
@@ -52,6 +68,10 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
             .get_filtered_barcodes(areaThreshold, intensityThreshold,
                                    distanceThreshold=distanceThreshold,
                                    fov=fragmentIndex)
+        if self.parameters['remove_zplane_duplicates']:
+            zPlanes = self.parameters['z_planes_above_below']
+            maxDist = self.parameters['max_centroid_separation']
+            currentBC = self._remove_zplane_duplicates(currentBC, zPlanes, maxDist)
         barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
 
 
@@ -316,7 +336,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                         codingCounts, 'coding_counts', self)
 
 
-class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
+class AdaptiveFilterBarcodes(FilterBarcodes):
 
     """
     An analysis task that filters barcodes based on a mean intensity threshold
@@ -329,9 +349,6 @@ class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
 
         if 'misidentification_rate' not in self.parameters:
             self.parameters['misidentification_rate'] = 0.05
-
-    def fragment_count(self):
-        return len(self.dataSet.get_fovs())
 
     def get_estimated_memory(self):
         return 1000
@@ -352,11 +369,6 @@ class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         return self.dataSet.load_analysis_task(
             self.parameters['adaptive_task'])
 
-    def get_codebook(self) -> Codebook:
-        decodeTask = self.dataSet.load_analysis_task(
-            self.parameters['decode_task'])
-        return decodeTask.get_codebook()
-
     def _run_analysis(self, fragmentIndex):
         adaptiveTask = self.dataSet.load_analysis_task(
             self.parameters['adaptive_task'])
@@ -369,6 +381,10 @@ class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         bcDatabase = self.get_barcode_database()
         currentBarcodes = decodeTask.get_barcode_database()\
             .get_barcodes(fragmentIndex)
+        if self.parameters['remove_zplane_duplicates']:
+            zPlanes = self.parameters['z_planes_above_below']
+            maxDist = self.parameters['max_centroid_separation']
+            currentBarcodes = self._remove_zplane_duplicates(currentBarcodes, zPlanes, maxDist)
         bcDatabase.write_barcodes(
             adaptiveTask.extract_barcodes_with_threshold(
                 threshold, currentBarcodes), fov=fragmentIndex)

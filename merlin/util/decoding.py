@@ -130,57 +130,6 @@ class PixelBasedDecoder(object):
 
         return decodedImage, pixelMagnitudes, normalizedPixelTraces, distances
 
-    # TODO barcodes here has two different meanings. One of these should be
-    # renamed.
-    def extract_barcodes_with_index(
-            self, barcodeIndex: int, decodedImage: np.ndarray,
-            pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
-            distances: np.ndarray, fov: int, cropWidth: int, zIndex: int=None,
-            globalAligner=None, segmenter=None, minimumArea: int=0
-    ) -> pandas.DataFrame:
-        """Extract the barcode information from the decoded image for barcodes
-        that were decoded to the specified barcode index.
-
-        Args:
-            barcodeIndex: the index of the barcode to extract the corresponding
-                barcodes
-            decodedImage: the image indicating the barcode index assigned to
-                each pixel
-            pixelMagnitudes: an image containing norm of the intensities for
-                each pixel across all bits after scaling by the scale factors
-            pixelTraces: an image stack containing the normalized pixel
-                intensity traces
-            distances: an image indicating the distance between the normalized
-                pixel trace and the assigned barcode for each pixel
-            fov: the index of the field of view
-            cropWidth: the number of pixels around the edge of each image within
-                which barcodes are excluded from the output list.
-            zIndex: the index of the z position
-            globalAligner: the aligner used for converted to local x,y
-                coordinates to global x,y coordinates
-            segmenter: the cell segmenter for assigning a cell for each of the
-                identified barcodes
-            minimumArea: the minimum area of barcodes to identify. Barcodes
-                less than the specified minimum area are ignored.
-        Returns:
-            a pandas dataframe containing all the barcodes decoded with the
-                specified barcode index
-        """
-        properties = measure.regionprops(
-                measure.label(decodedImage == barcodeIndex),
-                intensity_image=pixelMagnitudes,
-                cache=False)
-        dList = [self._bc_properties_to_dict(
-            p, barcodeIndex, fov, distances, pixelTraces, zIndex,
-            globalAligner, segmenter
-        ) for p in properties
-            if self._position_within_crop(
-                p.centroid, cropWidth, decodedImage.shape)
-            and p.area >= minimumArea]
-        barcodeInformation = pandas.DataFrame(dList)
-
-        return barcodeInformation
-
     def extract_barcodes_with_index_inbatch(
             self, barcodeIndex: int, decodedImage: np.ndarray,
             pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
@@ -289,72 +238,6 @@ class PixelBasedDecoder(object):
             print('no support for segmenter in extract barcodes in batch')
 
         return fullDF
-
-    @staticmethod
-    def _position_within_crop(position: np.ndarray, cropWidth: float,
-                              imageSize: Tuple[int]) -> bool:
-        if len(position) == 2:
-            return cropWidth < position[0] < imageSize[0] - cropWidth \
-                    and cropWidth < position[1] < imageSize[1] - cropWidth
-        else:
-            return cropWidth < position[1] < imageSize[1] - cropWidth \
-                   and cropWidth < position[2] < imageSize[2] - cropWidth
-
-    def _bc_properties_to_dict(self, properties, bcIndex: int, fov: int,
-                               distances: np.ndarray, pixelTraces: np.ndarray,
-                               zIndex: int=None, globalAligner=None,
-                               segmenter=None) -> Dict:
-        # centroid is reversed since skimage regionprops returns the centroid
-        # as (r,c)
-        inputCentroid = properties.weighted_centroid
-        if len(inputCentroid) == 2:
-            centroid = [zIndex, inputCentroid[1], inputCentroid[0]]
-        else:
-            centroid = [inputCentroid[0], inputCentroid[2], inputCentroid[1]]
-
-        if globalAligner is not None:
-            globalCentroid = globalAligner.fov_coordinates_to_global(
-                    fov, centroid)
-        else:
-            globalCentroid = centroid
-
-        if len(distances.shape) == 2:
-            d = [distances[x[0], x[1]] for x in properties.coords]
-        else:
-            d = [distances[x[0], x[1], x[2]] for x in properties.coords]
-
-        outputDict = {'barcode_id': bcIndex,
-                      'fov': fov,
-                      'mean_intensity': properties.mean_intensity,
-                      'max_intensity': properties.max_intensity,
-                      'area': properties.area,
-                      'mean_distance': np.mean(d),
-                      'min_distance': np.min(d),
-                      'x': centroid[1],
-                      'y': centroid[2],
-                      'z': centroid[0],
-                      'global_x': globalCentroid[1],
-                      'global_y': globalCentroid[2],
-                      'global_z': globalCentroid[0],
-                      'cell_index': -1}
-
-        if len(pixelTraces.shape) == 3:
-            for i in range(len(pixelTraces)):
-                outputDict['intensity_' + str(i)] = \
-                    np.mean([pixelTraces[i, x[0], x[1]]
-                            for x in properties.coords])
-        else:
-            for i in range(len(pixelTraces[0])):
-                outputDict['intensity_' + str(i)] = \
-                    np.mean([pixelTraces[x[0], i, x[1], x[2]]
-                             for x in properties.coords])
-
-        if segmenter is not None:
-            outputDict['cell_index'] = segmenter \
-                    .get_cell_containing_position(
-                            globalCentroid[0], globalCentroid[1])
-
-        return outputDict
 
     def _calculate_normalized_barcodes(
             self, ignoreBlanks=False, includeErrors=False):

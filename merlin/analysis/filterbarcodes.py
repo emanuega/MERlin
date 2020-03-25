@@ -391,4 +391,3 @@ class AdaptiveFilterBarcodes(FilterBarcodes):
         bcDatabase.write_barcodes(
             adaptiveTask.extract_barcodes_with_threshold(
                 threshold, currentBarcodes), fov=fragmentIndex)
-        

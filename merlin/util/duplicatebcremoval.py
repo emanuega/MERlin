@@ -49,4 +49,3 @@ def cleanup_across_z(barcodes: pd.DataFrame, zPlanes: int, maxDist: float) \
     keptBarcodes = barcodes.loc[sorted([x[0] if len(x) == 1 else choice(x) for x
                                         in connectedComponents]), :]
     return keptBarcodes
-

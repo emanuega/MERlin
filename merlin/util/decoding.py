@@ -168,9 +168,22 @@ class PixelBasedDecoder(object):
             measure.label(decodedImage == barcodeIndex),
             intensity_image=pixelMagnitudes,
             cache=False)
+        columnNames = ['barcode_id', 'fov', 'mean_intensity', 'max_intensity',
+         'area', 'mean_distance', 'min_distance',
+         'x', 'y', 'z', 'global_x', 'global_y', 'global_z',
+         'cell_index']
+        if len(pixelTraces.shape) == 3:
+            intensityColumns = ['intensity_{}'.format(i) for i in
+                                range(pixelTraces.shape[0])]
+        else:
+            intensityColumns = ['intensity_{}'.format(i) for i in
+                                range(pixelTraces.shape[1])]
+        if len(properties) == 0:
+            return pandas.DataFrame(columns=columnNames + intensityColumns)
 
         centroidCoords = np.array(
             [prop.weighted_centroid for prop in properties])
+        print(centroidCoords)
         if centroidCoords.shape[1] == 2:
             centroids = np.zeros((centroidCoords.shape[0], 3))
             centroids[:, 0] = zIndex
@@ -193,10 +206,6 @@ class PixelBasedDecoder(object):
         else:
             d = [[distances[y[0], y[1], y[2]] for y in x] for x in allCoords]
 
-        columnNames = ['barcode_id', 'fov', 'mean_intensity', 'max_intensity',
-                       'area', 'mean_distance', 'min_distance',
-                       'x', 'y', 'z', 'global_x', 'global_y', 'global_z',
-                       'cell_index']
         df = pandas.DataFrame(np.zeros((len(properties), 14)), columns=columnNames)
         df['barcode_id'] = barcodeIndex
         df['fov'] = fov
@@ -214,16 +223,14 @@ class PixelBasedDecoder(object):
                            x in allCoords]
             intensities = pandas.DataFrame(
                 [np.mean(x, 0) if len(x) > 1 else x[0] for x in intensities],
-                columns=['intensity_{}'.format(i) for i in
-                         range(pixelTraces.shape[0])])
+                columns=intensityColumns)
         else:
             intensities = [
                 [pixelTraces[y[0], :, y[1], y[2]] for y in x] for x in
                 allCoords]
             intensities = pandas.DataFrame(
                 [np.mean(x, 0) if len(x) > 1 else x[0] for x in intensities],
-                columns=['intensity_{}'.format(i) for i in
-                         range(pixelTraces.shape[1])])
+                columns=intensityColumns)
 
         fullDF = pandas.concat([df, intensities], 1)
         fullDF = fullDF[(fullDF['x'].between(cropWidth,

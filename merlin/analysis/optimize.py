@@ -98,7 +98,7 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
         # TODO this saves the barcodes under fragment instead of fov
         # the barcodedb should be made more general
         self.get_barcode_database().write_barcodes(
-            pandas.concat([decoder.extract_barcodes_with_index(
+            pandas.concat([decoder.extract_barcodes_with_index_inbatch(
                 i, di, pm, npt, d, fovIndex,
                 10, zIndex, minimumArea=areaThreshold)
                 for i in range(codebook.get_barcode_count())]),

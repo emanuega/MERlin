@@ -75,6 +75,50 @@ class DeconvolutionPreprocess(Preprocess):
     def get_codebook(self) -> codebook.Codebook:
         return self.dataSet.get_codebook(self.parameters['codebook_index'])
 
+    def write_processed_stack(self, fov, chromaticCorrector = None):
+        import zstandard as zstd
+        if zIndex is None:
+            return np.array([[self.get_processed_image(
+                fov, self.dataSet.get_data_organization()
+                    .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
+                for zIndex in range(len(self.dataSet.get_z_positions()))]
+                for b in self.get_codebook().get_bit_names()])
+
+        allMultiplexChannels = [self.dataSet.get_data_organization().get_data_channel_for_bit(b) for b in self.get_codebook().get_bit_names()]
+        seqChannels, seqNames = self.dataSet.get_data_organization().get_sequential_rounds()
+        seqToKeep = [seqChannels[i] for i in range(len(seqChannels)) if seqNames[i] in ['polyT','DAPI']]
+        dataChannels = allMultiplexChannels + seqToKeep
+        zPositions = range(len(self.dataSet.get_z_positions()))
+        imageDescription = self.dataSet.analysis_tiff_description(
+                len(zPositions), len(dataChannels))
+        imgName = self.dataSet._analysis_image_name(self, 'processed_images', fov)
+        compressedImgName = imgName + '.zstd'
+        with self.dataSet.writer_for_analysis_images(
+                self, 'processed_images', fov) as outputTif:
+            for ch in dataChannels:
+                for z in zPositions:
+                    if self.dataSet.get_data_organization().get_data_channel_name(ch) in ['polyT','DAPI']:
+                        try:
+                            transformedImage = self.warpTask.get_aligned_image(fov, ch, z)
+                            outputTif.save(transformedImage,
+                                           photometric='MINISBLACK',
+                                           metadata=imageDescription)
+                        except Exception:
+                            pass
+                    else:
+                        try:
+                            processedImage = self.get_processed_image(fov, ch, z, chromaticCorrector)
+                            outputTif.save(processedImage,
+                                           photometric='MINISBLACK',
+                                           metadata=imageDescription)
+                        except Exception:
+                            pass
+
+        cctx = zstd.ZstdCompressor()
+        with open(imgName, 'rb') as ifh, open(compressedImgName, 'wb') as ofh:
+            cctx.copy_stream(ifh, ofh)
+        os.remove(imgName)
+
     def get_processed_image_set(
             self, fov, zIndex: int = None,
             chromaticCorrector: aberration.ChromaticCorrector = None

@@ -130,11 +130,11 @@ class PixelBasedDecoder(object):
 
         return decodedImage, pixelMagnitudes, normalizedPixelTraces, distances
 
-    def extract_barcodes_with_index_inbatch(
+    def extract_barcodes_with_index(
             self, barcodeIndex: int, decodedImage: np.ndarray,
             pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
             distances: np.ndarray, fov: int, cropWidth: int, zIndex: int = None,
-            globalAligner=None, segmenter=None, minimumArea: int = 0
+            globalAligner=None, minimumArea: int = 0
     ) -> pandas.DataFrame:
         """Extract the barcode information from the decoded image for barcodes
         that were decoded to the specified barcode index.
@@ -156,8 +156,6 @@ class PixelBasedDecoder(object):
             zIndex: the index of the z position
             globalAligner: the aligner used for converted to local x,y
                 coordinates to global x,y coordinates
-            segmenter: the cell segmenter for assigning a cell for each of the
-                identified barcodes
             minimumArea: the minimum area of barcodes to identify. Barcodes
                 less than the specified minimum area are ignored.
         Returns:
@@ -168,69 +166,80 @@ class PixelBasedDecoder(object):
             measure.label(decodedImage == barcodeIndex),
             intensity_image=pixelMagnitudes,
             cache=False)
+        is3D = len(pixelTraces.shape) == 3
+
         columnNames = ['barcode_id', 'fov', 'mean_intensity', 'max_intensity',
          'area', 'mean_distance', 'min_distance',
          'x', 'y', 'z', 'global_x', 'global_y', 'global_z',
          'cell_index']
-        if len(pixelTraces.shape) == 3:
-            intensityColumns = ['intensity_{}'.format(i) for i in
-                                range(pixelTraces.shape[0])]
-        else:
+        if is3D:
             intensityColumns = ['intensity_{}'.format(i) for i in
                                 range(pixelTraces.shape[1])]
+        else:
+            intensityColumns = ['intensity_{}'.format(i) for i in
+                                range(pixelTraces.shape[0])]
         if len(properties) == 0:
             return pandas.DataFrame(columns=columnNames + intensityColumns)
 
-        centroidCoords = np.array(
-            [prop.weighted_centroid for prop in properties])
-        print(centroidCoords)
-        if centroidCoords.shape[1] == 2:
-            centroids = np.zeros((centroidCoords.shape[0], 3))
-            centroids[:, 0] = zIndex
-            centroids[:, [1, 2]] = centroidCoords[:, [1, 0]]
-        else:
-            centroids = centroidCoords[:, [0, 2, 1]]
-
-        if globalAligner is not None:
-            tForm = globalAligner.fov_to_global_transform(fov)
-            toGlobal = np.ones(centroids.shape)
-            toGlobal[:, [0, 1]] = centroids[:, [1, 2]]
-            globalCentroids = np.matmul(tForm, toGlobal.T).T[:, [2, 0, 1]]
-            globalCentroids[:, 0] = centroids[:, 0]
-        else:
-            globalCentroids = centroids
-
         allCoords = [list(p.coords) for p in properties]
-        if len(distances.shape) == 2:
-            d = [[distances[y[0], y[1]] for y in x] for x in allCoords]
-        else:
-            d = [[distances[y[0], y[1], y[2]] for y in x] for x in allCoords]
 
-        df = pandas.DataFrame(np.zeros((len(properties), 14)), columns=columnNames)
-        df['barcode_id'] = barcodeIndex
-        df['fov'] = fov
-        df.loc[:, ['mean_intensity', 'max_intensity', 'area']] = np.array(
-            [[x.mean_intensity, x.max_intensity, x.area] for x in properties])
-        df.loc[:, ['mean_distance', 'min_distance']] = np.array(
-            [[np.mean(x), np.min(x)] if len(x) > 1 else [x[0], x[0]] for x in
-             d])
-        df.loc[:, ['x', 'y', 'z']] = centroids[:, [1, 2, 0]]
-        df.loc[:, ['global_x', 'global_y', 'global_z']] = centroids[:,
-                                                          [1, 2, 0]]
-        df['cell_index'] = -1
-        if len(pixelTraces.shape) == 3:
-            intensities = [[pixelTraces[:, y[0], y[1]] for y in x] for
-                           x in allCoords]
-            intensities = pandas.DataFrame(
-                [np.mean(x, 0) if len(x) > 1 else x[0] for x in intensities],
-                columns=intensityColumns)
-        else:
+        if is3D:
+            centroidCoords = np.array(
+                [prop.weighted_centroid for prop in properties])
+            centroids = centroidCoords[:, [0, 2, 1]]
+            d = [[distances[y[0], y[1], y[2]] for y in x] for x in allCoords]
+            intensityAndAreas = np.array([[x.mean_intensity,
+                                           x.max_intensity,
+                                           x.area] for x in properties])
             intensities = [
                 [pixelTraces[y[0], :, y[1], y[2]] for y in x] for x in
                 allCoords]
             intensities = pandas.DataFrame(
                 [np.mean(x, 0) if len(x) > 1 else x[0] for x in intensities],
                 columns=intensityColumns)
+
+        else:
+            intensityAndCoords = [
+                np.array([[y[0], y[1], pixelMagnitudes[y[0], y[1]]] for y in x])
+                for x in allCoords]
+            centroidCoords = np.array([[(r[:, 0] * (
+                        r[:, -1] / r[:, -1].sum())).sum(), (r[:, 1] * (
+                        r[:, -1] / r[:, -1].sum())).sum()] if r.shape[0] > 1
+                                       else [r[0][0], r[0][1]]
+                                       for r in intensityAndCoords])
+            centroids = np.zeros((centroidCoords.shape[0], 3))
+            centroids[:, 0] = zIndex
+            centroids[:, [1, 2]] = centroidCoords[:, [1, 0]]
+            d = [[distances[y[0], y[1]] for y in x] for x in allCoords]
+            intensityAndAreas = np.array([[x[:, 2].mean(),
+                                           x[:, 2].max(),
+                                           x.shape[0]]
+                                          for x in intensityAndCoords])
+            intensities = [[pixelTraces[:, y[0], y[1]] for y in x] for
+                           x in allCoords]
+            intensities = pandas.DataFrame(
+                [np.mean(x, 0) if len(x) > 1 else x[0] for x in intensities],
+                columns=intensityColumns)
+
+        if globalAligner is not None:
+            globalCentroids = globalAligner.fov_coordinate_array_to_global(
+                fov, centroids)
+        else:
+            globalCentroids = centroids
+
+        df = pandas.DataFrame(np.zeros((len(properties), len(columnNames))),
+                              columns=columnNames)
+        df['barcode_id'] = barcodeIndex
+        df['fov'] = fov
+        df.loc[:, ['mean_intensity', 'max_intensity', 'area']] = \
+            intensityAndAreas
+        df.loc[:, ['mean_distance', 'min_distance']] = np.array(
+            [[np.mean(x), np.min(x)] if len(x) > 1 else [x[0], x[0]] for x in
+             d])
+        df.loc[:, ['x', 'y', 'z']] = centroids[:, [1, 2, 0]]
+        df.loc[:, ['global_x', 'global_y', 'global_z']] = \
+            globalCentroids[:, [1, 2, 0]]
+        df['cell_index'] = -1
 
         fullDF = pandas.concat([df, intensities], 1)
         fullDF = fullDF[(fullDF['x'].between(cropWidth,
@@ -240,9 +249,6 @@ class PixelBasedDecoder(object):
                                              decodedImage.shape[1] - cropWidth,
                                              inclusive=False)) &
                         (fullDF['area'] >= minimumArea)]
-
-        if segmenter is not None:
-            print('no support for segmenter in extract barcodes in batch')
 
         return fullDF
 

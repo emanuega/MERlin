@@ -126,6 +126,23 @@ class SimpleGlobalAlignment(GlobalAlignment):
                     fovStart[0] + fovCoordinates[1]*micronsPerPixel,
                     fovStart[1] + fovCoordinates[2]*micronsPerPixel)
 
+    def fov_coordinate_array_to_global(self, fov: int,
+                                       fovCoordArray: np.array) -> np.array:
+        """A matrix based transformation of fov coordiantes to global coordiantes
+        Args:
+            fov: the fov of interest
+            fovCoordArray: numpy array of the [z, x, y] positions to transform
+        Returns:
+            numpy array of the global [z, x, y] coordinates
+        """
+        tForm = self.fov_to_global_transform(fov)
+        toGlobal = np.ones(fovCoordArray.shape)
+        toGlobal[:, [0, 1]] = fovCoordArray[:, [1, 2]]
+        globalCentroids = np.matmul(tForm, toGlobal.T).T[:, [2, 0, 1]]
+        globalCentroids[:, 0] = fovCoordArray[:, 0]
+        return globalCentroids
+
+
     def fov_global_extent(self, fov: int) -> List[float]:
 
         """

@@ -166,12 +166,11 @@ class PixelBasedDecoder(object):
             measure.label(decodedImage == barcodeIndex),
             intensity_image=pixelMagnitudes,
             cache=False)
-        is3D = len(pixelTraces.shape) == 3
+        is3D = len(pixelTraces.shape) == 4
 
         columnNames = ['barcode_id', 'fov', 'mean_intensity', 'max_intensity',
-         'area', 'mean_distance', 'min_distance',
-         'x', 'y', 'z', 'global_x', 'global_y', 'global_z',
-         'cell_index']
+                       'area', 'mean_distance', 'min_distance', 'x', 'y', 'z',
+                       'global_x', 'global_y', 'global_z', 'cell_index']
         if is3D:
             intensityColumns = ['intensity_{}'.format(i) for i in
                                 range(pixelTraces.shape[1])]
@@ -202,11 +201,11 @@ class PixelBasedDecoder(object):
             intensityAndCoords = [
                 np.array([[y[0], y[1], pixelMagnitudes[y[0], y[1]]] for y in x])
                 for x in allCoords]
-            centroidCoords = np.array([[(r[:, 0] * (
-                        r[:, -1] / r[:, -1].sum())).sum(), (r[:, 1] * (
-                        r[:, -1] / r[:, -1].sum())).sum()] if r.shape[0] > 1
-                                       else [r[0][0], r[0][1]]
-                                       for r in intensityAndCoords])
+            centroidCoords = np.array(
+                [[(r[:, 0] * (r[:, -1] / r[:, -1].sum())).sum(),
+                  (r[:, 1] * (r[:, -1] / r[:, -1].sum())).sum()]
+                 if r.shape[0] > 1 else [r[0][0], r[0][1]]
+                 for r in intensityAndCoords])
             centroids = np.zeros((centroidCoords.shape[0], 3))
             centroids[:, 0] = zIndex
             centroids[:, [1, 2]] = centroidCoords[:, [1, 0]]

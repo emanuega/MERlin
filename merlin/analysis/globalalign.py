@@ -128,7 +128,8 @@ class SimpleGlobalAlignment(GlobalAlignment):
 
     def fov_coordinate_array_to_global(self, fov: int,
                                        fovCoordArray: np.array) -> np.array:
-        """A matrix based transformation of fov coordiantes to global coordiantes
+        """A matrix based transformation of fov coordinates to
+           global coordinates.
         Args:
             fov: the fov of interest
             fovCoordArray: numpy array of the [z, x, y] positions to transform

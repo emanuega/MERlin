@@ -77,13 +77,6 @@ class DeconvolutionPreprocess(Preprocess):
 
     def write_processed_stack(self, fov, chromaticCorrector = None):
         import zstandard as zstd
-        if zIndex is None:
-            return np.array([[self.get_processed_image(
-                fov, self.dataSet.get_data_organization()
-                    .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
-                for zIndex in range(len(self.dataSet.get_z_positions()))]
-                for b in self.get_codebook().get_bit_names()])
-
         allMultiplexChannels = [self.dataSet.get_data_organization().get_data_channel_for_bit(b) for b in self.get_codebook().get_bit_names()]
         seqChannels, seqNames = self.dataSet.get_data_organization().get_sequential_rounds()
         seqToKeep = [seqChannels[i] for i in range(len(seqChannels)) if seqNames[i] in ['polyT','DAPI']]

@@ -31,9 +31,7 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
         if 'optimize_chromatic_correction' not in self.parameters:
             self.parameters['optimize_chromatic_correction'] = False
         if 'crop_width' not in self.parameters:
-            self.parameters['crop_width'] = 100
-
-        self.cropWidth = self.parameters['crop_width']
+            self.parameters['crop_width'] = 0
 
     def get_estimated_memory(self):
         return 4000
@@ -101,9 +99,10 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
 
         # TODO this saves the barcodes under fragment instead of fov
         # the barcodedb should be made more general
+        cropWidth = self.parameters['crop_width']
         self.get_barcode_database().write_barcodes(
             pandas.concat([decoder.extract_barcodes_with_index(
-                i, di, pm, npt, d, fovIndex, self.cropWidth,
+                i, di, pm, npt, d, fovIndex, cropWidth,
                 zIndex, minimumArea=areaThreshold)
                 for i in range(codebook.get_barcode_count())]),
             fov=fragmentIndex)

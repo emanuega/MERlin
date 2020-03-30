@@ -209,6 +209,6 @@ class Decode(BarcodeSavingParallelAnalysisTask):
         self.get_barcode_database().write_barcodes(
             pandas.concat([decoder.extract_barcodes_with_index(
                 i, decodedImage, pixelMagnitudes, pixelTraces, distances, fov,
-                self.cropWidth, zIndex, globalTask, None, minimumArea)
+                self.cropWidth, zIndex, globalTask, minimumArea)
                 for i in range(self.get_codebook().get_barcode_count())]),
             fov=fov)

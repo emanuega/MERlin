@@ -34,5 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.5] - 2020-01-22
 ### Changed
 - Updated the filemap to only store the file name so that it can easily be pointed to new data home directories. This change maintains backward compatibility.
+- Improved decoding speed
 ### Added
 - Parameters to filter tasks that enable removing barcodes that were putatively duplicated across adjacent z planes. 

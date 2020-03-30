@@ -369,6 +369,11 @@ class AdaptiveFilterBarcodes(AbstractFilterBarcodes):
         return [self.parameters['adaptive_task'],
                 self.parameters['decode_task']]
 
+    def get_codebook(self):
+        decodeTask = self.dataSet.load_analysis_task(
+            self.parameters['decode_task'])
+        return decodeTask.get_codebook()
+
     def get_adaptive_thresholds(self):
         """ Get the adaptive thresholds used for filtering barcodes.
 

@@ -1,7 +1,4 @@
-import pytest
 import pandas as pd
-import json
-import networkx as nx
 import random
 import numpy as np
 from merlin.util import barcodefilters
@@ -29,8 +26,8 @@ def generate_barcode(fov, barcode_id, x, y, z, mean_intensity):
     return bc
 
 b1 = generate_barcode(100, 5, 402.21, 787.11, 3, 14.23)
-b2 = generate_barcode(100, 5, 502.21, 687.11, 4.5, 12.23) #same id, different place
-b3 = generate_barcode(100, 17, 402.21, 787.11, 3, 10.23) #different id, same place
+b2 = generate_barcode(100, 5, 502.21, 687.11, 4.5, 12.23)
+b3 = generate_barcode(100, 17, 402.21, 787.11, 3, 10.23)
 
 b1_above_dimmer = generate_barcode(100, 5, 402.21, 787.11, 4.5, 11.23)
 b1_closeby_above_brighter = generate_barcode(100, 5, 403.21, 787.11, 4.5, 15.23)
@@ -54,8 +51,8 @@ def test_multiple_comparisons_barcodes():
                                           b1_closeby_below_brighter,
                                           b1_closeby_toofar_brighter]]
 
-    keptBC = remove_zplane_duplicates_all_barcodeids(bcDF, zplane_cutoff,
-                                                     xy_cutoff, zpositions)
+    keptBC = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+        bcDF, zplane_cutoff, xy_cutoff, zpositions)
     for ex in expected:
         assert ex in keptBC['barcode'].values
     for notEx in notExpected:
@@ -69,8 +66,8 @@ def test_all_compatible_barcodes():
     bcSet = [b1, b2, b3, b1_closeby_toofar_brighter]
     bcDF = pd.DataFrame(bcSet)
     expected = [x['barcode'] for x in bcSet]
-    keptBC = remove_zplane_duplicates_all_barcodeids(bcDF, zplane_cutoff,
-                                                     xy_cutoff, zpositions)
+    keptBC = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+        bcDF, zplane_cutoff, xy_cutoff, zpositions)
     for ex in expected:
         assert ex in keptBC['barcode'].values
     assert len(keptBC) == len(bcSet)
@@ -84,8 +81,8 @@ def test_farther_zrange():
     bcDF = pd.DataFrame(bcSet)
     expected = [x['barcode'] for x in [b2, b3, b1_closeby_toofar_brighter]]
     notExpected = [x['barcode'] for x in [b1]]
-    keptBC = remove_zplane_duplicates_all_barcodeids(bcDF, zplane_cutoff,
-                                                     xy_cutoff, zpositions)
+    keptBC = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+        bcDF, zplane_cutoff, xy_cutoff, zpositions)
     for ex in expected:
         assert ex in keptBC['barcode'].values
     for notEx in notExpected:
@@ -100,8 +97,8 @@ def test_farther_xyrange():
     bcDF = pd.DataFrame(bcSet)
     expected = [x['barcode'] for x in [b1, b3]]
     notExpected = [x['barcode'] for x in [b2]]
-    keptBC = remove_zplane_duplicates_all_barcodeids(bcDF, zplane_cutoff,
-                                                     xy_cutoff, zpositions)
+    keptBC = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+        bcDF, zplane_cutoff, xy_cutoff, zpositions)
     for ex in expected:
         assert ex in keptBC['barcode'].values
     for notEx in notExpected:

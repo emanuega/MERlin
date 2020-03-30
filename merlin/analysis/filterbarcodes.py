@@ -27,7 +27,8 @@ class AbstractFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         if self.parameters['remove_z_duplicated_barcodes']:
             bc = barcodefilters.remove_zplane_duplicates_all_barcodeids(
                 bc, self.parameters['z_duplicate_zPlane_threshold'],
-                self.parameters['z_duplicate_xy_pixel_threshold'])
+                self.parameters['z_duplicate_xy_pixel_threshold'],
+                self.dataSet.get_z_positions())
         return bc
 
 
@@ -354,6 +355,9 @@ class AdaptiveFilterBarcodes(AbstractFilterBarcodes):
 
         if 'misidentification_rate' not in self.parameters:
             self.parameters['misidentification_rate'] = 0.05
+
+    def fragment_count(self):
+        return len(self.dataSet.get_fovs())
 
     def get_estimated_memory(self):
         return 1000

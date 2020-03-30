@@ -2,11 +2,13 @@ import numpy as np
 from scipy.spatial import cKDTree
 import networkx as nx
 import pandas as pd
+from typing import List
 
 
 def remove_zplane_duplicates_all_barcodeids(barcodes: pd.DataFrame,
                                             zPlanes: int,
-                                            maxDist: float) -> pd.DataFrame:
+                                            maxDist: float,
+                                            allZPos: List) -> pd.DataFrame:
     """ Depending on the separation between z planes, spots from a single
         molecule may be observed in more than one z plane. These putative
         duplicates are removed based on supplied distance and z plane
@@ -35,14 +37,16 @@ def remove_zplane_duplicates_all_barcodeids(barcodes: pd.DataFrame,
         bcToKeep.append(
             barcodefilters.remove_zplane_duplicates_single_barcodeid(bcData,
                                                                      zPlanes,
-                                                                     maxDist))
-    mergedBC = pandas.concat(bcToKeep, 0).reset_index(drop=True)
+                                                                     maxDist,
+                                                                     allZPos))
+    mergedBC = pd.concat(bcToKeep, 0).reset_index(drop=True)
     mergedBC = mergedBC.sort_values(by=['barcode_id', 'z'])
     return mergedBC
 
 def remove_zplane_duplicates_single_barcodeid(barcodes: pd.DataFrame,
                                               zPlanes: int,
-                                              maxDist: float) -> pd.DataFrame:
+                                              maxDist: float,
+                                              allZPos: List) -> pd.DataFrame:
     """ Remove barcodes with a given barcode id that are putative z plane
         duplicates.
 
@@ -67,7 +71,7 @@ def remove_zplane_duplicates_single_barcodeid(barcodes: pd.DataFrame,
                       'dataframes containing multiple barcode ids'
         raise ValueError(errorString)
     graph = nx.Graph()
-    zPos = sorted(barcodes['z'].unique())
+    zPos = sorted(allZPos)
     graph.add_nodes_from(barcodes.index.values.tolist())
     for i in range(0, len(zPos)):
         z = zPos[i]

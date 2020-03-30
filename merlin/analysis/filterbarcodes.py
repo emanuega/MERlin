@@ -3,11 +3,35 @@ import pandas
 from scipy import optimize
 
 from merlin.core import analysistask
-from merlin.data.codebook import Codebook
 from merlin.analysis import decode
-from merlin.util import duplicatebcremoval
+from merlin.util import barcodefilters
 
-class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
+
+class AbstractFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
+    """
+    An abstract class for filtering barcodes identified by pixel-based decoding.
+    """
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'remove_z_duplicated_barcodes' not in self.parameters:
+            self.parameters['remove_z_duplicated_barcodes'] = False
+        if self.parameters['remove_z_duplicated_barcodes']:
+            if 'z_duplicate_zPlane_threshold' not in self.parameters:
+                self.parameters['z_duplicate_zPlane_threshold'] = 1
+            if 'z_duplicate_xy_pixel_threshold' not in self.parameters:
+                self.parameters['z_duplicate_xy_pixel_threshold'] = np.sqrt(2)
+
+    def remove_z_duplicate_barcodes(self, bc):
+        if self.parameters['remove_z_duplicated_barcodes']:
+            bc = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+                bc, self.parameters['z_duplicate_zPlane_threshold'],
+                self.parameters['z_duplicate_xy_pixel_threshold'])
+        return bc
+
+
+class FilterBarcodes(AbstractFilterBarcodes):
 
     """
     An analysis task that filters barcodes based on area and mean
@@ -23,13 +47,6 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
             self.parameters['intensity_threshold'] = 200
         if 'distance_threshold' not in self.parameters:
             self.parameters['distance_threshold'] = 1e6
-        if 'remove_zplane_duplicates' not in self.parameters:
-            self.parameters['remove_zplane_duplicates'] = False
-        if self.parameters['remove_zplane_duplicates']:
-            if 'z_planes_above_below' not in self.parameters:
-                self.parameters['z_planes_above_below'] = 1
-            if 'max_centroid_separation' not in self.parameters:
-                self.parameters['max_centroid_separation'] = np.sqrt(2)
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -48,16 +65,6 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
             self.parameters['decode_task'])
         return decodeTask.get_codebook()
 
-    def _remove_zplane_duplicates(self, barcodes, zPlanes, maxDist):
-        barcodeGroups = barcodes.groupby('barcode_id')
-        bcToKeep = []
-        for bcGroup, bcData in barcodeGroups:
-            bcToKeep.append(duplicatebcremoval.cleanup_across_z(bcData, zPlanes,
-                                                                maxDist))
-        mergedBC = pandas.concat(bcToKeep, 0).reset_index(drop=True)
-        mergedBC = mergedBC.sort_values(by=['barcode_id', 'z'])
-        return mergedBC
-
     def _run_analysis(self, fragmentIndex):
         decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])
@@ -69,11 +76,7 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
             .get_filtered_barcodes(areaThreshold, intensityThreshold,
                                    distanceThreshold=distanceThreshold,
                                    fov=fragmentIndex)
-        if self.parameters['remove_zplane_duplicates']:
-            zPlanes = self.parameters['z_planes_above_below']
-            maxDist = self.parameters['max_centroid_separation']
-            currentBC = self._remove_zplane_duplicates(currentBC, zPlanes,
-                                                       maxDist)
+        currentBC = self.remove_z_duplicate_barcodes(currentBC)
         barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
 
 
@@ -338,7 +341,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                         codingCounts, 'coding_counts', self)
 
 
-class AdaptiveFilterBarcodes(FilterBarcodes):
+class AdaptiveFilterBarcodes(AbstractFilterBarcodes):
 
     """
     An analysis task that filters barcodes based on a mean intensity threshold
@@ -383,11 +386,7 @@ class AdaptiveFilterBarcodes(FilterBarcodes):
         bcDatabase = self.get_barcode_database()
         currentBarcodes = decodeTask.get_barcode_database()\
             .get_barcodes(fragmentIndex)
-        if self.parameters['remove_zplane_duplicates']:
-            zPlanes = self.parameters['z_planes_above_below']
-            maxDist = self.parameters['max_centroid_separation']
-            currentBarcodes = self._remove_zplane_duplicates(currentBarcodes,
-                                                             zPlanes, maxDist)
+        currentBarcodes = self.remove_z_duplicate_barcodes(currentBarcodes)
         bcDatabase.write_barcodes(
             adaptiveTask.extract_barcodes_with_threshold(
                 threshold, currentBarcodes), fov=fragmentIndex)

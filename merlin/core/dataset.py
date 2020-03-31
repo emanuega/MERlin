@@ -9,6 +9,7 @@ import time
 import logging
 import pickle
 import datetime
+import networkx as nx
 from matplotlib import pyplot as plt
 from typing import List
 from typing import Tuple
@@ -200,7 +201,7 @@ class DataSet(object):
             analysisTask, imageBaseName, imageIndex))
         indexInFile = sliceIndex*imagesPerSlice + frameIndex
         return imageFile.asarray(key=int(indexInFile))
-    
+
     def writer_for_analysis_images(
             self, analysisTask: TaskOrName, imageBaseName: str,
             imageIndex: int = None, imagej: bool = True) -> tifffile.TiffWriter:
@@ -265,6 +266,49 @@ class DataSet(object):
         if fullPath:
             fileList = [os.path.join(basePath, x) for x in fileList]
         return fileList
+
+    def save_graph_as_gpickle(
+            self, graph: nx.Graph, resultName: str,
+            analysisTask: TaskOrName = None, resultIndex: int = None,
+            subdirectory: str = None):
+        """ Save a networkx graph as a gpickle into the analysis results
+
+        Args:
+            graph: the networkx graph to save
+            resultName: the base name of the output file
+            analysisTask: the analysis task that the graph should be
+                saved under. If None, the graph is saved to the
+                data set root.
+            resultIndex: index of the graph to save or None if no index
+                should be specified
+            subdirectory: subdirectory of the analysis task that the graph
+                should be saved to or None if the graph should be
+                saved to the root directory for the analysis task.
+        """
+        savePath = self._analysis_result_save_path(
+            resultName, analysisTask, resultIndex, subdirectory, '.gpickle')
+        nx.readwrite.gpickle.write_gpickle(graph, savePath)
+
+    def load_graph_from_gpickle(
+            self, resultName: str, analysisTask: TaskOrName = None,
+            resultIndex: int = None, subdirectory: str = None):
+        """ Load a networkx graph from a gpickle objective saved in the analysis
+        results.
+
+        Args:
+            resultName: the base name of the output file
+            analysisTask: the analysis task that the graph should be
+                saved under. If None, the graph is saved to the
+                data set root.
+            resultIndex: index of the graph to save or None if no index
+                should be specified
+            subdirectory: subdirectory of the analysis task that the graph
+                should be saved to or None if the graph should be
+                saved to the root directory for the analysis task.
+        """
+        savePath = self._analysis_result_save_path(
+            resultName, analysisTask, resultIndex, subdirectory, '.gpickle')
+        return nx.readwrite.gpickle.read_gpickle(savePath)
 
     def save_dataframe_to_csv(
             self, dataframe: pandas.DataFrame, resultName: str,
@@ -786,7 +830,7 @@ class DataSet(object):
         fileName = self._analysis_status_file(
                 analysisTask, 'run', fragmentIndex)
         try:
-            return time.time() - os.path.getmtime(fileName) > 120
+            return time.time() - os.path.getmtime(fileName) > 1
         except FileNotFoundError:
             return True
 
@@ -805,7 +849,6 @@ class DataSet(object):
     def check_analysis_error(self, analysisTask: analysistask.AnalysisTask,
                              fragmentIndex: int = None) -> bool:
         return self._check_analysis_event(analysisTask, 'error', fragmentIndex)
-
 
     def reset_analysis_status(self, analysisTask: analysistask.AnalysisTask,
                               fragmentIndex: int = None):

@@ -21,7 +21,7 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         super().__init__(dataSet, parameters, analysisName)
 
         if 'apply_highpass' not in self.parameters:
-            self.parameters['apply_highpass'] = True
+            self.parameters['apply_highpass'] = False
         if 'highpass_sigma' not in self.parameters:
             self.parameters['highpass_sigma'] = 5
         if 'z_index' not in self.parameters:

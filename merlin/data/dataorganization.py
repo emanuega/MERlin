@@ -134,7 +134,8 @@ class DataOrganization(object):
         Returns:
             The index of the associated data channel
         """
-        return self.data[self.data['readoutName'] == bitName].index.values.item()
+        return self.data[self.data['readoutName'] ==
+                         bitName].index.values.item()
 
     def get_data_channel_with_name(self, channelName: str) -> int:
         """Get the data channel associated with a gene name.
@@ -144,7 +145,8 @@ class DataOrganization(object):
         Returns:
             The index of the associated data channel
         """
-        return self.data[self.data['channelName'] == channelName].index.values.item()
+        return self.data[self.data['channelName'] ==
+                         channelName].index.values.item()
 
     def get_fiducial_filename(self, dataChannel: int, fov: int) -> str:
         """Get the path for the image file that contains the fiducial

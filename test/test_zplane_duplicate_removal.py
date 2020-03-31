@@ -3,6 +3,7 @@ import random
 import numpy as np
 from merlin.util import barcodefilters
 
+
 def generate_barcode(fov, barcode_id, x, y, z, mean_intensity):
     bc = {'barcode': random.getrandbits(32),
           'barcode_id': barcode_id,
@@ -24,6 +25,7 @@ def generate_barcode(fov, barcode_id, x, y, z, mean_intensity):
         bc['intensity_' + str(i)] = random.uniform(5, 15)
 
     return bc
+
 
 b1 = generate_barcode(100, 5, 402.21, 787.11, 3, 14.23)
 b2 = generate_barcode(100, 5, 502.21, 687.11, 4.5, 12.23)
@@ -58,6 +60,7 @@ def test_multiple_comparisons_barcodes():
     for notEx in notExpected:
         assert notEx not in keptBC['barcode'].values
 
+
 def test_all_compatible_barcodes():
     zplane_cutoff = 1
     xy_cutoff = np.sqrt(2)
@@ -71,6 +74,7 @@ def test_all_compatible_barcodes():
     for ex in expected:
         assert ex in keptBC['barcode'].values
     assert len(keptBC) == len(bcSet)
+
 
 def test_farther_zrange():
     zplane_cutoff = 2
@@ -88,6 +92,7 @@ def test_farther_zrange():
     for notEx in notExpected:
         assert notEx not in keptBC['barcode'].values
 
+
 def test_farther_xyrange():
     zplane_cutoff = 1
     xy_cutoff = np.sqrt(20001)
@@ -103,4 +108,3 @@ def test_farther_xyrange():
         assert ex in keptBC['barcode'].values
     for notEx in notExpected:
         assert notEx not in keptBC['barcode'].values
-

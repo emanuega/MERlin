@@ -134,3 +134,19 @@ class DeconvolutionPreprocess(Preprocess):
             filteredImage, deconFilterSize, self._deconSigma,
             self._deconIterations).astype(np.uint16)
         return deconvolvedImage
+
+
+class DeconvolutionPreprocessGuo(Preprocess):
+    
+    def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
+        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
+        deconFilterSize = self.parameters['decon_filter_size']
+
+        filteredImage = inputImage.astype(float) - cv2.GaussianBlur(
+            inputImage, (highPassFilterSize, highPassFilterSize),
+            self._highPassSigma, borderType=cv2.BORDER_REPLICATE)
+        filteredImage[filteredImage < 0] = 0
+        deconvolvedImage = deconvolve.deconvolve_lucyrichardson_guo(
+            filteredImage, deconFilterSize, self._deconSigma,
+            self._deconIterations).astype(np.uint16)
+        return deconvolvedImage

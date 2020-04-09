@@ -136,8 +136,21 @@ class DeconvolutionPreprocess(Preprocess):
         return deconvolvedImage
 
 
-class DeconvolutionPreprocessGuo(Preprocess):
-    
+class DeconvolutionPreprocessGuo(DeconvolutionPreprocess):
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        # FIXME: This doesn't work as hoped because 'decon_iterations'
+        #        is added in the super-class. So we end up with 20
+        #        iterations instead of the 2 that we want to be the
+        #        default.
+        #
+        if 'decon_iterations' not in self.parameters:
+            self.parameters['decon_iterations'] = 2
+
+        self._deconIterations = self.parameters['decon_iterations']
+        
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
         highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
         deconFilterSize = self.parameters['decon_filter_size']

@@ -144,7 +144,8 @@ class DeconvolutionPreprocessGuo(DeconvolutionPreprocess):
         # FIXME: This doesn't work as hoped because 'decon_iterations'
         #        is added in the super-class. So we end up with 20
         #        iterations instead of the 2 that we want to be the
-        #        default.
+        #        default. And we can't do this before calling the
+        #        super() because then self.parameters won't exist.
         #
         if 'decon_iterations' not in self.parameters:
             self.parameters['decon_iterations'] = 2

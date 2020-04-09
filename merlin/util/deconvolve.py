@@ -9,11 +9,12 @@ This module containts utility functions for performing deconvolution on
 images.
 """
 
+
 def calculate_projectors(windowSize: int, sigmaG: float) -> list:
     """Calculate forward and backward projectors as described in:
 
-    'Accelerating iterative deconvolution and multiview fusion by orders 
-    of magnitude', Guo et al, bioRxiv 2019.    
+    'Accelerating iterative deconvolution and multiview fusion by orders
+    of magnitude', Guo et al, bioRxiv 2019.
 
     Args:
         windowSize: the size of the window over which to perform the gaussian.
@@ -24,10 +25,10 @@ def calculate_projectors(windowSize: int, sigmaG: float) -> list:
         A list containing the forward and backward projectors to use for
         Lucy-Richardson deconvolution.
     """
-    pf = matlab.matlab_gauss2D(shape = (windowSize, windowSize),
-                               sigma = sigmaG)
+    pf = matlab.matlab_gauss2D(shape=(windowSize, windowSize),
+                               sigma=sigmaG)
     pfFFT = np.fft.fft2(pf)
-    
+
     # Wiener-Butterworth back projector.
     #
     # These values are from Guo et al.
@@ -43,7 +44,7 @@ def calculate_projectors(windowSize: int, sigmaG: float) -> list:
 
     kx = np.zeros((kv.size, kv.size))
     for i in range(kv.size):
-        kx[i,:] = np.copy(kv)
+        kx[i, :] = np.copy(kv)
 
     ky = np.transpose(kx)
     kk = np.sqrt(kx*kx + ky*ky)
@@ -59,17 +60,19 @@ def calculate_projectors(windowSize: int, sigmaG: float) -> list:
 
     # Weiner-Butterworth back projector
     pbFFT = bWiener * bBWorth
-    
+
     # back projector.
     pb = np.real(np.fft.ifft2(pbFFT))
-    
+
     # normalize.
     pb = pb * np.sum(pf)/np.sum(pb)
-    
+
     return [pf, pb]
 
-    
-def deconvolve_lucyrichardson(image: np.ndarray, windowSize: int, sigmaG: float,
+
+def deconvolve_lucyrichardson(image: np.ndarray,
+                              windowSize: int,
+                              sigmaG: float,
                               iterationCount: int) -> np.ndarray:
     """Performs Lucy-Richardson deconvolution on the provided image using a
     Gaussian point spread function.
@@ -142,7 +145,7 @@ def deconvolve_lucyrichardson_guo(image: np.ndarray,
     deconvolution approach described in:
 
 
-    'Accelerating iterative deconvolution and multiview fusion by orders 
+    'Accelerating iterative deconvolution and multiview fusion by orders
     of magnitude', Guo et al, bioRxiv 2019.
 
     Args:
@@ -158,14 +161,17 @@ def deconvolve_lucyrichardson_guo(image: np.ndarray,
     [pf, pb] = calculate_projectors(windowSize, sigmaG)
 
     eps = 1.0e-3
-    
+
     ek = np.copy(image)
     np.clip(ek, eps, None, ek)
 
     for i in range(iterationCount):
-        ekf = cv2.filter2D(ek, -1, pf, borderType=cv2.BORDER_REPLICATE)
+        ekf = cv2.filter2D(ek, -1, pf,
+                           borderType=cv2.BORDER_REPLICATE)
         np.clip(ekf, eps, None, ekf)
-        ek = ek*cv2.filter2D(image/ekf, -1, pb, borderType=cv2.BORDER_REPLICATE)
+
+        ek = ek*cv2.filter2D(image/ekf, -1, pb,
+                             borderType=cv2.BORDER_REPLICATE)
         np.clip(ek, eps, None, ek)
-        
+
     return ek

@@ -11,19 +11,19 @@ from merlin.data import codebook
 class Preprocess(analysistask.ParallelAnalysisTask):
 
     """
-    An abstract class for preparing data for barcode calling. 
+    An abstract class for preparing data for barcode calling.
     """
 
     def _image_name(self, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
                 self.analysisName, subdirectory='preprocessed_images')
         return os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
-    
+
     def get_pixel_histogram(self, fov=None):
         if fov is not None:
             return self.dataSet.load_numpy_analysis_result(
                 'pixel_histogram', self.analysisName, fov, 'histograms')
-        
+
         pixelHistogram = np.zeros(self.get_pixel_histogram(
                 self.dataSet.get_fovs()[0]).shape)
         for f in self.dataSet.get_fovs():
@@ -62,7 +62,7 @@ class DeconvolutionPreprocess(Preprocess):
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
-    
+
     def get_estimated_memory(self):
         return 2048
 
@@ -141,17 +141,15 @@ class DeconvolutionPreprocessGuo(DeconvolutionPreprocess):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        # FIXME: This doesn't work as hoped because 'decon_iterations'
-        #        is added in the super-class. So we end up with 20
-        #        iterations instead of the 2 that we want to be the
-        #        default. And we can't do this before calling the
-        #        super() because then self.parameters won't exist.
-        #
-        if 'decon_iterations' not in self.parameters:
+        # Check for 'decon_iterations' in parameters instead of
+        # self.parameters as 'decon_iterations' is added to
+        # self.parameters by the super-class with a default value
+        # of 20, but we want the default value to be 2.
+        if 'decon_iterations' not in parameters:
             self.parameters['decon_iterations'] = 2
 
         self._deconIterations = self.parameters['decon_iterations']
-        
+
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
         highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
         deconFilterSize = self.parameters['decon_filter_size']

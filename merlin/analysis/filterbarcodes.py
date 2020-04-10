@@ -77,8 +77,8 @@ class FilterBarcodes(AbstractFilterBarcodes):
             .get_filtered_barcodes(areaThreshold, intensityThreshold,
                                    distanceThreshold=distanceThreshold,
                                    fov=fragmentIndex)
-        currentBC = self.remove_z_duplicate_barcodes(currentBC)
-        barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
+        barcodeDB.write_barcodes(
+            self.remove_z_duplicate_barcodes(currentBC), fov=fragmentIndex)
 
 
 class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
@@ -395,7 +395,9 @@ class AdaptiveFilterBarcodes(AbstractFilterBarcodes):
         bcDatabase = self.get_barcode_database()
         currentBarcodes = decodeTask.get_barcode_database()\
             .get_barcodes(fragmentIndex)
-        currentBarcodes = self.remove_z_duplicate_barcodes(currentBarcodes)
+
+        currentBarcodes = adaptiveTask.extract_barcodes_with_threshold(
+            threshold, currentBarcodes)
         bcDatabase.write_barcodes(
-            adaptiveTask.extract_barcodes_with_threshold(
-                threshold, currentBarcodes), fov=fragmentIndex)
+            self.remove_z_duplicate_barcodes(currentBarcodes),
+            fov=fragmentIndex)

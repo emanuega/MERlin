@@ -102,9 +102,10 @@ class DeconvolutionPreprocess(Preprocess):
 
     def _high_pass_filter(self, inputImage: np.ndarray) -> np.ndarray:
         highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
-        return imagefilters.high_pass_filter(inputImage,
-                                             highPassFilterSize,
-                                             self._highPassSigma)
+        hpImage = imagefilters.high_pass_filter(inputImage,
+                                                highPassFilterSize,
+                                                self._highPassSigma)
+        return hpImage.astype(np.float)
 
     def _run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(

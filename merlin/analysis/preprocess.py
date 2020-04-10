@@ -5,6 +5,7 @@ import numpy as np
 from merlin.core import analysistask
 from merlin.util import deconvolve
 from merlin.util import aberration
+from merlin.util import imagefilters
 from merlin.data import codebook
 
 
@@ -99,6 +100,12 @@ class DeconvolutionPreprocess(Preprocess):
                                                      chromaticCorrector)
         return self._preprocess_image(inputImage)
 
+    def _high_pass_filter(self, inputImage: np.ndarray) -> np.ndarray:
+        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
+        return imagefilters.high_pass_filter(inputImage,
+                                             highPassFilterSize,
+                                             self._highPassSigma)
+
     def _run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(
                 self.parameters['warp_task'])
@@ -123,13 +130,9 @@ class DeconvolutionPreprocess(Preprocess):
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)
 
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
-        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
         deconFilterSize = self.parameters['decon_filter_size']
-
-        filteredImage = inputImage.astype(float) - cv2.GaussianBlur(
-            inputImage, (highPassFilterSize, highPassFilterSize),
-            self._highPassSigma, borderType=cv2.BORDER_REPLICATE)
-        filteredImage[filteredImage < 0] = 0
+        
+        filteredImage = self._high_pass_filter(inputImage)
         deconvolvedImage = deconvolve.deconvolve_lucyrichardson(
             filteredImage, deconFilterSize, self._deconSigma,
             self._deconIterations).astype(np.uint16)
@@ -151,13 +154,9 @@ class DeconvolutionPreprocessGuo(DeconvolutionPreprocess):
         self._deconIterations = self.parameters['decon_iterations']
 
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
-        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
         deconFilterSize = self.parameters['decon_filter_size']
 
-        filteredImage = inputImage.astype(float) - cv2.GaussianBlur(
-            inputImage, (highPassFilterSize, highPassFilterSize),
-            self._highPassSigma, borderType=cv2.BORDER_REPLICATE)
-        filteredImage[filteredImage < 0] = 0
+        filteredImage = self._high_pass_filter(inputImage)
         deconvolvedImage = deconvolve.deconvolve_lucyrichardson_guo(
             filteredImage, deconFilterSize, self._deconSigma,
             self._deconIterations).astype(np.uint16)

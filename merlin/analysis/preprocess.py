@@ -132,7 +132,7 @@ class DeconvolutionPreprocess(Preprocess):
 
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
         deconFilterSize = self.parameters['decon_filter_size']
-        
+
         filteredImage = self._high_pass_filter(inputImage)
         deconvolvedImage = deconvolve.deconvolve_lucyrichardson(
             filteredImage, deconFilterSize, self._deconSigma,

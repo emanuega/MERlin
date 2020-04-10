@@ -64,9 +64,6 @@ def calculate_projectors(windowSize: int, sigmaG: float) -> list:
     # back projector.
     pb = np.real(np.fft.ifft2(pbFFT))
 
-    # normalize.
-    pb = pb * np.sum(pf)/np.sum(pb)
-
     return [pf, pb]
 
 
@@ -144,7 +141,6 @@ def deconvolve_lucyrichardson_guo(image: np.ndarray,
     Gaussian point spread function. This version used the optimized
     deconvolution approach described in:
 
-
     'Accelerating iterative deconvolution and multiview fusion by orders
     of magnitude', Guo et al, bioRxiv 2019.
 
@@ -160,7 +156,8 @@ def deconvolve_lucyrichardson_guo(image: np.ndarray,
     """
     [pf, pb] = calculate_projectors(windowSize, sigmaG)
 
-    eps = 1.0e-3
+    eps = 1.0e-6
+    i_max = 2**16-1
 
     ek = np.copy(image)
     np.clip(ek, eps, None, ek)
@@ -168,10 +165,10 @@ def deconvolve_lucyrichardson_guo(image: np.ndarray,
     for i in range(iterationCount):
         ekf = cv2.filter2D(ek, -1, pf,
                            borderType=cv2.BORDER_REPLICATE)
-        np.clip(ekf, eps, None, ekf)
+        np.clip(ekf, eps, i_max, ekf)
 
         ek = ek*cv2.filter2D(image/ekf, -1, pb,
                              borderType=cv2.BORDER_REPLICATE)
-        np.clip(ek, eps, None, ek)
+        np.clip(ek, eps, i_max, ek)
 
     return ek

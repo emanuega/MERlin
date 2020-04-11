@@ -16,13 +16,13 @@ def high_pass_filter(image: np.ndarray,
         sigma: the sigma of the Gaussian.
 
     Returns:
-        the high pass filtered image image
+        the high pass filtered image. The returned image is the same type
+        as the input image.
     """
-    img = image.astype(np.int16)
-    lowpass = cv2.GaussianBlur(img,
+    lowpass = cv2.GaussianBlur(image,
                                (windowSize, windowSize),
                                sigma,
                                borderType=cv2.BORDER_REPLICATE)
-    gauss_highpass = img - lowpass
-    gauss_highpass[gauss_highpass < 0] = 0
+    gauss_highpass = image - lowpass
+    gauss_highpass[lowpass > image] = 0
     return gauss_highpass

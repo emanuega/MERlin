@@ -35,6 +35,19 @@ Parameters:
 * decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image.
 * decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
 
+preprocess.DeconvolutionPreprocessGuo
+--------------------------------------
+
+Description: High-pass filters and deconvolves the image data in preparation for bit-calling. This version uses the Lucy-Richardson deconvolution approach described in this reference - `Guo et al. <http://dx.doi.org/10.1101/647370>`.
+
+Parameters:
+
+* warp\_task -- The name of the warp task that provides the aligned image stacks.
+* highpass\_pass -- The standard deviation to use for the high pass filter.
+* decon\_sigma -- The standard deviation to use for the Lucy-Richardson deconvolution.
+* decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image. The default value is 2.
+* decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
+ 
 optimize.Optimize
 ------------------
 

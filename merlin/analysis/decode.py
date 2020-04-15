@@ -8,6 +8,7 @@ from merlin.core import analysistask
 from merlin.util import decoding
 from merlin.util import barcodedb
 from merlin.data.codebook import Codebook
+from merlin.util import barcodefilters
 
 
 class BarcodeSavingParallelAnalysisTask(analysistask.ParallelAnalysisTask):
@@ -20,6 +21,14 @@ class BarcodeSavingParallelAnalysisTask(analysistask.ParallelAnalysisTask):
                  analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        if 'remove_z_duplicated_barcodes' not in self.parameters:
+            self.parameters['remove_z_duplicated_barcodes'] = False
+        if self.parameters['remove_z_duplicated_barcodes']:
+            if 'z_duplicate_zPlane_threshold' not in self.parameters:
+                self.parameters['z_duplicate_zPlane_threshold'] = 1
+            if 'z_duplicate_xy_pixel_threshold' not in self.parameters:
+                self.parameters['z_duplicate_xy_pixel_threshold'] = np.sqrt(2)
+
     def _reset_analysis(self, fragmentIndex: int = None) -> None:
         super()._reset_analysis(fragmentIndex)
         self.get_barcode_database().empty_database(fragmentIndex)
@@ -30,6 +39,15 @@ class BarcodeSavingParallelAnalysisTask(analysistask.ParallelAnalysisTask):
         Returns: The barcode database reference.
         """
         return barcodedb.PyTablesBarcodeDB(self.dataSet, self)
+
+    def remove_z_duplicate_barcodes(self, bc):
+        bc = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+            bc, self.parameters['z_duplicate_zPlane_threshold'],
+            self.parameters['z_duplicate_xy_pixel_threshold'],
+            self.dataSet.get_z_positions())
+        return bc
+
+
 
 
 class Decode(BarcodeSavingParallelAnalysisTask):
@@ -158,6 +176,14 @@ class Decode(BarcodeSavingParallelAnalysisTask):
             self._save_decoded_images(
                 fragmentIndex, zPositionCount, decodedImages, magnitudeImages,
                 distances)
+
+        if self.parameters['remove_z_duplicated_barcodes']:
+            bcDB = self.get_barcode_database()
+            bc = self.remove_z_duplicate_barcodes(
+                bcDB.get_barcodes(fov=fragmentIndex))
+            bcDB.empty_database(fragmentIndex)
+            bcDB.write_barcodes(bc, fov=fragmentIndex)
+
 
     def _process_independent_z_slice(
             self, fov: int, zIndex: int, chromaticCorrector, scaleFactors,

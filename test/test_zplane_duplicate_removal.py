@@ -109,6 +109,7 @@ def test_farther_xyrange():
     for notEx in notExpected:
         assert notEx not in keptBC['barcode'].values
 
+
 def test_empty_barcodes():
     zplane_cutoff = 1
     xy_cutoff = np.sqrt(2)

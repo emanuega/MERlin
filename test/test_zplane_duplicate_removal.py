@@ -108,3 +108,15 @@ def test_farther_xyrange():
         assert ex in keptBC['barcode'].values
     for notEx in notExpected:
         assert notEx not in keptBC['barcode'].values
+
+def test_empty_barcodes():
+    zplane_cutoff = 1
+    xy_cutoff = np.sqrt(2)
+    zpositions = [0, 1.5, 3, 4.5, 6, 7.5, 9]
+
+    bcDF = pd.DataFrame([b1])
+    bcDF.drop(0, inplace=True)
+
+    keptBC = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+        bcDF, zplane_cutoff, xy_cutoff, zpositions)
+    assert type(keptBC) == pd.DataFrame

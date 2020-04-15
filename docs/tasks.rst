@@ -56,7 +56,8 @@ Description: Determines the optimal per-bit scale factors for barcode decoding.
 Parameters:
 
 * iteration\_count -- The number of iterations to perform for the optimization.
-* fov\_per\_iteration -- The number of fields of view to decode in each round of optimization.
+* fov\_index -- (Optional) A list of [[fov_1, z_value_1], [fov_2, z_value_2], ..] specifying which fields of view and what z values should be used for optimization.
+* fov\_per\_iteration -- The number of fields of view to decode in each round of optimization. This will be set to the length of ``fov_index`` if the ``fov_index`` is specified.
 * estimate\_initial\_scale\_factors\_from\_cdf -- Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.
 * area\_threshold -- The minimum barcode area for barcodes to be used in the calculation of the scale factors.
 

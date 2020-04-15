@@ -32,12 +32,22 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
             self.parameters['optimize_chromatic_correction'] = False
         if 'crop_width' not in self.parameters:
             self.parameters['crop_width'] = 0
+            
         if 'fov_index' in self.parameters:
-            # Set iterations number to length of fov_index if not
-            # None. Should we warn the user?
-            #
+            logger = self.dataSet.get_logger(self)
+            logger.info('Setting fov_per_iteration to length of fov_index')
+
             self.parameters['fov_per_iteration'] = \
                 len(self.parameters['fov_index'])
+            
+        else:
+            self.parameters['fov_index'] = []
+            for i in range(self.parameters['fov_per_iteration']):
+                fovIndex = int(np.random.choice(
+                    list(self.dataSet.get_fovs())))
+                zIndex = int(np.random.choice(
+                    list(range(len(self.dataSet.get_z_positions())))))
+                self.parameters['fov_index'].append([fovIndex, zIndex])
 
     def get_estimated_memory(self):
         return 4000
@@ -65,25 +75,7 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
                 self.parameters['preprocess_task'])
         codebook = self.get_codebook()
 
-        # Use random FOV and Z index if the user did not specify.
-        if 'fov_index' not in self.parameters:
-            fovIndex = np.random.choice(list(self.dataSet.get_fovs()))
-            zIndex = np.random.choice(
-                list(range(len(self.dataSet.get_z_positions()))))
-
-        # Otherwise use FOV and Z indices specified by the user.
-        else:
-            tmp = self.parameters['fov_index'][fragmentIndex]
-
-            # Two element list is FOV, z index.
-            if isinstance(tmp, list):
-                fovIndex = tmp[0]
-                zIndex = tmp[1]
-
-            # Otherwise this is the FOV index.
-            else:
-                fovIndex = tmp
-                zIndex = 0
+        fovIndex, zIndex = self.parameters['fov_index'][fragmentIndex]
 
         scaleFactors = self._get_previous_scale_factors()
         backgrounds = self._get_previous_backgrounds()

@@ -32,14 +32,14 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
             self.parameters['optimize_chromatic_correction'] = False
         if 'crop_width' not in self.parameters:
             self.parameters['crop_width'] = 0
-            
+
         if 'fov_index' in self.parameters:
             logger = self.dataSet.get_logger(self)
             logger.info('Setting fov_per_iteration to length of fov_index')
 
             self.parameters['fov_per_iteration'] = \
                 len(self.parameters['fov_index'])
-            
+
         else:
             self.parameters['fov_index'] = []
             for i in range(self.parameters['fov_per_iteration']):

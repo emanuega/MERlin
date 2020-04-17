@@ -41,3 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.6] - 
 ### Fixed
 - Fixed bug and edge cases in removal of barcodes duplicated across z planes. Moved to the decode step to prevent unintended conflict with misidentification rate determination.
+
+### Added
+- An alternative Lucy-Richardson deconvolution approach that requires ~10x fewer iterations.
+

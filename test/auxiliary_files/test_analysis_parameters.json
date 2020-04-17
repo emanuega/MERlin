@@ -46,7 +46,10 @@
                 "preprocess_task": "DeconvolutionPreprocess",
                 "optimize_task": "Optimize2",
                 "global_align_task": "SimpleGlobalAlignment",
-                "crop_width": 10
+                "crop_width": 10,
+                "remove_z_duplicated_barcodes": true,
+                "z_duplicate_zPlane_threshold": 1,
+                "z_duplicate_xy_pixel_threshold": 1.414
             }
         },
         {
@@ -67,10 +70,7 @@
             "parameters": {
                 "decode_task": "Decode",
                 "area_threshold": 5,
-                "intensity_threshold": 1,
-                "remove_zplane_duplicates": true,
-                "z_planes_above_below": 1,
-                "max_centroid_separation": 1.414
+                "intensity_threshold": 1
             }
         },
         {
@@ -86,10 +86,7 @@
             "module": "merlin.analysis.filterbarcodes",
             "parameters": {
                 "decode_task": "Decode",
-                "adaptive_task": "GenerateAdaptiveThreshold",
-                "remove_zplane_duplicates": true,
-                "z_planes_above_below": 1,
-                "max_centroid_separation": 1.414
+                "adaptive_task": "GenerateAdaptiveThreshold"
             }
         },
         {

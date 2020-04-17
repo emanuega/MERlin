@@ -27,14 +27,14 @@ def generate_barcode(fov, barcode_id, x, y, z, mean_intensity):
     return bc
 
 
-b1 = generate_barcode(100, 5, 402.21, 787.11, 3, 14.23)
-b2 = generate_barcode(100, 5, 502.21, 687.11, 4.5, 12.23)
-b3 = generate_barcode(100, 17, 402.21, 787.11, 3, 10.23)
+b1 = generate_barcode(100, 5, 402.21, 787.11, 2, 14.23)
+b2 = generate_barcode(100, 5, 502.21, 687.11, 3, 12.23)
+b3 = generate_barcode(100, 17, 402.21, 787.11, 2, 10.23)
 
-b1_above_dimmer = generate_barcode(100, 5, 402.21, 787.11, 4.5, 11.23)
-b1_closeby_above_brighter = generate_barcode(100, 5, 403.21, 787.11, 4.5, 15.23)
-b2_above_brighter = generate_barcode(100, 5, 502.31, 687.11, 6, 14.23)
-b1_closeby_below_brighter = generate_barcode(100, 5, 403.21, 787.11, 1.5, 15.0)
+b1_above_dimmer = generate_barcode(100, 5, 402.21, 787.11, 3, 11.23)
+b1_closeby_above_brighter = generate_barcode(100, 5, 403.21, 787.11, 3, 15.23)
+b2_above_brighter = generate_barcode(100, 5, 502.31, 687.11, 4, 14.23)
+b1_closeby_below_brighter = generate_barcode(100, 5, 403.21, 787.11, 1, 15.0)
 b1_closeby_toofar_brighter = generate_barcode(100, 5, 403.21, 787.11, 0, 15.0)
 
 
@@ -108,3 +108,16 @@ def test_farther_xyrange():
         assert ex in keptBC['barcode'].values
     for notEx in notExpected:
         assert notEx not in keptBC['barcode'].values
+
+
+def test_empty_barcodes():
+    zplane_cutoff = 1
+    xy_cutoff = np.sqrt(2)
+    zpositions = [0, 1.5, 3, 4.5, 6, 7.5, 9]
+
+    bcDF = pd.DataFrame([b1])
+    bcDF.drop(0, inplace=True)
+
+    keptBC = barcodefilters.remove_zplane_duplicates_all_barcodeids(
+        bcDF, zplane_cutoff, xy_cutoff, zpositions)
+    assert type(keptBC) == pd.DataFrame

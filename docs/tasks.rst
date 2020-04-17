@@ -71,6 +71,9 @@ Parameters:
 * write_decoded\_images -- Flag indicating if the decoded and intensity images should be written.
 * minimum\_area -- The area threshold, below which decoded barcodes are ignored.
 * lowpass\_sigma -- The standard deviation for the low pass filter prior to decoding.
+* remove\_z\_duplicated\_barcodes -- Remove putative duplicate barcode counts from adjacent z planes.
+* z\_duplicate\_zPlane\_threshold -- If removing putative duplicate barcodes, number of adjacent z planes to consider, generally anything within 2 µm would be worth considering.
+* z\_duplicate\_xy\_pixel\_threshold -- If removing putative duplicate barcodes, maximum euclidean distance in xy pixels that can separate the centroids of putative duplicates.
 
 filterbarcodes.FilterBarcodes
 ------------------------------
@@ -81,9 +84,6 @@ Parameters:
 
 * area\_threshold -- Barcodes with areas below the specified area\_threshold are removed.
 * intensity\_threshold -- Barcodes with intensities below this threshold are removed.
-* remove\_z\_duplicated\_barcodes -- Remove putative duplicate barcode counts from adjacent z planes.
-* z\_duplicate\_zPlane\_threshold -- If removing putative duplicate barcodes, number of adjacent z planes to consider, generally anything within 2 µm would be worth considering.
-* z\_duplicate\_xy\_pixel\_threshold -- If removing putative duplicate barcodes, maximum euclidean distance in xy pixels that can separate the centroids of putative duplicates.
 
 filterbarcodes.GenerateAdaptiveThreshold
 -------------------------------------------
@@ -103,9 +103,6 @@ Description: Use an adaptive barcode to enrich the decode barcodes for the corre
 Parameters:
 
 * misidentification_rate -- The target misidentification rate, calculated as the number of blank barcodes per blank barcode divided by the number of coding barcodes per coding barcode.
-* remove\_z\_duplicated\_barcodes -- Remove putative duplicate barcode counts from adjacent z planes.
-* z\_duplicate\_zPlane\_threshold -- If removing putative duplicate barcodes, number of adjacent z planes to consider, generally anything within 2 µm would be worth considering.
-* z\_duplicate\_xy\_pixel\_threshold -- If removing putative duplicate barcodes, maximum euclidean distance in xy pixels that can separate the centroids of putative duplicates.
 
 segment.SegmentCells
 ----------------------

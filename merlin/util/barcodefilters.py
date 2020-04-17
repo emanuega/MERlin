@@ -31,15 +31,18 @@ def remove_zplane_duplicates_all_barcodeids(barcodes: pd.DataFrame,
                       fall within parameters of z plane duplicates have
                       been removed.
     """
-    barcodeGroups = barcodes.groupby('barcode_id')
-    bcToKeep = []
-    for bcGroup, bcData in barcodeGroups:
-        bcToKeep.append(
-            remove_zplane_duplicates_single_barcodeid(bcData, zPlanes,
-                                                      maxDist, allZPos))
-    mergedBC = pd.concat(bcToKeep, 0).reset_index(drop=True)
-    mergedBC = mergedBC.sort_values(by=['barcode_id', 'z'])
-    return mergedBC
+    if len(barcodes) == 0:
+        return barcodes
+    else:
+        barcodeGroups = barcodes.groupby('barcode_id')
+        bcToKeep = []
+        for bcGroup, bcData in barcodeGroups:
+            bcToKeep.append(
+                remove_zplane_duplicates_single_barcodeid(bcData, zPlanes,
+                                                          maxDist, allZPos))
+        mergedBC = pd.concat(bcToKeep, 0).reset_index(drop=True)
+        mergedBC = mergedBC.sort_values(by=['barcode_id', 'z'])
+        return mergedBC
 
 
 def remove_zplane_duplicates_single_barcodeid(barcodes: pd.DataFrame,
@@ -72,21 +75,26 @@ def remove_zplane_duplicates_single_barcodeid(barcodes: pd.DataFrame,
     graph = nx.Graph()
     zPos = sorted(allZPos)
     graph.add_nodes_from(barcodes.index.values.tolist())
-    for i in range(0, len(zPos)):
-        z = zPos[i]
-        zToCompare = [otherZ for pos, otherZ in enumerate(zPos) if
-                      (pos >= i - zPlanes) & (pos <= i + zPlanes) & ~(pos == i)]
+    for z in range(0, len(zPos)):
+        zToCompare = [pos for pos, otherZ in enumerate(zPos) if
+                      (pos >= z - zPlanes) & (pos <= z + zPlanes) & ~(pos == z)]
         treeBC = barcodes[barcodes['z'] == z]
-        tree = cKDTree(treeBC.loc[:, ['x', 'y']].values)
-        for compZ in zToCompare:
-            queryBC = barcodes[barcodes['z'] == compZ]
-            dist, idx = tree.query(queryBC.loc[:, ['x', 'y']].values, k=1,
-                                   distance_upper_bound=maxDist)
-            currentHits = treeBC.index.values[idx[np.isfinite(dist)]]
-            comparisonHits = queryBC.index.values[np.isfinite(dist)]
-            graph.add_edges_from(list(zip(currentHits, comparisonHits)))
-    connectedComponents = [list(x) for x in
-                           list(nx.connected_components(graph))]
+        if len(treeBC) == 0:
+            pass
+        else:
+            tree = cKDTree(treeBC.loc[:, ['x', 'y']].values)
+            for compZ in zToCompare:
+                queryBC = barcodes[barcodes['z'] == compZ]
+                if len(queryBC) == 0:
+                    pass
+                else:
+                    dist, idx = tree.query(queryBC.loc[:, ['x', 'y']].values,
+                                           k=1, distance_upper_bound=maxDist)
+                    currentHits = treeBC.index.values[idx[np.isfinite(dist)]]
+                    comparisonHits = queryBC.index.values[np.isfinite(dist)]
+                    graph.add_edges_from(list(zip(currentHits, comparisonHits)))
+        connectedComponents = [list(x) for x in
+                               list(nx.connected_components(graph))]
 
     def choose_brighter_barcode(barcodes, indexes):
         sortedBC = barcodes.loc[indexes, :].sort_values(by='mean_intensity',

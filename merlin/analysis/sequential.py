@@ -6,7 +6,7 @@ import cv2
 from skimage.measure import regionprops
 
 from merlin.core import analysistask
-from merlin.util import filter
+from merlin.util import imagefilters
 
 
 class SumSignal(analysistask.ParallelAnalysisTask):
@@ -92,8 +92,11 @@ class SumSignal(analysistask.ParallelAnalysisTask):
         for ch in channels:
             img = fTask.get_aligned_image(fov, ch, zIndex)
             if self.highpass:
-                img = filter.high_pass_filter(
-                    img, self.parameters['highpass_sigma'])
+                highPassSigma = self.parameters['highpass_sigma']
+                highPassFilterSize = int(2 * np.ceil(3 * highPassSigma) + 1)
+                img = imagefilters.high_pass_filter(img,
+                                                    highPassFilterSize,
+                                                    highPassSigma)
             signals.append(self._extract_signal(cells, img,
                                                 zIndex).iloc[:, [0]])
 

@@ -35,6 +35,19 @@ Parameters:
 * decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image.
 * decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
 
+preprocess.DeconvolutionPreprocessGuo
+--------------------------------------
+
+Description: High-pass filters and deconvolves the image data in preparation for bit-calling. This version uses the Lucy-Richardson deconvolution approach described in this reference - `Guo et al. <http://dx.doi.org/10.1101/647370>`.
+
+Parameters:
+
+* warp\_task -- The name of the warp task that provides the aligned image stacks.
+* highpass\_pass -- The standard deviation to use for the high pass filter.
+* decon\_sigma -- The standard deviation to use for the Lucy-Richardson deconvolution.
+* decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image. The default value is 2.
+* decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
+ 
 optimize.Optimize
 ------------------
 
@@ -43,7 +56,8 @@ Description: Determines the optimal per-bit scale factors for barcode decoding.
 Parameters:
 
 * iteration\_count -- The number of iterations to perform for the optimization.
-* fov\_per\_iteration -- The number of fields of view to decode in each round of optimization.
+* fov\_index -- (Optional) A list of [[fov_1, z_value_1], [fov_2, z_value_2], ..] specifying which fields of view and what z values should be used for optimization.
+* fov\_per\_iteration -- The number of fields of view to decode in each round of optimization. This will be set to the length of ``fov_index`` if the ``fov_index`` parameter is specified.
 * estimate\_initial\_scale\_factors\_from\_cdf -- Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.
 * area\_threshold -- The minimum barcode area for barcodes to be used in the calculation of the scale factors.
 
@@ -58,6 +72,9 @@ Parameters:
 * write_decoded\_images -- Flag indicating if the decoded and intensity images should be written.
 * minimum\_area -- The area threshold, below which decoded barcodes are ignored.
 * lowpass\_sigma -- The standard deviation for the low pass filter prior to decoding.
+* remove\_z\_duplicated\_barcodes -- Remove putative duplicate barcode counts from adjacent z planes.
+* z\_duplicate\_zPlane\_threshold -- If removing putative duplicate barcodes, number of adjacent z planes to consider, generally anything within 2 µm would be worth considering.
+* z\_duplicate\_xy\_pixel\_threshold -- If removing putative duplicate barcodes, maximum euclidean distance in xy pixels that can separate the centroids of putative duplicates.
 
 filterbarcodes.FilterBarcodes
 ------------------------------
@@ -68,9 +85,6 @@ Parameters:
 
 * area\_threshold -- Barcodes with areas below the specified area\_threshold are removed.
 * intensity\_threshold -- Barcodes with intensities below this threshold are removed.
-* remove\_z\_duplicated\_barcodes -- Remove putative duplicate barcode counts from adjacent z planes.
-* z\_duplicate\_zPlane\_threshold -- If removing putative duplicate barcodes, number of adjacent z planes to consider, generally anything within 2 µm would be worth considering.
-* z\_duplicate\_xy\_pixel\_threshold -- If removing putative duplicate barcodes, maximum euclidean distance in xy pixels that can separate the centroids of putative duplicates.
 
 filterbarcodes.GenerateAdaptiveThreshold
 -------------------------------------------
@@ -90,9 +104,6 @@ Description: Use an adaptive barcode to enrich the decode barcodes for the corre
 Parameters:
 
 * misidentification_rate -- The target misidentification rate, calculated as the number of blank barcodes per blank barcode divided by the number of coding barcodes per coding barcode.
-* remove\_z\_duplicated\_barcodes -- Remove putative duplicate barcode counts from adjacent z planes.
-* z\_duplicate\_zPlane\_threshold -- If removing putative duplicate barcodes, number of adjacent z planes to consider, generally anything within 2 µm would be worth considering.
-* z\_duplicate\_xy\_pixel\_threshold -- If removing putative duplicate barcodes, maximum euclidean distance in xy pixels that can separate the centroids of putative duplicates.
 
 segment.SegmentCells
 ----------------------

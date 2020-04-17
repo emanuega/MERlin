@@ -4,7 +4,6 @@ from scipy import optimize
 
 from merlin.core import analysistask
 from merlin.analysis import decode
-from merlin.util import barcodefilters
 
 
 class AbstractFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
@@ -15,21 +14,10 @@ class AbstractFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
-        if 'remove_z_duplicated_barcodes' not in self.parameters:
-            self.parameters['remove_z_duplicated_barcodes'] = False
-        if self.parameters['remove_z_duplicated_barcodes']:
-            if 'z_duplicate_zPlane_threshold' not in self.parameters:
-                self.parameters['z_duplicate_zPlane_threshold'] = 1
-            if 'z_duplicate_xy_pixel_threshold' not in self.parameters:
-                self.parameters['z_duplicate_xy_pixel_threshold'] = np.sqrt(2)
-
-    def remove_z_duplicate_barcodes(self, bc):
-        if self.parameters['remove_z_duplicated_barcodes']:
-            bc = barcodefilters.remove_zplane_duplicates_all_barcodeids(
-                bc, self.parameters['z_duplicate_zPlane_threshold'],
-                self.parameters['z_duplicate_xy_pixel_threshold'],
-                self.dataSet.get_z_positions())
-        return bc
+    def get_codebook(self):
+        decodeTask = self.dataSet.load_analysis_task(
+            self.parameters['decode_task'])
+        return decodeTask.get_codebook()
 
 
 class FilterBarcodes(AbstractFilterBarcodes):
@@ -61,11 +49,6 @@ class FilterBarcodes(AbstractFilterBarcodes):
     def get_dependencies(self):
         return [self.parameters['decode_task']]
 
-    def get_codebook(self):
-        decodeTask = self.dataSet.load_analysis_task(
-            self.parameters['decode_task'])
-        return decodeTask.get_codebook()
-
     def _run_analysis(self, fragmentIndex):
         decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])
@@ -73,12 +56,11 @@ class FilterBarcodes(AbstractFilterBarcodes):
         intensityThreshold = self.parameters['intensity_threshold']
         distanceThreshold = self.parameters['distance_threshold']
         barcodeDB = self.get_barcode_database()
-        currentBC = decodeTask.get_barcode_database() \
-            .get_filtered_barcodes(areaThreshold, intensityThreshold,
-                                   distanceThreshold=distanceThreshold,
-                                   fov=fragmentIndex)
-        currentBC = self.remove_z_duplicate_barcodes(currentBC)
-        barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
+        barcodeDB.write_barcodes(
+            decodeTask.get_barcode_database().get_filtered_barcodes(
+                areaThreshold, intensityThreshold,
+                distanceThreshold=distanceThreshold, fov=fragmentIndex),
+            fov=fragmentIndex)
 
 
 class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
@@ -369,11 +351,6 @@ class AdaptiveFilterBarcodes(AbstractFilterBarcodes):
         return [self.parameters['adaptive_task'],
                 self.parameters['decode_task']]
 
-    def get_codebook(self):
-        decodeTask = self.dataSet.load_analysis_task(
-            self.parameters['decode_task'])
-        return decodeTask.get_codebook()
-
     def get_adaptive_thresholds(self):
         """ Get the adaptive thresholds used for filtering barcodes.
 
@@ -395,7 +372,6 @@ class AdaptiveFilterBarcodes(AbstractFilterBarcodes):
         bcDatabase = self.get_barcode_database()
         currentBarcodes = decodeTask.get_barcode_database()\
             .get_barcodes(fragmentIndex)
-        currentBarcodes = self.remove_z_duplicate_barcodes(currentBarcodes)
-        bcDatabase.write_barcodes(
-            adaptiveTask.extract_barcodes_with_threshold(
-                threshold, currentBarcodes), fov=fragmentIndex)
+
+        bcDatabase.write_barcodes(adaptiveTask.extract_barcodes_with_threshold(
+            threshold, currentBarcodes), fov=fragmentIndex)

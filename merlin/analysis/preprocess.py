@@ -5,25 +5,26 @@ import numpy as np
 from merlin.core import analysistask
 from merlin.util import deconvolve
 from merlin.util import aberration
+from merlin.util import imagefilters
 from merlin.data import codebook
 
 
 class Preprocess(analysistask.ParallelAnalysisTask):
 
     """
-    An abstract class for preparing data for barcode calling. 
+    An abstract class for preparing data for barcode calling.
     """
 
     def _image_name(self, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
                 self.analysisName, subdirectory='preprocessed_images')
         return os.sep.join([destPath, 'fov_' + str(fov) + '.tif'])
-    
+
     def get_pixel_histogram(self, fov=None):
         if fov is not None:
             return self.dataSet.load_numpy_analysis_result(
                 'pixel_histogram', self.analysisName, fov, 'histograms')
-        
+
         pixelHistogram = np.zeros(self.get_pixel_histogram(
                 self.dataSet.get_fovs()[0]).shape)
         for f in self.dataSet.get_fovs():
@@ -62,7 +63,7 @@ class DeconvolutionPreprocess(Preprocess):
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
-    
+
     def get_estimated_memory(self):
         return 2048
 
@@ -99,6 +100,13 @@ class DeconvolutionPreprocess(Preprocess):
                                                      chromaticCorrector)
         return self._preprocess_image(inputImage)
 
+    def _high_pass_filter(self, inputImage: np.ndarray) -> np.ndarray:
+        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
+        hpImage = imagefilters.high_pass_filter(inputImage,
+                                                highPassFilterSize,
+                                                self._highPassSigma)
+        return hpImage.astype(np.float)
+
     def _run_analysis(self, fragmentIndex):
         warpTask = self.dataSet.load_analysis_task(
                 self.parameters['warp_task'])
@@ -123,14 +131,34 @@ class DeconvolutionPreprocess(Preprocess):
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)
 
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
-        highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
         deconFilterSize = self.parameters['decon_filter_size']
 
-        filteredImage = inputImage.astype(float) - cv2.GaussianBlur(
-            inputImage, (highPassFilterSize, highPassFilterSize),
-            self._highPassSigma, borderType=cv2.BORDER_REPLICATE)
-        filteredImage[filteredImage < 0] = 0
+        filteredImage = self._high_pass_filter(inputImage)
         deconvolvedImage = deconvolve.deconvolve_lucyrichardson(
+            filteredImage, deconFilterSize, self._deconSigma,
+            self._deconIterations).astype(np.uint16)
+        return deconvolvedImage
+
+
+class DeconvolutionPreprocessGuo(DeconvolutionPreprocess):
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        # Check for 'decon_iterations' in parameters instead of
+        # self.parameters as 'decon_iterations' is added to
+        # self.parameters by the super-class with a default value
+        # of 20, but we want the default value to be 2.
+        if 'decon_iterations' not in parameters:
+            self.parameters['decon_iterations'] = 2
+
+        self._deconIterations = self.parameters['decon_iterations']
+
+    def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
+        deconFilterSize = self.parameters['decon_filter_size']
+
+        filteredImage = self._high_pass_filter(inputImage)
+        deconvolvedImage = deconvolve.deconvolve_lucyrichardson_guo(
             filteredImage, deconFilterSize, self._deconSigma,
             self._deconIterations).astype(np.uint16)
         return deconvolvedImage

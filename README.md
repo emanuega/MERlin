@@ -9,6 +9,9 @@ single task or split among many subtasks that can be executed in parallel. MERli
 execute workflows on a single computer, on a high performance cluster, or on the cloud 
 (AWS and Google Cloud).
 
+If MERlin is useful for your research, consider citing:
+Emanuel, G., Eichhorn, S. W., Zhuang, X. 2020, MERlin - scalable and extensible MERFISH analysis software, v0.1.6, Zenodo, doi:10.5281/zenodo.3758540 
+
 Please find the most recent version of MERlin [here](https://github.com/emanuega/merlin).
 
 ## MERFISH data analysis

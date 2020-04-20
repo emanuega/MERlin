@@ -1,5 +1,6 @@
 [![CircleCI](https://circleci.com/gh/emanuega/MERlin/tree/master.svg?style=svg)](https://circleci.com/gh/emanuega/MERlin/tree/master)
 [![codecov](https://codecov.io/gh/emanuega/MERlin/branch/master/graph/badge.svg)](https://codecov.io/gh/emanuega/MERlin)
+[![DOI](https://zenodo.org/badge/202668055.svg)](https://zenodo.org/badge/latestdoi/202668055)
 
 # MERlin - Extensible pipeline for scalable data analysis
 

@@ -242,36 +242,39 @@ def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
     return binary_fill_holes(nucleiMask)
 
 
-def get_cv2_watershed_markers(nucleiImages: np.ndarray,
-                              membraneImages: np.ndarray) -> np.ndarray:
-    """Combine membrane and nuclei markers into a single multilabel mask
+def get_cv2_watershed_markers(compartmentImages: np.ndarray,
+                              membraneImages: np.ndarray,
+                              membraneFlag: int) -> np.ndarray:
+    """Combine membrane and compartment markers into a single multilabel mask
     for CV2 watershed
 
     Args:
-        nucleiImages: a 3 dimensional numpy array containing the images
+        compartmentImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
         membraneImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
+        membraneFlag: 0 if compartment and membrane images are the same, 1 
+            otherwise
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
             cv2-compatible watershed markers
     """
 
-    nucleiMask = get_nuclei_mask(nucleiImages)
+    compartmentMask = get_nuclei_mask(compartmentImages)
     membraneMask = get_membrane_mask(membraneImages)
 
-    watershedMarker = np.zeros(nucleiMask.shape)
+    watershedMarker = np.zeros(compartmentMask.shape)
 
-    for z in range(nucleiImages.shape[0]):
+    for z in range(compartmentImages.shape[0]):
 
         # generate areas of sure bg and fg, as well as the area of
         # unknown classification
-        background = morphology.dilation(nucleiMask[z, :, :],
+        background = morphology.dilation(compartmentMask[z, :, :],
                                          morphology.selem.disk(15))
         membraneDilated = morphology.dilation(
             membraneMask[z, :, :].astype('bool'),
             morphology.selem.disk(10))
-        foreground = morphology.erosion(nucleiMask[z, :, :] * ~
+        foreground = morphology.erosion(compartmentMask[z, :, :] * ~
                                         membraneDilated,
                                         morphology.selem.disk(5))
         unknown = background * ~ foreground
@@ -322,12 +325,12 @@ def convert_grayscale_to_rgb(uint16Image: np.ndarray) -> np.ndarray:
     return rgbImage
 
 
-def apply_cv2_watershed(nucleiImages: np.ndarray,
+def apply_cv2_watershed(compartmentImages: np.ndarray,
                         watershedMarkers: np.ndarray) -> np.ndarray:
     """Perform watershed using cv2
 
     Args:
-        nucleiImages: a 3 dimensional numpy array containing the images
+        compartmentImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
         watershedMarkers: a 3 dimensional numpy array containing the cv2
             markers arranged as (z, x, y).
@@ -339,7 +342,7 @@ def apply_cv2_watershed(nucleiImages: np.ndarray,
 
     watershedOutput = np.zeros(watershedMarkers.shape)
     for z in range(nucleiImages.shape[0]):
-        rgbImage = convert_grayscale_to_rgb(nucleiImages[z, :, :])
+        rgbImage = convert_grayscale_to_rgb(compartmentImages[z, :, :])
         watershedOutput[z, :, :] = cv2.watershed(rgbImage,
                                                  watershedMarkers[z, :, :].
                                                  astype('int32'))
@@ -348,7 +351,7 @@ def apply_cv2_watershed(nucleiImages: np.ndarray,
     return watershedOutput
 
 
-def get_overlapping_nuclei(watershedZ0: np.ndarray,
+def get_overlapping_objects(watershedZ0: np.ndarray,
                            watershedZ1: np.ndarray, n0: int):
     """Perform watershed using cv2
 
@@ -357,26 +360,27 @@ def get_overlapping_nuclei(watershedZ0: np.ndarray,
             segmentation mask
         watershedZ1: a 2 dimensional numpy array containing a
             segmentation mask adjacent to watershedZ1
-        n0: an integer with the index of the cell/nuclei to be compared
-            between the provided watershed segmentation masks
+        n0: an integer with the index of the object (cell/nuclei) 
+            to be compared between the provided watershed 
+            segmentation masks
     Returns:
         a tuple (n1, f0, f1) containing the label of the cell in Z1
         overlapping n0 (n1), the fraction of n0 overlaping n1 (f0) and
         the fraction of n1 overlapping n0 (f1)
     """
 
-    z1NucleiIndexes = np.unique(watershedZ1[watershedZ0 == n0])
-    z1NucleiIndexes = z1NucleiIndexes[z1NucleiIndexes > 100]
+    z1Indexes = np.unique(watershedZ1[watershedZ0 == n0])
+    z1Indexes = z1Indexes[z1NucleiIndexes > 100]
 
-    if z1NucleiIndexes.shape[0] > 0:
+    if z1Indexes.shape[0] > 0:
 
         # calculate overlap fraction
         n0Area = np.count_nonzero(watershedZ0 == n0)
-        n1Area = np.zeros(len(z1NucleiIndexes))
-        overlapArea = np.zeros(len(z1NucleiIndexes))
+        n1Area = np.zeros(len(z1Indexes))
+        overlapArea = np.zeros(len(z1Indexes))
 
-        for ii in range(len(z1NucleiIndexes)):
-            n1 = z1NucleiIndexes[ii]
+        for ii in range(len(z1Indexes)):
+            n1 = z1Indexes[ii]
             n1Area[ii] = np.count_nonzero(watershedZ1 == n1)
             overlapArea[ii] = np.count_nonzero((watershedZ0 == n0) *
                                                (watershedZ1 == n1))
@@ -393,7 +397,7 @@ def get_overlapping_nuclei(watershedZ0: np.ndarray,
 
         if (n0OverlapFraction[indexSorted[0]] > 0.2 and
                 n1OverlapFraction[indexSorted[0]] > 0.5):
-            return z1NucleiIndexes[indexSorted[0]],
+            return z1Indexes[indexSorted[0]],
             n0OverlapFraction[indexSorted[0]],
             n1OverlapFraction[indexSorted[0]]
         else:
@@ -428,9 +432,9 @@ def combine_2d_segmentation_masks_into_3d(watershedOutput:
                                 np.unique(watershedOutput[z, :, :]) > 100]
 
     for n0 in zNucleiIndex:
-        n1, f0, f1 = get_overlapping_nuclei(watershedCombinedZ[z, :, :],
-                                            watershedOutput[z-1, :, :],
-                                            n0)
+        n1, f0, f1 = get_overlapping_objects(watershedCombinedZ[z, :, :],
+                                             watershedOutput[z-1, :, :],
+                                             n0)
         if n1:
             watershedCombinedZ[z-1, :, :][(watershedOutput[z-1, :, :] ==
                                            n1)] = n0

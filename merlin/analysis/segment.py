@@ -226,7 +226,9 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
 
         # Prepare masks for cv2 watershed
         watershedMarkers = watershed.get_cv2_watershed_markers(
-                                        compartmentImages, membraneImages)
+                            compartmentImages,
+                            membraneImages,
+                            membraneFlag)
 
         endTime = time.time()
         print(" markers calculated, ET {:.2f} min".format(

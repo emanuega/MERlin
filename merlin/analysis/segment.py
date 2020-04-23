@@ -205,11 +205,11 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
               + str(membraneImages.shape[0])
               + "," + str(membraneImages.shape[1])
               + "," + str(membraneImages.shape[2]) + "]")
-        print(" nucleiImages Type: " + str(type(nucleiImages)))
-        print(" nucleiImages Size: ["
-              + str(nucleiImages.shape[0])
-              + "," + str(nucleiImages.shape[1])
-              + "," + str(nucleiImages.shape[2]) + "]")
+        print(" compartmentImages Type: " + str(type(compartmentImages)))
+        print(" compartmentImages Size: ["
+              + str(compartmentImages.shape[0])
+              + "," + str(compartmentImages.shape[1])
+              + "," + str(compartmentImages.shape[2]) + "]")
 
         # Prepare masks for cv2 watershed
         watershedMarkers = segmentation.get_cv2_watershed_markers(

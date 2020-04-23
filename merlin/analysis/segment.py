@@ -123,7 +123,7 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             for z in range(len(self.dataSet.get_z_positions()))])
 
 
-class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
+class WatershedSegmentCV2(FeatureSavingAnalysisTask):
 
     """
     An analysis task that determines the boundaries of features in the
@@ -149,7 +149,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-
+        
         if 'membrane_channel_name' not in self.parameters:
             self.parameters['membrane_channel_name'] = 'DAPI'
         if 'compartment_channel_name' not in self.parameters:

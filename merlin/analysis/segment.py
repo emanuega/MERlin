@@ -124,7 +124,7 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             for z in range(len(self.dataSet.get_z_positions()))])
 
 
-class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
+class WatershedSegmentCV2(FeatureSavingAnalysisTask):
 
     """
     An analysis task that determines the boundaries of features in the
@@ -136,7 +136,12 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
     py_tutorials/py_imgproc/py_watershed/py_watershed.html.
 
     The watershed segmentation is performed in each z-position
-    independently and     combined into 3D objects in a later step
+    independently and combined into 3D objects in a later step
+
+    The class can be used to segment either nuclear or cytoplasmic 
+    compartments. If both the compartment and membrane channels are the 
+    same, the membrane channel is calculated from the edge transform of 
+    the provided channel.
 
     Since each field of view is analyzed individually, the segmentation
     results should be cleaned in order to merge cells that cross the
@@ -145,11 +150,11 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-
+        
         if 'membrane_channel_name' not in self.parameters:
-            self.parameters['membrane_channel_name'] = 'ConA'
-        if 'nuclei_channel_name' not in self.parameters:
-            self.parameters['nuclei_channel_name'] = 'DAPI'
+            self.parameters['membrane_channel_name'] = 'DAPI'
+        if 'compartment_channel_name' not in self.parameters:
+            self.parameters['compartment_channel_name'] = 'DAPI'
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())

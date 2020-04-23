@@ -9,3 +9,18 @@ from pyclustering.cluster import kmedoids
 from typing import Tuple
 
 from merlin.util import matlab
+
+"""
+This module contains utility functions for preparing imagmes for performing
+segmentation using machine learning approaches
+"""
+
+def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
+										method: str) -> np.ndarray:
+
+def segment_using_ilastik(imageStackIn: np.ndarray) -> np.ndarray:
+
+def segment_using_unet(imageStackIn: np.ndarray) -> np.ndarray:
+
+def segment_using_cellpose(imageStackIn: np.ndarray) -> np.ndarray:
+

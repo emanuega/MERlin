@@ -345,8 +345,15 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
     """
     An analysis task that determines the boundaries of features in the
-    image data in each field of view using a watershed algorithm
-    implemented in CV2.
+    image data in each field of view using a the specified machine learning
+    method. The available methods are:
+
+        unet:
+            
+        ilastik:
+            
+        cellpose:
+
 
     A tutorial explaining the general scheme of the method can be
     found in  https://opencv-python-tutroals.readthedocs.io/en/latest/
@@ -368,8 +375,8 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
         
-        if 'membrane_channel_name' not in self.parameters:
-            self.parameters['membrane_channel_name'] = 'DAPI'
+        if 'method' not in self.parameters:
+            self.parameters['method'] = 'ilastik'
         if 'compartment_channel_name' not in self.parameters:
             self.parameters['compartment_channel_name'] = 'DAPI'
 
@@ -396,6 +403,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         startTime = time.time()
 
         print('Entered the _run_analysis method, FOV ' + str(fragmentIndex))
+        print('Using ' + self.parameters['method'] + ' method.')
 
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
@@ -403,30 +411,32 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         print(' globalTask loaded')
 
         # read membrane and compartment  indexes
-        membraneIndex = self.dataSet \
-                            .get_data_organization() \
-                            .get_data_channel_index(
-                                self.parameters['membrane_channel_name'])
         compartmentIndex = self.dataSet \
                                .get_data_organization() \
                                .get_data_channel_index(
                                 self.parameters['compartment_channel_name'])
 
-        if self.parameters['membrane_channel_name'] ==
-                self.parameters['compartment_channel_name']:
-            membraneFlag = 0
-        else:
-            membraneFlag = 1
-
         endTime = time.time()
         print(" image indexes read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
 
-        # read membrane and compartment images
-        membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)
+        # Read images and perform segmentation
         compartmentImages = self._read_image_stack(fragmentIndex,
                                                    compartmentIndex)
 
+        endTime = time.time()
+        print(" images read, ET {:.2f} min".format(
+                (endTime - startTime) / 60))
+
+        segmentationOutput = machinelearningsegmentation.
+                                apply_machine_learning_segmentation(
+                                    compartmentImages,
+                                    self.parameters['method'])
+
+        endTime = time.time()
+        print(" Segmentation finished, ET {:.2f} min".format(
+                (endTime - startTime) / 60))
+"""
         endTime = time.time()
         print(" images read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
@@ -466,6 +476,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         endTime = time.time()
         print(" watershed z positions combined, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
+"""
 
         # get features from mask. This is the slowestart (6 min for the
         # previous part, 15+ for the rest, for a 7 frame Image.

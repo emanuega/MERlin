@@ -138,9 +138,9 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
     The watershed segmentation is performed in each z-position
     independently and combined into 3D objects in a later step
 
-    The class can be used to segment either nuclear or cytoplasmic 
-    compartments. If both the compartment and membrane channels are the 
-    same, the membrane channel is calculated from the edge transform of 
+    The class can be used to segment either nuclear or cytoplasmic
+    compartments. If both the compartment and membrane channels are the
+    same, the membrane channel is calculated from the edge transform of
     the provided channel.
 
     Since each field of view is analyzed individually, the segmentation
@@ -185,23 +185,30 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
 
         print(' globalTask loaded')
 
-        # read membrane (seed) and nuclei (watershed) indexes
+        # read membrane and compartment  indexes
         membraneIndex = self.dataSet \
                             .get_data_organization() \
                             .get_data_channel_index(
                                 self.parameters['membrane_channel_name'])
-        nucleiIndex = self.dataSet \
-                          .get_data_organization() \
-                          .get_data_channel_index(
-                            self.parameters['nuclei_channel_name'])
+        compartmentIndex = self.dataSet \
+                               .get_data_organization() \
+                               .get_data_channel_index(
+                                self.parameters['compartment_channel_name'])
+
+        if self.parameters['membrane_channel_name'] ==
+                self.parameters['compartment_channel_name']:
+            membraneFlag = 0
+        else:
+            membraneFlag = 1
 
         endTime = time.time()
         print(" image indexes read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
 
-        # read membrane (seed) and nuclei (watershed) images
+        # read membrane and compartment images
         membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)
-        nucleiImages = self._read_image_stack(fragmentIndex, nucleiIndex)
+        compartmentImages = self._read_image_stack(fragmentIndex,
+                                                   compartmentIndex)
 
         endTime = time.time()
         print(" images read, ET {:.2f} min".format(
@@ -211,22 +218,22 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
               + str(membraneImages.shape[0])
               + "," + str(membraneImages.shape[1])
               + "," + str(membraneImages.shape[2]) + "]")
-        print(" nucleiImages Type: " + str(type(nucleiImages)))
-        print(" nucleiImages Size: ["
-              + str(nucleiImages.shape[0])
-              + "," + str(nucleiImages.shape[1])
-              + "," + str(nucleiImages.shape[2]) + "]")
+        print(" compartmentImages Type: " + str(type(compartmentImages)))
+        print(" compartmentImages Size: ["
+              + str(compartmentImages.shape[0])
+              + "," + str(compartmentImages.shape[1])
+              + "," + str(compartmentImages.shape[2]) + "]")
 
         # Prepare masks for cv2 watershed
-        watershedMarkers = watershed.get_cv2_watershed_markers(nucleiImages,
-                                                               membraneImages)
+        watershedMarkers = watershed.get_cv2_watershed_markers(
+                                        compartmentImages, membraneImages)
 
         endTime = time.time()
         print(" markers calculated, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
 
         # perform watershed in individual z positions
-        watershedOutput = watershed.apply_cv2_watershed(nucleiImages,
+        watershedOutput = watershed.apply_cv2_watershed(compartmentImages,
                                                         watershedMarkers)
 
         endTime = time.time()

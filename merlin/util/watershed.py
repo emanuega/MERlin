@@ -398,7 +398,6 @@ def get_overlapping_objects(watershedZ0: np.ndarray,
 
     z1Indexes = np.unique(watershedZ1[watershedZ0 == n0])
     z1Indexes = z1Indexes[z1Indexes > 100]
-
     if z1Indexes.shape[0] > 0:
 
         # calculate overlap fraction

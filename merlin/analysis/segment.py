@@ -354,22 +354,8 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
             
         cellpose:
 
+    TODO: ADD FLAT FIELD CORRECTION TASK
 
-    A tutorial explaining the general scheme of the method can be
-    found in  https://opencv-python-tutroals.readthedocs.io/en/latest/
-    py_tutorials/py_imgproc/py_watershed/py_watershed.html.
-
-    The watershed segmentation is performed in each z-position
-    independently and combined into 3D objects in a later step
-
-    The class can be used to segment either nuclear or cytoplasmic
-    compartments. If both the compartment and membrane channels are the
-    same, the membrane channel is calculated from the edge transform of
-    the provided channel.
-
-    Since each field of view is analyzed individually, the segmentation
-    results should be cleaned in order to merge cells that cross the
-    field of view boundary.
     """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):

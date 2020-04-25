@@ -24,8 +24,7 @@ def segment_using_cellpose(imageStackIn: np.ndarray) -> np.ndarray:
 
 def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
 										method: str) -> np.ndarray:
-	"""Calculate 
-
+	"""Select segmentation algorithm to use
     Args:
         imageStackIn: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).

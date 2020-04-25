@@ -172,30 +172,31 @@ def get_membrane_mask(membraneImages: np.ndarray) -> np.ndarray:
     return mask
 
 
-def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
-    """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
-    The images expected are some type of Nuclei label (e.g. DAPI)
+def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
+    """Calculate binary mask with 1's in compartment (nuclei or cytoplasm) 
+    pixels and 0 otherwise. The images expected are some type of compartment 
+    label (e.g. Nuclei: DAPI, Cytoplasm: PolyT, CD45, etc)
 
     Args:
-        membraneImages: a 3 dimensional numpy array containing the images
+        compartmentImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
     """
 
-    # generate nuclei mask based on thresholding
-    thresholdingMask = np.zeros(nucleiImages.shape)
+    # generate compartment mask based on thresholding
+    thresholdingMask = np.zeros(compartmentImages.shape)
     coarseBlockSize = 241
     fineBlockSize = 61
-    for z in range(nucleiImages.shape[0]):
-        coarseThresholdingMask = (nucleiImages[z, :, :] >
+    for z in range(compartmentImages.shape[0]):
+        coarseThresholdingMask = (compartmentImages[z, :, :] >
                                   filters.threshold_local(
-                                    nucleiImages[z, :, :],
+                                    compartmentImages[z, :, :],
                                     coarseBlockSize,
                                     offset=0))
-        fineThresholdingMask = (nucleiImages[z, :, :] >
+        fineThresholdingMask = (compartmentImages[z, :, :] >
                                 filters.threshold_local(
-                                    nucleiImages[z, :, :],
+                                    compartmentImages[z, :, :],
                                     fineBlockSize,
                                     offset=0))
         thresholdingMask[z, :, :] = (coarseThresholdingMask *
@@ -205,15 +206,15 @@ def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
 
     # generate border mask, necessary to avoid making a single
     # connected component when using binary_fill_holes below
-    borderMask = np.zeros((2048, 2048))
-    borderMask[25:2023, 25:2023] = 1
+    borderMask = np.zeros((compartmentImages.shape[1], 
+                           compartmentImages.shape[2]))
+    borderMask[25:(compartmentImages.shape[1]-25), 
+               25:(compartmentImages.shape[2]-25)] = 1
 
-    # TODO - use the image size variable for borderMask
-
-    # generate nuclei mask from hessian, fine
-    fineHessianMask = np.zeros(nucleiImages.shape)
-    for z in range(nucleiImages.shape[0]):
-        fineHessian = filters.hessian(nucleiImages[z, :, :])
+    # generate compartment mask from hessian, fine
+    fineHessianMask = np.zeros(compartmentImages.shape)
+    for z in range(compartmentImages.shape[0]):
+        fineHessian = filters.hessian(compartmentImages[z, :, :])
         fineHessianMask[z, :, :] = fineHessian == fineHessian.max()
         fineHessianMask[z, :, :] = morphology.binary_closing(
                                                 fineHessianMask[z, :, :],
@@ -222,12 +223,12 @@ def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
         fineHessianMask[z, :, :] = binary_fill_holes(
                                     fineHessianMask[z, :, :])
 
-    # generate dapi mask from hessian, coarse
-    coarseHessianMask = np.zeros(nucleiImages.shape)
-    for z in range(nucleiImages.shape[0]):
-        coarseHessian = filters.hessian(nucleiImages[z, :, :] -
+    # generate compartment mask from hessian, coarse
+    coarseHessianMask = np.zeros(comapartImages.shape)
+    for z in range(compartmentImages.shape[0]):
+        coarseHessian = filters.hessian(compartmentImages[z, :, :] -
                                         morphology.white_tophat(
-                                            nucleiImages[z, :, :],
+                                            compartmentImages[z, :, :],
                                             morphology.selem.disk(20)))
         coarseHessianMask[z, :, :] = coarseHessian == coarseHessian.max()
         coarseHessianMask[z, :, :] = morphology.binary_closing(
@@ -238,8 +239,8 @@ def get_nuclei_mask(nucleiImages: np.ndarray) -> np.ndarray:
                                         coarseHessianMask[z, :, :])
 
     # combine masks
-    nucleiMask = thresholdingMask + fineHessianMask + coarseHessianMask
-    return binary_fill_holes(nucleiMask)
+    compartmentMask = thresholdingMask + fineHessianMask + coarseHessianMask
+    return binary_fill_holes(compartmentMask)
 
 
 def get_cv2_watershed_markers(compartmentImages: np.ndarray,
@@ -260,7 +261,7 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
             cv2-compatible watershed markers
     """
 
-    compartmentMask = get_nuclei_mask(compartmentImages)
+    compartmentMask = get_compartment_mask(compartmentImages)
     membraneMask = get_membrane_mask(membraneImages)
 
     watershedMarker = np.zeros(compartmentMask.shape)

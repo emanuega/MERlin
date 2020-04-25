@@ -195,12 +195,6 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
                                .get_data_channel_index(
                                 self.parameters['compartment_channel_name'])
 
-        if self.parameters['membrane_channel_name'] ==
-                self.parameters['compartment_channel_name']:
-            membraneFlag = 0
-        else:
-            membraneFlag = 1
-
         endTime = time.time()
         print(" image indexes read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
@@ -228,7 +222,7 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
         watershedMarkers = watershed.get_cv2_watershed_markers(
                             compartmentImages,
                             membraneImages,
-                            membraneFlag)
+                            self.parameters['membrane_channel_name'])
 
         endTime = time.time()
         print(" markers calculated, ET {:.2f} min".format(

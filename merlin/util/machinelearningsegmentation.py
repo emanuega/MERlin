@@ -24,11 +24,10 @@ def segment_using_cellpose(imageStackIn: np.ndarray) -> np.ndarray:
 
 def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
 										method: str) -> np.ndarray:
-	"""Calculate binary mask with 1's in membrane pixels and 0 otherwise.
-    The images expected are some type of Nuclei label (e.g. DAPI)
+	"""Calculate 
 
     Args:
-        membraneImages: a 3 dimensional numpy array containing the images
+        imageStackIn: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)

@@ -5,6 +5,7 @@ from scipy.ndimage.morphology import binary_fill_holes
 from skimage import morphology
 from skimage import filters
 from skimage import measure
+from skimage import feature
 from pyclustering.cluster import kmedoids
 from typing import Tuple
 
@@ -142,33 +143,68 @@ def prepare_watershed_images(watershedImageStack: np.ndarray
     return normalizedWatershed, watershedMask
 
 
-def get_membrane_mask(membraneImages: np.ndarray) -> np.ndarray:
+def get_membrane_mask(membraneImages: np.ndarray,
+                      membraneChannelName: str,
+                      compartmentChannelName: str) -> np.ndarray:
     """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
     The images expected are some type of membrane label (WGA, ConA,
-    Lamin, Cadherins)
+    Lamin, Cadherins) or compartment images (DAPI, CD45, polyT) 
 
     Args:
         membraneImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
+        membraneChannelName: A string with the name of a membrane channel.
+        compartmentChannelName: A string with the name of the compartment 
+            channel
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
     """
     mask = np.zeros(membraneImages.shape)
-    fineBlockSize = 61
-    for z in range(membraneImages.shape[0]):
-        mask[z, :, :] = (membraneImages[z, :, :] >
-                         filters.threshold_local(membraneImages[z, :, :],
-                                                 fineBlockSize,
-                                                 offset=0))
-        mask[z, :, :] = morphology.remove_small_objects(
-                                mask[z, :, :].astype('bool'),
-                                min_size=100,
-                                connectivity=1)
-        mask[z, :, :] = morphology.binary_closing(mask[z, :, :],
-                                                  morphology.selem.disk(5))
-        mask[z, :, :] = morphology.skeletonize(mask[z, :, :])
+    if membraneChannelName != compartmentChannelName:
+        fineBlockSize = 61
+        for z in range(membraneImages.shape[0]):
+            mask[z, :, :] = (membraneImages[z, :, :] >
+                             filters.threshold_local(membraneImages[z, :, :],
+                                                     fineBlockSize,
+                                                     offset=0))
+            mask[z, :, :] = morphology.remove_small_objects(
+                                    mask[z, :, :].astype('bool'),
+                                    min_size=100,
+                                    connectivity=1)
+            mask[z, :, :] = morphology.binary_closing(mask[z, :, :],
+                                                      morphology.selem.disk(5))
+            mask[z, :, :] = morphology.skeletonize(mask[z, :, :])
+    else:
+        filterSigma2 = 5
+        filterSize2 = int(2*np.ceil(2*filterSigma2)+1)
+        edgeSigma = 2 #1 #2
+        lowThresh = 0.1 #0.5 #0.2
+        hiThresh = 0.5 #0.7 #0.6
+        for z in range(membraneImages.shape[0]):
+            blurredImage = cv2.GaussianBlur(img[:,:,1],
+                                            (filterSize2,filterSize2),
+                                            filterSigma2)
+            edge0  = feature.canny(membraneImages[z, :, :],
+                                   sigma=edgeSigma,
+                                   use_quantiles=True,
+                                   low_threshold=lowThresh,
+                                   high_threshold=hiThresh)
+            edge0 = morphology.remove_small_objects(
+                                    mask[z, :, :].astype('bool'),
+                                    min_size=20,
+                                    connectivity=1)
+            edge1  = feature.canny(blurredImage,
+                                   sigma=edgeSigma,
+                                   use_quantiles=True,
+                                   low_threshold=lowThresh,
+                                   high_threshold=hiThresh)
+            edge1 = morphology.remove_small_objects(
+                                    mask[z, :, :].astype('bool'),
+                                    min_size=20,
+                                    connectivity=1)
 
-    # combine masks
+            mask[z, :, :] = edge0 + edge1
+    
     return mask
 
 
@@ -262,7 +298,7 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
     """
 
     compartmentMask = get_compartment_mask(compartmentImages)
-    membraneMask = get_membrane_mask(membraneImages)
+    membraneMask = get_membrane_mask(membraneImages, membraneFlag)
 
     watershedMarker = np.zeros(compartmentMask.shape)
 
@@ -371,7 +407,7 @@ def get_overlapping_objects(watershedZ0: np.ndarray,
     """
 
     z1Indexes = np.unique(watershedZ1[watershedZ0 == n0])
-    z1Indexes = z1Indexes[z1NucleiIndexes > 100]
+    z1Indexes = z1Indexes[z1Indexes > 100]
 
     if z1Indexes.shape[0] > 0:
 
@@ -429,10 +465,10 @@ def combine_2d_segmentation_masks_into_3d(watershedOutput:
 
     # starting far from coverslip
     for z in range(watershedOutput.shape[0]-1, 0, -1):
-        zNucleiIndex = np.unique(watershedOutput[z, :, :])[
+        zIndex = np.unique(watershedOutput[z, :, :])[
                                 np.unique(watershedOutput[z, :, :]) > 100]
 
-    for n0 in zNucleiIndex:
+    for n0 in zIndex:
         n1, f0, f1 = get_overlapping_objects(watershedCombinedZ[z, :, :],
                                              watershedOutput[z-1, :, :],
                                              n0)

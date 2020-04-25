@@ -294,6 +294,7 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
 
     compartmentMask = get_compartment_mask(compartmentImages)
     membraneMask = get_membrane_mask(membraneImages, membraneFlag)
+
     watershedMarker = np.zeros(compartmentMask.shape)
 
     for z in range(compartmentImages.shape[0]):
@@ -398,6 +399,7 @@ def get_overlapping_objects(watershedZ0: np.ndarray,
 
     z1Indexes = np.unique(watershedZ1[watershedZ0 == n0])
     z1Indexes = z1Indexes[z1Indexes > 100]
+
     if z1Indexes.shape[0] > 0:
 
         # calculate overlap fraction

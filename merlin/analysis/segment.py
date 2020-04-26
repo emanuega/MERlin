@@ -362,9 +362,12 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         super().__init__(dataSet, parameters, analysisName)
         
         if 'method' not in self.parameters:
-            self.parameters['method'] = 'ilastik'
+            self.parameters['method'] = 'cellpose'
         if 'compartment_channel_name' not in self.parameters:
             self.parameters['compartment_channel_name'] = 'DAPI'
+        if 'compartment_channel_type' not in self.parameters:
+            self.parameters['compartment_channel_type'] = 'cytoplasm' # nuclei
+
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -414,10 +417,10 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         print(" images read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
 
-        segmentationOutput = machinelearningsegmentation.
-                                apply_machine_learning_segmentation(
-                                    compartmentImages,
-                                    self.parameters['method'])
+        segmentationOutput = segmentation.apply_machine_learning_segmentation(
+                                compartmentImages, 
+                                self.parameters['method'],
+                                self.parameters['compartment_channel_name'])
 
         endTime = time.time()
         print(" Segmentation finished, ET {:.2f} min".format(

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from skimage import measure
-from skimage import segmentation
+from skimage import segmentation as skiseg
 from skimage import morphology
 from skimage import feature
 from skimage import filters
@@ -13,7 +13,7 @@ from scipy.spatial import cKDTree
 from merlin.core import dataset
 from merlin.core import analysistask
 from merlin.util import spatialfeature
-from merlin.util import watershed
+from merlin.util import segmentation
 import pandas
 import networkx as nx
 import time
@@ -94,13 +94,13 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             .get_data_channel_index(self.parameters['watershed_channel_name'])
         watershedImages = self._read_and_filter_image_stack(fragmentIndex,
                                                             watershedIndex, 5)
-        seeds = watershed.separate_merged_seeds(
-            watershed.extract_seeds(seedImages))
-        normalizedWatershed, watershedMask = watershed.prepare_watershed_images(
+        seeds = segmentation.separate_merged_seeds(
+            segmentation.extract_seeds(seedImages))
+        normalizedWatershed, watershedMask = segmentation.prepare_watershed_images(
             watershedImages)
 
         seeds[np.invert(watershedMask)] = 0
-        watershedOutput = segmentation.watershed(
+        watershedOutput = skiseg.watershed(
             normalizedWatershed, measure.label(seeds), mask=watershedMask,
             connectivity=np.ones((3, 3, 3)), watershed_line=True)
 
@@ -219,7 +219,7 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
               + "," + str(compartmentImages.shape[2]) + "]")
 
         # Prepare masks for cv2 watershed
-        watershedMarkers = watershed.get_cv2_watershed_markers(
+        watershedMarkers = segmentation.get_cv2_watershed_markers(
                             compartmentImages,
                             membraneImages,
                             self.parameters['membrane_channel_name'])
@@ -229,15 +229,15 @@ class WatershedSegmentCV2(FeatureSavingAnalysisTask):
                 (endTime - startTime) / 60))
 
         # perform watershed in individual z positions
-        watershedOutput = watershed.apply_cv2_watershed(compartmentImages,
-                                                        watershedMarkers)
+        watershedOutput = segmentation.apply_cv2_watershed(compartmentImages,
+                                                           watershedMarkers)
 
         endTime = time.time()
         print(" watershed calculated, ET {:.2f} min".format(
             (endTime - startTime) / 60))
 
         # combine all z positions in watershed
-        watershedCombinedOutput = watershed \
+        watershedCombinedOutput = segmentation \
             .combine_2d_segmentation_masks_into_3d(watershedOutput)
 
         endTime = time.time()
@@ -286,9 +286,12 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         super().__init__(dataSet, parameters, analysisName)
         
         if 'method' not in self.parameters:
-            self.parameters['method'] = 'ilastik'
+            self.parameters['method'] = 'cellpose'
         if 'compartment_channel_name' not in self.parameters:
             self.parameters['compartment_channel_name'] = 'DAPI'
+        if 'compartment_channel_type' not in self.parameters:
+            self.parameters['compartment_channel_type'] = 'cytoplasm' # nuclei
+
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -338,10 +341,10 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         print(" images read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
 
-        segmentationOutput = machinelearningsegmentation.
-                                apply_machine_learning_segmentation(
-                                    compartmentImages,
-                                    self.parameters['method'])
+        segmentationOutput = segmentation.apply_machine_learning_segmentation(
+                                compartmentImages, 
+                                self.parameters['method'],
+                                self.parameters['compartment_channel_name'])
 
         endTime = time.time()
         print(" Segmentation finished, ET {:.2f} min".format(

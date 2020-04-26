@@ -11,9 +11,13 @@ from typing import Tuple
 
 from merlin.util import matlab
 
+from cellpose import models
+
+
 """
-This module contains utility functions for preparing imagmes for
-watershed segmentation.
+This module contains utility functions for preparing images for
+watershed segmentation, as well as functions to perform segmentation
+using macnine learning approaches
 """
 
 # To match Matlab's strel('disk', 20)
@@ -473,3 +477,42 @@ def combine_2d_segmentation_masks_into_3d(watershedOutput:
             watershedCombinedZ[z-1, :, :][(watershedOutput[z-1, :, :] ==
                                            n1)] = n0
     return watershedCombinedZ
+
+def segment_using_ilastik(imageStackIn: np.ndarray) -> np.ndarray:
+
+def segment_using_unet(imageStackIn: np.ndarray) -> np.ndarray:
+
+def segment_using_cellpose(imageStackIn: np.ndarray,
+                           channelName: str) -> np.ndarray:
+    """perform segmentation using cellpose
+    Args:
+        imageStackIn: a 3 dimensional numpy array containing the images
+            arranged as (z, x, y).
+        channelName: a string with the channel name
+    Returns:
+        ndarray containing a 3 dimensional mask arranged as (z, x, y)
+    """
+
+    # DEFINE CELLPOSE MODEL
+    # model_type='cyto' or model_type='nuclei'
+    if channelName ==
+    model = models.Cellpose(gpu=False, model_type='cyto')
+
+def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
+                                        method: str,
+                                        channelName: str) -> np.ndarray:
+    """Select segmentation algorithm to use
+    Args:
+        imageStackIn: a 3 dimensional numpy array containing the images
+            arranged as (z, x, y).
+    Returns:
+        ndarray containing a 3 dimensional mask arranged as (z, x, y)
+    """
+    if method == 'ilastik':
+        segmentOutput = segment_using_ilastik(imageStackIn)
+    elif method == 'cellpose':
+        segmentOutput = segment_using_cellpose(imageStackIn, channelName)
+    elif method == 'unet'
+        segmentOutput = segment_using_unet(imageStackIn)
+
+    return segmentOutput

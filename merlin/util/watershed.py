@@ -181,30 +181,27 @@ def get_membrane_mask(membraneImages: np.ndarray,
         lowThresh = 0.1 #0.5 #0.2
         hiThresh = 0.5 #0.7 #0.6
         for z in range(membraneImages.shape[0]):
-            blurredImage = cv2.GaussianBlur(img[:,:,1],
+            blurredImage = cv2.GaussianBlur(membraneImages[z, :, :],
                                             (filterSize2,filterSize2),
                                             filterSigma2)
-            edge0  = feature.canny(membraneImages[z, :, :],
+            edge0 = feature.canny(membraneImages[z, :, :],
                                    sigma=edgeSigma,
                                    use_quantiles=True,
                                    low_threshold=lowThresh,
                                    high_threshold=hiThresh)
-            edge0 = morphology.remove_small_objects(
-                                    mask[z, :, :].astype('bool'),
-                                    min_size=20,
-                                    connectivity=1)
+            edge0 = morphology.dilation(edge0,morphology.selem.disk(15))
+            
             edge1  = feature.canny(blurredImage,
                                    sigma=edgeSigma,
                                    use_quantiles=True,
                                    low_threshold=lowThresh,
                                    high_threshold=hiThresh)
-            edge1 = morphology.remove_small_objects(
-                                    mask[z, :, :].astype('bool'),
-                                    min_size=20,
-                                    connectivity=1)
+            edge1 = morphology.dilation(edge1,morphology.selem.disk(15))
 
             mask[z, :, :] = edge0 + edge1
-    
+
+            mask[z, :, :] = morphology.skeletonize(mask[z, :, :])
+
     return mask
 
 
@@ -260,7 +257,7 @@ def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
                                     fineHessianMask[z, :, :])
 
     # generate compartment mask from hessian, coarse
-    coarseHessianMask = np.zeros(comapartImages.shape)
+    coarseHessianMask = np.zeros(compartmentImages.shape)
     for z in range(compartmentImages.shape[0]):
         coarseHessian = filters.hessian(compartmentImages[z, :, :] -
                                         morphology.white_tophat(

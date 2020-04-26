@@ -407,6 +407,7 @@ def get_overlapping_objects(segmentationZ0: np.ndarray,
             segmentation mask adjacent tosegmentationZ0
         n0: an integer with the index of the object (cell/nuclei)
             to be compared between the provided segmentation masks
+
     Returns:
         a tuple (n1, f0, f1) containing the label of the cell in Z1
         overlapping n0 (n1), the fraction of n0 overlaping n1 (f0) and

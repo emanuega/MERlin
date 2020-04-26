@@ -189,14 +189,14 @@ def get_membrane_mask(membraneImages: np.ndarray,
                                    use_quantiles=True,
                                    low_threshold=lowThresh,
                                    high_threshold=hiThresh)
-            edge0 = morphology.dilation(edge0,morphology.selem.disk(15))
+            edge0 = morphology.dilation(edge0,morphology.selem.disk(10))
             
             edge1  = feature.canny(blurredImage,
                                    sigma=edgeSigma,
                                    use_quantiles=True,
                                    low_threshold=lowThresh,
                                    high_threshold=hiThresh)
-            edge1 = morphology.dilation(edge1,morphology.selem.disk(15))
+            edge1 = morphology.dilation(edge1,morphology.selem.disk(10))
 
             mask[z, :, :] = edge0 + edge1
 

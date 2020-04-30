@@ -17,11 +17,11 @@ def est_significance(foreground: np.ndarray,
         an estimate of the significance of each pixel in units of
         sigma (or standard deviation).
     """
-    snbfIm = foreground/np.sqrt(background)
-
-    # Rescale snbfIM so that it's histogram is Gaussian with
-    # zero offset and sigma = 1.0.
+    # Clip so that we don't try and take the sqrt of 0.0 or
+    # a negative number.
     #
+    background = np.clip(background, 1.0, None)
+    snbfIm = foreground/np.sqrt(background)
 
     # Why subtract 1.0 in order to make offset = 0.0? This is
     # emperical, not entirely sure I understand why the offset
@@ -29,15 +29,7 @@ def est_significance(foreground: np.ndarray,
     #
     snbfIm -= 1.0
 
-    sx = min(snbfIm.shape[0], 512)
-    sy = min(snbfIm.shape[1], 512)
-
-    [hist, edges] = np.histogram(snbfIm[0:sx, 0:sy], bins=100, range=(0, 6))
-    centers = 0.5*(edges[1:] + edges[:-1])
-
-    sigma = np.sum(hist*centers)/np.sum(hist)
-
-    return snbfIm/sigma
+    return snbfIm
 
 
 def high_low_filter(image: np.ndarray,

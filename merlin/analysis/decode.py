@@ -92,7 +92,7 @@ class Decode(BarcodeSavingParallelAnalysisTask):
     def _get_decoder(self, codebook, scaleFactors, backgrounds):
         decoder = decoding.PixelBasedDecoder(codebook)
         return [decoder,
-                decoder.decode_pixels(
+                lambda x: decoder.decode_pixels(
                     x, scaleFactors, backgrounds,
                     lowPassSigma=
                     self.parameters['lowpass_sigma'],
@@ -261,7 +261,7 @@ class DecodeSNB(Decode):
     def _get_decoder(self, codebook, scaleFactors, backgrounds):
         decoder = decoding.PixelBasedDecoderSNB(codebook)
         return [decoder,
-                decoder.decode_pixels(
+                lambda x:decoder.decode_pixels(
                     x,
                     significanceThreshold=
                     self.parameters['significance_threshold'],

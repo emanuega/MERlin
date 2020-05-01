@@ -14,6 +14,19 @@ Utility functions for pixel based decoding.
 """
 
 
+def filter_images(imageData, lowPassSigma):
+    if (lowPassSigma > 0):
+        filteredImages = np.zeros(imageData.shape, dtype=np.float32)
+        filterSize = int(2 * np.ceil(2 * lowPassSigma) + 1)
+        for i in range(imageData.shape[0]):
+            filteredImages[i, :, :] = cv2.GaussianBlur(
+                imageData[i, :, :], (filterSize, filterSize), lowPassSigma)
+    else:
+        filteredImages = imageData.astype(np.float32)
+
+    return filteredImages
+
+
 def normalize(x):
     norm = np.linalg.norm(x)
     if norm > 0:
@@ -90,21 +103,18 @@ class PixelBasedDecoder(object):
         if backgrounds is None:
             backgrounds = self._backgrounds
 
-        filteredImages = np.zeros(imageData.shape, dtype=np.float32)
-        filterSize = int(2 * np.ceil(2 * lowPassSigma) + 1)
-        for i in range(imageData.shape[0]):
-            filteredImages[i, :, :] = cv2.GaussianBlur(
-                imageData[i, :, :], (filterSize, filterSize), lowPassSigma)
+        scaleFactors = scaleFactors.astype(np.float32)
+        backgrounds = backgrounds.astype(np.float32)
+
+        filteredImages = filter_images(imageData, lowPassSigma)
 
         pixelTraces = np.reshape(
-                filteredImages, 
+                filteredImages,
                 (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
-        scaledPixelTraces = np.transpose(
-                np.array([(p-b)/s for p, s, b in zip(pixelTraces, scaleFactors,
-                                                   backgrounds)]))
 
-        pixelMagnitudes = np.array(
-            [np.linalg.norm(x) for x in scaledPixelTraces], dtype=np.float32)
+        scaledPixelTraces = np.transpose(pixelTraces).astype(np.float32)
+        scaledPixelTraces = (scaledPixelTraces - backgrounds)/scaleFactors
+        pixelMagnitudes = np.linalg.norm(scaledPixelTraces, axis = 1).astype(np.float32)
         pixelMagnitudes[pixelMagnitudes == 0] = 1
 
         normalizedPixelTraces = scaledPixelTraces/pixelMagnitudes[:, None]
@@ -115,10 +125,9 @@ class PixelBasedDecoder(object):
         distances, indexes = neighbors.kneighbors(
                 normalizedPixelTraces, return_distance=True)
 
-        decodedImage = np.reshape(
-            np.array([i[0] if d[0] <= distanceThreshold else -1
-                      for i, d in zip(indexes, distances)], dtype=np.int16),
-            filteredImages.shape[1:])
+        decodedImage = indexes.astype(np.int16)
+        decodedImage[distances > distanceThreshold] = -1
+        decodedImage = np.reshape(decodedImage, filteredImages.shape[1:])
 
         pixelMagnitudes = np.reshape(pixelMagnitudes, filteredImages.shape[1:])
         normalizedPixelTraces = np.moveaxis(normalizedPixelTraces, 1, 0)
@@ -375,3 +384,87 @@ class PixelBasedDecoder(object):
         backgroundRefactors = offBitIntensity
 
         return backgroundRefactors
+
+
+class PixelBasedDecoderSNB(PixelBasedDecoder):
+
+    """
+    This variant is designed for the shot noise based analysis
+    pathway. In this pathway the pixel values are not AU but
+    an estimate of the actually significance in units of sigma
+    of the pixel, so in this decoder there is no scaling or
+    background offset.
+    """
+
+    def decode_pixels(self, imageData: np.ndarray,
+                      distanceThreshold: float=0.5176,
+                      significanceThreshold: float=6,
+                      lowPassSigma: float=-1):
+        """Assign barcodes to the pixels in the provided image stock.
+
+        Each pixel is assigned to the nearest barcode from the codebook if
+        the distance between the normalized pixel trace and the barcode is
+        less than the distance threshold.
+
+        Args:
+            imageData: input image stack. The first dimension indexes the bit
+                number and the second and third dimensions contain the
+                corresponding image.
+            distanceThreshold: the maximum distance between an assigned pixel
+                and the nearest barcode. Pixels for which the nearest barcode
+                is greater than distanceThreshold are left unassigned.
+            significanceThreshold: the minimum pixel significance to not be
+                'noise' and set to zero.
+            lowPassSigma: standard deviation for the low pass filter that is
+                applied to the images prior to decoding. Usually this is not
+                done because the images were not deconvolved in the first
+                place.
+        Returns:
+            Four results are returned as a tuple (decodedImage, pixelMagnitudes,
+                normalizedPixelTraces, distances). decodedImage is an image
+                indicating the barcode index assigned to each pixel. Pixels
+                for which a barcode is not assigned have a value of -1.
+                pixelMagnitudes is an image where each pixel is the norm of
+                the pixel trace after scaling by the provided scaleFactors.
+                normalizedPixelTraces is an image stack containing the
+                normalized intensities for each pixel. distances is an
+                image containing the distance for each pixel to the assigned
+                barcode.
+        """
+        filteredImages = filter_images(imageData, lowPassSigma)
+
+        pixelTraces = np.reshape(
+                filteredImages, 
+                (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
+        pixelTraces = np.transpose(pixelTraces)
+        pixelTraces[(pixelTraces < significanceThreshold)] = 0
+
+        pixelMagnitudes = np.linalg.norm(pixelTraces, axis = 1).astype(np.float32)
+        pixelMask = (pixelMagnitudes > 0)
+
+        normalizedPixelTraces = pixelTraces[pixelMask,:]/ \
+                                pixelMagnitudes[pixelMask, None]
+
+        neighbors = NearestNeighbors(n_neighbors=1, algorithm='ball_tree')
+        neighbors.fit(self._decodingMatrix)
+
+        distances, indexes = neighbors.kneighbors(
+                normalizedPixelTraces, return_distance=True)
+
+        nptImages = np.zeros(pixelTraces.shape, dtype = np.float32)
+        nptImages[pixelMask,:] = normalizedPixelTraces
+        nptImages = np.moveaxis(nptImages, 1, 0)
+        nptImages = np.reshape(nptImages, filteredImages.shape)
+
+        pixelMask = np.reshape(pixelMask, filteredImages.shape[1:])
+
+        distanceImage = np.zeros(pixelMask.shape, dtype = np.float32)
+        distanceImage[pixelMask] = distances[:,0]
+
+        decodedImage = np.zeros(pixelMask.shape, dtype = np.int16) - 1
+        decodedImage[pixelMask] = indexes[:,0]
+        decodedImage[distanceImage > distanceThreshold] = -1
+
+        pixelMagnitudes = np.reshape(pixelMagnitudes, filteredImages.shape[1:])
+
+        return decodedImage, pixelMagnitudes, nptImages, distanceImage

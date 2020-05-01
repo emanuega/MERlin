@@ -89,6 +89,13 @@ class Decode(BarcodeSavingParallelAnalysisTask):
             self.parameters['preprocess_task'])
         return preprocessTask.get_codebook()
 
+    def _get_decoder(self, codebook, scaleFactors, backgrounds):
+        decoder = decoding.PixelBasedDecoder(codebook)
+        return lambda x: \
+            decoder.decode_pixels(x, scaleFactors, backgrounds,
+                                  lowPassSigma=self.parameters['lowpass_sigma'],
+                                  distanceThreshold=self.parameters['distance_threshold'])
+
     def _run_analysis(self, fragmentIndex):
         """This function decodes the barcodes in a fov and saves them to the
         barcode database.
@@ -102,9 +109,9 @@ class Decode(BarcodeSavingParallelAnalysisTask):
         lowPassSigma = self.parameters['lowpass_sigma']
 
         codebook = self.get_codebook()
-        decoder = decoding.PixelBasedDecoder(codebook)
         scaleFactors = optimizeTask.get_scale_factors()
         backgrounds = optimizeTask.get_backgrounds()
+        decodeFn = self._get_decoder(codebook, scaleFactors, backgrounds)
         chromaticCorrector = optimizeTask.get_chromatic_corrector()
 
         zPositionCount = len(self.dataSet.get_z_positions())
@@ -145,10 +152,7 @@ class Decode(BarcodeSavingParallelAnalysisTask):
                         (imageSet.shape[0], imageSet.shape[-2],
                          imageSet.shape[-1]))
 
-                    di, pm, npt, d = decoder.decode_pixels(
-                        imageSet, scaleFactors, backgrounds,
-                        lowPassSigma=lowPassSigma,
-                        distanceThreshold=self.parameters['distance_threshold'])
+                    di, pm, npt, d = decodeFn(imageSet)
 
                     normalizedPixelTraces[zIndex, :, :, :] = npt
                     decodedImages[zIndex, :, :] = di
@@ -176,18 +180,16 @@ class Decode(BarcodeSavingParallelAnalysisTask):
 
 
     def _process_independent_z_slice(
-            self, fov: int, zIndex: int, chromaticCorrector, scaleFactors,
-            backgrounds, preprocessTask, decoder):
+            self, fov: int, zIndex: int, chromaticCorrector, preprocessTask,
+            decoderFn):
 
         imageSet = preprocessTask.get_processed_image_set(
             fov, zIndex, chromaticCorrector)
         imageSet = imageSet.reshape(
             (imageSet.shape[0], imageSet.shape[-2], imageSet.shape[-1]))
 
-        di, pm, npt, d = decoder.decode_pixels(
-            imageSet, scaleFactors, backgrounds,
-            lowPassSigma=self.parameters['lowpass_sigma'],
-            distanceThreshold=self.parameters['distance_threshold'])
+        di, pm, npt, d = decoderFn(imageSet)
+
         self._extract_and_save_barcodes(
             decoder, di, pm, npt, d, fov, zIndex)
 
@@ -235,3 +237,27 @@ class Decode(BarcodeSavingParallelAnalysisTask):
             self.parameters['z_duplicate_xy_pixel_threshold'],
             self.dataSet.get_z_positions())
         return bc
+
+
+class DecodeSNB(Decode):
+
+    """
+    This variant is designed for shot noise based analysis.
+    """
+
+    def __init__(self, dataSet: dataset.MERFISHDataSet,
+                 parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'lowpass_sigma' not in parameters:
+            self.parameters['lowpass_sigma'] = -1
+        if 'significance_threshold' not in self.parameters:
+            self.parameters['significance_threshold'] = 6
+
+    def _get_decoder(self, codebook, scaleFactors, backgrounds):
+        decoder = decoding.PixelBasedDecoder(codebook)
+        return lambda x: \
+            decoder.decode_pixels(
+                x, significanceThreshold=self.parameters['significance_threshold'],    
+                lowPassSigma=self.parameters['lowpass_sigma'],
+                distanceThreshold=self.parameters['distance_threshold'])

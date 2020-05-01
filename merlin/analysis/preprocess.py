@@ -184,6 +184,8 @@ class EstimatePixelSignificance(Preprocess):
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
+        if 'calculate_histograms' not in self.parameters:
+            self.parameters['calculate_histograms'] = False
         if 'highpass_sigma' not in self.parameters:
             self.parameters['highpass_sigma'] = 3
         if 'filter_iterations' not in self.parameters:
@@ -196,15 +198,18 @@ class EstimatePixelSignificance(Preprocess):
         self._highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
 
     def _run_analysis(self, fragmentIndex):
+        if not self.parameters['calculate_histograms']:
+            return
+        
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
 
-        histogramBins = np.arange(0, 1000, 1)
+        histogramBins = np.arange(0, 1000, 0.1)
         pixelHistogram = np.zeros(
                 (self.get_codebook().get_bit_count(), len(histogramBins)-1))
 
-        # this currently only is to calculate the pixel histograms in order
-        # to estimate the initial scale factors. This is likely unnecessary
+        # This is only used to calculate the pixel sigma value histograms,
+        # which might not be that useful.
         for bi, b in enumerate(self.get_codebook().get_bit_names()):
             dataChannel = self.dataSet.get_data_organization()\
                     .get_data_channel_for_bit(b)

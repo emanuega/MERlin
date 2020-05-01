@@ -414,3 +414,68 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
                 self.parameters['previous_iteration']
             ).get_barcode_count_history()
             return np.append(previousHistory, [countsMean], axis=0)
+
+
+
+class OptimizeIterationChromaticCorrection(OptimizeIteration):
+
+    """
+    This variant only optimizes the chromatic correction. It is
+    used in the shot noise based analysis pathway where optimizing
+    scale factors and background offsets isn't relevant.
+    """
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'significance_threshold' not in self.parameters:
+            self.parameters['significance_threshold'] = 10
+
+    def get_backgrounds(self) -> np.ndarray:
+        return None
+        
+    def get_scale_factors(self) -> np.ndarray:
+        return None
+        
+    def _run_analysis(self, fragmentIndex):
+        if not self.parameters['optimize_chromatic_correction']:
+            return
+                    
+        preprocessTask = self.dataSet.load_analysis_task(
+                self.parameters['preprocess_task'])
+        codebook = self.get_codebook()
+
+        fovIndex, zIndex = self.parameters['fov_index'][fragmentIndex]
+
+        chromaticTransformations = \
+            self._get_previous_chromatic_transformations()
+
+        self.dataSet.save_pickle_analysis_result(
+            chromaticTransformations, 'previous_chromatic_corrections',
+            self.analysisName, resultIndex=fragmentIndex)
+        self.dataSet.save_numpy_analysis_result(
+            np.array([fovIndex, zIndex]), 'select_frame', self.analysisName,
+            resultIndex=fragmentIndex)
+
+        chromaticCorrector = aberration.RigidChromaticCorrector(
+            chromaticTransformations, self.get_reference_color())
+        warpedImages = preprocessTask.get_processed_image_set(
+            fovIndex, zIndex=zIndex, chromaticCorrector=chromaticCorrector)
+
+        decoder = decoding.PixelBasedDecoderSNB(codebook)
+        areaThreshold = self.parameters['area_threshold']
+        decoder.refactorAreaThreshold = areaThreshold
+        di, pm, npt, d = \
+            decoder.decode_pixels(warpedImages,
+                                  signicanceThreshold = \
+                                  self.parameters['significance_threshold'])
+
+        # TODO this saves the barcodes under fragment instead of fov
+        # the barcodedb should be made more general
+        cropWidth = self.parameters['crop_width']
+        self.get_barcode_database().write_barcodes(
+            pandas.concat([decoder.extract_barcodes_with_index(
+                i, di, pm, npt, d, fovIndex, cropWidth,
+                zIndex, minimumArea=areaThreshold)
+                for i in range(codebook.get_barcode_count())]),
+            fov=fragmentIndex)

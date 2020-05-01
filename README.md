@@ -1,5 +1,6 @@
 [![CircleCI](https://circleci.com/gh/emanuega/MERlin/tree/master.svg?style=svg)](https://circleci.com/gh/emanuega/MERlin/tree/master)
 [![codecov](https://codecov.io/gh/emanuega/MERlin/branch/master/graph/badge.svg)](https://codecov.io/gh/emanuega/MERlin)
+[![DOI](https://zenodo.org/badge/202668055.svg)](https://zenodo.org/badge/latestdoi/202668055)
 
 # MERlin - Extensible pipeline for scalable data analysis
 
@@ -8,6 +9,9 @@ datasets. Each MERlin workflow consists of a set of analysis tasks, each of whic
 single task or split among many subtasks that can be executed in parallel. MERlin is able to 
 execute workflows on a single computer, on a high performance cluster, or on the cloud 
 (AWS and Google Cloud).
+
+If MERlin is useful for your research, consider citing:
+Emanuel, G., Eichhorn, S. W., Zhuang, X. 2020, MERlin - scalable and extensible MERFISH analysis software, v0.1.6, Zenodo, doi:10.5281/zenodo.3758540 
 
 Please find the most recent version of MERlin [here](https://github.com/emanuega/merlin).
 

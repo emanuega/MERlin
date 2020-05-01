@@ -25,7 +25,8 @@ def normalize(x):
 class PixelBasedDecoder(object):
 
     def __init__(self, codebook: mcodebook.Codebook,
-                 scaleFactors: np.ndarray=None, backgrounds: np.ndarray=None):
+                 scaleFactors: np.ndarray = None,
+                 backgrounds: np.ndarray = None):
         self._codebook = codebook
         self._decodingMatrix = self._calculate_normalized_barcodes()
         self._barcodeCount = self._decodingMatrix.shape[0]
@@ -44,11 +45,11 @@ class PixelBasedDecoder(object):
         self.refactorAreaThreshold = 4
 
     def decode_pixels(self, imageData: np.ndarray,
-                      scaleFactors: np.ndarray=None,
-                      backgrounds: np.ndarray=None,
-                      distanceThreshold: float=0.5176,
-                      magnitudeThreshold: float=1,
-                      lowPassSigma: float=1):
+                      scaleFactors: np.ndarray = None,
+                      backgrounds: np.ndarray = None,
+                      distanceThreshold: float = 0.5176,
+                      magnitudeThreshold: float = 1,
+                      lowPassSigma: float = 1):
         """Assign barcodes to the pixels in the provided image stock.
 
         Each pixel is assigned to the nearest barcode from the codebook if
@@ -74,16 +75,16 @@ class PixelBasedDecoder(object):
             lowPassSigma: standard deviation for the low pass filter that is
                 applied to the images prior to decoding.
         Returns:
-            Four results are returned as a tuple (decodedImage, pixelMagnitudes,
-                normalizedPixelTraces, distances). decodedImage is an image
-                indicating the barcode index assigned to each pixel. Pixels
-                for which a barcode is not assigned have a value of -1.
-                pixelMagnitudes is an image where each pixel is the norm of
-                the pixel trace after scaling by the provided scaleFactors.
-                normalizedPixelTraces is an image stack containing the
-                normalized intensities for each pixel. distances is an
-                image containing the distance for each pixel to the assigned
-                barcode.
+            Four results are returned as a tuple (decodedImage,
+                pixelMagnitudes, normalizedPixelTraces, distances).
+                decodedImage is an image indicating the barcode index assigned
+                to each pixel. Pixels for which a barcode is not assigned have
+                a value of -1. pixelMagnitudes is an image where each pixel is
+                the norm of the pixel trace after scaling by the provided
+                scaleFactors. normalizedPixelTraces is an image stack
+                containing the normalized intensities for each pixel. distances
+                is an image containing the distance for each pixel to the
+                assigned barcode.
         """
         if scaleFactors is None:
             scaleFactors = self._scaleFactors
@@ -96,15 +97,17 @@ class PixelBasedDecoder(object):
             filteredImages[i, :, :] = cv2.GaussianBlur(
                 imageData[i, :, :], (filterSize, filterSize), lowPassSigma)
 
-        pixelTraces = np.reshape(
-                filteredImages, 
-                (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
-        scaledPixelTraces = np.transpose(
-                np.array([(p-b)/s for p, s, b in zip(pixelTraces, scaleFactors,
-                                                   backgrounds)]))
+        scaleFactors = scaleFactors.astype(np.float32)
+        backgrounds = backgrounds.astype(np.float32)
 
-        pixelMagnitudes = np.array(
-            [np.linalg.norm(x) for x in scaledPixelTraces], dtype=np.float32)
+        pixelTraces = np.reshape(
+                filteredImages,
+                (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))
+
+        scaledPixelTraces = np.transpose(pixelTraces).astype(np.float32)
+        scaledPixelTraces = (scaledPixelTraces - backgrounds)/scaleFactors
+        pixelMagnitudes = \
+            np.linalg.norm(scaledPixelTraces, axis=1).astype(np.float32)
         pixelMagnitudes[pixelMagnitudes == 0] = 1
 
         normalizedPixelTraces = scaledPixelTraces/pixelMagnitudes[:, None]
@@ -115,10 +118,9 @@ class PixelBasedDecoder(object):
         distances, indexes = neighbors.kneighbors(
                 normalizedPixelTraces, return_distance=True)
 
-        decodedImage = np.reshape(
-            np.array([i[0] if d[0] <= distanceThreshold else -1
-                      for i, d in zip(indexes, distances)], dtype=np.int16),
-            filteredImages.shape[1:])
+        decodedImage = indexes.astype(np.int16)
+        decodedImage[distances > distanceThreshold] = -1
+        decodedImage = np.reshape(decodedImage, filteredImages.shape[1:])
 
         pixelMagnitudes = np.reshape(pixelMagnitudes, filteredImages.shape[1:])
         normalizedPixelTraces = np.moveaxis(normalizedPixelTraces, 1, 0)
@@ -133,8 +135,8 @@ class PixelBasedDecoder(object):
     def extract_barcodes_with_index(
             self, barcodeIndex: int, decodedImage: np.ndarray,
             pixelMagnitudes: np.ndarray, pixelTraces: np.ndarray,
-            distances: np.ndarray, fov: int, cropWidth: int, zIndex: int = None,
-            globalAligner=None, minimumArea: int = 0
+            distances: np.ndarray, fov: int, cropWidth: int,
+            zIndex: int = None, globalAligner=None, minimumArea: int = 0
     ) -> pandas.DataFrame:
         """Extract the barcode information from the decoded image for barcodes
         that were decoded to the specified barcode index.
@@ -151,8 +153,8 @@ class PixelBasedDecoder(object):
             distances: an image indicating the distance between the normalized
                 pixel trace and the assigned barcode for each pixel
             fov: the index of the field of view
-            cropWidth: the number of pixels around the edge of each image within
-                which barcodes are excluded from the output list.
+            cropWidth: the number of pixels around the edge of each image
+                within which barcodes are excluded from the output list.
             zIndex: the index of the z position
             globalAligner: the aligner used for converted to local x,y
                 coordinates to global x,y coordinates
@@ -199,7 +201,8 @@ class PixelBasedDecoder(object):
 
         else:
             intensityAndCoords = [
-                np.array([[y[0], y[1], pixelMagnitudes[y[0], y[1]]] for y in x])
+                np.array([[y[0], y[1],
+                           pixelMagnitudes[y[0], y[1]]] for y in x])
                 for x in allCoords]
             centroidCoords = np.array(
                 [[(r[:, 0] * (r[:, -1] / r[:, -1].sum())).sum(),
@@ -260,16 +263,16 @@ class PixelBasedDecoder(object):
             ignoreBlanks: Flag to set if the barcodes corresponding to blanks
                 should be ignored. If True, barcodes corresponding to a name
                 that contains 'Blank' are ignored.
-            includeErrors: Flag to set if barcodes corresponding to single bit 
+            includeErrors: Flag to set if barcodes corresponding to single bit
                 errors should be added.
         Returns:
             A 2d numpy array where each row is a normalized barcode and each
                 column is the corresponding normalized bit value.
         """
-        
+
         barcodeSet = self._codebook.get_barcodes(ignoreBlanks=ignoreBlanks)
         magnitudes = np.sqrt(np.sum(barcodeSet*barcodeSet, axis=1))
-       
+
         if not includeErrors:
             weightedBarcodes = np.array(
                 [normalize(x) for x, m in zip(barcodeSet, magnitudes)])
@@ -289,7 +292,7 @@ class PixelBasedDecoder(object):
 
     def extract_refactors(
             self, decodedImage, pixelMagnitudes, normalizedPixelTraces,
-            extractBackgrounds = False
+            extractBackgrounds=False
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Calculate the scale factors that would result in the mean
         on bit intensity for each bit to be equal.
@@ -349,8 +352,8 @@ class PixelBasedDecoder(object):
             imageSet: the image stack to decode in order to determine the
                 scale factors
         Returns:
-            an array of the backgrounds where the i'th entry is the scale factor
-                for bit i.
+            an array of the backgrounds where the i'th entry is the scale
+                factor for bit i.
         """
         sumMinPixelTraces = np.zeros((self._barcodeCount, self._bitCount))
         barcodesSeen = np.zeros(self._barcodeCount)

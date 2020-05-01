@@ -14,12 +14,15 @@ class Preprocess(analysistask.ParallelAnalysisTask):
     """
     An abstract class for preparing data for barcode calling.
     """
-    
+
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
 
         if 'codebook_index' not in self.parameters:
             self.parameters['codebook_index'] = 0
+
+        self.warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
 
     def _image_name(self, fov):
         destPath = self.dataSet.get_analysis_subdirectory(
@@ -64,14 +67,14 @@ class Preprocess(analysistask.ParallelAnalysisTask):
         if zIndex is None:
             return np.array([[self.get_processed_image(
                 fov, self.dataSet.get_data_organization()
-                    .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
-                for zIndex in range(len(self.dataSet.get_z_positions()))]
-                for b in self.get_codebook().get_bit_names()])
+                .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
+                            for zIndex in range(len(self.dataSet.get_z_positions()))]
+                            for b in self.get_codebook().get_bit_names()])
         else:
             return np.array([self.get_processed_image(
                 fov, self.dataSet.get_data_organization()
-                    .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
-                    for b in self.get_codebook().get_bit_names()])
+                .get_data_channel_for_bit(b), zIndex, chromaticCorrector)
+                             for b in self.get_codebook().get_bit_names()])
 
     def get_processed_image(
             self, fov: int, dataChannel: int, zIndex: int,
@@ -102,10 +105,6 @@ class DeconvolutionPreprocess(Preprocess):
         self._highPassSigma = self.parameters['highpass_sigma']
         self._deconSigma = self.parameters['decon_sigma']
         self._deconIterations = self.parameters['decon_iterations']
-
-        self.warpTask = self.dataSet.load_analysis_task(
-            self.parameters['warp_task'])
-
 
     def _high_pass_filter(self, inputImage: np.ndarray) -> np.ndarray:
         highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
@@ -175,7 +174,7 @@ class EstimatePixelSignificance(Preprocess):
     """
     Estimates pixel significance in units of sigma.
 
-    In order for this to work correctly you must provide the correct 
+    In order for this to work correctly you must provide the correct
     values for the camera gain and the camera offset. You can
     verify that this is true by loading the histograms and checking
     that their shape is approximately that of a Gaussian with 0
@@ -195,12 +194,13 @@ class EstimatePixelSignificance(Preprocess):
         self._cameraOffset = self.parameters['camera_offset']
         self._filterIterations = self.parameters['filter_iterations']
         self._highPassSigma = self.parameters['highpass_sigma']
-        self._highPassFilterSize = int(2 * np.ceil(2 * self._highPassSigma) + 1)
+        self._highPassFilterSize =\
+            int(2 * np.ceil(2 * self._highPassSigma) + 1)
 
     def _run_analysis(self, fragmentIndex):
         if not self.parameters['calculate_histograms']:
             return
-        
+
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
 

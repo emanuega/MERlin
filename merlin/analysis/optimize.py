@@ -332,9 +332,10 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
             # Don't rescale bits that were never seen
             refactors[refactors == 0] = 1
 
-            previousFactors = np.array([self.dataSet.load_numpy_analysis_result(
-                'previous_scale_factors', self.analysisName, resultIndex=i)
-                for i in range(self.parameters['fov_per_iteration'])])
+            previousFactors = np.array(
+                [self.dataSet.load_numpy_analysis_result(
+                    'previous_scale_factors', self.analysisName, resultIndex=i)
+                 for i in range(self.parameters['fov_per_iteration'])])
 
             scaleFactors = np.nanmedian(
                     np.multiply(refactors, previousFactors), axis=0)
@@ -364,9 +365,10 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
                     'previous_backgrounds', self.analysisName, resultIndex=i)
                     for i in range(self.parameters['fov_per_iteration'])])
 
-            previousFactors = np.array([self.dataSet.load_numpy_analysis_result(
-                'previous_scale_factors', self.analysisName, resultIndex=i)
-                for i in range(self.parameters['fov_per_iteration'])])
+            previousFactors = np.array(
+                [self.dataSet.load_numpy_analysis_result(
+                    'previous_scale_factors', self.analysisName, resultIndex=i)
+                 for i in range(self.parameters['fov_per_iteration'])])
 
             backgrounds = np.nanmedian(np.add(
                 previousBackgrounds, np.multiply(refactors, previousFactors)),
@@ -416,7 +418,6 @@ class OptimizeIteration(decode.BarcodeSavingParallelAnalysisTask):
             return np.append(previousHistory, [countsMean], axis=0)
 
 
-
 class OptimizeIterationChromaticCorrection(OptimizeIteration):
 
     """
@@ -433,14 +434,14 @@ class OptimizeIterationChromaticCorrection(OptimizeIteration):
 
     def get_backgrounds(self) -> np.ndarray:
         return None
-        
+
     def get_scale_factors(self) -> np.ndarray:
         return None
-        
+
     def _run_analysis(self, fragmentIndex):
         if not self.parameters['optimize_chromatic_correction']:
             return
-                    
+
         preprocessTask = self.dataSet.load_analysis_task(
                 self.parameters['preprocess_task'])
         codebook = self.get_codebook()
@@ -467,7 +468,7 @@ class OptimizeIterationChromaticCorrection(OptimizeIteration):
         decoder.refactorAreaThreshold = areaThreshold
         di, pm, npt, d = \
             decoder.decode_pixels(warpedImages,
-                                  signicanceThreshold = \
+                                  significanceThreshold=
                                   self.parameters['significance_threshold'])
 
         # TODO this saves the barcodes under fragment instead of fov

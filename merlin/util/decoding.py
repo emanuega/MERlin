@@ -109,6 +109,9 @@ class PixelBasedDecoder(object):
 
         filteredImages = filter_images(imageData, lowPassSigma)
 
+        scaleFactors = scaleFactors.astype(np.float32)
+        backgrounds = backgrounds.astype(np.float32)
+
         pixelTraces = np.reshape(
                 filteredImages,
                 (filteredImages.shape[0], np.prod(filteredImages.shape[1:])))

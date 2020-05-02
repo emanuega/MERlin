@@ -224,6 +224,7 @@ class EstimatePixelSignificance(Preprocess):
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)
 
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
+        inputImage = (inputImage - self._cameraOffset)/self._cameraGain
         [fg, bg] = imagefilters.high_low_filter(inputImage,
                                                 self._highPassFilterSize,
                                                 self._highPassSigma,

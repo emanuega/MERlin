@@ -247,6 +247,10 @@ class DecodeSNB(Decode):
 
     """
     This variant is designed for shot noise based analysis.
+
+    A significance_threshold value of at least 5.0 is
+    recommended. A value of 3.0 or 4.0 will return lots of
+    false positives.
     """
 
     def __init__(self, dataSet: dataset.MERFISHDataSet,

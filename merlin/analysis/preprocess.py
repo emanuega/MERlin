@@ -204,7 +204,7 @@ class EstimatePixelSignificance(Preprocess):
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
 
-        histogramBins = np.arange(0, 1000, 0.1)
+        histogramBins = np.arange(-10, 100, 1.0)
         pixelHistogram = np.zeros(
                 (self.get_codebook().get_bit_count(), len(histogramBins)-1))
 
@@ -224,6 +224,7 @@ class EstimatePixelSignificance(Preprocess):
         self._save_pixel_histogram(pixelHistogram, fragmentIndex)
 
     def _preprocess_image(self, inputImage: np.ndarray) -> np.ndarray:
+        inputImage = inputImage.astype(np.float32)
         inputImage = (inputImage - self._cameraOffset)/self._cameraGain
         [fg, bg] = imagefilters.high_low_filter(inputImage,
                                                 self._highPassFilterSize,

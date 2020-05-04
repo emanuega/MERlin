@@ -21,15 +21,7 @@ def est_significance(foreground: np.ndarray,
     # a negative number.
     #
     background = np.clip(background, 1.0, None)
-    snbfIm = foreground/np.sqrt(background)
-
-    # Why subtract 1.0 in order to make offset = 0.0? This is
-    # emperical, not entirely sure I understand why the offset
-    # is 1.0.
-    #
-    snbfIm -= 1.0
-
-    return snbfIm
+    return foreground/np.sqrt(background)
 
 
 def high_low_filter(image: np.ndarray,

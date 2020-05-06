@@ -479,12 +479,16 @@ def combine_2d_segmentation_masks_into_3d(watershedOutput:
     return watershedCombinedZ
 
 def segment_using_ilastik(imageStackIn: np.ndarray) -> np.ndarray:
+    return None
 
 def segment_using_unet(imageStackIn: np.ndarray) -> np.ndarray:
+    return None
 
 def segment_using_cellpose(imageStackIn: np.ndarray,
                            channelName: str) -> np.ndarray:
-    """perform segmentation using cellpose
+    """Perform segmentation using cellpose. Code adapted from 
+    https://nbviewer.jupyter.org/github/MouseLand/cellpose/blob/
+    master/notebooks/run_cellpose.ipynb
     Args:
         imageStackIn: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
@@ -492,11 +496,43 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
     """
+    channelName = channelName.lower()
 
-    # DEFINE CELLPOSE MODEL
-    # model_type='cyto' or model_type='nuclei'
-    if channelName ==
-    model = models.Cellpose(gpu=False, model_type='cyto')
+    # Define cellpose model
+    if any([channelName == 'dapi', channelName == 'lamin']):
+        model = models.Cellpose(gpu=False, model_type='nuclei')
+    if any([channelName == 'polyt', channelName == 'polya',
+            channelName == 'ecadherin',channelName == 'cd45',
+            channelName == 'wga', channelName == 'cona']):
+        model = models.Cellpose(gpu=False, model_type='cyto')
+
+    # define CHANNELS to run segementation on
+    # grayscale=0, R=1, G=2, B=3
+    # channels = [cytoplasm, nucleus]
+    # if NUCLEUS channel does not exist, set the second channel to 0
+    # channels = [0,0]
+    # IF ALL YOUR IMAGES ARE THE SAME TYPE, you can give a list with 2 elements
+    channels = [0,0] # IF YOU HAVE GRAYSCALE
+    # channels = [2,3] # IF YOU HAVE G=cytoplasm and B=nucleus
+    # channels = [2,1] # IF YOU HAVE G=cytoplasm and R=nucleus
+
+    # or if you have different types of channels in each image
+    # channels = [[0,0],[0,0]]
+
+    # if diameter is set to None, the size of the cells is estimated on a per 
+    # image basis you can set the average cell `diameter` in pixels yourself 
+    # (recommended) diameter can be a list or a single number for all images
+
+    # put list of images in cellpose format
+    imageList = np.split(imageStackIn,imageStackIn.shape[0])
+
+    masks, flows, styles, diams = model.eval(imageList, diameter=None,
+                                             channels=channels)
+    # combine masks into array
+    masksArray = np.stack(masks)
+
+    return masksArray
+
 
 def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
                                         method: str,
@@ -512,7 +548,7 @@ def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
         segmentOutput = segment_using_ilastik(imageStackIn)
     elif method == 'cellpose':
         segmentOutput = segment_using_cellpose(imageStackIn, channelName)
-    elif method == 'unet'
+    elif method == 'unet':
         segmentOutput = segment_using_unet(imageStackIn)
 
     return segmentOutput

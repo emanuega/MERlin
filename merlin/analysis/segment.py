@@ -289,9 +289,6 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
             self.parameters['method'] = 'cellpose'
         if 'compartment_channel_name' not in self.parameters:
             self.parameters['compartment_channel_name'] = 'DAPI'
-        if 'compartment_channel_type' not in self.parameters:
-            self.parameters['compartment_channel_type'] = 'cytoplasm' # nuclei
-
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())

@@ -62,20 +62,20 @@ class DataOrganization(object):
                 filePath,
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
 
-        elif dataPortal is not None:
-            fileList = dataPortal.list_files('.csv')
-            if 'dataorganization.csv' in fileList:
-                self.data = pandas.read_csv(
-                    dataPortal.open_file('dataorganization.csv'),
-                    converters={'frame': _parse_int_list, 'zPos': _parse_list})
+        elif dataPortal is not None and \
+                'dataorganization.csv' in dataPortal.list_files('csv'):
+            self.data = pandas.read_csv(
+                dataPortal.open_file('dataorganization.csv'),
+                converters={'frame': _parse_int_list, 'zPos': _parse_list})
         else:
             self.data = self._dataSet.load_dataframe_from_csv(
                 'dataorganization',
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
 
-        self.data['readoutName'] = self.data['readoutName'].str.strip()
-        self._dataSet.save_dataframe_to_csv(
-            self.data, 'dataorganization', index=False)
+        if self.data is not None:
+            self.data['readoutName'] = self.data['readoutName'].str.strip()
+            self._dataSet.save_dataframe_to_csv(
+                self.data, 'dataorganization', index=False)
 
         stringColumns = ['readoutName', 'channelName', 'imageType',
                          'imageRegExp', 'fiducialImageType', 'fiducialRegExp']

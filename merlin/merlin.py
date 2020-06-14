@@ -56,9 +56,10 @@ def build_parser():
                         help='the analysis home directory')
     parser.add_argument('-k', '--snakemake-parameters',
                         help='the name of the snakemake parameters file')
-    parser.add_argument('--no_report',
-                        help='flag indicating that the snakemake stats ' +
-                        'should not be shared to improve MERlin')
+    parser.add_argument('--report-path',
+                        help='The path to send a report of the MERlin run to.' +
+                        'If no report path is specified, no MERlin run ' +
+                        'information is shared.')
 
     return parser
 
@@ -144,7 +145,7 @@ def merlin():
                     snakemakeParameters = json.load(f)
 
             run_with_snakemake(dataSet, snakefilePath, args.core_count,
-                               snakemakeParameters, not args.no_report)
+                               snakemakeParameters, args.report_path)
 
 
 def generate_analysis_tasks_and_snakefile(dataSet: dataset.MERFISHDataSet,
@@ -160,18 +161,18 @@ def generate_analysis_tasks_and_snakefile(dataSet: dataset.MERFISHDataSet,
 
 def run_with_snakemake(
         dataSet: dataset.MERFISHDataSet, snakefilePath: str, coreCount: int,
-        snakemakeParameters: Dict = {}, report: bool = True):
+        snakemakeParameters: Dict = {}, reportPath: str = None):
     print('Running MERlin pipeline through snakemake')
     snakemake.snakemake(snakefilePath, cores=coreCount,
                         workdir=dataSet.get_snakemake_path(),
                         stats=snakefilePath + '.stats', lock=False,
                         **snakemakeParameters)
 
-    if report:
+    if reportPath:
         reportTime = int(time.time())
         try:
             with open(snakefilePath + '.stats', 'r') as f:
-                requests.post('http://merlin.georgeemanuel.com/post',
+                requests.post(reportPath,
                               files={
                                   'file': (
                                       '.'.join(
@@ -200,7 +201,7 @@ def run_with_snakemake(
             'analysis_parameters': analysisParameters
         }
         try:
-            requests.post('http://merlin.georgeemanuel.com/post',
+            requests.post(reportPath,
                           files={'file': ('.'.join(
                               [dataSet.dataSetName,
                                str(reportTime)])

@@ -62,20 +62,25 @@ class DataOrganization(object):
                 filePath,
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
 
-        elif dataPortal is not None and \
-                'dataorganization.csv' in dataPortal.list_files('csv'):
-            self.data = pandas.read_csv(
-                dataPortal.open_file('dataorganization.csv'),
-                converters={'frame': _parse_int_list, 'zPos': _parse_list})
-        else:
+        if self.data is None and dataPortal is not None:
+            try:
+                self.data = pandas.read_csv(
+                    dataPortal.open_file('dataorganization.csv'),
+                    converters={'frame': _parse_int_list, 'zPos': _parse_list})
+            # this could be many different exceptions so for now it can remain
+            # broad. If data can't be loaded from the data portal we load it from
+            # the dataset before
+            except Exception:
+                pass
+
+        if self.data is None:
             self.data = self._dataSet.load_dataframe_from_csv(
                 'dataorganization',
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
 
-        if self.data is not None:
-            self.data['readoutName'] = self.data['readoutName'].str.strip()
-            self._dataSet.save_dataframe_to_csv(
-                self.data, 'dataorganization', index=False)
+        self.data['readoutName'] = self.data['readoutName'].str.strip()
+        self._dataSet.save_dataframe_to_csv(
+            self.data, 'dataorganization', index=False)
 
         stringColumns = ['readoutName', 'channelName', 'imageType',
                          'imageRegExp', 'fiducialImageType', 'fiducialRegExp']

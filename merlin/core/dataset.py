@@ -66,7 +66,7 @@ class DataSet(object):
             self.rawDataPath)
         if not self.rawDataPortal.is_available():
             print('The raw data is not available at %s'.format(
-                self.rawDataPath))
+            self.rawDataPath))
 
         self.analysisPath = os.sep.join([analysisHome, dataDirectoryName])
         os.makedirs(self.analysisPath, exist_ok=True)
@@ -886,16 +886,25 @@ class ImageDataSet(DataSet):
 
         if microscopeParametersName is not None:
             self._import_microscope_parameters(microscopeParametersName)
-    
+
+        # try to find the image data in two locations. First in the Data
+        # subdirectory and then in the dataset directory
+        self.imageDataPath = os.sep.join([self.rawDataPath, 'Data'])
+        self.imageDataPortal = dataportal.DataPortal.create_portal(
+            self.imageDataPath)
+        if not self.imageDataPortal.is_available():
+            self.imageDataPath = self.rawDataPath
+            self.imageDataPortal = self.rawDataPortal
+
         self._load_microscope_parameters()
 
     def get_image_file_names(self):
-        return sorted(self.rawDataPortal.list_files(
+        return sorted(self.imageDataPortal.list_files(
             extensionList=['.dax', '.tif', '.tiff']))
 
     def load_image(self, imagePath, frameIndex):
         with imagereader.infer_reader(
-                self.rawDataPortal.open_file(imagePath)) as reader:
+                self.imageDataPortal.open_file(imagePath)) as reader:
             imageIn = reader.load_frame(int(frameIndex))
             if self.transpose:
                 imageIn = np.transpose(imageIn)
@@ -913,7 +922,7 @@ class ImageDataSet(DataSet):
             a three element list with [width, height, frameCount] or None
                     if the file does not exist
         """
-        with imagereader.infer_reader(self.rawDataPortal.open_file(imagePath)
+        with imagereader.infer_reader(self.imageDataPortal.open_file(imagePath)
                                       ) as reader:
             return reader.film_size()
 
@@ -965,7 +974,7 @@ class ImageDataSet(DataSet):
             imagePath: the path to the image file (.dax or .tif)
         Returns: the metadata from the associated xml file
         """
-        filePortal = self.rawDataPortal.open_file(
+        filePortal = self.imageDataPortal.open_file(
             imagePath).get_sibling_with_extension('.xml')
         return xmltodict.parse(filePortal.read_as_text())
 
@@ -1005,7 +1014,7 @@ class MERFISHDataSet(ImageDataSet):
                          microscopeParametersName)
 
         self.dataOrganization = dataorganization.DataOrganization(
-                self, dataOrganizationName)
+                self, dataOrganizationName, self.rawDataPortal)
         if codebookNames:
             self.codebooks = [codebook.Codebook(self, name, i)
                               for i, name in enumerate(codebookNames)]

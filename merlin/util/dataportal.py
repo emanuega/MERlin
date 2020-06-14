@@ -256,6 +256,8 @@ class LocalFilePortal(FilePortal):
 
     def __init__(self, fileName: str):
         super().__init__(fileName)
+        if not os.path.exists(fileName):
+            raise FileNotFoundError
         self._fileHandle = open(fileName, 'rb')
 
     def get_sibling_with_extension(self, newExtension: str):

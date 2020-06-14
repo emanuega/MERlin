@@ -4,6 +4,7 @@ from typing import List
 from typing import Tuple
 import pandas
 import numpy as np
+from io import StringIO
 
 import merlin
 from merlin.core import dataset
@@ -64,8 +65,8 @@ class DataOrganization(object):
 
         if self.data is None and dataPortal is not None:
             try:
-                self.data = pandas.read_csv(
-                    dataPortal.open_file('dataorganization.csv'),
+                self.data = pandas.read_csv(StringIO(
+                    dataPortal.open_file('dataorganization.csv').read_as_text()),
                     converters={'frame': _parse_int_list, 'zPos': _parse_list})
             # this could be many different exceptions so for now it can remain
             # broad. If data can't be loaded from the data portal we load it
@@ -273,8 +274,7 @@ class DataOrganization(object):
                                  (self.fileMap['fov'] == fov) &
                                  (self.fileMap['imagingRound'] == imagingRound)]
         filemapPath = selection['imagePath'].values[0]
-        return os.path.join(self._dataSet.dataHome, self._dataSet.dataSetName,
-                            filemapPath)
+        return os.path.join(self._dataSet.imageDataPath, filemapPath)
 
     def _truncate_file_path(self, path) -> None:
         head, tail = os.path.split(path)
@@ -300,7 +300,7 @@ class DataOrganization(object):
             fileNames = self._dataSet.get_image_file_names()
             if len(fileNames) == 0:
                 raise dataset.DataFormatException(
-                    'No image files found at %s.' % self._dataSet.rawDataPath)
+                    'No image files found at %s.' % self._dataSet.imageDataPath)
             fileData = []
             for currentType, currentIndex in zip(uniqueTypes, uniqueIndexes):
                 matchRE = re.compile(
@@ -360,7 +360,7 @@ class DataOrganization(object):
                         (channelInfo['imageType'], fov,
                          channelInfo['imagingRound']))
 
-                if not self._dataSet.rawDataPortal.open_file(
+                if not self._dataSet.imageDataPortal.open_file(
                         imagePath).exists():
                     raise InputDataError(
                         ('Image data for channel {0} and fov {1} not found. '

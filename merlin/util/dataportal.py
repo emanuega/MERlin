@@ -116,8 +116,8 @@ class S3DataPortal(DataPortal):
         self._s3 = boto3.resource('s3', **kwargs)
 
     def is_available(self):
-        objects = list(self._s3.Bucket(self._bucketName).objects.limit(10)
-                       .filter(Prefix=self._prefix))
+        objects = list(self._s3.Bucket(self._bucketName).objects
+                       .filter(Prefix=self._prefix).limit(10))
         return len(objects) > 0
 
     def open_file(self, fileName):

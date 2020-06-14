@@ -65,8 +65,8 @@ class DataOrganization(object):
 
         if self.data is None and dataPortal is not None:
             try:
-                self.data = pandas.read_csv(StringIO(
-                    dataPortal.open_file('dataorganization.csv').read_as_text()),
+                self.data = pandas.read_csv(StringIO(dataPortal.open_file(
+                    'dataorganization.csv').read_as_text()),
                     converters={'frame': _parse_int_list, 'zPos': _parse_list})
             # this could be many different exceptions so for now it can remain
             # broad. If data can't be loaded from the data portal we load it

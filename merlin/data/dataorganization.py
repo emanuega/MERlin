@@ -68,8 +68,8 @@ class DataOrganization(object):
                     dataPortal.open_file('dataorganization.csv'),
                     converters={'frame': _parse_int_list, 'zPos': _parse_list})
             # this could be many different exceptions so for now it can remain
-            # broad. If data can't be loaded from the data portal we load it from
-            # the dataset before
+            # broad. If data can't be loaded from the data portal we load it
+            # from the dataset before
             except Exception:
                 pass
 

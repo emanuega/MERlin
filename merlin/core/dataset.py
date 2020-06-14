@@ -66,7 +66,7 @@ class DataSet(object):
             self.rawDataPath)
         if not self.rawDataPortal.is_available():
             print('The raw data is not available at %s'.format(
-            self.rawDataPath))
+                self.rawDataPath))
 
         self.analysisPath = os.sep.join([analysisHome, dataDirectoryName])
         os.makedirs(self.analysisPath, exist_ok=True)

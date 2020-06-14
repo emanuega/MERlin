@@ -45,3 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - An alternative Lucy-Richardson deconvolution approach that requires ~10x fewer iterations.
 
+## [0.1.7] - 
+### Added
+- Added option to put image data into a folder named "Data" and to save the data organization with the raw data in the root directory named dataorganization.csv 

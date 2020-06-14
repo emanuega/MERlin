@@ -893,8 +893,13 @@ class ImageDataSet(DataSet):
         self.imageDataPortal = dataportal.DataPortal.create_portal(
             self.imageDataPath)
         if not self.imageDataPortal.is_available():
-            self.imageDataPath = self.rawDataPath
-            self.imageDataPortal = self.rawDataPortal
+            # allow "data" to be used instead of "Data"
+            self.imageDataPath = os.sep.join([self.rawDataPath, 'data'])
+            self.imageDataPortal = dataportal.DataPortal.create_portal(
+                self.imageDataPath)
+            if not self.imageDataPortal.is_available():
+                self.imageDataPath = self.rawDataPath
+                self.imageDataPortal = self.rawDataPortal
 
         self._load_microscope_parameters()
 

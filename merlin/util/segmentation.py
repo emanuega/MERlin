@@ -527,7 +527,7 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     # put list of images in cellpose format
     imageList = np.split(imageStackIn,imageStackIn.shape[0])
 
-    masks, flows, styles, diams = model.eval(imageList, diameter=None,
+    masks, flows, styles, diams = model.eval(imageList, diameter=diameter,
                                              channels=channels)
     # combine masks into array
     masksArray = np.stack(masks)

@@ -485,7 +485,8 @@ def segment_using_unet(imageStackIn: np.ndarray) -> np.ndarray:
     return None
 
 def segment_using_cellpose(imageStackIn: np.ndarray,
-                           channelName: str) -> np.ndarray:
+                           channelName: str, 
+                           diameter: np.int) -> np.ndarray:
     """Perform segmentation using cellpose. Code adapted from 
     https://nbviewer.jupyter.org/github/MouseLand/cellpose/blob/
     master/notebooks/run_cellpose.ipynb

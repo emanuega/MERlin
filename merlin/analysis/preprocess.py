@@ -77,10 +77,14 @@ class DeconvolutionPreprocess(Preprocess):
 
     def write_processed_stack(self, fov, chromaticCorrector = None):
         import zstandard as zstd
-        allMultiplexChannels = [self.dataSet.get_data_organization().get_data_channel_for_bit(b) for b in self.get_codebook().get_bit_names()]
+        codebooks = self.dataSet.codebooks
+        allMultiplexChannels = []
+        for codebook in codebooks:
+            allMultiplexChannels.extend(
+                [self.dataSet.get_data_organization().get_data_channel_for_bit(b)
+                 for b in codebook.get_bit_names()])
         seqChannels, seqNames = self.dataSet.get_data_organization().get_sequential_rounds()
-        seqToKeep = [seqChannels[i] for i in range(len(seqChannels)) if seqNames[i] in ['polyT','DAPI']]
-        dataChannels = allMultiplexChannels + seqToKeep
+        dataChannels = allMultiplexChannels + seqChannels
         zPositions = range(len(self.dataSet.get_z_positions()))
         imageDescription = self.dataSet.analysis_tiff_description(
                 len(zPositions), len(dataChannels))
@@ -90,22 +94,16 @@ class DeconvolutionPreprocess(Preprocess):
                 self, 'processed_images', fov) as outputTif:
             for ch in dataChannels:
                 for z in zPositions:
-                    if self.dataSet.get_data_organization().get_data_channel_name(ch) in ['polyT','DAPI']:
-                        try:
-                            transformedImage = self.warpTask.get_aligned_image(fov, ch, z)
-                            outputTif.save(transformedImage,
-                                           photometric='MINISBLACK',
-                                           metadata=imageDescription)
-                        except Exception:
-                            pass
+                    if self.dataSet.get_data_organization().get_data_channel_name(ch) in ['polyT', 'DAPI']:
+                        transformedImage = self.warpTask.get_aligned_image(fov, ch, z)
+                        outputTif.save(transformedImage,
+                                       photometric='MINISBLACK',
+                                       metadata=imageDescription)
                     else:
-                        try:
-                            processedImage = self.get_processed_image(fov, ch, z, chromaticCorrector)
-                            outputTif.save(processedImage,
-                                           photometric='MINISBLACK',
-                                           metadata=imageDescription)
-                        except Exception:
-                            pass
+                        processedImage = self.get_processed_image(fov, ch, z, chromaticCorrector)
+                        outputTif.save(processedImage,
+                                       photometric='MINISBLACK',
+                                       metadata=imageDescription)
 
         cctx = zstd.ZstdCompressor()
         with open(imgName, 'rb') as ifh, open(compressedImgName, 'wb') as ofh:

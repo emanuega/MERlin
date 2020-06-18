@@ -363,6 +363,8 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         
         if 'method' not in self.parameters:
             self.parameters['method'] = 'cellpose'
+        if 'diameter' not in self.parameters:
+            self.parameters['diameter'] = 50
         if 'compartment_channel_name' not in self.parameters:
             self.parameters['compartment_channel_name'] = 'DAPI'
 
@@ -414,10 +416,15 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         print(" images read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
 
+        if self.parameters['method'] == 'cellpose':
+            segParameters = dict({
+                'method':'cellpose',
+                'diameter':self.parameters['diameter'],
+                'channel':self.parameters['compartment_channel_name']
+            })
+
         segmentationOutput = segmentation.apply_machine_learning_segmentation(
-                                compartmentImages, 
-                                self.parameters['method'],
-                                self.parameters['compartment_channel_name'])
+                                compartmentImages,segParameters)
 
         endTime = time.time()
         print(" Segmentation finished, ET {:.2f} min".format(

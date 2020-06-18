@@ -76,6 +76,41 @@ class DeconvolutionPreprocess(Preprocess):
     def get_codebook(self) -> codebook.Codebook:
         return self.dataSet.get_codebook(self.parameters['codebook_index'])
 
+    def write_processed_stack(self, fov, chromaticCorrector = None):
+        import zstandard as zstd
+        codebooks = self.dataSet.codebooks
+        allMultiplexChannels = []
+        for codebook in codebooks:
+            allMultiplexChannels.extend(
+                [self.dataSet.get_data_organization().get_data_channel_for_bit(b)
+                 for b in codebook.get_bit_names()])
+        seqChannels, seqNames = self.dataSet.get_data_organization().get_sequential_rounds()
+        dataChannels = allMultiplexChannels + seqChannels
+        zPositions = range(len(self.dataSet.get_z_positions()))
+        imageDescription = self.dataSet.analysis_tiff_description(
+                len(zPositions), len(dataChannels))
+        imgName = self.dataSet._analysis_image_name(self, 'processed_images', fov)
+        compressedImgName = imgName + '.zstd'
+        with self.dataSet.writer_for_analysis_images(
+                self, 'processed_images', fov) as outputTif:
+            for ch in dataChannels:
+                for z in zPositions:
+                    if self.dataSet.get_data_organization().get_data_channel_name(ch) in ['polyT', 'DAPI']:
+                        transformedImage = self.warpTask.get_aligned_image(fov, ch, z)
+                        outputTif.save(transformedImage,
+                                       photometric='MINISBLACK',
+                                       metadata=imageDescription)
+                    else:
+                        processedImage = self.get_processed_image(fov, ch, z, chromaticCorrector)
+                        outputTif.save(processedImage,
+                                       photometric='MINISBLACK',
+                                       metadata=imageDescription)
+
+        cctx = zstd.ZstdCompressor()
+        with open(imgName, 'rb') as ifh, open(compressedImgName, 'wb') as ofh:
+            cctx.copy_stream(ifh, ofh)
+        os.remove(imgName)
+
     def get_processed_image_set(
             self, fov, zIndex: int = None,
             chromaticCorrector: aberration.ChromaticCorrector = None

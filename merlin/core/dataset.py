@@ -572,7 +572,7 @@ class DataSet(object):
             -> analysistask.AnalysisTask:
         loadName = os.sep.join([self.get_task_subdirectory(
             analysisTaskName), 'task.json'])
-
+        print(loadName)
         with open(loadName, 'r') as inFile:
             parameters = json.load(inFile)
             analysisModule = importlib.import_module(parameters['module'])

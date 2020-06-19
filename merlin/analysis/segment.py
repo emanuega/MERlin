@@ -250,7 +250,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
             (watershedCombinedOutput == i), fragmentIndex,
             globalTask.fov_to_global_transform(fragmentIndex), zPos)
-            for i in np.unique(watershedOutput) if i != 0]
+            for i in np.unique(watershedCombinedOutput) if i != 0]
 
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
@@ -364,7 +364,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
             (watershedCombinedOutput == i), fragmentIndex,
             globalTask.fov_to_global_transform(fragmentIndex), zPos)
-            for i in np.unique(watershedOutput) if i != 0]
+            for i in np.unique(watershedCombinedOutput) if i != 0]
 
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)

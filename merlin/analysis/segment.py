@@ -123,7 +123,7 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             for z in range(len(self.dataSet.get_z_positions()))])
 
 
-class WatershedSegmentCV2(FeatureSavingAnalysisTask):
+class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
     """
     An analysis task that determines the boundaries of features in the

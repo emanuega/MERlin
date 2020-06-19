@@ -485,26 +485,29 @@ def segment_using_unet(imageStackIn: np.ndarray) -> np.ndarray:
     return None
 
 def segment_using_cellpose(imageStackIn: np.ndarray,
-                           channelName: str, 
-                           diameter: np.int) -> np.ndarray:
+                           params: dict) -> np.ndarray:
     """Perform segmentation using cellpose. Code adapted from 
     https://nbviewer.jupyter.org/github/MouseLand/cellpose/blob/
     master/notebooks/run_cellpose.ipynb
     Args:
         imageStackIn: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
-        channelName: a string with the channel name
+        params: a dictionary with the parameters for segmentation
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
     """
-    channelName = channelName.lower()
+    channelName = params['channel'].lower()
 
     # Define cellpose model
-    if any([channelName == 'dapi', channelName == 'lamin']):
+    if any([channelName == 'dapi', 
+            channelName == 'lamin']):
         model = models.Cellpose(gpu=False, model_type='nuclei')
-    if any([channelName == 'polyt', channelName == 'polya',
-            channelName == 'ecadherin',channelName == 'cd45',
-            channelName == 'wga', channelName == 'cona']):
+    if any([channelName == 'polyt', 
+            channelName == 'polya',
+            channelName == 'ecadherin',
+            channelName == 'cd45',
+            channelName == 'wga', 
+            channelName == 'cona']):
         model = models.Cellpose(gpu=False, model_type='cyto')
 
     # define CHANNELS to run segementation on
@@ -527,7 +530,8 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     # put list of images in cellpose format
     imageList = np.split(imageStackIn,imageStackIn.shape[0])
 
-    masks, flows, styles, diams = model.eval(imageList, diameter=diameter,
+    masks, flows, styles, diams = model.eval(imageList, 
+                                             diameter=params['diameter'],
                                              channels=channels)
     # combine masks into array
     masksArray = np.stack(masks)
@@ -535,21 +539,24 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     return masksArray
 
 
-def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
-                                        method: str,
-                                        channelName: str) -> np.ndarray:
+def apply_machine_learning_segmentation(imageStackIn: np.ndarray, 
+                                        params: dict) -> np.ndarray:
     """Select segmentation algorithm to use
     Args:
         imageStackIn: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
+        params: dictionary with key:value pairs with parameters to be passed
+            to the segmentation code. Keys used are 'method', 'diameter',
+            'channel' 
+
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
     """
-    if method == 'ilastik':
-        segmentOutput = segment_using_ilastik(imageStackIn)
-    elif method == 'cellpose':
-        segmentOutput = segment_using_cellpose(imageStackIn, channelName)
-    elif method == 'unet':
-        segmentOutput = segment_using_unet(imageStackIn)
+    if params['method'] == 'ilastik':
+        segmentOutput = segment_using_ilastik(imageStackIn, params)
+    elif params['method'] == 'cellpose':
+        segmentOutput = segment_using_cellpose(imageStackIn, params)
+    elif params['method'] == 'unet':
+        segmentOutput = segment_using_unet(imageStackIn, params)
 
     return segmentOutput

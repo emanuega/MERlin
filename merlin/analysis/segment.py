@@ -424,7 +424,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
             })
 
         segmentationOutput = segmentation.apply_machine_learning_segmentation(
-                                compartmentImages,segParameters)
+                                compartmentImages, segParameters)
 
         endTime = time.time()
         print(" Segmentation finished, ET {:.2f} min".format(

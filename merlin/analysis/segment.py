@@ -429,7 +429,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         endTime = time.time()
         print(" Segmentation finished, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
-"""
+        """
         endTime = time.time()
         print(" images read, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
@@ -469,7 +469,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         endTime = time.time()
         print(" watershed z positions combined, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
-"""
+        """
 
         # get features from mask. This is the slowestart (6 min for the
         # previous part, 15+ for the rest, for a 7 frame Image.

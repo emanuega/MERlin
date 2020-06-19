@@ -131,6 +131,8 @@ class Warp(analysistask.ParallelAnalysisTask):
 
     def write_transformed_stack(self, fov):
         import zstandard as zstd
+        import os
+        counts = 0
         transformations = list(self.get_transformation(fov))
         zPositions = self.dataSet.get_z_positions()
         dataChannels = self.dataSet.get_data_organization().get_data_channels()
@@ -143,14 +145,19 @@ class Warp(analysistask.ParallelAnalysisTask):
                 self, 'aligned_images', fov) as outputTif:
             for t, x in zip(transformations, dataChannels):
                 for z in zPositions:
-                    inputImage = self.dataSet.get_raw_image(x, fov, z)
-                    transformedImage = transform.warp(
-                            inputImage, t, preserve_range=True) \
-                        .astype(inputImage.dtype)
-                    outputTif.save(
-                            transformedImage,
-                            photometric='MINISBLACK',
-                            metadata=imageDescription)
+                    try:
+                        inputImage = self.dataSet.get_raw_image(x, fov, z)
+                        transformedImage = transform.warp(
+                                inputImage, t, preserve_range=True) \
+                            .astype(inputImage.dtype)
+                        outputTif.save(
+                                transformedImage,
+                                photometric='MINISBLACK',
+                                metadata=imageDescription)
+                        counts += 1
+                    except Exception:
+                        pass
+        print(counts)
         cctx = zstd.ZstdCompressor()
         with open(imgName, 'rb') as ifh, open(compressedImgName, 'wb') as ofh:
             cctx.copy_stream(ifh, ofh)

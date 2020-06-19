@@ -96,16 +96,22 @@ class DeconvolutionPreprocess(Preprocess):
             for ch in dataChannels:
                 for z in zPositions:
                     if self.dataSet.get_data_organization().get_data_channel_name(ch) in ['polyT', 'DAPI']:
-                        transformedImage = self.warpTask.get_aligned_image(fov, ch, z)
-                        outputTif.save(transformedImage,
-                                       photometric='MINISBLACK',
-                                       metadata=imageDescription)
-                    else:
-                        processedImage = self.get_processed_image(fov, ch, z, chromaticCorrector)
-                        outputTif.save(processedImage,
-                                       photometric='MINISBLACK',
-                                       metadata=imageDescription)
+                        try:
+                            transformedImage = self.warpTask.get_aligned_image(fov, ch, z)
+                            outputTif.save(transformedImage,
+                                           photometric='MINISBLACK',
+                                           metadata=imageDescription)
+                        except Exception:
+                            pass
 
+                    else:
+                        try:
+                            processedImage = self.get_processed_image(fov, ch, z, chromaticCorrector)
+                            outputTif.save(processedImage,
+                                           photometric='MINISBLACK',
+                                           metadata=imageDescription)
+                        except Exception:
+                            pass
         cctx = zstd.ZstdCompressor()
         with open(imgName, 'rb') as ifh, open(compressedImgName, 'wb') as ofh:
             cctx.copy_stream(ifh, ofh)

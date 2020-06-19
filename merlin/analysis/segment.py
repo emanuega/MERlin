@@ -429,47 +429,10 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         endTime = time.time()
         print(" Segmentation finished, ET {:.2f} min".format(
                 (endTime - startTime) / 60))
-        """
-        endTime = time.time()
-        print(" images read, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
-        print(" membraneImages Type: " + str(type(membraneImages)))
-        print(" membraneImages Size: ["
-              + str(membraneImages.shape[0])
-              + "," + str(membraneImages.shape[1])
-              + "," + str(membraneImages.shape[2]) + "]")
-        print(" compartmentImages Type: " + str(type(compartmentImages)))
-        print(" compartmentImages Size: ["
-              + str(compartmentImages.shape[0])
-              + "," + str(compartmentImages.shape[1])
-              + "," + str(compartmentImages.shape[2]) + "]")
-
-        # Prepare masks for cv2 watershed
-        watershedMarkers = watershed.get_cv2_watershed_markers(
-                            compartmentImages,
-                            membraneImages,
-                            membraneFlag)
-
-        endTime = time.time()
-        print(" markers calculated, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
-
-        # perform watershed in individual z positions
-        watershedOutput = watershed.apply_cv2_watershed(compartmentImages,
-                                                        watershedMarkers)
-
-        endTime = time.time()
-        print(" watershed calculated, ET {:.2f} min".format(
-            (endTime - startTime) / 60))
 
         # combine all z positions in watershed
-        watershedCombinedOutput = watershed \
-            .combine_2d_segmentation_masks_into_3d(watershedOutput)
-
-        endTime = time.time()
-        print(" watershed z positions combined, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
-        """
+        watershedCombinedOutput = segmentation \
+            .combine_2d_segmentation_masks_into_3d(segmentationOutput)
 
         # get features from mask. This is the slowestart (6 min for the
         # previous part, 15+ for the rest, for a 7 frame Image.

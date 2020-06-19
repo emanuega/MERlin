@@ -78,6 +78,9 @@ class DeconvolutionPreprocess(Preprocess):
 
     def write_processed_stack(self, fov, chromaticCorrector = None):
         import zstandard as zstd
+        import time
+        statusDir = self.dataSet.get_analysis_subdirectory(self, subdirectory='BIL_status')
+        statusFile = statusDir+'/BIL{}.done'.format(fov)
         codebooks = self.dataSet.codebooks
         allMultiplexChannels = []
         for codebook in codebooks:
@@ -116,6 +119,9 @@ class DeconvolutionPreprocess(Preprocess):
         with open(imgName, 'rb') as ifh, open(compressedImgName, 'wb') as ofh:
             cctx.copy_stream(ifh, ofh)
         os.remove(imgName)
+        with open(statusFile, 'w') as f:
+            f.write('%s' % time.time())
+
 
     def get_processed_image_set(
             self, fov, zIndex: int = None,

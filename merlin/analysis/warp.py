@@ -132,6 +132,9 @@ class Warp(analysistask.ParallelAnalysisTask):
     def write_transformed_stack(self, fov):
         import zstandard as zstd
         import os
+        import time
+        statusDir = self.dataSet.get_analysis_subdirectory(self, subdirectory='BIL_status')
+        statusFile = statusDir+'/BIL{}.done'.format(fov)
         counts = 0
         transformations = list(self.get_transformation(fov))
         zPositions = self.dataSet.get_z_positions()
@@ -162,6 +165,9 @@ class Warp(analysistask.ParallelAnalysisTask):
         with open(imgName, 'rb') as ifh, open(compressedImgName, 'wb') as ofh:
             cctx.copy_stream(ifh, ofh)
         os.remove(imgName)
+        with open(statusFile, 'w') as f:
+            f.write('%s' % time.time())
+
 
     def _save_transformations(self, transformationList: List, fov: int) -> None:
         self.dataSet.save_numpy_analysis_result(

@@ -398,6 +398,7 @@ def get_overlapping_objects(segmentationZ0: np.ndarray,
                             segmentationZ1: np.ndarray,
                             n0: int) -> Tuple[np.float64, 
                                               np.float64, np.float64]:
+
     """compare cell labels in adjacent image masks
 
     Args:

@@ -472,12 +472,9 @@ def combine_2d_segmentation_masks_into_3d(segmentationOutput:
 
         # compare each cell in z0                         
         for n0 in zIndex:
-            out = get_overlapping_objects(segmentationCombinedZ[z, :, :],
+            n1, f0, f1 = get_overlapping_objects(segmentationCombinedZ[z, :, :],
                                              segmentationOutput[z-1, :, :],
                                              n0)
-            n1 = out[0]
-            f0 = out[1]
-            f1 = out[2]
             if n1:
                 segmentationCombinedZ[z-1, :, :][(segmentationOutput[z-1, :, :] ==
                                            n1)] = n0

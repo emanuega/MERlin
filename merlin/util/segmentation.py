@@ -415,6 +415,7 @@ def get_overlapping_objects(segmentationZ0: np.ndarray,
     """
 
     z1Indexes = np.unique(segmentationZ1[segmentationZ0 == n0])
+
     z1Indexes = z1Indexes[z1Indexes > 0]
 
     if z1Indexes.shape[0] > 0:

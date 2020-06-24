@@ -408,7 +408,7 @@ def get_overlapping_objects(watershedZ0: np.ndarray,
     """
 
     z1Indexes = np.unique(watershedZ1[watershedZ0 == n0])
-    z1Indexes = z1Indexes[z1Indexes > 100]
+    z1Indexes = z1Indexes[z1Indexes > 0]
 
     if z1Indexes.shape[0] > 0:
 
@@ -467,7 +467,7 @@ def combine_2d_segmentation_masks_into_3d(watershedOutput:
     # starting far from coverslip
     for z in range(watershedOutput.shape[0]-1, 0, -1):
         zIndex = np.unique(watershedOutput[z, :, :])[
-                                np.unique(watershedOutput[z, :, :]) > 100]
+                                np.unique(watershedOutput[z, :, :]) > 0]
 
     for n0 in zIndex:
         n1, f0, f1 = get_overlapping_objects(watershedCombinedZ[z, :, :],

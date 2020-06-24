@@ -389,39 +389,38 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
     return watershedOutput
 
 
-def get_overlapping_objects(watershedZ0: np.ndarray,
-                           watershedZ1: np.ndarray, n0: int):
-    """Perform watershed using cv2
+def get_overlapping_objects(segmentationZ0: np.ndarray,
+                           segmentationZ1: np.ndarray, n0: int):
+    """compare cell labels in adjacent image masks
 
     Args:
-        watershedZ0: a 2 dimensional numpy array containing a
-            segmentation mask
-        watershedZ1: a 2 dimensional numpy array containing a
-            segmentation mask adjacent to watershedZ1
+        segmentationZ0: a 2 dimensional numpy array containing a
+            segmentation mask in position Z
+        segmentationZ1: a 2 dimensional numpy array containing a
+            segmentation mask adjacent tosegmentationZ0
         n0: an integer with the index of the object (cell/nuclei) 
-            to be compared between the provided watershed 
-            segmentation masks
+            to be compared between the provided segmentation masks
     Returns:
         a tuple (n1, f0, f1) containing the label of the cell in Z1
         overlapping n0 (n1), the fraction of n0 overlaping n1 (f0) and
         the fraction of n1 overlapping n0 (f1)
     """
 
-    z1Indexes = np.unique(watershedZ1[watershedZ0 == n0])
+    z1Indexes = np.unique(segmentationZ1[segmentationZ0 == n0])
     z1Indexes = z1Indexes[z1Indexes > 0]
 
     if z1Indexes.shape[0] > 0:
 
         # calculate overlap fraction
-        n0Area = np.count_nonzero(watershedZ0 == n0)
+        n0Area = np.count_nonzero(segmentationZ0 == n0)
         n1Area = np.zeros(len(z1Indexes))
         overlapArea = np.zeros(len(z1Indexes))
 
         for ii in range(len(z1Indexes)):
             n1 = z1Indexes[ii]
-            n1Area[ii] = np.count_nonzero(watershedZ1 == n1)
-            overlapArea[ii] = np.count_nonzero((watershedZ0 == n0) *
-                                               (watershedZ1 == n1))
+            n1Area[ii] = np.count_nonzero(segmentationZ1 == n1)
+            overlapArea[ii] = np.count_nonzero((segmentationZ0 == n0) *
+                                               (segmentationZ1 == n1))
 
         n0OverlapFraction = np.asarray(overlapArea / n0Area)
         n1OverlapFraction = np.asarray(overlapArea / n1Area)
@@ -444,39 +443,42 @@ def get_overlapping_objects(watershedZ0: np.ndarray,
         return False, False, False
 
 
-def combine_2d_segmentation_masks_into_3d(watershedOutput:
+def combine_2d_segmentation_masks_into_3d(segmentationOutput:
                                           np.ndarray) -> np.ndarray:
-    """Take a 3 dimensional watershed masks and relabel them so that
+    """Take a 3 dimensional segmentation masks and relabel them so that
     nuclei in adjacent sections have the same label if the area their
     overlap surpases certain threshold
 
     Args:
-        watershedOutput: a 3 dimensional numpy array containing the
+        segmentationOutput: a 3 dimensional numpy array containing the
             segmentation masks arranged as (z, x, y).
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
             relabeled segmented cells
     """
 
-    # Initialize empty array with size as watershedOutput array
-    watershedCombinedZ = np.zeros(watershedOutput.shape)
+    # Initialize empty array with size as segmentationOutput array
+    segmentationCombinedZ = np.zeros(segmentationOutput.shape)
 
-    # copy the mask of the section farthest to the coverslip
-    watershedCombinedZ[-1, :, :] = watershedOutput[-1, :, :]
+    # copy the mask of the section farthest to the coverslip to start
+    segmentationCombinedZ[-1, :, :] = segmentationOutput[-1, :, :]
 
     # starting far from coverslip
-    for z in range(watershedOutput.shape[0]-1, 0, -1):
-        zIndex = np.unique(watershedOutput[z, :, :])[
-                                np.unique(watershedOutput[z, :, :]) > 0]
+    for z in range(segmentationOutput.shape[0]-1, 0, -1):
 
-    for n0 in zIndex:
-        n1, f0, f1 = get_overlapping_objects(watershedCombinedZ[z, :, :],
-                                             watershedOutput[z-1, :, :],
+        # get non-background cell indexes
+        zIndex = np.unique(segmentationOutput[z, :, :])[
+                                np.unique(segmentationOutput[z, :, :]) > 0]
+
+        # compare each cell in z0                         
+        for n0 in zIndex:
+            n1, f0, f1 = get_overlapping_objects(segmentationCombinedZ[z, :, :],
+                                             segmentationOutput[z-1, :, :],
                                              n0)
-        if n1:
-            watershedCombinedZ[z-1, :, :][(watershedOutput[z-1, :, :] ==
+            if n1:
+                segmentationCombinedZ[z-1, :, :][(segmentationOutput[z-1, :, :] ==
                                            n1)] = n0
-    return watershedCombinedZ
+    return segmentationCombinedZ
 
 def segment_using_ilastik(imageStackIn: np.ndarray) -> np.ndarray:
     return None

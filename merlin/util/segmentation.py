@@ -434,13 +434,13 @@ def get_overlapping_objects(segmentationZ0: np.ndarray,
 
         if (n0OverlapFraction[indexSorted[0]] > 0.2 and
                 n1OverlapFraction[indexSorted[0]] > 0.5):
-            return z1Indexes[indexSorted[0]],
-                n0OverlapFraction[indexSorted[0]],
-                n1OverlapFraction[indexSorted[0]]
+            return (z1Indexes[indexSorted[0]],
+            n0OverlapFraction[indexSorted[0]],
+            n1OverlapFraction[indexSorted[0]])
         else:
-            return False, False, False
+            return (False, False, False)
     else:
-        return False, False, False
+        return (False, False, False)
 
 
 def combine_2d_segmentation_masks_into_3d(segmentationOutput:

@@ -378,7 +378,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
             independent
     """
 
-    watershedOutput = np.zeros(watershedMarkers.shape)
+    watershedOutput = np.zeros(watershedMarkers.shape)  
     for z in range(nucleiImages.shape[0]):
         rgbImage = convert_grayscale_to_rgb(compartmentImages[z, :, :])
         watershedOutput[z, :, :] = cv2.watershed(rgbImage,
@@ -390,7 +390,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
 
 
 def get_overlapping_objects(segmentationZ0: np.ndarray,
-                           segmentationZ1: np.ndarray, n0: int):
+                            segmentationZ1: np.ndarray, n0: int):
     """compare cell labels in adjacent image masks
 
     Args:
@@ -435,8 +435,8 @@ def get_overlapping_objects(segmentationZ0: np.ndarray,
         if (n0OverlapFraction[indexSorted[0]] > 0.2 and
                 n1OverlapFraction[indexSorted[0]] > 0.5):
             return z1Indexes[indexSorted[0]],
-            n0OverlapFraction[indexSorted[0]],
-            n1OverlapFraction[indexSorted[0]]
+                n0OverlapFraction[indexSorted[0]],
+                n1OverlapFraction[indexSorted[0]]
         else:
             return False, False, False
     else:
@@ -472,9 +472,12 @@ def combine_2d_segmentation_masks_into_3d(segmentationOutput:
 
         # compare each cell in z0                         
         for n0 in zIndex:
-            n1, f0, f1 = get_overlapping_objects(segmentationCombinedZ[z, :, :],
+            out = get_overlapping_objects(segmentationCombinedZ[z, :, :],
                                              segmentationOutput[z-1, :, :],
                                              n0)
+            n1 = out[0]
+            f0 = out[1]
+            f1 = out[2]
             if n1:
                 segmentationCombinedZ[z-1, :, :][(segmentationOutput[z-1, :, :] ==
                                            n1)] = n0

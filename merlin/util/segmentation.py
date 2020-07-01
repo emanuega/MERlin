@@ -522,7 +522,7 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     # if NUCLEUS channel does not exist, set the second channel to 0
     # channels = [0,0]
     # IF ALL YOUR IMAGES ARE THE SAME TYPE, you can give a list with 2 elements
-    channels = [0,0]  # IF YOU HAVE GRAYSCALE
+    channels = [0, 0]  # IF YOU HAVE GRAYSCALE
     # channels = [2,3] # IF YOU HAVE G=cytoplasm and B=nucleus
     # channels = [2,1] # IF YOU HAVE G=cytoplasm and R=nucleus
 

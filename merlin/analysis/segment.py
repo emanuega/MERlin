@@ -177,8 +177,6 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
     def _run_analysis(self, fragmentIndex):
         startTime = time.time()
 
-        print('Entered the _run_analysis method, FOV ' + str(fragmentIndex))
-
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
 
@@ -197,20 +195,6 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         compartmentImages = self._read_image_stack(fragmentIndex,
                                                    compartmentIndex)
 
-        endTime = time.time()
-        print(" images read, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
-        print(" membraneImages Type: " + str(type(membraneImages)))
-        print(" membraneImages Size: ["
-              + str(membraneImages.shape[0])
-              + "," + str(membraneImages.shape[1])
-              + "," + str(membraneImages.shape[2]) + "]")
-        print(" compartmentImages Type: " + str(type(compartmentImages)))
-        print(" compartmentImages Size: ["
-              + str(compartmentImages.shape[0])
-              + "," + str(compartmentImages.shape[1])
-              + "," + str(compartmentImages.shape[2]) + "]")
-
         # Prepare masks for cv2 watershed
         watershedMarkers = segmentation.get_cv2_watershed_markers(
                             compartmentImages,
@@ -218,17 +202,9 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
                             self.parameters['compartment_channel_name'],
                             self.parameters['membrane_channel_name'])
 
-        endTime = time.time()
-        print(" markers calculated, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
-
         # perform watershed in individual z positions
         watershedOutput = segmentation.apply_cv2_watershed(compartmentImages,
                                                            watershedMarkers)
-
-        endTime = time.time()
-        print(" watershed calculated, ET {:.2f} min".format(
-            (endTime - startTime) / 60))
 
         # combine all z positions in watershed
         watershedCombinedOutput = segmentation \
@@ -331,10 +307,6 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
 
-        endTime = time.time()
-        print(" features written, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
-
     def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(
             self.parameters['warp_task'])
@@ -347,16 +319,10 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
     """
     An analysis task that determines the boundaries of features in the
     image data in each field of view using a the specified machine learning
-    method. The available methods are:
+    method. The available method is cellpose (https://github.com/MouseLand/
+    cellpose).
 
-        unet:
-
-        ilastik:
-
-        cellpose:
-
-    TODO: ADD FLAT FIELD CORRECTION TASK
-
+    TODO: implement unets / Ilastik
     """
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
@@ -389,15 +355,9 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         return featureDB.read_features()
 
     def _run_analysis(self, fragmentIndex):
-        startTime = time.time()
-
-        print('Entered the _run_analysis method, FOV ' + str(fragmentIndex))
-        print('Using ' + self.parameters['method'] + ' method.')
 
         globalTask = self.dataSet.load_analysis_task(
                 self.parameters['global_align_task'])
-
-        print(' globalTask loaded')
 
         # read membrane and compartment indexes
         compartmentIndex = self.dataSet \
@@ -405,17 +365,9 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
                                .get_data_channel_index(
                                 self.parameters['compartment_channel_name'])
 
-        endTime = time.time()
-        print(" image indexes read, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
-
         # Read images and perform segmentation
         compartmentImages = self._read_image_stack(fragmentIndex,
                                                    compartmentIndex)
-
-        endTime = time.time()
-        print(" images read, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
 
         if self.parameters['method'] == 'cellpose':
             segParameters = dict({
@@ -426,10 +378,6 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
         segmentationOutput = segmentation.apply_machine_learning_segmentation(
                                 compartmentImages, segParameters)
-
-        endTime = time.time()
-        print(" Segmentation finished, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
 
         # combine all z positions in watershed
         watershedCombinedOutput = segmentation \
@@ -445,10 +393,6 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
         featureDB = self.get_feature_database()
         featureDB.write_features(featureList, fragmentIndex)
-
-        endTime = time.time()
-        print(" features written, ET {:.2f} min".format(
-                (endTime - startTime) / 60))
 
     def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
         warpTask = self.dataSet.load_analysis_task(

@@ -17,7 +17,7 @@ from cellpose import models
 """
 This module contains utility functions for preparing images for
 watershed segmentation, as well as functions to perform segmentation
-using macnine learning approaches
+using machine learning approaches
 """
 
 # To match Matlab's strel('disk', 20)
@@ -152,13 +152,13 @@ def get_membrane_mask(membraneImages: np.ndarray,
                       compartmentChannelName: str) -> np.ndarray:
     """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
     The images expected are some type of membrane label (WGA, ConA,
-    Lamin, Cadherins) or compartment images (DAPI, CD45, polyT) 
+    Lamin, Cadherins) or compartment images (DAPI, CD45, polyT)
 
     Args:
         membraneImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
         membraneChannelName: A string with the name of a membrane channel.
-        compartmentChannelName: A string with the name of the compartment 
+        compartmentChannelName: A string with the name of the compartment
             channel
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
@@ -210,8 +210,8 @@ def get_membrane_mask(membraneImages: np.ndarray,
 
 
 def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
-    """Calculate binary mask with 1's in compartment (nuclei or cytoplasm) 
-    pixels and 0 otherwise. The images expected are some type of compartment 
+    """Calculate binary mask with 1's in compartment (nuclei or cytoplasm)
+    pixels and 0 otherwise. The images expected are some type of compartment
     label (e.g. Nuclei: DAPI, Cytoplasm: PolyT, CD45, etc)
 
     Args:
@@ -243,7 +243,7 @@ def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
 
     # generate border mask, necessary to avoid making a single
     # connected component when using binary_fill_holes below
-    borderMask = np.zeros((compartmentImages.shape[1], 
+    borderMask = np.zeros((compartmentImages.shape[1],
                            compartmentImages.shape[2]))
     borderMask[25:(compartmentImages.shape[1]-25), 
                25:(compartmentImages.shape[2]-25)] = 1
@@ -291,7 +291,7 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
             arranged as (z, x, y).
         membraneImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
-        membraneFlag: 0 if compartment and membrane images are the same, 1 
+        membraneFlag: 0 if compartment and membrane images are the same, 1
             otherwise
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
@@ -390,7 +390,8 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
 
 
 def get_overlapping_objects(segmentationZ0: np.ndarray,
-                            segmentationZ1: np.ndarray, n0: int):
+                            segmentationZ1: np.ndarray, 
+                            n0: int) -> Tuple[]:
     """compare cell labels in adjacent image masks
 
     Args:
@@ -398,7 +399,7 @@ def get_overlapping_objects(segmentationZ0: np.ndarray,
             segmentation mask in position Z
         segmentationZ1: a 2 dimensional numpy array containing a
             segmentation mask adjacent tosegmentationZ0
-        n0: an integer with the index of the object (cell/nuclei) 
+        n0: an integer with the index of the object (cell/nuclei)
             to be compared between the provided segmentation masks
     Returns:
         a tuple (n1, f0, f1) containing the label of the cell in Z1
@@ -470,14 +471,14 @@ def combine_2d_segmentation_masks_into_3d(segmentationOutput:
         zIndex = np.unique(segmentationOutput[z, :, :])[
                                 np.unique(segmentationOutput[z, :, :]) > 0]
 
-        # compare each cell in z0                         
+        # compare each cell in z0
         for n0 in zIndex:
             n1, f0, f1 = get_overlapping_objects(segmentationCombinedZ[z, :, :],
                                              segmentationOutput[z-1, :, :],
                                              n0)
             if n1:
-                segmentationCombinedZ[z-1, :, :][(segmentationOutput[z-1, :, :] ==
-                                           n1)] = n0
+                segmentationCombinedZ[z-1, :, :][
+                (segmentationOutput[z-1, :, :] ==n1)] = n0
     return segmentationCombinedZ
 
 def segment_using_ilastik(imageStackIn: np.ndarray) -> np.ndarray:
@@ -488,7 +489,7 @@ def segment_using_unet(imageStackIn: np.ndarray) -> np.ndarray:
 
 def segment_using_cellpose(imageStackIn: np.ndarray,
                            params: dict) -> np.ndarray:
-    """Perform segmentation using cellpose. Code adapted from 
+    """Perform segmentation using cellpose. Code adapted from
     https://nbviewer.jupyter.org/github/MouseLand/cellpose/blob/
     master/notebooks/run_cellpose.ipynb
     Args:
@@ -525,14 +526,14 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     # or if you have different types of channels in each image
     # channels = [[0,0],[0,0]]
 
-    # if diameter is set to None, the size of the cells is estimated on a per 
-    # image basis you can set the average cell `diameter` in pixels yourself 
+    # if diameter is set to None, the size of the cells is estimated on a per
+    # image basis you can set the average cell `diameter` in pixels yourself
     # (recommended) diameter can be a list or a single number for all images
 
     # put list of images in cellpose format
     imageList = np.split(imageStackIn,imageStackIn.shape[0])
 
-    masks, flows, styles, diams = model.eval(imageList, 
+    masks, flows, styles, diams = model.eval(imageList,
                                              diameter=params['diameter'],
                                              channels=channels)
     # combine masks into array
@@ -541,7 +542,7 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     return masksArray
 
 
-def apply_machine_learning_segmentation(imageStackIn: np.ndarray, 
+def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
                                         params: dict) -> np.ndarray:
     """Select segmentation algorithm to use
     Args:
@@ -549,7 +550,7 @@ def apply_machine_learning_segmentation(imageStackIn: np.ndarray,
             arranged as (z, x, y).
         params: dictionary with key:value pairs with parameters to be passed
             to the segmentation code. Keys used are 'method', 'diameter',
-            'channel' 
+            'channel'
 
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)

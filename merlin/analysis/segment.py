@@ -149,7 +149,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-        
+
         if 'membrane_channel_name' not in self.parameters:
             self.parameters['membrane_channel_name'] = 'DAPI'
         if 'compartment_channel_name' not in self.parameters:
@@ -341,6 +341,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
         return np.array([warpTask.get_aligned_image(fov, channelIndex, z)
                          for z in range(len(self.dataSet.get_z_positions()))])
 
+
 class MachineLearningSegment(FeatureSavingAnalysisTask):
 
     """
@@ -349,9 +350,9 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
     method. The available methods are:
 
         unet:
-            
+
         ilastik:
-            
+
         cellpose:
 
     TODO: ADD FLAT FIELD CORRECTION TASK
@@ -360,7 +361,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
     def __init__(self, dataSet, parameters=None, analysisName=None):
         super().__init__(dataSet, parameters, analysisName)
-        
+
         if 'method' not in self.parameters:
             self.parameters['method'] = 'cellpose'
         if 'diameter' not in self.parameters:
@@ -418,9 +419,9 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
         if self.parameters['method'] == 'cellpose':
             segParameters = dict({
-                'method':'cellpose',
-                'diameter':self.parameters['diameter'],
-                'channel':self.parameters['compartment_channel_name']
+                'method': 'cellpose',
+                'diameter': self.parameters['diameter'],
+                'channel': self.parameters['compartment_channel_name']
             })
 
         segmentationOutput = segmentation.apply_machine_learning_segmentation(

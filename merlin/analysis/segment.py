@@ -96,8 +96,8 @@ class WatershedSegment(FeatureSavingAnalysisTask):
                                                             watershedIndex, 5)
         seeds = segmentation.separate_merged_seeds(
             segmentation.extract_seeds(seedImages))
-        normalizedWatershed, watershedMask = segmentation.prepare_watershed_images(
-            watershedImages)
+        normalizedWatershed, watershedMask = segmentation\
+            .prepare_watershed_images(watershedImages)
 
         seeds[np.invert(watershedMask)] = 0
         watershedOutput = skiseg.watershed(
@@ -322,7 +322,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
         print(' globalTask loaded')
 
-        # read membrane and compartment  indexes
+        # read membrane and compartment indexes
         compartmentIndex = self.dataSet \
                                .get_data_organization() \
                                .get_data_channel_index(

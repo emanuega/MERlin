@@ -177,18 +177,18 @@ def get_membrane_mask(membraneImages: np.ndarray,
     else:
         filterSigma2 = 5
         filterSize2 = int(2*np.ceil(2*filterSigma2)+1)
-        edgeSigma = 2  #1 #2
-        lowThresh = 0.1  #0.5 #0.2
-        hiThresh = 0.5  #0.7 #0.6
+        edgeSigma = 2  # 1, 2
+        lowThresh = 0.1  # 0.5, 0.2
+        hiThresh = 0.5  # 0.7, 0.6
         for z in range(membraneImages.shape[0]):
             blurredImage = cv2.GaussianBlur(membraneImages[z, :, :],
                                             (filterSize2, filterSize2),
                                             filterSigma2)
             edge0 = feature.canny(membraneImages[z, :, :],
-                                   sigma=edgeSigma,
-                                   use_quantiles=True,
-                                   low_threshold=lowThresh,
-                                   high_threshold=hiThresh)
+                                  sigma=edgeSigma,
+                                  use_quantiles=True,
+                                  low_threshold=lowThresh,
+                                  high_threshold=hiThresh)
             edge0 = morphology.dilation(edge0, morphology.selem.disk(10))
 
             edge1 = feature.canny(blurredImage,

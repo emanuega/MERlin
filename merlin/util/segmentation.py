@@ -140,8 +140,8 @@ def prepare_watershed_images(watershedImageStack: np.ndarray
 
     normalizedWatershed = 1 - (watershedImageStack
                                - np.min(watershedImageStack)) / \
-                          (np.max(watershedImageStack)
-                           - np.min(watershedImageStack))
+                              (np.max(watershedImageStack)
+                               - np.min(watershedImageStack))
     normalizedWatershed[np.invert(watershedMask)] = 1
 
     return normalizedWatershed, watershedMask
@@ -181,26 +181,26 @@ def get_membrane_mask(membraneImages: np.ndarray,
     else:
         filterSigma2 = 5
         filterSize2 = int(2*np.ceil(2*filterSigma2)+1)
-        edgeSigma = 2 #1 #2
-        lowThresh = 0.1 #0.5 #0.2
-        hiThresh = 0.5 #0.7 #0.6
+        edgeSigma = 2#  1 #2
+        lowThresh = 0.1#  0.5 #0.2
+        hiThresh = 0.5#  0.7 #0.6
         for z in range(membraneImages.shape[0]):
             blurredImage = cv2.GaussianBlur(membraneImages[z, :, :],
-                                            (filterSize2,filterSize2),
+                                            (filterSize2, filterSize2),
                                             filterSigma2)
             edge0 = feature.canny(membraneImages[z, :, :],
-                                   sigma=edgeSigma,
-                                   use_quantiles=True,
-                                   low_threshold=lowThresh,
-                                   high_threshold=hiThresh)
-            edge0 = morphology.dilation(edge0,morphology.selem.disk(10))
-            
-            edge1  = feature.canny(blurredImage,
-                                   sigma=edgeSigma,
-                                   use_quantiles=True,
-                                   low_threshold=lowThresh,
-                                   high_threshold=hiThresh)
-            edge1 = morphology.dilation(edge1,morphology.selem.disk(10))
+                                  sigma=edgeSigma,
+                                  use_quantiles=True,
+                                  low_threshold=lowThresh,
+                                  high_threshold=hiThresh)
+            edge0 = morphology.dilation(edge0, morphology.selem.disk(10))
+
+            edge1 = feature.canny(blurredImage,
+                                  sigma=edgeSigma,
+                                  use_quantiles=True,
+                                  low_threshold=lowThresh,
+                                  high_threshold=hiThresh)
+            edge1 = morphology.dilation(edge1, morphology.selem.disk(10))
 
             mask[z, :, :] = edge0 + edge1
 
@@ -245,7 +245,7 @@ def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
     # connected component when using binary_fill_holes below
     borderMask = np.zeros((compartmentImages.shape[1],
                            compartmentImages.shape[2]))
-    borderMask[25:(compartmentImages.shape[1]-25), 
+    borderMask[25:(compartmentImages.shape[1]-25),
                25:(compartmentImages.shape[2]-25)] = 1
 
     # generate compartment mask from hessian, fine
@@ -378,7 +378,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
             independent
     """
 
-    watershedOutput = np.zeros(watershedMarkers.shape)  
+    watershedOutput = np.zeros(watershedMarkers.shape)
     for z in range(nucleiImages.shape[0]):
         rgbImage = convert_grayscale_to_rgb(compartmentImages[z, :, :])
         watershedOutput[z, :, :] = cv2.watershed(rgbImage,
@@ -390,7 +390,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
 
 
 def get_overlapping_objects(segmentationZ0: np.ndarray,
-                            segmentationZ1: np.ndarray, 
+                            segmentationZ1: np.ndarray,
                             n0: int) -> Tuple[]:
     """compare cell labels in adjacent image masks
 
@@ -436,8 +436,8 @@ def get_overlapping_objects(segmentationZ0: np.ndarray,
         if (n0OverlapFraction[indexSorted[0]] > 0.2 and
                 n1OverlapFraction[indexSorted[0]] > 0.5):
             return (z1Indexes[indexSorted[0]],
-            n0OverlapFraction[indexSorted[0]],
-            n1OverlapFraction[indexSorted[0]])
+                    n0OverlapFraction[indexSorted[0]],
+                    n1OverlapFraction[indexSorted[0]])
         else:
             return (False, False, False)
     else:
@@ -474,18 +474,21 @@ def combine_2d_segmentation_masks_into_3d(segmentationOutput:
         # compare each cell in z0
         for n0 in zIndex:
             n1, f0, f1 = get_overlapping_objects(segmentationCombinedZ[z, :, :],
-                                             segmentationOutput[z-1, :, :],
-                                             n0)
+                                                 segmentationOutput[z-1, :, :],
+                                                 n0)
             if n1:
                 segmentationCombinedZ[z-1, :, :][
-                (segmentationOutput[z-1, :, :] ==n1)] = n0
+                    (segmentationOutput[z-1, :, :] == n1)] = n0
     return segmentationCombinedZ
+
 
 def segment_using_ilastik(imageStackIn: np.ndarray) -> np.ndarray:
     return None
 
+
 def segment_using_unet(imageStackIn: np.ndarray) -> np.ndarray:
     return None
+
 
 def segment_using_cellpose(imageStackIn: np.ndarray,
                            params: dict) -> np.ndarray:
@@ -502,14 +505,14 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     channelName = params['channel'].lower()
 
     # Define cellpose model
-    if any([channelName == 'dapi', 
+    if any([channelName == 'dapi',
             channelName == 'lamin']):
         model = models.Cellpose(gpu=False, model_type='nuclei')
-    if any([channelName == 'polyt', 
+    if any([channelName == 'polyt',
             channelName == 'polya',
             channelName == 'ecadherin',
             channelName == 'cd45',
-            channelName == 'wga', 
+            channelName == 'wga',
             channelName == 'cona']):
         model = models.Cellpose(gpu=False, model_type='cyto')
 
@@ -519,7 +522,7 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     # if NUCLEUS channel does not exist, set the second channel to 0
     # channels = [0,0]
     # IF ALL YOUR IMAGES ARE THE SAME TYPE, you can give a list with 2 elements
-    channels = [0,0] # IF YOU HAVE GRAYSCALE
+    channels = [0,0]  # IF YOU HAVE GRAYSCALE
     # channels = [2,3] # IF YOU HAVE G=cytoplasm and B=nucleus
     # channels = [2,1] # IF YOU HAVE G=cytoplasm and R=nucleus
 
@@ -531,7 +534,7 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     # (recommended) diameter can be a list or a single number for all images
 
     # put list of images in cellpose format
-    imageList = np.split(imageStackIn,imageStackIn.shape[0])
+    imageList = np.split(imageStackIn, imageStackIn.shape[0])
 
     masks, flows, styles, diams = model.eval(imageList,
                                              diameter=params['diameter'],

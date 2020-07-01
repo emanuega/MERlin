@@ -296,6 +296,7 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
             to use
         membraneChannelName: str with the name of the membrane channel 
             to use
+
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
             cv2-compatible watershed markers
@@ -488,6 +489,7 @@ def combine_2d_segmentation_masks_into_3d(segmentationOutput:
             if n1:
                 segmentationCombinedZ[z-1, :, :][
                     (segmentationOutput[z-1, :, :] == n1)] = n0
+
     return segmentationCombinedZ
 
 

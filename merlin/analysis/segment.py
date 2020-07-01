@@ -398,7 +398,7 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
 
         print(' globalTask loaded')
 
-        # read membrane and compartment  indexes
+        # read membrane and compartment indexes
         compartmentIndex = self.dataSet \
                                .get_data_organization() \
                                .get_data_channel_index(

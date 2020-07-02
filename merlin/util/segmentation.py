@@ -384,7 +384,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
     """
 
     watershedOutput = np.zeros(watershedMarkers.shape)
-    for z in range(nucleiImages.shape[0]):
+    for z in range(compartmentImages.shape[0]):
         rgbImage = convert_grayscale_to_rgb(compartmentImages[z, :, :])
         watershedOutput[z, :, :] = cv2.watershed(rgbImage,
                                                  watershedMarkers[z, :, :].

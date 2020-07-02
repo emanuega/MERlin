@@ -200,6 +200,7 @@ class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
         watershedMarkers = segmentation.get_cv2_watershed_markers(
                             compartmentImages,
                             membraneImages,
+                            self.parameters['compartment_channel_name'],
                             self.parameters['membrane_channel_name'])
 
         # perform watershed in individual z positions

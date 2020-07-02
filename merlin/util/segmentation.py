@@ -325,7 +325,7 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
         ret, markers = cv2.connectedComponents(foreground)
 
         # Add one to all labels so that sure background is not 0, but 1
-        markers = markers + 100
+        markers = markers + 1
 
         # Now, mark the region of unknown with zero
         markers[unknown == 255] = 0

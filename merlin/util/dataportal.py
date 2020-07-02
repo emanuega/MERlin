@@ -342,41 +342,39 @@ class GCloudFilePortal(FilePortal):
         return GCloudFilePortal(
             self._exchange_extension(newExtension), self._client)
 
-    def _error_tolerant_access(self, request, attempts=5, wait=60):
-        while attempts > 0:
+    def _error_tolerant_reading(self, method, startByte=None,
+                                endByte=None):
+        backoffSeries = [1, 2, 4, 8, 16, 32, 64, 128, 256]
+        for sleepDuration in backoffSeries:
             try:
-                file = self._fileHandle.download_as_string()
+                file = method(start=startByte, end=endByte)
                 return file
             except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
-                attempts -= 1
-                sleep(60)
-                if attempts == 0:
+                if sleepDuration == backoffSeries[-1]:
                     raise
+                else:
+                    sleep(sleepDuration)
 
     def read_as_text(self):
-        backoffSeries = [1, 2, 4, 8, 16, 32, 64, 128, 256]
-        for sleepDuration in backoffSeries:
-            try:
-                file = self._fileHandle.download_as_string().decode('utf-8')
-                return file
-            except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
-                if sleepDuration == backoffSeries[-1]:
-                    raise
-                else:
-                    sleep(sleepDuration)
+        """
+        Attempts to read a file from bucket as text, it if encounters a timeout
+        exception it reattempts after sleeping for exponentially increasing
+        delays, up to a delay of about 4 minutes
+        """
+        file = self._error_tolerant_reading(self._fileHandle.download_as_string)
+        return file.decode('utf-8')
 
     def read_file_bytes(self, startByte, endByte):
-        backoffSeries = [1, 2, 4, 8, 16, 32, 64, 128, 256]
-        for sleepDuration in backoffSeries:
-            try:
-                file = self._fileHandle.download_as_string(start=startByte,
-                                                           end=endByte-1)
-                return file
-            except (exceptions.GatewayTimeout, exceptions.ServiceUnavailable):
-                if sleepDuration == backoffSeries[-1]:
-                    raise
-                else:
-                    sleep(sleepDuration)
+        """
+        Attempts to read a file from bucket as bytes, it if encounters a timeout
+        exception it reattempts after sleeping for exponentially increasing
+        delays, up to a delay of about 4 minutes
+        """
+        file = self._error_tolerant_reading(self._fileHandle.download_as_string,
+                                            startByte=startByte,
+                                            endByte=endByte-1)
+        return file
+
 
     def close(self) -> None:
         pass

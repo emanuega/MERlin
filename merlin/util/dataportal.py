@@ -344,7 +344,6 @@ class GCloudFilePortal(FilePortal):
 
     def _error_tolerant_reading(self, method, startByte=None,
                                 endByte=None):
-
         backoffSeries = [1, 2, 4, 8, 16, 32, 64, 128, 256]
         for sleepDuration in backoffSeries:
             try:

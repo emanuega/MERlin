@@ -391,7 +391,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
 
 def get_overlapping_objects(segmentationZ0: np.ndarray,
                             segmentationZ1: np.ndarray,
-                            n0: int) -> Tuple[]:
+                            n0: int):
     """compare cell labels in adjacent image masks
 
     Args:

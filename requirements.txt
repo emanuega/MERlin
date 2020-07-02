@@ -29,4 +29,9 @@ boto3
 xmltodict
 google-cloud-storage
 docutils<0.16,>=0.10
+<<<<<<< HEAD
 
+=======
+pillow<=7.0.0
+cellpose
+>>>>>>> added input variables to get_membrane_mask

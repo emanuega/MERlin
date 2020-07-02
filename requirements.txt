@@ -28,5 +28,6 @@ tables
 boto3
 xmltodict
 google-cloud-storage
+docutils<0.16,>=0.10
 pillow<=7.0.0
 cellpose

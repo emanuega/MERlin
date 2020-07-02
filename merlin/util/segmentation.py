@@ -148,8 +148,8 @@ def prepare_watershed_images(watershedImageStack: np.ndarray
 
 
 def get_membrane_mask(membraneImages: np.ndarray,
-                      membraneChannelName: str,
-                      compartmentChannelName: str) -> np.ndarray:
+                      compartmentChannelName: str,
+                      membraneChannelName: str) -> np.ndarray:
     """Calculate binary mask with 1's in membrane pixels and 0 otherwise.
     The images expected are some type of membrane label (WGA, ConA,
     Lamin, Cadherins) or compartment images (DAPI, CD45, polyT)
@@ -282,7 +282,8 @@ def get_compartment_mask(compartmentImages: np.ndarray) -> np.ndarray:
 
 def get_cv2_watershed_markers(compartmentImages: np.ndarray,
                               membraneImages: np.ndarray,
-                              membraneFlag: int) -> np.ndarray:
+                              compartmentChannelName: str, 
+                              membraneChannelName: str) -> np.ndarray:
     """Combine membrane and compartment markers into a single multilabel mask
     for CV2 watershed
 
@@ -291,15 +292,19 @@ def get_cv2_watershed_markers(compartmentImages: np.ndarray,
             arranged as (z, x, y).
         membraneImages: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
-        membraneFlag: 0 if compartment and membrane images are the same, 1
-            otherwise
+        compartmentChannelName: str with the name of the compartment channel 
+            to use
+        membraneChannelName: str with the name of the membrane channel 
+            to use
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y) of
             cv2-compatible watershed markers
     """
 
     compartmentMask = get_compartment_mask(compartmentImages)
-    membraneMask = get_membrane_mask(membraneImages, membraneFlag)
+    membraneMask = get_membrane_mask(membraneImages,
+                                     compartmentChannelName,
+                                     membraneChannelName)
 
     watershedMarker = np.zeros(compartmentMask.shape)
 

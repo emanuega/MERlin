@@ -135,25 +135,6 @@
             }
         },
         {
-            "task": "WatershedSegmentNucleiCV2",
-            "module": "merlin.analysis.segment",
-            "parameters": {
-                "warp_task": "FiducialCorrelationWarp",
-                "global_align_task": "SimpleGlobalAlignment"
-            }
-        },
-        {
-            "task": "MachineLearningSegment",
-            "module": "merlin.analysis.segment",
-            "parameters": {
-                "warp_task": "FiducialCorrelationWarp",
-                "global_align_task": "SimpleGlobalAlignment",
-                "diameter": 50,
-                "method": "cellpose",
-                "compartment_channel_name": "DAPI"
-            }
-        },
-        {
             "task": "CleanCellBoundaries",
             "module": "merlin.analysis.segment",
             "parameters": {

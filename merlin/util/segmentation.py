@@ -360,6 +360,8 @@ def convert_grayscale_to_rgb(uint16Image: np.ndarray) -> np.ndarray:
     ratio = np.amax(uint16Image) / 256
     uint8Image = (uint16Image / ratio).astype('uint8')
 
+    print('size = [' + str(uint16Image.shape[0])  +  ', ' +  str(uint16Image.shape[1]) + ']')
+
     rgbImage = np.zeros((uint16Image.shape[0], uint16Image.shape[1], 3))
     rgbImage[:, :, 0] = uint8Image
     rgbImage[:, :, 1] = uint8Image

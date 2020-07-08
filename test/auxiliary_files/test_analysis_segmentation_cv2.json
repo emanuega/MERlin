@@ -11,7 +11,7 @@
         {
             "task": "SimpleGlobalAlignment",
             "module": "merlin.analysis.globalalign",
-            "analysis_name": "CV2SimpleGlobalAlignment",
+            "analysis_name": "CV2SimpleGlobalAlignment"
         },
         {
             "task": "WatershedSegmentNucleiCV2",

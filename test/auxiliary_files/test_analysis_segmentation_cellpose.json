@@ -11,7 +11,7 @@
         {
             "task": "SimpleGlobalAlignment",
             "module": "merlin.analysis.globalalign",
-            "analysis_name": "CellposeSimpleGlobalAlignment",
+            "analysis_name": "CellposeSimpleGlobalAlignment"
         },
         {
             "task": "MachineLearningSegment",

@@ -166,7 +166,7 @@ def run_with_snakemake(
     if 'restart_times' not in snakemakeParameters:
         snakemakeParameters['restart_times'] = 3
     if 'latency_wait' not in snakemakeParameters:
-        snakemakeParameters['latency_wait'] = 600
+        snakemakeParameters['latency_wait'] = 60
 
     snakemake.snakemake(snakefilePath, cores=coreCount,
                         workdir=dataSet.get_snakemake_path(),

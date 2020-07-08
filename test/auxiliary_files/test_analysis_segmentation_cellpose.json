@@ -1,12 +1,25 @@
 {
     "analysis_tasks": [
         {
+            "task": "FiducialCorrelationWarp",
+            "module": "merlin.analysis.warp",
+            "analysis_name": "CellposeFiducialCorrelationWarp",
+            "parameters": {
+                "write_aligned_images": true
+            }
+        },
+        {
+            "task": "SimpleGlobalAlignment",
+            "module": "merlin.analysis.globalalign",
+            "analysis_name": "CellposeSimpleGlobalAlignment",
+        },
+        {
             "task": "MachineLearningSegment",
             "module": "merlin.analysis.segment",
             "analysis_name": "CellposeSegment",
             "parameters": {
-                "warp_task": "FiducialCorrelationWarp",
-                "global_align_task": "SimpleGlobalAlignment",
+                "warp_task": "CellposeFiducialCorrelationWarp",
+                "global_align_task": "CellposeSimpleGlobalAlignment",
                 "method": "cellpose",
                 "diameter": 50,
                 "compartment_channel_name": "DAPI"
@@ -18,7 +31,7 @@
             "analysis_name": "CellposeCleanCellBoundaries",
             "parameters": {
                 "segment_task": "CellposeSegment",
-                "global_align_task": "SimpleGlobalAlignment"
+                "global_align_task": "CellposeSimpleGlobalAlignment"
             }
         },
         {
@@ -45,7 +58,7 @@
             "parameters": {
                 "filter_task": "AdaptiveFilterBarcodes",
                 "assignment_task": "CellposeRefineCellDatabases",
-                "alignment_task": "SimpleGlobalAlignment"
+                "alignment_task": "CellposeSimpleGlobalAlignment"
             }
         },
         {
@@ -71,10 +84,10 @@
             "parameters": {
                 "z_index": 0,
                 "apply_highpass": true,
-                "warp_task": "FiducialCorrelationWarp",
+                "warp_task": "CellposeFiducialCorrelationWarp",
                 "highpass_sigma": 5,
                 "segment_task": "CellposeRefineCellDatabases",
-                "global_align_task": "SimpleGlobalAlignment"
+                "global_align_task": "CellposeSimpleGlobalAlignment"
             }
         },
         {

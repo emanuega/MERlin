@@ -1,12 +1,25 @@
 {
     "analysis_tasks": [
         {
+            "task": "FiducialCorrelationWarp",
+            "module": "merlin.analysis.warp",
+            "analysis_name": "CV2FiducialCorrelationWarp",
+            "parameters": {
+                "write_aligned_images": true
+            }
+        },
+        {
+            "task": "SimpleGlobalAlignment",
+            "module": "merlin.analysis.globalalign",
+            "analysis_name": "CV2SimpleGlobalAlignment",
+        },
+        {
             "task": "WatershedSegmentNucleiCV2",
             "module": "merlin.analysis.segment",
             "analysis_name": "CV2Segment",
             "parameters": {
-                "warp_task": "FiducialCorrelationWarp",
-                "global_align_task": "SimpleGlobalAlignment",
+                "warp_task": "CV2FiducialCorrelationWarp",
+                "global_align_task": "CV2SimpleGlobalAlignment",
                 "membrane_channel_name": "DAPI",
                 "compartment_channel_name": "DAPI"
             }
@@ -17,7 +30,7 @@
             "analysis_name": "CV2CleanCellBoundaries",
             "parameters": {
                 "segment_task": "CV2Segment",
-                "global_align_task": "SimpleGlobalAlignment"
+                "global_align_task": "CV2SimpleGlobalAlignment"
             }
         },
         {
@@ -44,7 +57,7 @@
             "parameters": {
                 "filter_task": "AdaptiveFilterBarcodes",
                 "assignment_task": "CV2RefineCellDatabases",
-                "alignment_task": "SimpleGlobalAlignment"
+                "alignment_task": "CV2SimpleGlobalAlignment"
             }
         },
         {
@@ -70,10 +83,10 @@
             "parameters": {
                 "z_index": 0,
                 "apply_highpass": true,
-                "warp_task": "FiducialCorrelationWarp",
+                "warp_task": "CV2FiducialCorrelationWarp",
                 "highpass_sigma": 5,
                 "segment_task": "CV2RefineCellDatabases",
-                "global_align_task": "SimpleGlobalAlignment"
+                "global_align_task": "CV2SimpleGlobalAlignment"
             }
         },
         {

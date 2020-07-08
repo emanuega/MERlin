@@ -1,31 +1,21 @@
 {
     "analysis_tasks": [
         {
-            "task": "FiducialCorrelationWarp",
-            "module": "merlin.analysis.warp",
-            "parameters": {
-                "write_aligned_images": true
-            }
-        },
-        {
-            "task": "SimpleGlobalAlignment",
-            "module": "merlin.analysis.globalalign"
-        },
-        {
             "task": "MachineLearningSegment",
             "module": "merlin.analysis.segment",
             "analysis_name": "CellposeSegment",
             "parameters": {
                 "warp_task": "FiducialCorrelationWarp",
                 "global_align_task": "SimpleGlobalAlignment",
-                "diameter": 50,
                 "method": "cellpose",
+                "diameter": 50,
                 "compartment_channel_name": "DAPI"
             }
-        }, 
+        },
         {
             "task": "CleanCellBoundaries",
             "module": "merlin.analysis.segment",
+            "analysis_name": "CellposeCleanCellBoundaries",
             "parameters": {
                 "segment_task": "CellposeSegment",
                 "global_align_task": "SimpleGlobalAlignment"
@@ -34,24 +24,68 @@
         {
             "task": "CombineCleanedBoundaries",
             "module": "merlin.analysis.segment",
+            "analysis_name": "CellposeCombineCleanedBoundaries",
             "parameters": {
-                "cleaning_task": "CleanCellBoundaries"
+                "cleaning_task": "CellposeCleanCellBoundaries"
             }
         },
         {
             "task": "RefineCellDatabases",
             "module": "merlin.analysis.segment",
+            "analysis_name": "CellposeRefineCellDatabases",
             "parameters": {
                 "segment_task": "CellposeSegment",
-                "combine_cleaning_task": "CombineCleanedBoundaries"
+                "combine_cleaning_task": "CellposeCombineCleanedBoundaries"
+            }
+        },
+        {
+            "task": "PartitionBarcodes",
+            "module": "merlin.analysis.partition",
+            "analysis_name": "CellposePartitionBarcodes",
+            "parameters": {
+                "filter_task": "AdaptiveFilterBarcodes",
+                "assignment_task": "CellposeRefineCellDatabases",
+                "alignment_task": "SimpleGlobalAlignment"
+            }
+        },
+        {
+            "task": "ExportPartitionedBarcodes",
+            "module": "merlin.analysis.partition",
+            "analysis_name": "CellposeExportPartitionedBarcodes",
+            "parameters": {
+                "partition_task": "CellposePartitionBarcodes"
             }
         },
         {
             "task": "ExportCellMetadata",
             "module": "merlin.analysis.segment",
+            "analysis_name": "CellposeExportCellMetadata",
             "parameters": {
-                "segment_task": "RefineCellDatabases"
+                "segment_task": "CellposeRefineCellDatabases"
+            }
+        },
+        {
+            "task": "SumSignal",
+            "module": "merlin.analysis.sequential",
+            "analysis_name": "CellposeSumSignal",   
+            "parameters": {
+                "z_index": 0,
+                "apply_highpass": true,
+                "warp_task": "FiducialCorrelationWarp",
+                "highpass_sigma": 5,
+                "segment_task": "CellposeRefineCellDatabases",
+                "global_align_task": "SimpleGlobalAlignment"
+            }
+        },
+        {
+            "task": "ExportSumSignals",
+            "module": "merlin.analysis.sequential",
+            "analysis_name": "CellposeExportSumSignals",
+            "parameters": {
+                "sequential_task": "CellposeSumSignal"
             }
         }
+
     ]
+
 }

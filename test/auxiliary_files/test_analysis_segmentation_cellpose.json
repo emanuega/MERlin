@@ -19,10 +19,7 @@
             "analysis_name": "CellposeSegment",
             "parameters": {
                 "warp_task": "CellposeFiducialCorrelationWarp",
-                "global_align_task": "CellposeSimpleGlobalAlignment",
-                "method": "cellpose",
-                "diameter": 50,
-                "compartment_channel_name": "DAPI"
+                "global_align_task": "CellposeSimpleGlobalAlignment"
             }
         },
         {

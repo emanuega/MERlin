@@ -19,9 +19,7 @@
             "analysis_name": "CV2Segment",
             "parameters": {
                 "warp_task": "CV2FiducialCorrelationWarp",
-                "global_align_task": "CV2SimpleGlobalAlignment",
-                "membrane_channel_name": "DAPI",
-                "compartment_channel_name": "DAPI"
+                "global_align_task": "CV2SimpleGlobalAlignment"
             }
         },
         {

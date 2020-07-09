@@ -100,7 +100,7 @@
         {
             "task": "ExportBarcodes",
             "module": "merlin.analysis.exportbarcodes",
-            "analysis_tasks": "CV2ExportBarcodes",
+            "analysis_name": "CV2ExportBarcodes",
             "parameters": {
                 "filter_task": "CV2FilterBarcodes"
             }

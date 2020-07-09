@@ -100,7 +100,7 @@
         {
             "task": "ExportBarcodes",
             "module": "merlin.analysis.exportbarcodes",
-            "analysis_tasks": "CellposeExportBarcodes",
+            "analysis_name": "CellposeExportBarcodes",
             "parameters": {
                 "filter_task": "CellposeFilterBarcodes"
             }

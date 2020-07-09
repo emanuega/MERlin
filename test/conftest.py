@@ -59,14 +59,14 @@ def base_files():
             [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_parameters.json']))
     shutil.copyfile(
         os.sep.join(
-            [root, 'auxiliary_files', 'test_analysis_segmentation_cellpose.json']),
+            [root, 'auxiliary_files', 'test_analysis_parameters_segmentation_cellpose.json']),
         os.sep.join(
-            [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_segmentation_cellpose.json']))
+            [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_parameters_segmentation_cellpose.json']))
     shutil.copyfile(
         os.sep.join(
-            [root, 'auxiliary_files', 'test_analysis_segmentation_cv2.json']),
+            [root, 'auxiliary_files', 'test_analysis_parameters_segmentation_cv2.json']),
         os.sep.join(
-            [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_segmentation_cv2.json']))
+            [merlin.ANALYSIS_PARAMETERS_HOME, 'test_analysis_parameters_segmentation_cv2.json']))
     shutil.copyfile(
         os.sep.join(
             [root, 'auxiliary_files', 'test_microscope_parameters.json']),

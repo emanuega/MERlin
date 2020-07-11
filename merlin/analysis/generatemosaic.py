@@ -128,7 +128,8 @@ class GenerateMosaic(analysistask.AnalysisTask):
                 for z in zIndexes:
                     with self.dataSet.writer_for_analysis_images(
                         self, 'mosaic_%s_%i'
-                              % (dataOrganization.get_data_channel_name(d), z))\
+                              % (dataOrganization.get_data_channel_name(d), z),
+                              bigTiff = True, imagej = False)\
                             as outputTif:
                         mosaic = self._prepare_mosaic_slice(
                             z, d, micronExtents, alignTask, maximumProjection)

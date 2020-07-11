@@ -204,7 +204,7 @@ class DataSet(object):
 
     def writer_for_analysis_images(
             self, analysisTask: TaskOrName, imageBaseName: str,
-            imageIndex: int = None, imagej: bool = True) -> tifffile.TiffWriter:
+            imageIndex: int = None, bigTiff = False, imagej: bool = True) -> tifffile.TiffWriter:
         """Get a writer for writing tiff files from an analysis task.
 
         Args:
@@ -216,7 +216,8 @@ class DataSet(object):
 
         """
         return tifffile.TiffWriter(self._analysis_image_name(
-            analysisTask, imageBaseName, imageIndex), imagej=imagej)
+            analysisTask, imageBaseName, imageIndex), bigtiff=bigTiff, 
+            imagej=imagej)
 
     @staticmethod
     def analysis_tiff_description(sliceCount: int, frameCount: int) -> Dict:

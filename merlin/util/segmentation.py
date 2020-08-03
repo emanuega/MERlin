@@ -392,7 +392,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
         watershedOutput[z, :, :] = cv2.watershed(rgbImage,
                                                  watershedMarkers[z, :, :].
                                                  astype('int32'))
-        watershedOutput[z, :, :][watershedOutput[z, :, :] <= 100] = 0
+        watershedOutput[z, :, :][watershedOutput[z, :, :] <= 0] = 0
 
     return watershedOutput
 

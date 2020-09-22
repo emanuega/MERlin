@@ -256,6 +256,7 @@ class LocalFilePortal(FilePortal):
 
     def __init__(self, fileName: str):
         super().__init__(fileName)
+        self._fileHandle = None
         if not os.path.exists(fileName):
             raise FileNotFoundError
         self._fileHandle = open(fileName, 'rb')
@@ -275,7 +276,8 @@ class LocalFilePortal(FilePortal):
         return self._fileHandle.read(endByte-startByte)
 
     def close(self) -> None:
-        self._fileHandle.close()
+        if self._fileHandle is not None:
+            self._fileHandle.close()
 
 
 class S3FilePortal(FilePortal):

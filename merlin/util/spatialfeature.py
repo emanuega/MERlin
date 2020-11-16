@@ -10,8 +10,13 @@ from shapely import geometry
 import h5py
 import merlin
 import pandas
+import networkx as nx
+import rtree
+from scipy.spatial import cKDTree
+
 
 from merlin.core import dataset
+from merlin.core import analysistask
 
 
 class SpatialFeature(object):
@@ -299,6 +304,35 @@ class SpatialFeature(object):
 
         return containmentList
 
+    def get_overlapping_features(self, featuresToCheck: List['SpatialFeature']
+                                 ) -> List['SpatialFeature']:
+        """ Determine which features within the provided list overlap with this
+        feature.
+
+        Args:
+            featuresToCheck: the list of features to check for overlap with
+                this feature.
+        Returns: the features that overlap with this feature
+        """
+        areas = [self.intersection(x) for x in featuresToCheck]
+        overlapping = [featuresToCheck[i] for i, x in enumerate(areas) if x > 0]
+        benchmark = self.intersection(self)
+        contained = [x for x in overlapping if
+                     x.intersection(self) == benchmark]
+        if len(contained) > 1:
+            overlapping = []
+        else:
+            toReturn = []
+            for c in overlapping:
+                if c.get_feature_id() == self.get_feature_id():
+                    toReturn.append(c)
+                else:
+                    if c.intersection(self) != c.intersection(c):
+                        toReturn.append(c)
+            overlapping = toReturn
+
+        return overlapping
+
     def to_json_dict(self) -> Dict:
         return {
             'fov': self._fov,
@@ -585,3 +619,204 @@ class JSONSpatialFeatureDB(SpatialFeatureDB):
                 'bounds_x2': boundingBox[2],
                 'bounds_y2': boundingBox[3],
                 'volume': feature.get_volume()}
+
+
+def simple_clean_cells(cells: List) -> List:
+    """
+    Removes cells that lack a bounding box or have a volume equal to 0
+
+    Args:
+        cells: List of spatial features
+
+    Returns:
+        List of spatial features
+
+    """
+    return [cell for cell in cells
+            if len(cell.get_bounding_box()) == 4 and cell.get_volume() > 0]
+
+
+def append_cells_to_spatial_tree(tree: rtree.index.Index,
+                                 cells: List, idToNum: Dict):
+    for element in cells:
+        tree.insert(idToNum[element.get_feature_id()],
+                    element.get_bounding_box(), obj=element)
+
+
+def construct_tree(cells: List,
+                   spatialIndex: rtree.index.Index = rtree.index.Index(),
+                   count: int = 0, idToNum: Dict = dict()):
+    """
+    Builds or adds to an rtree with a list of cells
+
+    Args:
+        cells: list of spatial features
+        spatialIndex: an existing rtree to append to
+        count: number of existing entries in existing rtree
+        idToNum: dict containing feature ID as key, and number in rtree as value
+
+    Returns:
+        spatialIndex: an rtree updated with the input cells
+        count: number of entries in rtree
+        idToNum: dict containing feature ID as key, and number in rtree as value
+    """
+
+    for i in range(len(cells)):
+        idToNum[cells[i].get_feature_id()] = count
+        count += 1
+    append_cells_to_spatial_tree(spatialIndex, cells, idToNum)
+
+    return spatialIndex, count, idToNum
+
+
+def return_overlapping_cells(currentCell, cells: List):
+    """
+    Determines if there is overlap between a cell of interest and a list of
+    other cells. In the event that the cell of interest is entirely contained
+    within one of the cells in the cells it is being compared to, an empty
+    list is returned. Otherwise, the cell of interest and any overlapping
+    cells are returned.
+    Args:
+        currentCell: A spatial feature of interest
+        cells: A list of spatial features to compare to, the spatial feature
+               of interest is expected to be in this list
+
+    Returns:
+        A list of spatial features including the cell of interest and all
+        overlapping cells, or an empty list if the cell of intereset is
+        entirely contained within one of the cells it is compared to
+    """
+    areas = [currentCell.intersection(x) for x in cells]
+    overlapping = [cells[i] for i, x in enumerate(areas) if x > 0]
+    benchmark = currentCell.intersection(currentCell)
+    contained = [x for x in overlapping if
+                 x.intersection(currentCell) == benchmark]
+    if len(contained) > 1:
+        overlapping = []
+    else:
+        toReturn = []
+        for c in overlapping:
+            if c.get_feature_id() == currentCell.get_feature_id():
+                toReturn.append(c)
+            else:
+                if c.intersection(currentCell) != c.intersection(c):
+                    toReturn.append(c)
+        overlapping = toReturn
+
+    return overlapping
+
+
+def construct_graph(graph, cells, spatialTree, currentFOV, allFOVs, fovBoxes):
+    """
+    Adds the cells from the current fov to a graph where each node is a cell
+    and edges connect overlapping cells.
+
+    Args:
+        graph: An undirected graph, either empty of already containing cells
+        cells: A list of spatial features to potentially add to graph
+        spatialTree: an rtree index containing each cell in the dataset
+        currentFOV: the fov currently being added to the graph
+        allFOVs: a list of all fovs in the dataset
+        fovBoxes: a list of shapely polygons containing the bounds of each fov
+
+    Returns:
+        A graph updated to include cells from the current fov
+    """
+
+    fovIntersections = sorted([i for i, x in enumerate(fovBoxes) if
+                               fovBoxes[currentFOV].intersects(x)])
+
+    coords = [x.centroid.coords.xy for x in fovBoxes]
+    xcoords = [x[0][0] for x in coords]
+    ycoords = [x[1][0] for x in coords]
+    coordsDF = pandas.DataFrame(data=np.array(list(zip(xcoords, ycoords))),
+                                index=allFOVs,
+                                columns=['centerX', 'centerY'])
+    fovTree = cKDTree(data=coordsDF.loc[fovIntersections,
+                                        ['centerX', 'centerY']].values)
+    for cell in cells:
+        overlappingCells = spatialTree.intersection(
+            cell.get_bounding_box(), objects=True)
+        toCheck = [x.object for x in overlappingCells]
+        cellsToConsider = return_overlapping_cells(
+            cell, toCheck)
+        if len(cellsToConsider) == 0:
+            pass
+        else:
+            for cellToConsider in cellsToConsider:
+                xmin, ymin, xmax, ymax =\
+                    cellToConsider.get_bounding_box()
+                xCenter = (xmin + xmax) / 2
+                yCenter = (ymin + ymax) / 2
+                [d, i] = fovTree.query(np.array([xCenter, yCenter]))
+                assignedFOV = coordsDF.loc[fovIntersections, :]\
+                    .index.values.tolist()[i]
+                if cellToConsider.get_feature_id() not in graph.nodes:
+                    graph.add_node(cellToConsider.get_feature_id(),
+                                   originalFOV=cellToConsider.get_fov(),
+                                   assignedFOV=assignedFOV)
+            if len(cellsToConsider) > 1:
+                for cellToConsider1 in cellsToConsider:
+                    if cellToConsider1.get_feature_id() !=\
+                            cell.get_feature_id():
+                        graph.add_edge(cell.get_feature_id(),
+                                       cellToConsider1.get_feature_id())
+    return graph
+
+
+def remove_overlapping_cells(graph):
+    """
+    Takes in a graph in which each node is a cell and edges connect cells that
+    overlap eachother in space. Removes overlapping cells, preferentially
+    eliminating the cell that overlaps the most cells (i.e. if cell A overlaps
+    cells B, C, and D, whereas cell B only overlaps cell A, cell C only overlaps
+    cell A, and cell D only overlaps cell A, then cell A will be removed,
+    leaving cells B, C, and D remaining because there is no more overlap
+    within this group of cells).
+    Args:
+        graph: An undirected graph, in which each node is a cell and each
+               edge connects overlapping cells. nodes are expected to have
+               the following attributes: originalFOV, assignedFOV
+    Returns:
+        A pandas dataframe containing the feature ID of all cells after removing
+        all instances of overlap. There are columns for cell_id, originalFOV,
+        and assignedFOV
+    """
+    connectedComponents = list(nx.connected_components(graph))
+    cleanedCells = []
+    connectedComponents = [list(x) for x in connectedComponents]
+    for component in connectedComponents:
+        if len(component) == 1:
+            originalFOV = graph.nodes[component[0]]['originalFOV']
+            assignedFOV = graph.nodes[component[0]]['assignedFOV']
+            cleanedCells.append([component[0], originalFOV, assignedFOV])
+        if len(component) > 1:
+            sg = nx.subgraph(graph, component)
+            verts = list(nx.articulation_points(sg))
+            if len(verts) > 0:
+                sg = nx.subgraph(graph,
+                                 [x for x in component if x not in verts])
+            allEdges = [[k, v] for k, v in nx.degree(sg)]
+            sortedEdges = sorted(allEdges, key=lambda x: x[1], reverse=True)
+            maxEdges = sortedEdges[0][1]
+            while maxEdges > 0:
+                sg = nx.subgraph(graph, [x[0] for x in sortedEdges[1:]])
+                allEdges = [[k, v] for k, v in nx.degree(sg)]
+                sortedEdges = sorted(allEdges, key=lambda x: x[1],
+                                     reverse=True)
+                maxEdges = sortedEdges[0][1]
+            keptComponents = list(sg.nodes())
+            cellIDs = []
+            originalFOVs = []
+            assignedFOVs = []
+            for c in keptComponents:
+                cellIDs.append(c)
+                originalFOVs.append(graph.nodes[c]['originalFOV'])
+                assignedFOVs.append(graph.nodes[c]['assignedFOV'])
+            listOfLists = list(zip(cellIDs, originalFOVs, assignedFOVs))
+            listOfLists = [list(x) for x in listOfLists]
+            cleanedCells = cleanedCells + listOfLists
+    cleanedCellsDF = pandas.DataFrame(cleanedCells,
+                                      columns=['cell_id', 'originalFOV',
+                                               'assignedFOV'])
+    return cleanedCellsDF

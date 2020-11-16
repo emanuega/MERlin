@@ -113,8 +113,8 @@ class DataOrganization(object):
             # is not found
         """
         return self.data[self.data['channelName'].apply(
-            lambda x: str(x).lower()).str.match(
-            dataChannelName.lower())].index.values.tolist()[0]
+            lambda x: str(x).lower()) == str(dataChannelName).lower()]\
+            .index.values.tolist()[0]
 
     def get_data_channel_color(self, dataChannel: int) -> str:
         """Get the color used for measuring the specified data channel.
@@ -134,7 +134,8 @@ class DataOrganization(object):
         Returns:
             The index of the associated data channel
         """
-        return self.data[self.data['readoutName'] == bitName].index.item()
+        return self.data[self.data['readoutName'] ==
+                         bitName].index.values.item()
 
     def get_data_channel_with_name(self, channelName: str) -> int:
         """Get the data channel associated with a gene name.
@@ -144,7 +145,8 @@ class DataOrganization(object):
         Returns:
             The index of the associated data channel
         """
-        return self.data[self.data['channelName'] == channelName].index.item()
+        return self.data[self.data['channelName'] ==
+                         channelName].index.values.item()
 
     def get_fiducial_filename(self, dataChannel: int, fov: int) -> str:
         """Get the path for the image file that contains the fiducial
@@ -253,8 +255,13 @@ class DataOrganization(object):
         selection = self.fileMap[(self.fileMap['imageType'] == imageType) &
                                  (self.fileMap['fov'] == fov) &
                                  (self.fileMap['imagingRound'] == imagingRound)]
+        filemapPath = selection['imagePath'].values[0]
+        return os.path.join(self._dataSet.dataHome, self._dataSet.dataSetName,
+                            filemapPath)
 
-        return selection['imagePath'].values[0]
+    def _truncate_file_path(self, path) -> None:
+        head, tail = os.path.split(path)
+        return tail
 
     def _map_image_files(self) -> None:
         # TODO: This doesn't map the fiducial image types and currently assumes
@@ -263,6 +270,8 @@ class DataOrganization(object):
 
         try:
             self.fileMap = self._dataSet.load_dataframe_from_csv('filemap')
+            self.fileMap['imagePath'] = self.fileMap['imagePath'].apply(
+                self._truncate_file_path)
 
         except FileNotFoundError:
             uniqueEntries = self.data.drop_duplicates(
@@ -302,6 +311,8 @@ class DataOrganization(object):
             self.fileMap = pandas.DataFrame(fileData)
             self.fileMap[['imagingRound', 'fov']] = \
                 self.fileMap[['imagingRound', 'fov']].astype(int)
+            self.fileMap['imagePath'] = self.fileMap['imagePath'].apply(
+                self._truncate_file_path)
 
             self._validate_file_map()
 

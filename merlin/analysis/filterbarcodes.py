@@ -3,11 +3,24 @@ import pandas
 from scipy import optimize
 
 from merlin.core import analysistask
-from merlin.data.codebook import Codebook
 from merlin.analysis import decode
 
 
-class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
+class AbstractFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
+    """
+    An abstract class for filtering barcodes identified by pixel-based decoding.
+    """
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+    def get_codebook(self):
+        decodeTask = self.dataSet.load_analysis_task(
+            self.parameters['decode_task'])
+        return decodeTask.get_codebook()
+
+
+class FilterBarcodes(AbstractFilterBarcodes):
 
     """
     An analysis task that filters barcodes based on area and mean
@@ -36,11 +49,6 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
     def get_dependencies(self):
         return [self.parameters['decode_task']]
 
-    def get_codebook(self):
-        decodeTask = self.dataSet.load_analysis_task(
-            self.parameters['decode_task'])
-        return decodeTask.get_codebook()
-
     def _run_analysis(self, fragmentIndex):
         decodeTask = self.dataSet.load_analysis_task(
                 self.parameters['decode_task'])
@@ -48,11 +56,11 @@ class FilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         intensityThreshold = self.parameters['intensity_threshold']
         distanceThreshold = self.parameters['distance_threshold']
         barcodeDB = self.get_barcode_database()
-        currentBC = decodeTask.get_barcode_database() \
-            .get_filtered_barcodes(areaThreshold, intensityThreshold,
-                                   distanceThreshold=distanceThreshold,
-                                   fov=fragmentIndex)
-        barcodeDB.write_barcodes(currentBC, fov=fragmentIndex)
+        barcodeDB.write_barcodes(
+            decodeTask.get_barcode_database().get_filtered_barcodes(
+                areaThreshold, intensityThreshold,
+                distanceThreshold=distanceThreshold, fov=fragmentIndex),
+            fov=fragmentIndex)
 
 
 class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
@@ -260,7 +268,8 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
 
         updated = False
         while not all(completeFragments):
-            if intensityBins is None:
+            if (intensityBins is None or
+                    blankCounts is None or codingCounts is None):
                 for i in range(self.fragment_count()):
                     if not pendingFragments[i] and decodeTask.is_complete(i):
                         pendingFragments[i] = decodeTask.is_complete(i)
@@ -315,7 +324,7 @@ class GenerateAdaptiveThreshold(analysistask.AnalysisTask):
                         codingCounts, 'coding_counts', self)
 
 
-class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
+class AdaptiveFilterBarcodes(AbstractFilterBarcodes):
 
     """
     An analysis task that filters barcodes based on a mean intensity threshold
@@ -351,11 +360,6 @@ class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         return self.dataSet.load_analysis_task(
             self.parameters['adaptive_task'])
 
-    def get_codebook(self) -> Codebook:
-        decodeTask = self.dataSet.load_analysis_task(
-            self.parameters['decode_task'])
-        return decodeTask.get_codebook()
-
     def _run_analysis(self, fragmentIndex):
         adaptiveTask = self.dataSet.load_analysis_task(
             self.parameters['adaptive_task'])
@@ -368,6 +372,6 @@ class AdaptiveFilterBarcodes(decode.BarcodeSavingParallelAnalysisTask):
         bcDatabase = self.get_barcode_database()
         currentBarcodes = decodeTask.get_barcode_database()\
             .get_barcodes(fragmentIndex)
-        bcDatabase.write_barcodes(
-            adaptiveTask.extract_barcodes_with_threshold(
-                threshold, currentBarcodes), fov=fragmentIndex)
+
+        bcDatabase.write_barcodes(adaptiveTask.extract_barcodes_with_threshold(
+            threshold, currentBarcodes), fov=fragmentIndex)

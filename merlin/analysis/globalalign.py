@@ -2,6 +2,7 @@ from abc import abstractmethod
 import numpy as np
 from typing import Tuple
 from typing import List
+from shapely import geometry
 
 from merlin.core import analysistask
 
@@ -13,6 +14,8 @@ class GlobalAlignment(analysistask.AnalysisTask):
     different field of views relative to each other in order to construct
     a global alignment.
     """
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
 
     @abstractmethod
     def fov_coordinates_to_global(
@@ -73,6 +76,32 @@ class GlobalAlignment(analysistask.AnalysisTask):
         """
         pass
 
+    @abstractmethod
+    def fov_coordinate_array_to_global(self, fov: int,
+                                       fovCoordArray: np.array) -> np.array:
+        """A bulk transformation of a list of fov coordinates to
+           global coordinates.
+        Args:
+            fov: the fov of interest
+            fovCoordArray: numpy array of the [z, x, y] positions to transform
+        Returns:
+            numpy array of the global [z, x, y] coordinates
+        """
+        pass
+
+    def get_fov_boxes(self) -> List:
+        """
+        Creates a list of shapely boxes for each fov containing the global
+        coordinates as the box coordinates.
+
+        Returns:
+            A list of shapely boxes
+        """
+        fovs = self.dataSet.get_fovs()
+        boxes = [geometry.box(*self.fov_global_extent(f)) for f in fovs]
+
+        return boxes
+
 
 class SimpleGlobalAlignment(GlobalAlignment):
 
@@ -109,10 +138,18 @@ class SimpleGlobalAlignment(GlobalAlignment):
                     fovStart[0] + fovCoordinates[1]*micronsPerPixel,
                     fovStart[1] + fovCoordinates[2]*micronsPerPixel)
 
-    def fov_global_extent(self, fov: int) -> List[float]:
+    def fov_coordinate_array_to_global(self, fov: int,
+                                       fovCoordArray: np.array) -> np.array:
+        tForm = self.fov_to_global_transform(fov)
+        toGlobal = np.ones(fovCoordArray.shape)
+        toGlobal[:, [0, 1]] = fovCoordArray[:, [1, 2]]
+        globalCentroids = np.matmul(tForm, toGlobal.T).T[:, [2, 0, 1]]
+        globalCentroids[:, 0] = fovCoordArray[:, 0]
+        return globalCentroids
 
+    def fov_global_extent(self, fov: int) -> List[float]:
         """
-        Returns the global extent of an fov, output interleaved as
+        Returns the global extent of a fov, output interleaved as
         xmin, ymin, xmax, ymax
 
         Args:
@@ -185,6 +222,10 @@ class CorrelationGlobalAlignment(GlobalAlignment):
         raise NotImplementedError
 
     def get_global_extent(self):
+        raise NotImplementedError
+
+    def fov_coordinate_array_to_global(self, fov: int,
+                                       fovCoordArray: np.array) -> np.array:
         raise NotImplementedError
 
     @staticmethod

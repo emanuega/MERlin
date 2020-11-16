@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 import json
+import networkx as nx
 from shapely import geometry
 
 from merlin.util import spatialfeature
@@ -17,6 +18,18 @@ feature3 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)],
 feature4 = spatialfeature.SpatialFeature([[geometry.Polygon(testCoords1)],
                                           [geometry.Polygon(testCoords2)]],
                                          0, zCoordinates=np.array([0, 0.5]))
+
+p1 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])]], 0)
+p2 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 0.5), (0, 1), (1, 1), (1, 0.5)])]], 0)
+p3 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 0.5), (0, 1.5), (1, 1.5), (1, 0.5)])]], 0)
+p4 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(0, 1), (0, 2), (1, 2), (1, 1)])]], 0)
+p5 = spatialfeature.SpatialFeature(
+    [[geometry.Polygon([(4, 4), (4, 5), (5, 5), (5, 4)])]], 0)
+allCells = [p1, p2, p3, p4, p5]
 
 
 def test_feature_from_label_matrix():
@@ -193,3 +206,47 @@ def test_feature_contains_positions():
     assert all([a == b for a, b in zip(feature4.contains_positions(positions2),
                                        [False, False, True,
                                         False, True, True])])
+
+
+def test_find_overlapping_cells():
+    t1 = p1.get_overlapping_features(allCells)
+    t2 = p2.get_overlapping_features(allCells)
+    t3 = p3.get_overlapping_features(allCells)
+    t4 = p4.get_overlapping_features(allCells)
+    t5 = p5.get_overlapping_features(allCells)
+
+    assert ((p1 in t1) and (p3 in t1)
+            and (p2 not in t1) and (p5 not in t1) and (p5 not in t1))
+    assert len(t2) == 0
+    assert ((p3 in t3) and (p1 in t3) and (p4 in t3)
+            and (p2 not in t3) and (p5 not in t3))
+    assert ((p4 in t4) and (p3 in t4) and
+            (p1 not in t4) and (p2 not in t4) and (p5 not in t4))
+    assert ((p5 in t5) and (p1 not in t5)
+            and (p2 not in t5) and (p3 not in t5) and (p4 not in t5))
+
+
+def test_remove_overlapping_cells():
+    allFOVs = [0,1]
+    fovBoxes = [geometry.box(-1, -1, 2, 2), geometry.box(2, 2, 6, 6)]
+    currentFOV = 0
+    cells = spatialfeature.simple_clean_cells(allCells)
+
+    spatialIndex, _, _ = spatialfeature.construct_tree(cells)
+
+    G = nx.Graph()
+    G = spatialfeature.construct_graph(G, cells, spatialIndex,
+                                       currentFOV, allFOVs, fovBoxes)
+
+    cleanedCellsDF = spatialfeature.remove_overlapping_cells(G)
+    keptCells = cleanedCellsDF['cell_id'].values.tolist()
+
+    assert G.nodes[p5.get_feature_id()]['originalFOV'] == 0
+    assert G.nodes[p5.get_feature_id()]['assignedFOV'] == 1
+    assert G.nodes[p1.get_feature_id()]['originalFOV'] == 0
+    assert G.nodes[p1.get_feature_id()]['assignedFOV'] == 0
+    assert p1.get_feature_id() in keptCells
+    assert p4.get_feature_id() in keptCells
+    assert p5.get_feature_id() in keptCells
+    assert p2.get_feature_id() not in keptCells
+    assert p3.get_feature_id() not in keptCells

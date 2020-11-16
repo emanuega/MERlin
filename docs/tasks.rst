@@ -35,6 +35,19 @@ Parameters:
 * decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image.
 * decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
 
+preprocess.DeconvolutionPreprocessGuo
+--------------------------------------
+
+Description: High-pass filters and deconvolves the image data in preparation for bit-calling. This version uses the Lucy-Richardson deconvolution approach described in this reference - `Guo et al. <http://dx.doi.org/10.1101/647370>`.
+
+Parameters:
+
+* warp\_task -- The name of the warp task that provides the aligned image stacks.
+* highpass\_pass -- The standard deviation to use for the high pass filter.
+* decon\_sigma -- The standard deviation to use for the Lucy-Richardson deconvolution.
+* decon\_iterations -- The number of Lucy-Richardson deconvolution iterations to perform on each image. The default value is 2.
+* decon\_filter\_size -- The size of the gaussian filter to use for the deconvolution. It is not recommended to set this parameter manually.
+ 
 optimize.Optimize
 ------------------
 
@@ -43,7 +56,8 @@ Description: Determines the optimal per-bit scale factors for barcode decoding.
 Parameters:
 
 * iteration\_count -- The number of iterations to perform for the optimization.
-* fov\_per\_iteration -- The number of fields of view to decode in each round of optimization.
+* fov\_index -- (Optional) A list of [[fov_1, z_value_1], [fov_2, z_value_2], ..] specifying which fields of view and what z values should be used for optimization.
+* fov\_per\_iteration -- The number of fields of view to decode in each round of optimization. This will be set to the length of ``fov_index`` if the ``fov_index`` parameter is specified.
 * estimate\_initial\_scale\_factors\_from\_cdf -- Flag indicating if the initial scale factors should be estimated from the pixel intensity cdf. If false, the initial scale factors are all set to 1. If true, the initial scale factors are based on the 90th percentile of the pixe intensity cdf.
 * area\_threshold -- The minimum barcode area for barcodes to be used in the calculation of the scale factors.
 
@@ -58,6 +72,9 @@ Parameters:
 * write_decoded\_images -- Flag indicating if the decoded and intensity images should be written.
 * minimum\_area -- The area threshold, below which decoded barcodes are ignored.
 * lowpass\_sigma -- The standard deviation for the low pass filter prior to decoding.
+* remove\_z\_duplicated\_barcodes -- Remove putative duplicate barcode counts from adjacent z planes.
+* z\_duplicate\_zPlane\_threshold -- If removing putative duplicate barcodes, number of adjacent z planes to consider, generally anything within 2 µm would be worth considering.
+* z\_duplicate\_xy\_pixel\_threshold -- If removing putative duplicate barcodes, maximum euclidean distance in xy pixels that can separate the centroids of putative duplicates.
 
 filterbarcodes.FilterBarcodes
 ------------------------------
@@ -98,10 +115,20 @@ Parameters:
 * seed\_channel\_name -- The name of the data channel to use to find seeds
 * watershed\_channel\_name -- The name of the data channel to use as the watershed image.W
 
-segment.AssignCellFOV
+segment.CleanCellBoundaries
 --------------------------------
 
-Description: Assigns each cell to the FOV centroid they are closest to, and eliminates overlapping cells from the dataset, keeping 1.
+Description: For a FOV of interest, this task identifies all other FOVs with any overlapping regions, and constructs a graph containing cells from the FOV of interest and all cells from either that FOV or the overlapping FOVs that overlap a cell, with edges connecting overlapping cells
+
+segment.CombineCleanedBoundaries
+--------------------------------
+
+Description: Combines the cleaned cell boundaries generated for each fov, and eliminates overlapping cells, preferentially removing cells that overlap with the largest number of other cells until there is no more overlap in a given group of cells.
+
+segment.RefineCellDatabases
+--------------------------------
+
+Description: Creates a new cell database based on an initial cell database and a set of cells to keep.
 
 segment.ExportCellMetadata
 --------------------------------
@@ -119,7 +146,7 @@ Parameters:
 * data\_channels -- The names of the data channels to export, corresponding to the data organization. If not provided, all data channels are exported.
 * z\_indexes -- The z index to export. If not provided all z indexes are exported.
 * fov\_crop\_width -- The number of pixels to remove from each edge of each fov before inserting it into the mosaic.
-
+* draw\_fov\_labels -- Flag indicating if the fov index should be drawn on top of each fov in the mosaic
 sequential.SumSignal
 -------------------------------
 
@@ -169,3 +196,12 @@ Parameters:
 * sum\_task
 * partition\_task  
 * global\_align\_task  
+
+paralleltaskcomplete.ParallelTaskComplete
+_________________________________________
+
+Description: Check whether a parallel analysis task has completed all jobs and create a done fine for that task if so. This task does not need to be invoked by the user, it is used by the snakewriter.
+
+Parameters:
+
+* dependent\_task -- the parallel analysis task to check to see if it has completed

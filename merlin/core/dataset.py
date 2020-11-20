@@ -72,7 +72,10 @@ class DataSet(object):
         os.makedirs(self.analysisPath, exist_ok=True)
 
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
-        os.makedirs(self.logPath, exist_ok=True)
+        try: 
+            os.makedirs(self.logPath, exist_ok=True)
+        except PermissionError as e:
+            print("Unable to create logging directory")
 
         self._store_dataset_metadata()
 

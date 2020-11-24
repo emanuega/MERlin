@@ -80,8 +80,11 @@ class DataOrganization(object):
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
 
         self.data['readoutName'] = self.data['readoutName'].str.strip()
-        self._dataSet.save_dataframe_to_csv(
-            self.data, 'dataorganization', index=False)
+        try:
+            self._dataSet.save_dataframe_to_csv(
+                self.data, 'dataorganization', index=False)
+        except PermissionError as e:
+            print('Unable to save data organization.')
 
         stringColumns = ['readoutName', 'channelName', 'imageType',
                          'imageRegExp', 'fiducialImageType', 'fiducialRegExp']

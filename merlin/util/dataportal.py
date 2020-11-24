@@ -116,8 +116,8 @@ class S3DataPortal(DataPortal):
         self._s3 = boto3.resource('s3', **kwargs)
 
     def is_available(self):
-        objects = list(self._s3.Bucket(self._bucketName).objects.limit(10)
-                       .filter(Prefix=self._prefix))
+        objects = list(self._s3.Bucket(self._bucketName).objects
+                       .filter(Prefix=self._prefix).limit(10))
         return len(objects) > 0
 
     def open_file(self, fileName):
@@ -256,6 +256,9 @@ class LocalFilePortal(FilePortal):
 
     def __init__(self, fileName: str):
         super().__init__(fileName)
+        self._fileHandle = None
+        if not os.path.exists(fileName):
+            raise FileNotFoundError
         self._fileHandle = open(fileName, 'rb')
 
     def get_sibling_with_extension(self, newExtension: str):
@@ -273,7 +276,8 @@ class LocalFilePortal(FilePortal):
         return self._fileHandle.read(endByte-startByte)
 
     def close(self) -> None:
-        self._fileHandle.close()
+        if self._fileHandle is not None:
+            self._fileHandle.close()
 
 
 class S3FilePortal(FilePortal):

@@ -4,9 +4,11 @@ from typing import List
 from typing import Tuple
 import pandas
 import numpy as np
+from io import StringIO
 
 import merlin
 from merlin.core import dataset
+from merlin.util import dataportal
 
 
 def _parse_list(inputString: str, dtype=float):
@@ -31,15 +33,19 @@ class DataOrganization(object):
     image files.
     """
 
-    def __init__(self, dataSet, filePath: str = None):
+    def __init__(self, dataSet, filePath: str = None,
+                 dataPortal: dataportal.DataPortal = None):
         """
         Create a new DataOrganization for the data in the specified data set.
 
-        If filePath is not specified, a previously stored DataOrganization
-        is loaded from the dataSet if it exists. If filePath is specified,
-        the DataOrganization at the specified filePath is loaded and
-        stored in the dataSet, overwriting any previously stored
-        DataOrganization.
+        The DataOrganization is located in the following search order:
+        i) If filePath is specified and filePath exists this file is copied
+        into the data set analysis directory and used as the datorganization
+        ii) If dataPortal is specified and contains a file named
+        "dataorganization.csv", this file will be copied into the
+        data set analysis directory and used as the data organization.
+        iii) If neither filePath or dataPortal are specified, the previously
+        stored dataorganization is used.
 
         Raises:
             InputDataError: If the set of raw data is incomplete or the
@@ -47,23 +53,38 @@ class DataOrganization(object):
         """
 
         self._dataSet = dataSet
+        self.data = None
 
         if filePath is not None:
             if not os.path.exists(filePath):
                 filePath = os.sep.join(
                         [merlin.DATA_ORGANIZATION_HOME, filePath])
-
             self.data = pandas.read_csv(
                 filePath,
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
-            self.data['readoutName'] = self.data['readoutName'].str.strip()
-            self._dataSet.save_dataframe_to_csv(
-                    self.data, 'dataorganization', index=False)
 
-        else:
+        if self.data is None and dataPortal is not None:
+            try:
+                self.data = pandas.read_csv(StringIO(dataPortal.open_file(
+                    'dataorganization.csv').read_as_text()),
+                    converters={'frame': _parse_int_list, 'zPos': _parse_list})
+            # this could be many different exceptions so for now it can remain
+            # broad. If data can't be loaded from the data portal we load it
+            # from the dataset before
+            except Exception:
+                pass
+
+        if self.data is None:
             self.data = self._dataSet.load_dataframe_from_csv(
                 'dataorganization',
                 converters={'frame': _parse_int_list, 'zPos': _parse_list})
+
+        self.data['readoutName'] = self.data['readoutName'].str.strip()
+        try:
+            self._dataSet.save_dataframe_to_csv(
+                self.data, 'dataorganization', index=False)
+        except PermissionError as e:
+            print('Unable to save data organization.')
 
         stringColumns = ['readoutName', 'channelName', 'imageType',
                          'imageRegExp', 'fiducialImageType', 'fiducialRegExp']
@@ -256,8 +277,7 @@ class DataOrganization(object):
                                  (self.fileMap['fov'] == fov) &
                                  (self.fileMap['imagingRound'] == imagingRound)]
         filemapPath = selection['imagePath'].values[0]
-        return os.path.join(self._dataSet.dataHome, self._dataSet.dataSetName,
-                            filemapPath)
+        return os.path.join(self._dataSet.imageDataPath, filemapPath)
 
     def _truncate_file_path(self, path) -> None:
         head, tail = os.path.split(path)
@@ -283,7 +303,7 @@ class DataOrganization(object):
             fileNames = self._dataSet.get_image_file_names()
             if len(fileNames) == 0:
                 raise dataset.DataFormatException(
-                    'No image files found at %s.' % self._dataSet.rawDataPath)
+                    'No image files found at %s.' % self._dataSet.imageDataPath)
             fileData = []
             for currentType, currentIndex in zip(uniqueTypes, uniqueIndexes):
                 matchRE = re.compile(
@@ -343,7 +363,7 @@ class DataOrganization(object):
                         (channelInfo['imageType'], fov,
                          channelInfo['imagingRound']))
 
-                if not self._dataSet.rawDataPortal.open_file(
+                if not self._dataSet.imageDataPortal.open_file(
                         imagePath).exists():
                     raise InputDataError(
                         ('Image data for channel {0} and fov {1} not found. '

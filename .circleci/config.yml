@@ -22,6 +22,7 @@ jobs:
             conda config --set quiet true
             conda create -n merlin_env python=3.6
             source activate merlin_env
+            conda install matplotlib
             conda install rtree
             conda install pytables
             cd ~

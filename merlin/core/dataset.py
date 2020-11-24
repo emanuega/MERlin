@@ -72,7 +72,10 @@ class DataSet(object):
         os.makedirs(self.analysisPath, exist_ok=True)
 
         self.logPath = os.sep.join([self.analysisPath, 'logs'])
-        os.makedirs(self.logPath, exist_ok=True)
+        try: 
+            os.makedirs(self.logPath, exist_ok=True)
+        except PermissionError as e:
+            print("Unable to create logging directory")
 
         self._store_dataset_metadata()
 
@@ -204,7 +207,7 @@ class DataSet(object):
 
     def writer_for_analysis_images(
             self, analysisTask: TaskOrName, imageBaseName: str,
-            imageIndex: int = None, imagej: bool = True) -> tifffile.TiffWriter:
+            imageIndex: int = None, bigTiff = False, imagej: bool = True) -> tifffile.TiffWriter:
         """Get a writer for writing tiff files from an analysis task.
 
         Args:
@@ -216,7 +219,8 @@ class DataSet(object):
 
         """
         return tifffile.TiffWriter(self._analysis_image_name(
-            analysisTask, imageBaseName, imageIndex), imagej=imagej)
+            analysisTask, imageBaseName, imageIndex), bigtiff=bigTiff, 
+            imagej=imagej)
 
     @staticmethod
     def analysis_tiff_description(sliceCount: int, frameCount: int) -> Dict:
@@ -886,16 +890,30 @@ class ImageDataSet(DataSet):
 
         if microscopeParametersName is not None:
             self._import_microscope_parameters(microscopeParametersName)
-    
+
+        # try to find the image data in two locations. First in the Data
+        # subdirectory and then in the dataset directory
+        self.imageDataPath = os.sep.join([self.rawDataPath, 'Data'])
+        self.imageDataPortal = dataportal.DataPortal.create_portal(
+            self.imageDataPath)
+        if not self.imageDataPortal.is_available():
+            # allow "data" to be used instead of "Data"
+            self.imageDataPath = os.sep.join([self.rawDataPath, 'data'])
+            self.imageDataPortal = dataportal.DataPortal.create_portal(
+                self.imageDataPath)
+            if not self.imageDataPortal.is_available():
+                self.imageDataPath = self.rawDataPath
+                self.imageDataPortal = self.rawDataPortal
+
         self._load_microscope_parameters()
 
     def get_image_file_names(self):
-        return sorted(self.rawDataPortal.list_files(
+        return sorted(self.imageDataPortal.list_files(
             extensionList=['.dax', '.tif', '.tiff']))
 
     def load_image(self, imagePath, frameIndex):
         with imagereader.infer_reader(
-                self.rawDataPortal.open_file(imagePath)) as reader:
+                self.imageDataPortal.open_file(imagePath)) as reader:
             imageIn = reader.load_frame(int(frameIndex))
             if self.transpose:
                 imageIn = np.transpose(imageIn)
@@ -913,7 +931,7 @@ class ImageDataSet(DataSet):
             a three element list with [width, height, frameCount] or None
                     if the file does not exist
         """
-        with imagereader.infer_reader(self.rawDataPortal.open_file(imagePath)
+        with imagereader.infer_reader(self.imageDataPortal.open_file(imagePath)
                                       ) as reader:
             return reader.film_size()
 
@@ -965,7 +983,7 @@ class ImageDataSet(DataSet):
             imagePath: the path to the image file (.dax or .tif)
         Returns: the metadata from the associated xml file
         """
-        filePortal = self.rawDataPortal.open_file(
+        filePortal = self.imageDataPortal.open_file(
             imagePath).get_sibling_with_extension('.xml')
         return xmltodict.parse(filePortal.read_as_text())
 
@@ -1005,7 +1023,7 @@ class MERFISHDataSet(ImageDataSet):
                          microscopeParametersName)
 
         self.dataOrganization = dataorganization.DataOrganization(
-                self, dataOrganizationName)
+                self, dataOrganizationName, self.rawDataPortal)
         if codebookNames:
             self.codebooks = [codebook.Codebook(self, name, i)
                               for i, name in enumerate(codebookNames)]

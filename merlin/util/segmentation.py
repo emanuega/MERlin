@@ -392,7 +392,7 @@ def apply_cv2_watershed(compartmentImages: np.ndarray,
         watershedOutput[z, :, :] = cv2.watershed(rgbImage,
                                                  watershedMarkers[z, :, :].
                                                  astype('int32'))
-        watershedOutput[z, :, :][watershedOutput[z, :, :] <= 0] = 0
+        watershedOutput[z, :, :][watershedOutput[z, :, :] <= 1] = 0
 
     return watershedOutput
 
@@ -510,7 +510,13 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
     Args:
         imageStackIn: a 3 dimensional numpy array containing the images
             arranged as (z, x, y).
-        params: a dictionary with the parameters for segmentation
+        params: a dictionary with the parameters for segmentation. 
+                Available parameters:
+                    channel
+                    diameter
+                    flow_threshold
+                    cellprob_threshold
+
     Returns:
         ndarray containing a 3 dimensional mask arranged as (z, x, y)
     """
@@ -550,7 +556,11 @@ def segment_using_cellpose(imageStackIn: np.ndarray,
 
     masks, flows, styles, diams = model.eval(imageList,
                                              diameter=params['diameter'],
-                                             channels=channels)
+                                             channels=channels,
+                                             flow_threshold=
+                                                params['flow_threshold'],
+                                             cellprob_threshold=
+                                                params['cellprob_threshold'])
     # combine masks into array
     masksArray = np.stack(masks)
 

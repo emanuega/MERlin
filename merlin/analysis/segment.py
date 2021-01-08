@@ -247,6 +247,10 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
             self.parameters['diameter'] = 50
         if 'compartment_channel_name' not in self.parameters:
             self.parameters['compartment_channel_name'] = 'DAPI'
+        if 'flow_threshold' not in self.parameters:
+            self.parameters['flow_threshold'] = 0.5
+        if 'cellprob_threshold' not in self.parameters:
+            self.parameters['cellprob_threshold'] = 1
 
     def fragment_count(self):
         return len(self.dataSet.get_fovs())
@@ -286,7 +290,9 @@ class MachineLearningSegment(FeatureSavingAnalysisTask):
             segParameters = dict({
                 'method': 'cellpose',
                 'diameter': self.parameters['diameter'],
-                'channel': self.parameters['compartment_channel_name']
+                'channel': self.parameters['compartment_channel_name'], 
+                'flow_threshold': self.parameters['flow_threshold'],
+                'cellprob_threshold': self.parameters['cellprob_threshold']
             })
 
         segmentationOutput = segmentation.apply_machine_learning_segmentation(

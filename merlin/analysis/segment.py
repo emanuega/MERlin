@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
 from skimage import measure
-from skimage import segmentation
+from skimage import segmentation as skiseg
+from skimage import morphology
+from skimage import feature
+from skimage import filters
 import rtree
 from shapely import geometry
 from typing import List, Dict
@@ -10,10 +13,10 @@ from scipy.spatial import cKDTree
 from merlin.core import dataset
 from merlin.core import analysistask
 from merlin.util import spatialfeature
-from merlin.util import watershed
+from merlin.util import segmentation
 import pandas
 import networkx as nx
-
+import time
 
 class FeatureSavingAnalysisTask(analysistask.ParallelAnalysisTask):
 
@@ -90,13 +93,13 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             .get_data_channel_index(self.parameters['watershed_channel_name'])
         watershedImages = self._read_and_filter_image_stack(fragmentIndex,
                                                             watershedIndex, 5)
-        seeds = watershed.separate_merged_seeds(
-            watershed.extract_seeds(seedImages))
-        normalizedWatershed, watershedMask = watershed.prepare_watershed_images(
-            watershedImages)
+        seeds = segmentation.separate_merged_seeds(
+            segmentation.extract_seeds(seedImages))
+        normalizedWatershed, watershedMask = segmentation\
+            .prepare_watershed_images(watershedImages)
 
         seeds[np.invert(watershedMask)] = 0
-        watershedOutput = segmentation.watershed(
+        watershedOutput = skiseg.watershed(
             normalizedWatershed, measure.label(seeds), mask=watershedMask,
             connectivity=np.ones((3, 3, 3)), watershed_line=True)
 
@@ -118,6 +121,203 @@ class WatershedSegment(FeatureSavingAnalysisTask):
             warpTask.get_aligned_image(fov, channelIndex, z),
             (filterSize, filterSize), filterSigma)
             for z in range(len(self.dataSet.get_z_positions()))])
+
+
+class WatershedSegmentNucleiCV2(FeatureSavingAnalysisTask):
+
+    """
+    An analysis task that determines the boundaries of features in the
+    image data in each field of view using a watershed algorithm
+    implemented in CV2.
+
+    A tutorial explaining the general scheme of the method can be
+    found in  https://opencv-python-tutroals.readthedocs.io/en/latest/
+    py_tutorials/py_imgproc/py_watershed/py_watershed.html.
+
+    The watershed segmentation is performed in each z-position
+    independently and combined into 3D objects in a later step
+
+    The class can be used to segment either nuclear or cytoplasmic
+    compartments. If both the compartment and membrane channels are the
+    same, the membrane channel is calculated from the edge transform of
+    the provided channel.
+
+    Since each field of view is analyzed individually, the segmentation
+    results should be cleaned in order to merge cells that cross the
+    field of view boundary.
+    """
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'membrane_channel_name' not in self.parameters:
+            self.parameters['membrane_channel_name'] = 'DAPI'
+        if 'compartment_channel_name' not in self.parameters:
+            self.parameters['compartment_channel_name'] = 'DAPI'
+
+    def fragment_count(self):
+        return len(self.dataSet.get_fovs())
+
+    def get_estimated_memory(self):
+        # TODO - refine estimate
+        return 2048
+
+    def get_estimated_time(self):
+        # TODO - refine estimate
+        return 5
+
+    def get_dependencies(self):
+        return [self.parameters['warp_task'],
+                self.parameters['global_align_task']]
+
+    def get_cell_boundaries(self) -> List[spatialfeature.SpatialFeature]:
+        featureDB = self.get_feature_database()
+        return featureDB.read_features()
+
+    def _run_analysis(self, fragmentIndex):
+        startTime = time.time()
+
+        globalTask = self.dataSet.load_analysis_task(
+                self.parameters['global_align_task'])
+
+        # read membrane and compartment  indexes
+        membraneIndex = self.dataSet \
+                            .get_data_organization() \
+                            .get_data_channel_index(
+                                self.parameters['membrane_channel_name'])
+        compartmentIndex = self.dataSet \
+                               .get_data_organization() \
+                               .get_data_channel_index(
+                                self.parameters['compartment_channel_name'])
+
+        # read membrane and compartment images
+        membraneImages = self._read_image_stack(fragmentIndex, membraneIndex)
+        compartmentImages = self._read_image_stack(fragmentIndex,
+                                                   compartmentIndex)
+
+        # Prepare masks for cv2 watershed
+        watershedMarkers = segmentation.get_cv2_watershed_markers(
+                            compartmentImages,
+                            membraneImages,
+                            self.parameters['compartment_channel_name'],
+                            self.parameters['membrane_channel_name'])
+
+        # perform watershed in individual z positions
+        watershedOutput = segmentation.apply_cv2_watershed(compartmentImages,
+                                                           watershedMarkers)
+
+        # combine all z positions in watershed
+        watershedCombinedOutput = segmentation \
+            .combine_2d_segmentation_masks_into_3d(watershedOutput)
+
+        # get features from mask. This is the slowestart (6 min for the
+        # previous part, 15+ for the rest, for a 7 frame Image.
+        zPos = np.array(self.dataSet.get_data_organization().get_z_positions())
+        featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
+            (watershedCombinedOutput == i), fragmentIndex,
+            globalTask.fov_to_global_transform(fragmentIndex), zPos)
+            for i in np.unique(watershedCombinedOutput) if i != 0]
+
+        featureDB = self.get_feature_database()
+        featureDB.write_features(featureList, fragmentIndex)
+
+    def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
+        warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+        return np.array([warpTask.get_aligned_image(fov, channelIndex, z)
+                         for z in range(len(self.dataSet.get_z_positions()))])
+
+
+class MachineLearningSegment(FeatureSavingAnalysisTask):
+    """
+    An analysis task that determines the boundaries of features in the
+    image data in each field of view using a the specified machine learning
+    method. The available method is cellpose (https://github.com/MouseLand/
+    cellpose).
+
+    TODO: implement unets / Ilastik
+    """
+
+    def __init__(self, dataSet, parameters=None, analysisName=None):
+        super().__init__(dataSet, parameters, analysisName)
+
+        if 'method' not in self.parameters:
+            self.parameters['method'] = 'cellpose'
+        if 'diameter' not in self.parameters:
+            self.parameters['diameter'] = 50
+        if 'compartment_channel_name' not in self.parameters:
+            self.parameters['compartment_channel_name'] = 'DAPI'
+        if 'flow_threshold' not in self.parameters:
+            self.parameters['flow_threshold'] = 0.5
+        if 'cellprob_threshold' not in self.parameters:
+            self.parameters['cellprob_threshold'] = 1
+
+    def fragment_count(self):
+        return len(self.dataSet.get_fovs())
+
+    def get_estimated_memory(self):
+        # TODO - refine estimate
+        return 2048
+
+    def get_estimated_time(self):
+        # TODO - refine estimate
+        return 5
+
+    def get_dependencies(self):
+        return [self.parameters['warp_task'],
+                self.parameters['global_align_task']]
+
+    def get_cell_boundaries(self) -> List[spatialfeature.SpatialFeature]:
+        featureDB = self.get_feature_database()
+        return featureDB.read_features()
+
+    def _run_analysis(self, fragmentIndex):
+
+        globalTask = self.dataSet.load_analysis_task(
+                self.parameters['global_align_task'])
+
+        # read membrane and compartment indexes
+        compartmentIndex = self.dataSet \
+                               .get_data_organization() \
+                               .get_data_channel_index(
+                                self.parameters['compartment_channel_name'])
+
+        # Read images and perform segmentation
+        compartmentImages = self._read_image_stack(fragmentIndex,
+                                                   compartmentIndex)
+
+        if self.parameters['method'] == 'cellpose':
+            segParameters = dict({
+                'method': 'cellpose',
+                'diameter': self.parameters['diameter'],
+                'channel': self.parameters['compartment_channel_name'], 
+                'flow_threshold': self.parameters['flow_threshold'],
+                'cellprob_threshold': self.parameters['cellprob_threshold']
+            })
+
+        segmentationOutput = segmentation.apply_machine_learning_segmentation(
+                                compartmentImages, segParameters)
+
+        # combine all z positions in watershed
+        watershedCombinedOutput = segmentation \
+            .combine_2d_segmentation_masks_into_3d(segmentationOutput)
+
+        # get features from mask. This is the slowestart (6 min for the
+        # previous part, 15+ for the rest, for a 7 frame Image.
+        zPos = np.array(self.dataSet.get_data_organization().get_z_positions())
+        featureList = [spatialfeature.SpatialFeature.feature_from_label_matrix(
+            (watershedCombinedOutput == i), fragmentIndex,
+            globalTask.fov_to_global_transform(fragmentIndex), zPos)
+            for i in np.unique(watershedCombinedOutput) if i != 0]
+
+        featureDB = self.get_feature_database()
+        featureDB.write_features(featureList, fragmentIndex)
+
+    def _read_image_stack(self, fov: int, channelIndex: int) -> np.ndarray:
+        warpTask = self.dataSet.load_analysis_task(
+            self.parameters['warp_task'])
+        return np.array([warpTask.get_aligned_image(fov, channelIndex, z)
+                         for z in range(len(self.dataSet.get_z_positions()))])
 
 
 class CleanCellBoundaries(analysistask.ParallelAnalysisTask):

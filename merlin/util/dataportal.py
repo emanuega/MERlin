@@ -31,7 +31,7 @@ class DataPortal(ABC):
         """
         if basePath.startswith('s3://'):
             return S3DataPortal(basePath)
-        elif basePath.startswith('gc://'):
+        elif basePath.startswith('gs://') or basePath.startswith('gc://'):
             return GCloudDataPortal(basePath)
         else:
             return LocalDataPortal(basePath)

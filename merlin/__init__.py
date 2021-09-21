@@ -7,7 +7,9 @@ from typing import List
 
 from merlin.core import dataset
 
-envPath = os.path.join(os.path.expanduser('~'), '.merlinenv')
+envPath = os.path.join(
+    os.getenv("MERLIN_ENV_PATH") or os.path.expanduser("~"), ".merlinenv"
+)
 
 if os.path.exists(envPath):
     dotenv.load_dotenv(envPath)

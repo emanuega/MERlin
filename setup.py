@@ -27,5 +27,6 @@ setuptools.setup(
     entry_points={
         'console_scripts': ["merlin=merlin.merlin:merlin"]
     },
-    classifiers=CLASSIFIERS
+    include_package_data=True,
+    classifiers=CLASSIFIERS,
 )
